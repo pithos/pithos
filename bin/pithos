@@ -6,7 +6,9 @@
 
 import sys
 import os
-import gtk
+import gtk, gobject
+import gst
+import cgi
 
 # Check if we are working in the source tree or from the installed 
 # package and mangle the python path accordingly
@@ -21,6 +23,8 @@ sys.path.insert(0, os.path.dirname(fullPath))
 
 from pithos import AboutPithosDialog, PreferencesPithosDialog
 from pithos.pithosconfig import getdatapath
+from pithos.libpiano import PianoPandora
+#from pithos.fakepiano import PianoPandora
 
 class PithosWindow(gtk.Window):
     __gtype_name__ = "PithosWindow"
@@ -51,7 +55,168 @@ class PithosWindow(gtk.Window):
         #dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         #self.preferences = dlg.get_preferences()
 
-        #code for other initialization actions should be added here
+        self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
+        self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
+        
+        self.playpause_icon= self.builder.get_object('playpause_icon')
+        
+        self.songs_treeview = self.builder.get_object('songs_treeview')
+        self.songs_treeview.set_model(self.songs_model)
+        title_col   = gtk.TreeViewColumn()
+        render_text = gtk.CellRendererText()
+        title_col.pack_start(render_text, expand=True)
+        title_col.add_attribute(render_text, "markup", 1)
+        self.songs_treeview.append_column(title_col)
+        
+        self.stations_combo = self.builder.get_object('stations')
+        self.stations_combo.set_model(self.stations_model)
+        render_text = gtk.CellRendererText()
+        self.stations_combo.pack_start(render_text, expand=True)
+        self.stations_combo.add_attribute(render_text, "text", 1)
+        
+        self.pandora = PianoPandora()
+        
+        
+        self.player = gst.element_factory_make("playbin", "player")
+        bus = self.player.get_bus()
+        bus.add_signal_watch()
+        bus.connect("message", self.on_message)
+        self.time_format = gst.Format(gst.FORMAT_TIME)
+        
+        self.playing = False
+        self.current_song_index = None
+        self.current_station_index = None
+        
+        self.pandora.connect('username', 'password', self.pandora_ready)
+    
+    @property
+    def current_song(self):
+    	if self.current_song_index is not None:
+            return self.songs_model[self.current_song_index][0]
+        
+    @property
+    def current_station(self):
+        return self.stations_model[self.current_station_index][0]
+    
+    def song_changed(self, song_index):
+        prev = self.current_song
+        
+        self.stop()
+        self.current_song_index = song_index
+        self.player.set_property("uri", self.current_song.audioUrl)
+        self.play()
+        
+        if prev:
+            self.update_song_row(prev)
+            
+    def next_song(self, *ignore):
+        next_index = self.current_song_index+1
+        self.song_changed(next_index)
+        if next_index >= len(self.songs_model) -1 :
+            self.get_playlist()
+        
+    def play(self):
+        if not self.playing:
+            self.playing = True
+            self.player.set_state(gst.STATE_PLAYING)
+            gobject.timeout_add_seconds(1, self.update_song_row)
+        self.playpause_icon.set_from_stock(gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_SMALL_TOOLBAR)
+        self.update_song_row()
+        
+    def pause(self):
+        self.playing = False
+        self.player.set_state(gst.STATE_PAUSED)
+        self.playpause_icon.set_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_SMALL_TOOLBAR)
+        self.update_song_row()
+        
+    def stop(self):
+        self.playing = False
+        self.player.set_state(gst.STATE_NULL)
+        
+    def playpause(self, *ignore):
+        if self.playing:
+            self.pause()
+        else:
+            self.play()
+            
+    def get_playlist(self, start = False):
+        def callback(l):
+            start_index = len(self.songs_model)
+            for i in l:
+                i.index = len(self.songs_model)
+                self.songs_model.append((i, ''))
+                self.update_song_row(i)
+            if start:
+                self.song_changed(start_index)
+        self.pandora.get_playlist(self.current_station, callback)
+        
+    def pandora_ready(self):
+        for i in self.pandora.stations:
+            i.index = len(self.stations_model)
+            self.stations_model.append((i, i.name))
+        self.station_changed(0)
+        
+    def station_changed(self, station_index):
+        if station_index is self.current_station_index: return
+        self.current_song_index = None
+        self.stop()
+        self.current_station_index = station_index
+        self.songs_model.clear()
+        self.get_playlist(start = True)
+        self.stations_combo.set_active(station_index)
+        
+        
+    def on_message(self, bus, message):
+        t = message.type
+        if t == gst.MESSAGE_EOS:
+            self.stop()
+            self.next_song()
+        elif t == gst.MESSAGE_ERROR:
+            self.stop()
+            err, debug = message.parse_error()
+            print "Error: %s" % err, debug
+    
+    def song_text(self, song):
+        title = cgi.escape(song.title)
+        artist = cgi.escape(song.artist)
+        album = cgi.escape(song.album)
+        if song is self.current_song:
+            try:
+                p = ' '
+                if not self.playing:
+                    p = '- Paused'
+                dur_int = self.player.query_duration(self.time_format, None)[0]
+                dur_str = self.format_time(dur_int)
+                pos_int = self.player.query_position(self.time_format, None)[0]
+                pos_str = self.format_time(pos_int)
+                msg = "%s / %s %s" %(pos_str, dur_str, p)
+            except gst.QueryError:
+                msg = ""
+            return "<b><big>%s</big></b>\non <b>%s</b> by <b>%s</b>\n<small>%s</small>"%(title, album, artist, msg)
+        else:
+            return "<b><big>%s</big></b>\non <b>%s</b> by <b>%s</b>"%(title, album, artist)
+            
+    def update_song_row(self, song = None):
+        if song is None:
+            song = self.current_song
+        self.songs_model[song.index][1] = self.song_text(song)
+        return self.playing
+        
+    def stations_combo_changed(self, widget):
+        self.station_changed(widget.get_active())
+                    
+    def format_time(self, time_int):
+        time_int = time_int / 1000000000
+        s = time_int % 60
+        time_int /= 60
+        m = time_int % 60
+        time_int /= 60
+        h = time_int
+        
+        if h:
+            return "%i:%02i:%021"%(h,m,s)
+        else:
+            return "%i:%02i"%(m,s)
 
     def about(self, widget, data=None):
         """about - display the about box for pithos """
