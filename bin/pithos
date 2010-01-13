@@ -23,8 +23,6 @@ sys.path.insert(0, os.path.dirname(fullPath))
 
 from pithos import AboutPithosDialog, PreferencesPithosDialog
 from pithos.pithosconfig import getdatapath
-from pithos.libpiano import PianoPandora
-#from pithos.fakepiano import PianoPandora
 
 class PithosWindow(gtk.Window):
     __gtype_name__ = "PithosWindow"
@@ -41,7 +39,7 @@ class PithosWindow(gtk.Window):
         """
         pass
 
-    def finish_initializing(self, builder):
+    def finish_initializing(self, builder, pandora_class):
         """finish_initalizing should be called after parsing the ui definition
         and creating a PithosWindow object with it in order to finish
         initializing the start of the new PithosWindow instance.
@@ -71,10 +69,7 @@ class PithosWindow(gtk.Window):
         self.stations_combo.set_model(self.stations_model)
         render_text = gtk.CellRendererText()
         self.stations_combo.pack_start(render_text, expand=True)
-        self.stations_combo.add_attribute(render_text, "text", 1)
-        
-        self.pandora = PianoPandora()
-        
+        self.stations_combo.add_attribute(render_text, "text", 1)      
         
         self.player = gst.element_factory_make("playbin", "player")
         bus = self.player.get_bus()
@@ -88,7 +83,8 @@ class PithosWindow(gtk.Window):
         
         if not self.preferences['username']:
         	self.show_preferences()
-        	
+        
+        self.pandora = pandora_class()
         self.pandora.connect(self.preferences['username'], self.preferences['password'], self.pandora_ready)
     
     @property
@@ -244,7 +240,7 @@ class PithosWindow(gtk.Window):
 
         gtk.main_quit()
 
-def NewPithosWindow():
+def NewPithosWindow(pandora_class):
     """NewPithosWindow - returns a fully instantiated
     PithosWindow object. Use this function rather than
     creating a PithosWindow directly.
@@ -258,7 +254,7 @@ def NewPithosWindow():
     builder = gtk.Builder()
     builder.add_from_file(ui_filename)
     window = builder.get_object("pithos_window")
-    window.finish_initializing(builder)
+    window.finish_initializing(builder, pandora_class)
     return window
 
 if __name__ == "__main__":
@@ -266,15 +262,21 @@ if __name__ == "__main__":
     import logging, optparse
     parser = optparse.OptionParser(version="%prog %ver")
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Show debug messages")
+    parser.add_option("-t", "--test", action="store_true", dest="test", help="Use a mock web interface instead of connecting to the real Pandora server")
     (options, args) = parser.parse_args()
 
     #set the logging level to show debug messages
     if options.verbose:
         logging.basicConfig(level=logging.DEBUG)
         logging.debug('logging enabled')
+        
+    if options.test:
+    	from pithos.fakepiano import PianoPandora
+    else:
+    	from pithos.libpiano import PianoPandora
 
     #run the application
-    window = NewPithosWindow()
+    window = NewPithosWindow(PianoPandora)
     window.show()
     gtk.main()
 
