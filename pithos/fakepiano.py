@@ -16,6 +16,7 @@ class PianoPandora(object):
 		]
 		
 	def connect(self, user, password, init_callback):
+		print "logging in with", user, password
 		init_callback()
 
 		

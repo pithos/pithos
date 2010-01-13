@@ -6,10 +6,16 @@
 import sys
 import os
 import gtk
-from desktopcouch.records.server import CouchDatabase
-from desktopcouch.records.record import Record
 
 from pithos.pithosconfig import getdatapath
+
+try:
+    from xdg.BaseDirectory import xdg_config_home
+    config_home = xdg_config_home
+except ImportError:
+    config_home = os.path.dirname(__file__)
+    
+configfilename = os.path.join(config_home, 'pithos.ini')
 
 class PreferencesPithosDialog(gtk.Dialog):
     __gtype_name__ = "PreferencesPithosDialog"
@@ -36,55 +42,50 @@ class PreferencesPithosDialog(gtk.Dialog):
         #get a reference to the builder and set up the signals
         self.builder = builder
         self.builder.connect_signals(self)
+        
+        self.__load_preferences()
 
-        #set up couchdb and the preference info
-        self.__db_name = "pithos"
-        self.__database = CouchDatabase(self.__db_name, create=True)
-        self.__preferences = None
-        self.__key = None
-
-        #set the record type and then initalize the preferences
-        self.__record_type = "http://wiki.ubuntu.com/Quickly/RecordTypes/Pithos/Preferences"
-        self.__preferences = self.get_preferences()
-        #TODO:code for other initialization actions should be added here
 
     def get_preferences(self):
-        """get_preferences  -returns a dictionary object that contain
-        preferences for pithos. Creates a couchdb record if
-        necessary.
+        """get_preferences  - returns a dictionary object that contains
+        preferences for pithos.
         """
-
-        if self.__preferences == None: #the dialog is initializing
-            self.__load_preferences()
-            
-        #if there were no saved preference, this 
         return self.__preferences
 
     def __load_preferences(self):
-        #TODO: add prefernces to the self.__preferences dict
         #default preferences that will be overwritten if some are saved
-        self.__preferences = {"record_type":self.__record_type}
+        self.__preferences = {
+            "username":None,
+            "password":None,
+            "default_station_id":None,
+        }
         
-        results = self.__database.get_records(record_type=self.__record_type, create_view=True)
-       
-        if len(results.rows) == 0:
-            #no preferences have ever been saved
-            #save them before returning
-            self.__key = self.__database.put_record(Record(self.__preferences))
-        else:
-            self.__preferences = results.rows[0].value
-            self.__key = results.rows[0].value["_id"]
+        try:
+        	f = open(configfilename)
+        except IOError:
+        	return
+        
+        for line in f:
+            sep = line.find('=')
+            key = line[:sep]
+            val = line[sep+1:].strip()
+            self.__preferences[key]=val
         
     def __save_preferences(self):
-        self.__database.update_fields(self.__key, self.__preferences)
+        f = open(configfilename, 'w')
+        for key in self.__preferences:
+        	f.write('%s=%s\n'%(key, self.__preferences[key]))
+        f.close()
 
     def ok(self, widget, data=None):
         """ok - The user has elected to save the changes.
         Called before the dialog returns gtk.RESONSE_OK from run().
         """
-
-        #make any updates to self.__preferences here
-        #self.__preferences["preference1"] = "value2"
+        
+        self.__preferences["username"] = self.builder.get_object('prefs_username').get_text()
+        self.__preferences["password"] = self.builder.get_object('prefs_password').get_text()
+        
+        
         self.__save_preferences()
 
     def cancel(self, widget, data=None):

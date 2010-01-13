@@ -51,9 +51,8 @@ class PithosWindow(gtk.Window):
         self.builder = builder
         self.builder.connect_signals(self)
 
-        #uncomment the following code to read in preferences at start up
-        #dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
-        #self.preferences = dlg.get_preferences()
+        self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
+        self.preferences = self.prefs_dlg.get_preferences()
 
         self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
@@ -87,7 +86,10 @@ class PithosWindow(gtk.Window):
         self.current_song_index = None
         self.current_station_index = None
         
-        self.pandora.connect('username', 'password', self.pandora_ready)
+        if not self.preferences['username']:
+        	self.show_preferences()
+        	
+        self.pandora.connect(self.preferences['username'], self.preferences['password'], self.pandora_ready)
     
     @property
     def current_song(self):
@@ -224,14 +226,13 @@ class PithosWindow(gtk.Window):
         response = about.run()
         about.destroy()
 
-    def preferences(self, widget, data=None):
+    def show_preferences(self, widget=None, data=None):
         """preferences - display the preferences window for pithos """
-        prefs = PreferencesPithosDialog.NewPreferencesPithosDialog()
-        response = prefs.run()
+        response = self.prefs_dlg.run()
         if response == gtk.RESPONSE_OK:
             #make any updates based on changed preferences here
             pass
-        prefs.destroy()
+        self.prefs_dlg.hide()
 
     def quit(self, widget, data=None):
         """quit - signal handler for closing the PithosWindow"""
