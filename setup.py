@@ -79,16 +79,29 @@ class InstallAndUpdateDataDirectory(DistUtilsExtra.auto.install_auto):
 ##################################################################################
 ###################### YOU SHOULD MODIFY ONLY WHAT IS BELOW ######################
 ##################################################################################
+from distutils.core import Extension
 
 DistUtilsExtra.auto.setup(
     name='pithos',
     version='0.1',
-    #license='GPL v3',
-    #author='Your Name',
-    #author_email='email@ubuntu.com',
-    #description='UI for managing …',
+    ext_modules=[Extension('pithos.libpiano._piano', [
+	    	'pithos/libpiano/piano.i',
+	    	'pithos/libpiano/piano.c',
+	    	'pithos/libpiano/crypt.c',
+	    	'pithos/libpiano/http.c',
+	    	'pithos/libpiano/xml.c',
+	    	'pithos/libpiano/ezxml.c',
+	    	'pithos/libpiano/waitress.c'
+    	],
+        swig_opts=['-threads'],
+        include_dirs=['pithos/libpiano/']
+    )],
+    license='GPL v3',
+    author='Kevin Mehall',
+    author_email='km@kevinmehall.net',
+    description='Pandora.com client for the GNOME desktop',
     #long_description='Here a longer description',
-    #url='https://launchpad.net/pithos',
+    url='https://launchpad.net/pithos',
     cmdclass={'install': InstallAndUpdateDataDirectory}
     )
 
