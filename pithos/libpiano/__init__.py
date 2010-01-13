@@ -17,22 +17,21 @@ def pianoCheck(status):
 	return ret
 
 class PianoPandora(object):
-	def connect(self, user, password, callback):
+	def connect(self, user, password):
 		self.p = piano.PianoHandle_t()
 		piano.PianoInit(self.p)
 		pianoCheck(piano.PianoConnect(self.p, user, password))
 		pianoCheck(piano.PianoGetStations(self.p))
 		self.stations = [PianoStation(x) for x in linkedList(self.p.stations)]
-		callback()
 		
 
 		
-	def get_playlist(self, station, callback):
+	def get_playlist(self, station):
 		l = pianoCheck(piano.PianoGetPlaylist(self.p, station.id, piano.PIANO_AF_AACPLUS))
 		r = [PianoSong(x) for x in linkedList(l)]
 		print [i.title for i in r]
 		#piano.PianoDestroyPlaylist(l)
-		callback(r)
+		return r
 		
 		
 

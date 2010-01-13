@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(fullPath))
 
 from pithos import AboutPithosDialog, PreferencesPithosDialog
 from pithos.pithosconfig import getdatapath
+from pithos.gobject_worker import GObjectWorker
 
 class PithosWindow(gtk.Window):
     __gtype_name__ = "PithosWindow"
@@ -55,7 +56,8 @@ class PithosWindow(gtk.Window):
         self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
         
-        self.playpause_icon= self.builder.get_object('playpause_icon')
+        self.playpause_icon = self.builder.get_object('playpause_icon')
+        self.statusbar = self.builder.get_object('statusbar1')
         
         self.songs_treeview = self.builder.get_object('songs_treeview')
         self.songs_treeview.set_model(self.songs_model)
@@ -85,7 +87,9 @@ class PithosWindow(gtk.Window):
         	self.show_preferences()
         
         self.pandora = pandora_class()
-        self.pandora.connect(self.preferences['username'], self.preferences['password'], self.pandora_ready)
+        self.worker = GObjectWorker()
+        self.statusbar.push(self.statusbar.get_context_id('login'), "Logging in...")
+        self.worker.send(self.pandora.connect, (self.preferences['username'], self.preferences['password']), self.pandora_ready)
     
     @property
     def current_song(self):
@@ -144,11 +148,14 @@ class PithosWindow(gtk.Window):
                 i.index = len(self.songs_model)
                 self.songs_model.append((i, ''))
                 self.update_song_row(i)
+            self.statusbar.pop(self.statusbar.get_context_id('playlist'))
             if start:
                 self.song_changed(start_index)
-        self.pandora.get_playlist(self.current_station, callback)
+        self.statusbar.push(self.statusbar.get_context_id('playlist'), "Getting songs...")
+        self.worker.send(self.pandora.get_playlist, (self.current_station,), callback)
         
-    def pandora_ready(self):
+    def pandora_ready(self, ignore):
+    	self.statusbar.pop(self.statusbar.get_context_id('login'))
         for i in self.pandora.stations:
             i.index = len(self.stations_model)
             self.stations_model.append((i, i.name))
@@ -197,7 +204,8 @@ class PithosWindow(gtk.Window):
     def update_song_row(self, song = None):
         if song is None:
             song = self.current_song
-        self.songs_model[song.index][1] = self.song_text(song)
+        if song:
+        	self.songs_model[song.index][1] = self.song_text(song)
         return self.playing
         
     def stations_combo_changed(self, widget):

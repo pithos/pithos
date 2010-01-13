@@ -3,7 +3,7 @@ import Queue
 import gobject
 gobject.threads_init()
 
-class GobjectWorker():
+class GObjectWorker():
 	def __init__(self):
 		self.thread = threading.Thread(target=self._run)
 		self.thread.daemon = True
@@ -27,7 +27,7 @@ class GobjectWorker():
 		print "Unhandled exception in worker thread:", error
 		
 if __name__ == '__main__':
-	worker = GobjectWorker()
+	worker = GObjectWorker()
 	import time, gtk
 	
 	def test_cmd(a, b):

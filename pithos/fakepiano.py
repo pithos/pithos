@@ -1,4 +1,4 @@
-
+import time
 
 counter = 0
 def count():
@@ -15,14 +15,15 @@ class PianoPandora(object):
 			PianoStation("QuickMix", 1),
 		]
 		
-	def connect(self, user, password, init_callback):
+	def connect(self, user, password):
 		print "logging in with", user, password
-		init_callback()
+		time.sleep(3)
 
 		
-	def get_playlist(self, station, callback):
+	def get_playlist(self, station):
 		r = [PianoSong("Test  &song %i"%count(), "Test Artist", "Album %s"%station.name) for i in range(4)]		
-		callback(r)
+		time.sleep(3)
+		return r
 		
 		
 		
