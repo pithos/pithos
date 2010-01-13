@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=Pithos
-Comment=Pithos application
-Categories=GNOME;Utility;
+Comment=Play music from Pandora Radio
+Categories=GNOME;AudioVideo;
 Exec=pithos
 Icon=pithos
 Terminal=false
