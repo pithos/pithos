@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Pithos
+Comment=Pithos application
+Categories=GNOME;Utility;
+Exec=pithos
+Icon=pithos
+Terminal=false
+Type=Application

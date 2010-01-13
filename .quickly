@@ -1,0 +1,3 @@
+project = pithos
+template = ubuntu-project
+format = 0.2.5
