@@ -67,7 +67,7 @@ class PithosWindow(gtk.Window):
         self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
         
-        self.playpause_icon = self.builder.get_object('playpause_icon')
+        self.playpause_button = self.builder.get_object('playpause_button')
         self.statusbar = self.builder.get_object('statusbar1')
         
         self.songs_treeview = self.builder.get_object('songs_treeview')
@@ -133,13 +133,13 @@ class PithosWindow(gtk.Window):
             self.playing = True
             self.player.set_state(gst.STATE_PLAYING)
             gobject.timeout_add_seconds(1, self.update_song_row)
-        self.playpause_icon.set_from_stock(gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_SMALL_TOOLBAR)
+        self.playpause_button.set_stock_id(gtk.STOCK_MEDIA_PAUSE)
         self.update_song_row()
         
     def pause(self):
         self.playing = False
         self.player.set_state(gst.STATE_PAUSED)
-        self.playpause_icon.set_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_SMALL_TOOLBAR)
+        self.playpause_button.set_stock_id(gtk.STOCK_MEDIA_PLAY)
         self.update_song_row()
         
     def stop(self):
