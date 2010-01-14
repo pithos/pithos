@@ -11,13 +11,11 @@ Standards-Version: 3.8.2
 XS-Python-Version: current
 
 Package: pithos
-Architecture: all
+Architecture: any
 XB-Python-Version: ${python:Versions}
 Depends: ${misc:Depends},
- ${python:Depends}${misc:Depends},
  ${python:Depends},
  python-gobject,
  python-gst0.10,
  python-gtk2
 Description: Pandora.com client for the GNOME desktop
- UNKNOWN
