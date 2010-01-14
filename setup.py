@@ -92,10 +92,7 @@ class InstallAndUpdateDataDirectory(DistUtilsExtra.auto.install_auto):
 ##################################################################################
 from distutils.core import Extension
 
-DistUtilsExtra.auto.setup(
-    name='pithos',
-    version='0.1',
-    ext_modules=[Extension('pithos.libpiano._piano', [
+libpiano = Extension('pithos.libpiano._piano', [
 	    	'pithos/libpiano/piano.i',
 	    	'pithos/libpiano/piano.c',
 	    	'pithos/libpiano/crypt.c',
@@ -106,7 +103,12 @@ DistUtilsExtra.auto.setup(
     	],
         swig_opts=['-threads'],
         include_dirs=['pithos/libpiano/']
-    )],
+)
+
+DistUtilsExtra.auto.setup(
+    name='pithos',
+    version='0.1~public6',
+    ext_modules=[libpiano],
     license='GPL-3',
     author='Kevin Mehall',
     author_email='km@kevinmehall.net',

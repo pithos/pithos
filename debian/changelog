@@ -1,5 +1,29 @@
-pithos (0.1) karmic; urgency=low
+pithos (0.1~public6) karmic; urgency=low
+
+  * New release.
+
+ -- Kevin Mehall <km@kevinmehall.net>  Wed, 13 Jan 2010 18:54:02 -0700
+
+pithos (0.1~public5) karmic; urgency=low
+
+  * New release.
+
+ -- Kevin Mehall <km@kevinmehall.net>  Wed, 13 Jan 2010 18:42:43 -0700
+
+pithos (0.1~public4) karmic; urgency=low
+
+  * New release.
+
+ -- Kevin Mehall <km@kevinmehall.net>  Wed, 13 Jan 2010 18:32:45 -0700
+
+pithos (0.1~public3) karmic; urgency=low
+
+  * New release.
+
+ -- Kevin Mehall <km@kevinmehall.net>  Wed, 13 Jan 2010 18:32:06 -0700
+
+pithos (0.1~public1) karmic; urgency=low
 
   * Initial release.
 
- -- Kevin <km@dellstudio>  Wed, 13 Jan 2010 16:53:23 -0700
+ -- Kevin Mehall <km@kevinmehall.net>  Wed, 13 Jan 2010 16:53:23 -0700
