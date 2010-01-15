@@ -75,6 +75,7 @@ class PianoSong(object):
 		self.stationId = proxy.stationId
 		self.title = proxy.title
 		self.userSeed = proxy.userSeed
+		self.tired=False
 		
 		
 	

@@ -33,12 +33,12 @@ class PianoPandora(object):
 		
 	def connect(self, user, password):
 		print "logging in with", user, password
-		time.sleep(3)
+		time.sleep(1)
 
 		
 	def get_playlist(self, station):
-		r = [PianoSong("Test  &song %i"%count(), "Test Artist", "Album %s"%station.name) for i in range(4)]		
-		time.sleep(3)
+		r = [PianoSong("Test  &song %i"%count(), "Test Artist", "Album %s"%station.name, i%3-1) for i in range(4)]		
+		time.sleep(1)
 		return r
 		
 		
@@ -54,12 +54,14 @@ class PianoStation(object):
 		self.useQuickMix = True
 		
 class PianoSong(object):
-	def __init__(self, title, artist, album):
+	def __init__(self, title, artist, album, rating):
 		self.id=id(self)
 		self.album = album
 		self.artist = artist
 		self.audioUrl = 'file:///home/km/Downloads/download'
 		self.title = title
+		self.rating = rating
+		self.tired=False
 		
 		
 	
