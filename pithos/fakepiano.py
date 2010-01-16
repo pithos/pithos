@@ -22,14 +22,20 @@ def count():
 	counter +=1
 	return counter
 
+class PianoError(IOError): pass
+class PianoAuthTokenInvalid(PianoError): pass
+class PianoUserPasswordInvalid(PianoError): pass
+
 class PianoPandora(object):
 	def __init__(self):
 		self.stations = [
 			PianoStation("Fake 1"),
 			PianoStation("Fake 2"),
 			PianoStation("Fake 3"),
+			PianoStation("Errors"),
 			PianoStation("QuickMix", 1),
 		]
+		self.authError = False
 		
 	def connect(self, user, password):
 		print "logging in with", user, password
@@ -37,6 +43,12 @@ class PianoPandora(object):
 
 		
 	def get_playlist(self, station):
+		if station.name=='Errors':
+			if self.authError:
+				self.authError=False
+				raise PianoAuthTokenInvalid("Invalid Auth Token")
+			else:
+				self.authError = True
 		r = [PianoSong("Test  &song %i"%count(), "Test Artist", "Album %s"%station.name, i%3-1) for i in range(4)]		
 		time.sleep(1)
 		return r

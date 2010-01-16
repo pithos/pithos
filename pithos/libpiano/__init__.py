@@ -23,13 +23,23 @@ def linkedList(head):
 		head=head.next
 	return out
 
+class PianoError(IOError): pass
+class PianoAuthTokenInvalid(PianoError): pass
+class PianoUserPasswordInvalid(PianoError): pass
+
 def pianoCheck(status):
 	ret = None
 	if type(status) == tuple:
 		ret = status[1]
 		status = status[0]
 	if status!=0:
-		raise IOError(piano.PianoErrorToStr(status))
+		s=piano.PianoErrorToStr(status)
+		if status == piano.PIANO_AUTH_TOKEN_INVALID:
+			raise PianoAuthTokenInvalid(s)
+		elif status == piano.PIANO_RET_AUTH_USER_PASSWORD_INVALID:
+			raise PianoUserPasswordInvalid(s)
+		else:
+			raise PianoError(s)
 	return ret
 
 class PianoPandora(object):

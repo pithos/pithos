@@ -163,6 +163,8 @@ class PithosWindow(gtk.Window):
         self.playing = False
         self.current_song_index = None
         self.current_station_index = None
+        self.current_station_id = None
+        self.retrying = False
         
         if not self.preferences['username']:
             self.show_preferences()
@@ -232,23 +234,45 @@ class PithosWindow(gtk.Window):
             self.statusbar.pop(self.statusbar.get_context_id('playlist'))
             if start:
                 self.song_changed(start_index)
+            self.retrying = False
+        def errback(e):
+            try:
+                raise e
+            except PianoAuthTokenInvalid:
+                self.reconnect()
+            self.statusbar.pop(self.statusbar.get_context_id('playlist'))
         self.statusbar.push(self.statusbar.get_context_id('playlist'), "Getting songs...")
-        self.worker.send(self.pandora.get_playlist, (self.current_station,), callback)
+        self.worker.send(self.pandora.get_playlist, (self.current_station,), callback, errback)
         
     def pandora_ready(self, ignore):
         self.statusbar.pop(self.statusbar.get_context_id('login'))
+        self.stations_model.clear()
+        self.current_station_index = None
+        index = 0
         for i in self.pandora.stations:
             i.index = len(self.stations_model)
             self.stations_model.append((i, i.name))
-        self.station_changed(0)
+            if i.id == self.current_station_id:
+                index = i.index
+        self.station_changed(index, reconnecting = self.retrying)
         
-    def station_changed(self, station_index):
+    def reconnect(self):
+        if not self.retrying:
+            self.retrying = True
+            self.statusbar.push(self.statusbar.get_context_id('login'), "Reconnecting...")
+            self.worker.send(self.pandora.connect, (self.preferences['username'], self.preferences['password']), self.pandora_ready)
+        else:
+            print "Retry failed"
+        
+    def station_changed(self, station_index, reconnecting=False):
         if station_index is self.current_station_index: return
-        self.current_song_index = None
-        self.stop()
+        if not reconnecting:
+            self.current_song_index = None
+            self.songs_model.clear()
+            self.stop()
         self.current_station_index = station_index
-        self.songs_model.clear()
-        self.get_playlist(start = True)
+        self.current_station_id = self.current_station.id
+        self.get_playlist(start = not reconnecting)
         self.stations_combo.set_active(station_index)
         
         
@@ -290,7 +314,9 @@ class PithosWindow(gtk.Window):
         return self.playing
         
     def stations_combo_changed(self, widget):
-        self.station_changed(widget.get_active())
+    	index = widget.get_active()
+    	if index>=0:
+            self.station_changed(index)
                     
     def format_time(self, time_int):
         time_int = time_int / 1000000000
@@ -376,9 +402,9 @@ if __name__ == "__main__":
         logging.debug('logging enabled')
         
     if options.test:
-        from pithos.fakepiano import PianoPandora
+        from pithos.fakepiano import *
     else:
-        from pithos.libpiano import PianoPandora
+        from pithos.libpiano import *
 
     #run the application
     window = NewPithosWindow(PianoPandora)
