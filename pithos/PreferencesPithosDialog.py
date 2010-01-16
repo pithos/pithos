@@ -68,6 +68,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.__preferences = {
             "username":None,
             "password":None,
+            "notify":True,
             "default_station_id":None,
         }
         
@@ -80,14 +81,23 @@ class PreferencesPithosDialog(gtk.Dialog):
             sep = line.find('=')
             key = line[:sep]
             val = line[sep+1:].strip()
+            if val == 'None': val=None
+            elif val == 'False': val=False
+            elif val == 'True': val=True
             self.__preferences[key]=val
+        self.setup_fields()
         
     def __save_preferences(self):
         f = open(configfilename, 'w')
         for key in self.__preferences:
         	f.write('%s=%s\n'%(key, self.__preferences[key]))
         f.close()
-
+    
+    def setup_fields(self):
+        self.builder.get_object('prefs_username').set_text(self.__preferences["username"])
+        self.builder.get_object('prefs_password').set_text(self.__preferences["password"])
+        self.builder.get_object('checkbutton_notify').set_active(self.__preferences["notify"])
+    	
     def ok(self, widget, data=None):
         """ok - The user has elected to save the changes.
         Called before the dialog returns gtk.RESONSE_OK from run().
@@ -95,7 +105,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         
         self.__preferences["username"] = self.builder.get_object('prefs_username').get_text()
         self.__preferences["password"] = self.builder.get_object('prefs_password').get_text()
-        
+        self.__preferences["notify"] = self.builder.get_object('checkbutton_notify').get_active()
         
         self.__save_preferences()
 
