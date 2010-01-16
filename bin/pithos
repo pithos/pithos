@@ -20,6 +20,7 @@ import os
 import gtk, gobject
 import gst
 import cgi
+import pynotify
 
 # Check if we are working in the source tree or from the installed 
 # package and mangle the python path accordingly
@@ -160,6 +161,8 @@ class PithosWindow(gtk.Window):
         bus.connect("message", self.on_message)
         self.time_format = gst.Format(gst.FORMAT_TIME)
         
+        pynotify.init('pithos')
+        
         self.playing = False
         self.current_song_index = None
         self.current_station_index = None
@@ -193,6 +196,11 @@ class PithosWindow(gtk.Window):
         
         if prev:
             self.update_song_row(prev)
+            
+        if self.preferences['notify']:
+            msg = "by %s from %s"%(self.current_song.artist, self.current_song.album)
+            n = pynotify.Notification(self.current_song.title, msg, "audio-x-generic")
+            n.show()
             
     def next_song(self, *ignore):
         next_index = self.current_song_index+1
@@ -301,10 +309,10 @@ class PithosWindow(gtk.Window):
                 pos_str = self.format_time(pos_int)
                 msg = "%s / %s %s" %(pos_str, dur_str, p)
             except gst.QueryError:
-                msg = ""
-            return "<b><big>%s</big></b>\non <b>%s</b> by <b>%s</b>\n<small>%s</small>"%(title, album, artist, msg)
+                msg = " "
+            return "<b><big>%s</big></b>\nby <b>%s</b> on <b>%s</b>\n<small>%s</small>"%(title, artist, album, msg)
         else:
-            return "<b><big>%s</big></b>\non <b>%s</b> by <b>%s</b>"%(title, album, artist)
+            return "<b><big>%s</big></b>\nby <b>%s</b> on <b>%s</b>"%(title, artist, album)
             
     def update_song_row(self, song = None):
         if song is None:
@@ -314,8 +322,8 @@ class PithosWindow(gtk.Window):
         return self.playing
         
     def stations_combo_changed(self, widget):
-    	index = widget.get_active()
-    	if index>=0:
+        index = widget.get_active()
+        if index>=0:
             self.station_changed(index)
                     
     def format_time(self, time_int):
