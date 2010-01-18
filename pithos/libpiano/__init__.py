@@ -70,6 +70,7 @@ class PianoStation(object):
 		self.piano = piano
 		
 		self.id = c_obj.id
+		self.idToken = c_obj.idToken
 		self.isCreator = c_obj.isCreator
 		self.isQuickMix = c_obj.isQuickMix
 		self.name = c_obj.name
@@ -79,6 +80,10 @@ class PianoStation(object):
 		if not self.isCreator:
 			pianoCheck(piano.PianoTransformShared(self.piano.p, self._c_obj))
 			self.isCreator = True
+			
+	@property
+	def info_url(self):
+		return 'http://www.pandora.com/stations/'+self.idToken
 		
 class PianoSong(object):
 	def __init__(self, piano, c_obj):
@@ -98,6 +103,8 @@ class PianoSong(object):
 		self.stationId = c_obj.stationId
 		self.title = c_obj.title
 		self.userSeed = c_obj.userSeed
+		self.songDetailURL = c_obj.songDetailURL
+		self.artRadio = c_obj.artRadio
 		self.tired=False
 		
 	@property

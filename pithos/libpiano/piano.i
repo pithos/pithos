@@ -19,6 +19,7 @@ typedef struct PianoStation {
 	char useQuickMix; /* station will be included in quickmix */
 	char *name;
 	char *id;
+	char *idToken;
 	struct PianoStation *next;
 } PianoStation_t;
 
@@ -42,6 +43,8 @@ typedef struct PianoSong {
 	char *title;
 	char *focusTraitId;
 	char *identity;
+	char *artRadio;
+	char *songDetailURL;
 	PianoAudioFormat_t audioFormat;
 	struct PianoSong *next;
 } PianoSong_t;

@@ -215,11 +215,13 @@ static void PianoXmlParseStationsCb (const char *key, const ezxml_t value,
 		void *data) {
 	PianoStation_t *station = data;
 	char *valueStr = PianoXmlGetNodeText (value);
-
+	//printf("Station received XML: %s = %s\n", key, valueStr);
 	if (strcmp ("stationName", key) == 0) {
 		station->name = strdup (valueStr);
 	} else if (strcmp ("stationId", key) == 0) {
 		station->id = strdup (valueStr);
+	} else if (strcmp ("stationIdToken", key) == 0) {
+		station->idToken = strdup (valueStr);
 	} else if (strcmp ("isQuickMix", key) == 0) {
 		station->isQuickMix = (strcmp (valueStr, "1") == 0);
 	} else if (strcmp ("isCreator", key) == 0) {
@@ -231,7 +233,7 @@ static void PianoXmlParsePlaylistCb (const char *key, const ezxml_t value,
 		void *data) {
 	PianoSong_t *song = data;
 	char *valueStr = PianoXmlGetNodeText (value);
-
+	//printf("Song received XML: %s = %s\n", key, valueStr);
 	if (strcmp ("audioURL", key) == 0) {
 		/* last 48 chars of audioUrl are encrypted, but they put the key
 		 * into the door's lock... */
@@ -279,6 +281,10 @@ static void PianoXmlParsePlaylistCb (const char *key, const ezxml_t value,
 		song->stationId = strdup (valueStr);
 	} else if (strcmp ("albumTitle", key) == 0) {
 		song->album = strdup (valueStr);
+	} else if (strcmp ("songDetailURL", key) == 0) {
+		song->songDetailURL = strdup (valueStr);
+	} else if (strcmp ("artRadio", key) == 0) {
+		song->artRadio = strdup (valueStr);
 	} else if (strcmp ("fileGain", key) == 0) {
 		song->fileGain = atof (valueStr);
 	} else if (strcmp ("audioEncoding", key) == 0) {

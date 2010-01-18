@@ -21,6 +21,7 @@ import gtk, gobject
 import gst
 import cgi
 import pynotify
+import webbrowser
 
 # Check if we are working in the source tree or from the installed 
 # package and mangle the python path accordingly
@@ -345,8 +346,8 @@ class PithosWindow(gtk.Window):
         self.worker.send(sel.set_tired, (), callback, self.errback)
     
     def on_menuitem_info(self, widget):
-        obj = self.selected_song()
-        print "info", obj.title
+        song = self.selected_song()
+        webbrowser.open(song.songDetailURL)
         
     def on_treeview_button_press_event(self, treeview, event):
         if event.button == 3:
@@ -360,7 +361,10 @@ class PithosWindow(gtk.Window):
                 treeview.set_cursor( path, col, 0)
                 self.song_menu.popup( None, None, None, event.button, time)
             return True
-
+    
+    def station_properties(self, *ignore):
+        webbrowser.open(self.current_station.info_url)
+    
     def about(self, widget, data=None):
         """about - display the about box for pithos """
         about = AboutPithosDialog.NewAboutPithosDialog()
