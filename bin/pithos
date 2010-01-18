@@ -186,6 +186,7 @@ class PithosWindow(gtk.Window):
         if self.preferences['notify']:
             msg = "by %s from %s"%(self.current_song.artist, self.current_song.album)
             n = pynotify.Notification(self.current_song.title, msg, "audio-x-generic")
+            n.set_icon_from_pixbuf(self.songs_model[song_index][3])
             n.show()
             
     def next_song(self, *ignore):
