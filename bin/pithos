@@ -22,6 +22,7 @@ import gst
 import cgi
 import pynotify
 import webbrowser
+import urllib
 
 # Check if we are working in the source tree or from the installed 
 # package and mangle the python path accordingly
@@ -38,13 +39,18 @@ from pithos import AboutPithosDialog, PreferencesPithosDialog
 from pithos.pithosconfig import getdatapath
 from pithos.gobject_worker import GObjectWorker
 
-class CellRendererStockImage(gtk.GenericCellRenderer):  
+ALBUM_ART_SIZE = 64
+ALBUM_ART_X_PAD = 6
+
+class CellRendererAlbumArt(gtk.GenericCellRenderer):  
     def __init__(self):
         self.__gobject_init__()
         self.icon = None
+        self.pixbuf = None
         
     __gproperties__ = {
-        'icon': (str, 'icon', 'icon', '', gobject.PARAM_READWRITE)
+        'icon': (str, 'icon', 'icon', '', gobject.PARAM_READWRITE),
+        'pixbuf': (gtk.gdk.Pixbuf, 'pixmap', 'pixmap',  gobject.PARAM_READWRITE)
     }
     
     def do_set_property(self, pspec, value):
@@ -52,16 +58,24 @@ class CellRendererStockImage(gtk.GenericCellRenderer):
     def do_get_property(self, pspec):
         return getattr(self, pspec.name)
     def on_get_size(self, widget, cell_area):
-        return (0, 0, 32, 32)
+        return (0, 0, ALBUM_ART_SIZE + ALBUM_ART_X_PAD, ALBUM_ART_SIZE)
     def on_render(self, window, widget, background_area, cell_area, expose_area, flags):
+        if self.pixbuf:
+            window.draw_pixbuf(None, self.pixbuf, 0, 0, cell_area.x, cell_area.y, width=-1, height=-1, dither=gtk.gdk.RGB_DITHER_NORMAL, x_dither=0, y_dither=0)
         if self.icon:
             icon = widget.style.lookup_icon_set(self.icon)
-            pixbuf = icon.render_icon(widget.style, widget.get_direction(), gtk.STATE_ACTIVE, gtk.ICON_SIZE_LARGE_TOOLBAR, widget, detail=None)
-            x = cell_area.x+(cell_area.width-pixbuf.get_width())/2 #center horizontally
-            y = cell_area.y+(cell_area.height-pixbuf.get_height())/2 # center vertically     
+            pixbuf = icon.render_icon(widget.style, widget.get_direction(), gtk.STATE_ACTIVE, gtk.ICON_SIZE_MENU, widget, detail=None)
+            x = cell_area.x+(cell_area.width-pixbuf.get_width())-5 - ALBUM_ART_X_PAD # right
+            y = cell_area.y+(cell_area.height-pixbuf.get_height())-5 # bottom    
             window.draw_pixbuf(None, pixbuf, 0, 0, x, y, width=-1, height=-1, dither=gtk.gdk.RGB_DITHER_NORMAL, x_dither=0, y_dither=0)
         
-    
+def get_album_art(url, *extra):
+     content = urllib.urlopen(url).read()
+     l = gtk.gdk.PixbufLoader()
+     l.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
+     l.write(content)
+     l.close()
+     return (l.get_pixbuf(),) + extra
 
 class PithosWindow(gtk.Window):
     __gtype_name__ = "PithosWindow"
@@ -91,7 +105,7 @@ class PithosWindow(gtk.Window):
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         self.preferences = self.prefs_dlg.get_preferences()
 
-        self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str, str)
+        self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str, str, gtk.gdk.Pixbuf)
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
         
         self.playpause_button = self.builder.get_object('playpause_button')
@@ -104,9 +118,10 @@ class PithosWindow(gtk.Window):
         
         title_col   = gtk.TreeViewColumn()
         
-        render_icon = CellRendererStockImage()
+        render_icon = CellRendererAlbumArt()
         title_col.pack_start(render_icon, expand=False)
         title_col.add_attribute(render_icon, "icon", 2)
+        title_col.add_attribute(render_icon, "pixbuf", 3)
         
         render_text = gtk.CellRendererText()
         title_col.pack_start(render_text, expand=True)
@@ -141,8 +156,12 @@ class PithosWindow(gtk.Window):
         
         self.pandora = pandora_class()
         self.worker = GObjectWorker()
+        self.art_worker = GObjectWorker()
         self.statusbar.push(self.statusbar.get_context_id('login'), "Logging in...")
         self.worker.send(self.pandora.connect, (self.preferences['username'], self.preferences['password']), self.pandora_ready)
+        
+        aa = gtk.gdk.pixbuf_new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
+        self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, gtk.gdk.INTERP_BILINEAR)
     
     @property
     def current_song(self):
@@ -200,12 +219,19 @@ class PithosWindow(gtk.Window):
             self.play()
             
     def get_playlist(self, start = False):
+        def art_callback(t):
+            pixbuf, song, index = t
+            if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
+                self.songs_model[index][3]=pixbuf
+                self.update_song_row(song)
+            
         def callback(l):
             start_index = len(self.songs_model)
             for i in l:
                 i.index = len(self.songs_model)
-                self.songs_model.append((i, '', ''))
+                self.songs_model.append((i, '', '', self.default_album_art))
                 self.update_song_row(i)
+                if i.artRadio: self.art_worker.send(get_album_art, (i.artRadio, i, i.index), art_callback)
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if start:
                 self.song_changed(start_index)
@@ -336,6 +362,7 @@ class PithosWindow(gtk.Window):
             self.update_song_row(sel)
         self.statusbar.push(self.statusbar.get_context_id('net'), "Banning song...")
         self.worker.send(sel.rate, (RATE_BAN,), callback, self.errback)
+        self.next_song()
         
     def on_menuitem_tired(self, widget):
         sel = self.selected_song()
@@ -344,6 +371,7 @@ class PithosWindow(gtk.Window):
             self.update_song_row(sel)
         self.statusbar.push(self.statusbar.get_context_id('net'), "Putting song on shelf...")
         self.worker.send(sel.set_tired, (), callback, self.errback)
+        self.next_song()
     
     def on_menuitem_info(self, widget):
         song = self.selected_song()

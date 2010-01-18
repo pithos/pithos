@@ -67,7 +67,7 @@ class PianoStation(object):
 		self.isQuickMix = qm
 		self.name = name
 		self.useQuickMix = True
-		self.info_url 'http://launchpad.net/pithos'
+		self.info_url = 'http://launchpad.net/pithos'
 		
 class PianoSong(object):
 	def __init__(self, title, artist, album, rating):
@@ -79,6 +79,7 @@ class PianoSong(object):
 		self.rating = rating
 		self.tired=False
 		self.songDetailURL = 'http://launchpad.net/pithos'
+		self.artRadio = 'http://i.imgur.com/E3dUG.jpg'
 		
 	def rate(self, rating):
 		time.sleep(1)
