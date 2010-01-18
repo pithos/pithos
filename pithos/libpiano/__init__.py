@@ -34,7 +34,7 @@ def pianoCheck(status):
 		status = status[0]
 	if status!=0:
 		s=piano.PianoErrorToStr(status)
-		if status == piano.PIANO_AUTH_TOKEN_INVALID:
+		if status == piano.PIANO_RET_AUTH_TOKEN_INVALID:
 			raise PianoAuthTokenInvalid(s)
 		elif status == piano.PIANO_RET_AUTH_USER_PASSWORD_INVALID:
 			raise PianoUserPasswordInvalid(s)
@@ -55,7 +55,6 @@ class PianoPandora(object):
 	def get_playlist(self, station):
 		l = pianoCheck(piano.PianoGetPlaylist(self.p, station.id, piano.PIANO_AF_AACPLUS))
 		r = [PianoSong(x) for x in linkedList(l)]
-		print [i.title for i in r]
 		#piano.PianoDestroyPlaylist(l)
 		return r
 		
