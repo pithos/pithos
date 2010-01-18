@@ -47,6 +47,7 @@ class CellRendererAlbumArt(gtk.GenericCellRenderer):
         self.__gobject_init__()
         self.icon = None
         self.pixbuf = None
+        self.rate_bg = gtk.gdk.pixbuf_new_from_file(os.path.join(getdatapath(), 'media', 'rate_bg.png'))
         
     __gproperties__ = {
         'icon': (str, 'icon', 'icon', '', gobject.PARAM_READWRITE),
@@ -63,10 +64,14 @@ class CellRendererAlbumArt(gtk.GenericCellRenderer):
         if self.pixbuf:
             window.draw_pixbuf(None, self.pixbuf, 0, 0, cell_area.x, cell_area.y, width=-1, height=-1, dither=gtk.gdk.RGB_DITHER_NORMAL, x_dither=0, y_dither=0)
         if self.icon:
+            x = cell_area.x+(cell_area.width-self.rate_bg.get_width()) - ALBUM_ART_X_PAD # right
+            y = cell_area.y+(cell_area.height-self.rate_bg.get_height()) # bottom
+            window.draw_pixbuf(None, self.rate_bg, 0, 0, x, y, width=-1, height=-1, dither=gtk.gdk.RGB_DITHER_NORMAL, x_dither=0, y_dither=0)
+            
             icon = widget.style.lookup_icon_set(self.icon)
             pixbuf = icon.render_icon(widget.style, widget.get_direction(), gtk.STATE_ACTIVE, gtk.ICON_SIZE_MENU, widget, detail=None)
             x = cell_area.x+(cell_area.width-pixbuf.get_width())-5 - ALBUM_ART_X_PAD # right
-            y = cell_area.y+(cell_area.height-pixbuf.get_height())-5 # bottom    
+            y = cell_area.y+(cell_area.height-pixbuf.get_height())-5 # bottom
             window.draw_pixbuf(None, pixbuf, 0, 0, x, y, width=-1, height=-1, dither=gtk.gdk.RGB_DITHER_NORMAL, x_dither=0, y_dither=0)
         
 def get_album_art(url, *extra):
