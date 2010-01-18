@@ -118,14 +118,23 @@ class PithosWindow(gtk.Window):
         
         title_col   = gtk.TreeViewColumn()
         
+        def bgcolor_data_func(column, cell, model, iter):
+            if model.get_value(iter, 0) is self.current_song:
+                bgcolor = column.get_tree_view().get_style().mid[gtk.STATE_NORMAL]
+            else:
+                bgcolor = column.get_tree_view().get_style().base[gtk.STATE_NORMAL]
+            cell.set_property("cell-background", bgcolor)
+                
         render_icon = CellRendererAlbumArt()
         title_col.pack_start(render_icon, expand=False)
         title_col.add_attribute(render_icon, "icon", 2)
         title_col.add_attribute(render_icon, "pixbuf", 3)
+        title_col.set_cell_data_func(render_icon, bgcolor_data_func)
         
         render_text = gtk.CellRendererText()
         title_col.pack_start(render_text, expand=True)
         title_col.add_attribute(render_text, "markup", 1)
+        title_col.set_cell_data_func(render_text, bgcolor_data_func)
         
         self.songs_treeview.append_column(title_col)
         
@@ -173,6 +182,7 @@ class PithosWindow(gtk.Window):
         return self.stations_model[self.current_station_index][0]
     
     def song_changed(self, song_index):
+    	if song_index >= len(self.songs_model): return False
         prev = self.current_song
         
         self.stop()
@@ -182,8 +192,12 @@ class PithosWindow(gtk.Window):
         
         if prev:
             self.update_song_row(prev)
-            
-        if self.preferences['notify']:
+        
+        self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
+        self.songs_treeview.set_cursor(song_index, None, 0)
+        
+        if self.preferences['notify'] and not self.is_active():
+            # popup notification if enabled and the window isn't active
             msg = "by %s from %s"%(self.current_song.artist, self.current_song.album)
             n = pynotify.Notification(self.current_song.title, msg, "audio-x-generic")
             n.set_icon_from_pixbuf(self.songs_model[song_index][3])
