@@ -16,6 +16,9 @@
 
 import time
 
+RATE_BAN = 0
+RATE_LOVE = 1
+
 counter = 0
 def count():
 	global counter
@@ -74,6 +77,17 @@ class PianoSong(object):
 		self.title = title
 		self.rating = rating
 		self.tired=False
+		
+	def rate(self, rating):
+		time.sleep(1)
+		print "rating song", self.title, rating
+		self.rating = rating
+			
+	def set_tired(self):
+		time.sleep(1)
+		print "tired", self.title
+		self.tired = True
+		
 		
 		
 	

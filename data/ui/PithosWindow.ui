@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <interface>
-  <!-- interface-requires pithos_window 1.0 -->
   <requires lib="gtk+" version="2.16"/>
+  <!-- interface-requires pithos_window 1.0 -->
   <!-- interface-naming-policy project-wide -->
   <!-- interface-local-resource-path ../media -->
   <object class="PithosWindow" id="pithos_window">
@@ -135,5 +135,65 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
     <property name="page_size">10</property>
+  </object>
+  <object class="GtkMenu" id="song_menu">
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_info">
+        <property name="label" translatable="yes">Song _Info...</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="image">image1</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="on_menuitem_info"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_love">
+        <property name="label" translatable="yes">_Love Song</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="image">image2</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="on_menuitem_love"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_ban">
+        <property name="label" translatable="yes">_Ban Song</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="image">image3</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="on_menuitem_ban"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_tired">
+        <property name="label" translatable="yes">_Tired of this song</property>
+        <property name="visible">True</property>
+        <property name="tooltip_text" translatable="yes">Don't play song for a month</property>
+        <property name="use_underline">True</property>
+        <property name="image">image4</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="on_menuitem_tired"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="stock">gtk-dialog-info</property>
+  </object>
+  <object class="GtkImage" id="image2">
+    <property name="visible">True</property>
+    <property name="stock">gtk-about</property>
+  </object>
+  <object class="GtkImage" id="image3">
+    <property name="visible">True</property>
+    <property name="stock">gtk-cancel</property>
+  </object>
+  <object class="GtkImage" id="image4">
+    <property name="visible">True</property>
+    <property name="stock">gtk-jump-to</property>
   </object>
 </interface>

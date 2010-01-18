@@ -16,6 +16,9 @@
 
 import piano
 
+RATE_BAN = piano.PIANO_RATE_BAN
+RATE_LOVE = piano.PIANO_RATE_LOVE
+
 def linkedList(head):
 	out = []
 	while head:
@@ -48,43 +51,69 @@ class PianoPandora(object):
 		piano.PianoInit(self.p)
 		pianoCheck(piano.PianoConnect(self.p, user, password))
 		pianoCheck(piano.PianoGetStations(self.p))
-		self.stations = [PianoStation(x) for x in linkedList(self.p.stations)]
-		
-
+		self.stations = [PianoStation(self, x) for x in linkedList(self.p.stations)]
+		self.stations_dict = {}
+		for i in self.stations:
+			self.stations_dict[i.id] = i
 		
 	def get_playlist(self, station):
 		l = pianoCheck(piano.PianoGetPlaylist(self.p, station.id, piano.PIANO_AF_AACPLUS))
-		r = [PianoSong(x) for x in linkedList(l)]
-		#piano.PianoDestroyPlaylist(l)
+		r = [PianoSong(self, x) for x in linkedList(l)]
 		return r
 		
 		
 
 		
 class PianoStation(object):
-	def __init__(self, proxy):
-		self.id = proxy.id
-		self.isCreator = proxy.isCreator
-		self.isQuickMix = proxy.isQuickMix
-		self.name = proxy.name
-		self.useQuickMix = proxy.useQuickMix
+	def __init__(self, piano, c_obj):
+		self._c_obj = c_obj
+		self.piano = piano
+		
+		self.id = c_obj.id
+		self.isCreator = c_obj.isCreator
+		self.isQuickMix = c_obj.isQuickMix
+		self.name = c_obj.name
+		self.useQuickMix = c_obj.useQuickMix
+	
+	def transformIfShared(self):
+		if not self.isCreator:
+			pianoCheck(piano.PianoTransformShared(self.piano.p, self._c_obj))
+			self.isCreator = True
 		
 class PianoSong(object):
-	def __init__(self, proxy):
-		self.album = proxy.album
-		self.artist = proxy.artist
-		self.audioFormat = proxy.audioFormat
-		self.audioUrl = proxy.audioUrl
-		self.fileGain = proxy.fileGain
-		self.focusTraiId = proxy.focusTraitId
-		self.identity = proxy.identity
-		self.matchingSeed = proxy.matchingSeed
-		self.musicId = proxy.musicId
-		self.rating = proxy.rating
-		self.stationId = proxy.stationId
-		self.title = proxy.title
-		self.userSeed = proxy.userSeed
+	def __init__(self, piano, c_obj):
+		self._c_obj = c_obj
+		self.piano = piano
+		
+		self.album = c_obj.album
+		self.artist = c_obj.artist
+		self.audioFormat = c_obj.audioFormat
+		self.audioUrl = c_obj.audioUrl
+		self.fileGain = c_obj.fileGain
+		self.focusTraiId = c_obj.focusTraitId
+		self.identity = c_obj.identity
+		self.matchingSeed = c_obj.matchingSeed
+		self.musicId = c_obj.musicId
+		self.rating = c_obj.rating
+		self.stationId = c_obj.stationId
+		self.title = c_obj.title
+		self.userSeed = c_obj.userSeed
 		self.tired=False
+		
+	@property
+	def station(self):
+		return self.piano.stations_dict[self.stationId]
+	
+	def rate(self, rating):
+		if self.rating != rating:
+			self.station.transformIfShared()
+			pianoCheck(piano.PianoRateTrack(self.piano.p, self._c_obj, rating))
+			self.rating = rating
+		
+	def set_tired(self):
+		if not self.tired:
+			pianoCheck(piano.PianoSongTired(self.piano.p, self._c_obj))
+			self.tired = True
 		
 		
 	

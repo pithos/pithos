@@ -37,22 +37,15 @@ from pithos import AboutPithosDialog, PreferencesPithosDialog
 from pithos.pithosconfig import getdatapath
 from pithos.gobject_worker import GObjectWorker
 
-class CellRendererButton(gtk.GenericCellRenderer):
-    __gsignals__ = {
-        'clicked': (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE,
-                    (gtk.TreeModel, str,))
-    }
-
+class CellRendererStockImage(gtk.GenericCellRenderer):  
+    def __init__(self):
+        self.__gobject_init__()
+        self.icon = None
+        
     __gproperties__ = {
-        'selected': (gobject.TYPE_BOOLEAN, 'selected', 'selected', 0, gobject.PARAM_READWRITE)
+        'icon': (str, 'icon', 'icon', '', gobject.PARAM_READWRITE)
     }
     
-    def __init__(self, icon, selected=True):
-        self.__gobject_init__()
-        self.icon = icon
-        self.selected = selected
-        self.set_property('mode', gtk.CELL_RENDERER_MODE_ACTIVATABLE)
-
     def do_set_property(self, pspec, value):
         setattr(self, pspec.name, value)
     def do_get_property(self, pspec):
@@ -60,24 +53,13 @@ class CellRendererButton(gtk.GenericCellRenderer):
     def on_get_size(self, widget, cell_area):
         return (0, 0, 32, 32)
     def on_render(self, window, widget, background_area, cell_area, expose_area, flags):
-        if self.selected:
-            state = gtk.STATE_ACTIVE
-        else:
-            state=gtk.STATE_INSENSITIVE
+        if self.icon:
+            icon = widget.style.lookup_icon_set(self.icon)
+            pixbuf = icon.render_icon(widget.style, widget.get_direction(), gtk.STATE_ACTIVE, gtk.ICON_SIZE_LARGE_TOOLBAR, widget, detail=None)
+            x = cell_area.x+(cell_area.width-pixbuf.get_width())/2 #center horizontally
+            y = cell_area.y+(cell_area.height-pixbuf.get_height())/2 # center vertically     
+            window.draw_pixbuf(None, pixbuf, 0, 0, x, y, width=-1, height=-1, dither=gtk.gdk.RGB_DITHER_NORMAL, x_dither=0, y_dither=0)
         
-        if 0:
-            x = cell_area.x
-            y = cell_area.y+(cell_area.height-32)/2 # center vertically
-            widget.style.paint_box(window, state, gtk.SHADOW_OUT, cell_area, widget, "button", x, y, 32, 32)
-        
-        icon = widget.style.lookup_icon_set(self.icon)
-        pixbuf = icon.render_icon(widget.style, widget.get_direction(), state, gtk.ICON_SIZE_MENU, widget, detail=None)
-        x = cell_area.x+(cell_area.width-pixbuf.get_width())/2 #center horizontally
-        y = cell_area.y+(cell_area.height-pixbuf.get_height())/2 # center vertically     
-        window.draw_pixbuf(None, pixbuf, 0, 0, x, y, width=-1, height=-1, dither=gtk.gdk.RGB_DITHER_NORMAL, x_dither=0, y_dither=0)
-        
-    def on_activate(self, event, widget, path, background_area, cell_area, flags):
-        self.emit('clicked', widget.get_model(), path)
     
 
 class PithosWindow(gtk.Window):
@@ -108,46 +90,30 @@ class PithosWindow(gtk.Window):
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         self.preferences = self.prefs_dlg.get_preferences()
 
-        self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
+        self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str, str)
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
         
         self.playpause_button = self.builder.get_object('playpause_button')
         self.statusbar = self.builder.get_object('statusbar1')
         
+        self.song_menu = self.builder.get_object('song_menu')
+        
         self.songs_treeview = self.builder.get_object('songs_treeview')
         self.songs_treeview.set_model(self.songs_model)
         
         title_col   = gtk.TreeViewColumn()
+        
+        render_icon = CellRendererStockImage()
+        title_col.pack_start(render_icon, expand=False)
+        title_col.add_attribute(render_icon, "icon", 2)
+        
         render_text = gtk.CellRendererText()
         title_col.pack_start(render_text, expand=True)
         title_col.add_attribute(render_text, "markup", 1)
         
-        def rating_matches(column, cell, model, iter, user_data):
-            cell.selected = (model.get_value(iter, 0).rating == user_data)
-        
-        render_button_up = CellRendererButton(gtk.STOCK_ABOUT)
-        render_button_up.connect('clicked', self.on_rate_up)
-        title_col.pack_start(render_button_up, expand=False)
-        title_col.set_cell_data_func(render_button_up, rating_matches, 1)
-        
-        render_button_down = CellRendererButton(gtk.STOCK_CANCEL)
-        render_button_down.connect('clicked', self.on_rate_down)
-        title_col.pack_start(render_button_down, expand=False)
-        title_col.set_cell_data_func(render_button_down, rating_matches, -1)
-        
-        def is_tired(column, cell, model, iter, user_data):
-            cell.selected = (model.get_value(iter, 0).tired)
-        
-        render_button_tired = CellRendererButton(gtk.STOCK_JUMP_TO)
-        render_button_tired.connect('clicked', self.on_rate_tired)
-        title_col.pack_start(render_button_tired, expand=False)
-        title_col.set_cell_data_func(render_button_tired, is_tired, None)
-        
-        render_button_info = CellRendererButton(gtk.STOCK_INFO)
-        render_button_info.connect('clicked', self.on_info)
-        title_col.pack_start(render_button_info, expand=False)
-        
         self.songs_treeview.append_column(title_col)
+        
+        self.songs_treeview.connect('button_press_event', self.on_treeview_button_press_event)
         
         self.stations_combo = self.builder.get_object('stations')
         self.stations_combo.set_model(self.stations_model)
@@ -237,20 +203,14 @@ class PithosWindow(gtk.Window):
             start_index = len(self.songs_model)
             for i in l:
                 i.index = len(self.songs_model)
-                self.songs_model.append((i, ''))
+                self.songs_model.append((i, '', ''))
                 self.update_song_row(i)
-            self.statusbar.pop(self.statusbar.get_context_id('playlist'))
+            self.statusbar.pop(self.statusbar.get_context_id('net'))
             if start:
                 self.song_changed(start_index)
             self.retrying = False
-        def errback(e):
-            try:
-                raise e
-            except PianoAuthTokenInvalid:
-                self.reconnect()
-            self.statusbar.pop(self.statusbar.get_context_id('playlist'))
-        self.statusbar.push(self.statusbar.get_context_id('playlist'), "Getting songs...")
-        self.worker.send(self.pandora.get_playlist, (self.current_station,), callback, errback)
+        self.statusbar.push(self.statusbar.get_context_id('net'), "Getting songs...")
+        self.worker.send(self.pandora.get_playlist, (self.current_station,), callback, self.errback)
         
     def pandora_ready(self, ignore):
         self.statusbar.pop(self.statusbar.get_context_id('login'))
@@ -271,6 +231,13 @@ class PithosWindow(gtk.Window):
             self.worker.send(self.pandora.connect, (self.preferences['username'], self.preferences['password']), self.pandora_ready)
         else:
             print "Retry failed"
+            
+    def errback(self, e):
+        try:
+            raise e
+        except PianoAuthTokenInvalid:
+            self.reconnect()
+        self.statusbar.pop(self.statusbar.get_context_id('net'))
         
     def station_changed(self, station_index, reconnecting=False):
         if station_index is self.current_station_index: return
@@ -314,11 +281,20 @@ class PithosWindow(gtk.Window):
         else:
             return "<b><big>%s</big></b>\nby <b>%s</b> on <b>%s</b>"%(title, artist, album)
             
+    def song_icon(self, song):
+        if song.tired:
+            return gtk.STOCK_JUMP_TO
+        if song.rating == RATE_LOVE:
+            return gtk.STOCK_ABOUT
+        if song.rating == RATE_BAN:
+            return gtk.STOCK_CANCEL       
+            
     def update_song_row(self, song = None):
         if song is None:
             song = self.current_song
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
+            self.songs_model[song.index][2] = self.song_icon(song)
         return self.playing
         
     def stations_combo_changed(self, widget):
@@ -338,22 +314,52 @@ class PithosWindow(gtk.Window):
             return "%i:%02i:%021"%(h,m,s)
         else:
             return "%i:%02i"%(m,s)
-            
-    def on_rate_up(self, widget, model, path):
-        obj = model.get_value(model.get_iter(path), 0)
-        obj.rating = 1
-        
-    def on_rate_down(self, widget, model, path):
-        obj = model.get_value(model.get_iter(path), 0)
-        obj.rating = -1
-        
-    def on_rate_tired(self, widget, model, path):
-        obj = model.get_value(model.get_iter(path), 0)
-        obj.tired = True
     
-    def on_info(self, widget, model, path):
-        obj = model.get_value(model.get_iter(path), 0)
+    def selected_song(self):
+        sel = self.songs_treeview.get_selection().get_selected()
+        if sel:
+            return self.songs_treeview.get_model().get_value(sel[1], 0)
+            
+    def on_menuitem_love(self, widget):
+        sel = self.selected_song()
+        def callback(l):
+            self.statusbar.pop(self.statusbar.get_context_id('net'))
+            self.update_song_row(sel)
+        self.statusbar.push(self.statusbar.get_context_id('net'), "Loving song...")
+        self.worker.send(sel.rate, (RATE_LOVE,), callback, self.errback)
+        
+    def on_menuitem_ban(self, widget):
+        sel = self.selected_song()
+        def callback(l):
+            self.statusbar.pop(self.statusbar.get_context_id('net'))
+            self.update_song_row(sel)
+        self.statusbar.push(self.statusbar.get_context_id('net'), "Banning song...")
+        self.worker.send(sel.rate, (RATE_BAN,), callback, self.errback)
+        
+    def on_menuitem_tired(self, widget):
+        sel = self.selected_song()
+        def callback(l):
+            self.statusbar.pop(self.statusbar.get_context_id('net'))
+            self.update_song_row(sel)
+        self.statusbar.push(self.statusbar.get_context_id('net'), "Putting song on shelf...")
+        self.worker.send(sel.set_tired, (), callback, self.errback)
+    
+    def on_menuitem_info(self, widget):
+        obj = self.selected_song()
         print "info", obj.title
+        
+    def on_treeview_button_press_event(self, treeview, event):
+        if event.button == 3:
+            x = int(event.x)
+            y = int(event.y)
+            time = event.time
+            pthinfo = treeview.get_path_at_pos(x, y)
+            if pthinfo is not None:
+                path, col, cellx, celly = pthinfo
+                treeview.grab_focus()
+                treeview.set_cursor( path, col, 0)
+                self.song_menu.popup( None, None, None, event.button, time)
+            return True
 
     def about(self, widget, data=None):
         """about - display the about box for pithos """
