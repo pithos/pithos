@@ -6,7 +6,6 @@
   <!-- interface-local-resource-path ../media -->
   <object class="PithosWindow" id="pithos_window">
     <property name="width_request">600</property>
-    <property name="height_request">500</property>
     <property name="title" translatable="yes">Pithos</property>
     <property name="icon">../media/icon.png</property>
     <signal name="destroy" handler="on_destroy"/>
@@ -109,6 +108,7 @@
         </child>
         <child>
           <object class="GtkScrolledWindow" id="scrolledwindow1">
+            <property name="height_request">396</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="vadjustment">adjustment1</property>
