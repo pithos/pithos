@@ -163,7 +163,10 @@ class PithosWindow(gtk.Window):
         self.current_song_index = None
         self.current_station_index = None
         self.current_station_id = None
+        
         self.retrying = False
+        self.waiting_for_playlist = False
+        self.start_new_playlist = False
         
         if not self.preferences['username']:
             self.show_preferences()
@@ -187,11 +190,16 @@ class PithosWindow(gtk.Window):
         return self.stations_model[self.current_station_index][0]
     
     def song_changed(self, song_index):
-    	if song_index >= len(self.songs_model): return False
+        if song_index >= len(self.songs_model): return False
         prev = self.current_song
         
         self.stop()
         self.current_song_index = song_index
+        
+        if self.current_song.tired or self.current_song.rating == RATE_BAN:
+            self.next_song()
+            return
+        
         self.player.set_property("uri", self.current_song.audioUrl)
         self.play()
         
@@ -210,9 +218,16 @@ class PithosWindow(gtk.Window):
             
     def next_song(self, *ignore):
         next_index = self.current_song_index+1
-        self.song_changed(next_index)
-        if next_index >= len(self.songs_model) -1 :
-            self.get_playlist()
+        songs_remaining = len(self.songs_model) - next_index 
+        
+        if songs_remaining <= 0:
+            self.get_playlist(start = True)
+        else:
+            self.song_changed(next_index)
+        
+            if songs_remaining == 1:
+                # preload next playlist so there's no delay
+                self.get_playlist()
         
     def play(self):
         if not self.playing:
@@ -239,6 +254,9 @@ class PithosWindow(gtk.Window):
             self.play()
             
     def get_playlist(self, start = False):
+    	self.start_new_playlist = self.start_new_playlist or start
+    	if self.waiting_for_playlist: return
+    	
         def art_callback(t):
             pixbuf, song, index = t
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
@@ -253,10 +271,14 @@ class PithosWindow(gtk.Window):
                 self.update_song_row(i)
                 if i.artRadio: self.art_worker.send(get_album_art, (i.artRadio, i, i.index), art_callback)
             self.statusbar.pop(self.statusbar.get_context_id('net'))
-            if start:
+            if self.start_new_playlist:
                 self.song_changed(start_index)
             self.retrying = False
+            self.waiting_for_playlist = False
+            self.start_new_playlist = False
+            
         self.statusbar.push(self.statusbar.get_context_id('net'), "Getting songs...")
+        self.waiting_for_playlist = True
         self.worker.send(self.pandora.get_playlist, (self.current_station,), callback, self.errback)
         
     def pandora_ready(self, ignore):
@@ -307,6 +329,7 @@ class PithosWindow(gtk.Window):
             self.stop()
             err, debug = message.parse_error()
             print "Error: %s" % err, debug
+            self.next_song()
     
     def song_text(self, song):
         title = cgi.escape(song.title)
@@ -382,7 +405,8 @@ class PithosWindow(gtk.Window):
             self.update_song_row(sel)
         self.statusbar.push(self.statusbar.get_context_id('net'), "Banning song...")
         self.worker.send(sel.rate, (RATE_BAN,), callback, self.errback)
-        self.next_song()
+        if sel is self.current_song:
+            self.next_song()
         
     def on_menuitem_tired(self, widget):
         sel = self.selected_song()
@@ -391,7 +415,8 @@ class PithosWindow(gtk.Window):
             self.update_song_row(sel)
         self.statusbar.push(self.statusbar.get_context_id('net'), "Putting song on shelf...")
         self.worker.send(sel.set_tired, (), callback, self.errback)
-        self.next_song()
+        if sel is self.current_song:
+            self.next_song()
     
     def on_menuitem_info(self, widget):
         song = self.selected_song()
