@@ -264,9 +264,9 @@ class PithosWindow(gtk.Window):
             self.play()
             
     def get_playlist(self, start = False):
-    	self.start_new_playlist = self.start_new_playlist or start
-    	if self.waiting_for_playlist: return
-    	
+        self.start_new_playlist = self.start_new_playlist or start
+        if self.waiting_for_playlist: return
+        
         def art_callback(t):
             pixbuf, song, index = t
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
@@ -320,6 +320,7 @@ class PithosWindow(gtk.Window):
         
     def station_changed(self, station_index, reconnecting=False):
         if station_index is self.current_station_index: return
+        self.waiting_for_playlist = False
         if not reconnecting:
             self.current_song_index = None
             self.songs_model.clear()
