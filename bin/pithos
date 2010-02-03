@@ -23,6 +23,9 @@ import cgi
 import pynotify
 import webbrowser
 import urllib
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+DBusGMainLoop(set_as_default=True)
 
 # Check if we are working in the source tree or from the installed 
 # package and mangle the python path accordingly
@@ -158,6 +161,13 @@ class PithosWindow(gtk.Window):
         self.time_format = gst.Format(gst.FORMAT_TIME)
         
         pynotify.init('pithos')
+        
+        try:
+            bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
+            mk = bus.get_object("org.gnome.SettingsDaemon","/org/gnome/SettingsDaemon/MediaKeys")
+            mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
+        except dbus.DBusException:
+            print "Could not bind media keys"
         
         self.playing = False
         self.current_song_index = None
@@ -437,6 +447,15 @@ class PithosWindow(gtk.Window):
     
     def station_properties(self, *ignore):
         webbrowser.open(self.current_station.info_url)
+    
+    def mediakey_pressed(self, *args):
+        for i in args:
+            if i == 'Play':
+                self.playpause()
+            if i == 'Next':
+                self.next_song()
+            if i == 'Stop':
+                self.pause()
     
     def about(self, widget, data=None):
         """about - display the about box for pithos """
