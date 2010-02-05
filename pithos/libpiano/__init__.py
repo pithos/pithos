@@ -15,6 +15,7 @@
 ### END LICENSE
 
 import piano
+import logging
 
 RATE_BAN = piano.PIANO_RATE_BAN
 RATE_LOVE = piano.PIANO_RATE_LOVE
@@ -37,6 +38,7 @@ def pianoCheck(status):
 		status = status[0]
 	if status!=0:
 		s=piano.PianoErrorToStr(status)
+		logging.error("libpiano: error: %s"%(s))
 		if status == piano.PIANO_RET_AUTH_TOKEN_INVALID:
 			raise PianoAuthTokenInvalid(s)
 		elif status == piano.PIANO_RET_AUTH_USER_PASSWORD_INVALID:
@@ -49,14 +51,18 @@ class PianoPandora(object):
 	def connect(self, user, password):
 		self.p = piano.PianoHandle_t()
 		piano.PianoInit(self.p)
+		logging.debug("libpiano: Connecting")
 		pianoCheck(piano.PianoConnect(self.p, user, password))
+		logging.debug("libpiano: Get Stations")
 		pianoCheck(piano.PianoGetStations(self.p))
 		self.stations = [PianoStation(self, x) for x in linkedList(self.p.stations)]
+		logging.debug("libpiano: found %i stations"%(len(self.stations)))
 		self.stations_dict = {}
 		for i in self.stations:
 			self.stations_dict[i.id] = i
 		
 	def get_playlist(self, station):
+		logging.debug("libpiano: Get Playlist")
 		l = pianoCheck(piano.PianoGetPlaylist(self.p, station.id, piano.PIANO_AF_AACPLUS))
 		r = [PianoSong(self, x) for x in linkedList(l)]
 		return r
@@ -78,6 +84,7 @@ class PianoStation(object):
 	
 	def transformIfShared(self):
 		if not self.isCreator:
+			logging.debug("libpiano: transforming station")
 			pianoCheck(piano.PianoTransformShared(self.piano.p, self._c_obj))
 			self.isCreator = True
 			

@@ -15,6 +15,7 @@
 ### END LICENSE
 
 import time
+import logging
 
 RATE_BAN = 0
 RATE_LOVE = 1
@@ -41,9 +42,8 @@ class PianoPandora(object):
 		self.authError = False
 		
 	def connect(self, user, password):
-		print "logging in with", user, password
+		logging.debug("fakepiano: logging in")
 		time.sleep(1)
-
 		
 	def get_playlist(self, station):
 		if station.name=='Errors':

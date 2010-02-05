@@ -210,6 +210,7 @@ class PithosWindow(gtk.Window):
             self.next_song()
             return
         
+        logging.debug("Starting song: index = %i"%(song_index))
         self.player.set_property("uri", self.current_song.audioUrl)
         self.play()
         
@@ -270,6 +271,7 @@ class PithosWindow(gtk.Window):
         def art_callback(t):
             pixbuf, song, index = t
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
+                logging.debug("Downloaded album art for %i"%song.index)
                 self.songs_model[index][3]=pixbuf
                 self.update_song_row(song)
             
@@ -296,10 +298,12 @@ class PithosWindow(gtk.Window):
         self.stations_model.clear()
         self.current_station_index = None
         index = 0
+        logging.debug("Pandora connected")
         for i in self.pandora.stations:
             i.index = len(self.stations_model)
             self.stations_model.append((i, i.name))
             if i.id == self.current_station_id:
+                logging.debug("Restoring saved station: id = %s, index = %s"%(i.id, i.index))
                 index = i.index
         self.station_changed(index, reconnecting = self.retrying)
         
@@ -326,6 +330,7 @@ class PithosWindow(gtk.Window):
             self.songs_model.clear()
             self.stop()
         self.current_station_index = station_index
+        logging.debug("Selecting station index = %i; total = %i" % (self.current_station_index, len(self.stations_model)))
         self.current_station_id = self.current_station.id
         self.get_playlist(start = not reconnecting)
         self.stations_combo.set_active(station_index)
@@ -339,7 +344,7 @@ class PithosWindow(gtk.Window):
         elif t == gst.MESSAGE_ERROR:
             self.stop()
             err, debug = message.parse_error()
-            print "Error: %s" % err, debug
+            logging.error("Gstreamer error: %s, %s" % (err, debug))
             self.next_song()
     
     def song_text(self, song):
@@ -509,7 +514,7 @@ if __name__ == "__main__":
 
     #set the logging level to show debug messages
     if options.verbose:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s")
         logging.debug('logging enabled')
         
     if options.test:
