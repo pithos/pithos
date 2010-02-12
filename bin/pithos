@@ -176,6 +176,10 @@ class PithosWindow(gtk.Window):
         self.current_station_id = self.preferences['last_station_id']
         
         self.retrying = False
+        self.playcount = 0
+        self.gstreamer_errorcount_1 = 0
+        self.gstreamer_errorcount_2 = 0
+        self.gstreamer_error = ''
         self.waiting_for_playlist = False
         self.start_new_playlist = False
         
@@ -220,6 +224,7 @@ class PithosWindow(gtk.Window):
         logging.debug("Starting song: index = %i"%(song_index))
         self.player.set_property("uri", self.current_song.audioUrl)
         self.play()
+        self.playcount += 1
         
         if prev:
             self.update_song_row(prev)
@@ -275,6 +280,12 @@ class PithosWindow(gtk.Window):
         self.start_new_playlist = self.start_new_playlist or start
         if self.waiting_for_playlist: return
         
+        if self.gstreamer_errorcount_1 >= self.playcount and self.gstreamer_errorcount_2 >=1:
+            logging.warn("Too many gstreamer errors. Not retrying")
+            self.waiting_for_playlist = 1
+            self.error_dialog(self.gstreamer_error)
+            return
+        
         def art_callback(t):
             pixbuf, song, index = t
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
@@ -293,6 +304,9 @@ class PithosWindow(gtk.Window):
             if self.start_new_playlist:
                 self.song_changed(start_index)
             self.retrying = False
+            self.gstreamer_errorcount_2 = self.gstreamer_errorcount_1
+            self.gstreamer_errorcount_1 = 0
+            self.playcount = 0
             self.waiting_for_playlist = False
             self.start_new_playlist = False
             
@@ -327,24 +341,29 @@ class PithosWindow(gtk.Window):
         self.statusbar.pop(self.statusbar.get_context_id('net'))
         if isinstance(e, PianoAuthTokenInvalid) and not self.retrying:
             self.retrying = True
+            logging.debug("Automatic retry")
             self.connect("Reconnecting...")
         elif isinstance(e, PianoError):
-            dialog = self.builder.get_object("error_dialog")
-            dialog.format_secondary_text(e.message)
-            response = dialog.run()
-            dialog.hide()
-            
-            if response == 1:
-                self.quit()
-            elif response == 2:
-                self.connect("Reconnecting...")
-            elif response == 3:
-                self.show_preferences()
+           self.error_dialog(e.message)
         else:
             logging.warn(e)
-                
-            
+      
+    def error_dialog(self, message):
+        dialog = self.builder.get_object("error_dialog")
+        dialog.format_secondary_text(message)
+        response = dialog.run()
+        dialog.hide()
         
+        if response == 1:
+            self.quit()
+        elif response == 2:
+            self.retrying = True
+            self.gstreamer_errorcount_2 = 0
+            logging.debug("Manual retry")
+            self.connect("Reconnecting...")
+        elif response == 3:
+            self.retrying = False
+            self.show_preferences()
         
     def station_changed(self, station_index, reconnecting=False):
         if station_index is self.current_station_index: return
@@ -369,6 +388,8 @@ class PithosWindow(gtk.Window):
             self.stop()
             err, debug = message.parse_error()
             logging.error("Gstreamer error: %s, %s" % (err, debug))
+            self.gstreamer_error = str(err)
+            self.gstreamer_errorcount_1 += 1
             self.next_song()
     
     def song_text(self, song):
