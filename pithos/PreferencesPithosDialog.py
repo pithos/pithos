@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
 ### BEGIN LICENSE
 # Copyright (C) 2010 Kevin Mehall <km@kevinmehall.net>
 #This program is free software: you can redistribute it and/or modify it 
@@ -73,9 +73,9 @@ class PreferencesPithosDialog(gtk.Dialog):
         }
         
         try:
-        	f = open(configfilename)
+            f = open(configfilename)
         except IOError:
-        	return
+            return
         
         for line in f:
             sep = line.find('=')
@@ -90,14 +90,14 @@ class PreferencesPithosDialog(gtk.Dialog):
     def __save_preferences(self):
         f = open(configfilename, 'w')
         for key in self.__preferences:
-        	f.write('%s=%s\n'%(key, self.__preferences[key]))
+            f.write('%s=%s\n'%(key, self.__preferences[key]))
         f.close()
     
     def setup_fields(self):
         self.builder.get_object('prefs_username').set_text(self.__preferences["username"])
         self.builder.get_object('prefs_password').set_text(self.__preferences["password"])
         self.builder.get_object('checkbutton_notify').set_active(self.__preferences["notify"])
-    	
+        
     def ok(self, widget, data=None):
         """ok - The user has elected to save the changes.
         Called before the dialog returns gtk.RESONSE_OK from run().

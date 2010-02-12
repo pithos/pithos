@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
 ### BEGIN LICENSE
 # Copyright (C) 2010 Kevin Mehall <km@kevinmehall.net>
 #This program is free software: you can redistribute it and/or modify it 
@@ -13,11 +13,6 @@
 #You should have received a copy of the GNU General Public License along 
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
-
-# THIS IS Pithos CONFIGURATION FILE
-# YOU CAN PUT THERE SOME GLOBAL VALUE
-# Do not touch until you know what you're doing.
-# you're warned :)
 
 # where your project will head for your data (for instance, images and ui files)
 # by default, this is ../data, relative your trunk layout
