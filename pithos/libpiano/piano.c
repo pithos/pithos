@@ -847,7 +847,7 @@ const char *PianoErrorToStr (PianoReturn_t ret) {
 			break;
 
 		case PIANO_RET_PROTOCOL_INCOMPATIBLE:
-			return "Protocol incompatible. Please upgrade " PACKAGE ".";
+			return "Protocol incompatible. Please upgrade.";
 			break;
 
 		case PIANO_RET_READONLY_MODE:
@@ -860,8 +860,8 @@ const char *PianoErrorToStr (PianoReturn_t ret) {
 			break;
 
 		case PIANO_RET_IP_REJECTED:
-			return "Your ip address was rejected. Please setup a control "
-					"proxy (see manpage).";
+			return "Your IP address was rejected. Please set up a control "
+					"proxy.";
 			break;
 
 		case PIANO_RET_STATION_NONEXISTENT:

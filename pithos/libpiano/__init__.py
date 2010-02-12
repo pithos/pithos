@@ -27,9 +27,12 @@ def linkedList(head):
         head=head.next
     return out
 
-class PianoError(IOError): pass
+class PianoError(IOError):
+    def __init__(self, status, message):
+        self.status = status
+        self.message = message
+        
 class PianoAuthTokenInvalid(PianoError): pass
-class PianoUserPasswordInvalid(PianoError): pass
 
 def pianoCheck(status):
     ret = None
@@ -40,23 +43,18 @@ def pianoCheck(status):
         s=piano.PianoErrorToStr(status)
         logging.error("libpiano: error: %s"%(s))
         if status == piano.PIANO_RET_AUTH_TOKEN_INVALID:
-            raise PianoAuthTokenInvalid(s)
-        elif status == piano.PIANO_RET_AUTH_USER_PASSWORD_INVALID:
-            raise PianoUserPasswordInvalid(s)
+            raise PianoAuthTokenInvalid(status, s)
         else:
-            raise PianoError(s)
+            raise PianoError(status, s)
     return ret
 
-class PianoPandora(object):
-    def __init__(self, proxy):
-        self.proxy = proxy
-        
-    def connect(self, user, password):
+class PianoPandora(object):      
+    def connect(self, user, password, proxy):
         self.p = piano.PianoHandle_t()
         piano.PianoInit(self.p)
-        if self.proxy:
-            logging.debug("libpiano: Using proxy %s"%self.proxy)
-            piano.PianoSetProxy(self.p, self.proxy)
+        if proxy:
+            logging.debug("libpiano: Using proxy %s"%proxy)
+            piano.PianoSetProxy(self.p, proxy)
         
         logging.debug("libpiano: Connecting")
         pianoCheck(piano.PianoConnect(self.p, user, password))

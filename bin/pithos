@@ -182,15 +182,21 @@ class PithosWindow(gtk.Window):
         if not self.preferences['username']:
             self.show_preferences()
         
-        self.pandora = pandora_class(proxy=self.preferences['proxy'])
+        self.pandora = pandora_class()
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
-        self.statusbar.push(self.statusbar.get_context_id('login'), "Logging in...")
-        self.worker.send(self.pandora.connect, (self.preferences['username'], self.preferences['password']), self.pandora_ready)
-        
+        self.connect()
+
         aa = gtk.gdk.pixbuf_new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, gtk.gdk.INTERP_BILINEAR)
     
+    def connect(self, message="Logging in..."):
+        self.statusbar.push(self.statusbar.get_context_id('login'), message)
+        args = (self.preferences['username'],
+                self.preferences['password'],
+                self.preferences['proxy'])
+        self.worker.send(self.pandora.connect, args, self.pandora_ready, self.errback)
+        
     @property
     def current_song(self):
         if self.current_song_index is not None:
@@ -316,21 +322,29 @@ class PithosWindow(gtk.Window):
                 logging.debug("Restoring saved station: id = %s, index = %s"%(i.id, i.index))
                 index = i.index
         self.station_changed(index, reconnecting = self.retrying)
-        
-    def reconnect(self):
-        if not self.retrying:
-            self.retrying = True
-            self.statusbar.push(self.statusbar.get_context_id('login'), "Reconnecting...")
-            self.worker.send(self.pandora.connect, (self.preferences['username'], self.preferences['password']), self.pandora_ready)
-        else:
-            print "Retry failed"
             
     def errback(self, e):
-        try:
-            raise e
-        except PianoAuthTokenInvalid:
-            self.reconnect()
         self.statusbar.pop(self.statusbar.get_context_id('net'))
+        if isinstance(e, PianoAuthTokenInvalid) and not self.retrying:
+            self.retrying = True
+            self.connect("Reconnecting...")
+        elif isinstance(e, PianoError):
+            dialog = self.builder.get_object("error_dialog")
+            dialog.format_secondary_text(e.message)
+            response = dialog.run()
+            dialog.hide()
+            
+            if response == 1:
+                self.quit()
+            elif response == 2:
+                self.connect("Reconnecting...")
+            elif response == 3:
+                self.show_preferences()
+        else:
+            logging.warn(e)
+                
+            
+        
         
     def station_changed(self, station_index, reconnecting=False):
         if station_index is self.current_station_index: return
@@ -481,13 +495,19 @@ class PithosWindow(gtk.Window):
 
     def show_preferences(self, widget=None, data=None):
         """preferences - display the preferences window for pithos """
+        old_prefs = dict(self.preferences)
         response = self.prefs_dlg.run()
-        if response == gtk.RESPONSE_OK:
-            #make any updates based on changed preferences here
-            pass
         self.prefs_dlg.hide()
+        
+        if response == gtk.RESPONSE_OK:
+            self.preferences = self.prefs_dlg.get_preferences()
+            if (   self.preferences['username'] != old_prefs['username']
+                or self.preferences['password'] != old_prefs['password']
+                or self.preferences['proxy']    != old_prefs['proxy']):
+                    self.connect()
+        
 
-    def quit(self, widget, data=None):
+    def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
         self.destroy()
 
