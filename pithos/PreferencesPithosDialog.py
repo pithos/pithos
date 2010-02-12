@@ -70,6 +70,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             "password":None,
             "notify":True,
             "last_station_id":None,
+            "proxy":'',
         }
         
         try:
@@ -96,6 +97,7 @@ class PreferencesPithosDialog(gtk.Dialog):
     def setup_fields(self):
         self.builder.get_object('prefs_username').set_text(self.__preferences["username"])
         self.builder.get_object('prefs_password').set_text(self.__preferences["password"])
+        self.builder.get_object('prefs_proxy').set_text(self.__preferences["proxy"])
         self.builder.get_object('checkbutton_notify').set_active(self.__preferences["notify"])
         
     def ok(self, widget, data=None):
@@ -105,6 +107,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         
         self.__preferences["username"] = self.builder.get_object('prefs_username').get_text()
         self.__preferences["password"] = self.builder.get_object('prefs_password').get_text()
+        self.__preferences["proxy"] = self.builder.get_object('prefs_proxy').get_text()
         self.__preferences["notify"] = self.builder.get_object('checkbutton_notify').get_active()
         
         self.save()

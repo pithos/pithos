@@ -130,3 +130,12 @@ PianoReturn_t PianoExplain (PianoHandle_t *, const PianoSong_t *, char **OUTPUT)
 const char *PianoErrorToStr (PianoReturn_t);
 PianoReturn_t PianoSeedSuggestions (PianoHandle_t *, const char *,
 		unsigned int, PianoSearchResult_t *);
+
+%inline %{		
+void PianoSetProxy(PianoHandle_t *ph, const char *proxystr){
+	char tmpPath[2];
+	WaitressSplitUrl (proxystr, ph->waith.proxyHost,
+			sizeof (ph->waith.proxyHost), ph->waith.proxyPort,
+			sizeof (ph->waith.proxyPort), tmpPath, sizeof (tmpPath));
+}
+%}

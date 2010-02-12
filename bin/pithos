@@ -182,7 +182,7 @@ class PithosWindow(gtk.Window):
         if not self.preferences['username']:
             self.show_preferences()
         
-        self.pandora = pandora_class()
+        self.pandora = pandora_class(proxy=self.preferences['proxy'])
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
         self.statusbar.push(self.statusbar.get_context_id('login'), "Logging in...")

@@ -48,9 +48,16 @@ def pianoCheck(status):
     return ret
 
 class PianoPandora(object):
+    def __init__(self, proxy):
+        self.proxy = proxy
+        
     def connect(self, user, password):
         self.p = piano.PianoHandle_t()
         piano.PianoInit(self.p)
+        if self.proxy:
+            logging.debug("libpiano: Using proxy %s"%self.proxy)
+            piano.PianoSetProxy(self.p, self.proxy)
+        
         logging.debug("libpiano: Connecting")
         pianoCheck(piano.PianoConnect(self.p, user, password))
         logging.debug("libpiano: Get Stations")

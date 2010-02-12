@@ -31,7 +31,7 @@ class PianoAuthTokenInvalid(PianoError): pass
 class PianoUserPasswordInvalid(PianoError): pass
 
 class PianoPandora(object):
-    def __init__(self):
+    def __init__(self, proxy):
         self.stations = [
             PianoStation("Fake 1"),
             PianoStation("Fake 2"),
@@ -40,9 +40,12 @@ class PianoPandora(object):
             PianoStation("QuickMix", 1),
         ]
         self.authError = False
+        self.proxy = proxy
         
     def connect(self, user, password):
         logging.debug("fakepiano: logging in")
+        if self.proxy:
+            logging.debug("fakepiano: using proxy")
         time.sleep(1)
         
     def get_playlist(self, station):
