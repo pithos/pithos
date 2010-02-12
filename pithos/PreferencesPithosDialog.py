@@ -69,7 +69,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             "username":None,
             "password":None,
             "notify":True,
-            "default_station_id":None,
+            "last_station_id":None,
         }
         
         try:
@@ -87,7 +87,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             self.__preferences[key]=val
         self.setup_fields()
         
-    def __save_preferences(self):
+    def save(self):
         f = open(configfilename, 'w')
         for key in self.__preferences:
             f.write('%s=%s\n'%(key, self.__preferences[key]))
@@ -107,7 +107,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.__preferences["password"] = self.builder.get_object('prefs_password').get_text()
         self.__preferences["notify"] = self.builder.get_object('checkbutton_notify').get_active()
         
-        self.__save_preferences()
+        self.save()
 
     def cancel(self, widget, data=None):
         """cancel - The user has elected cancel changes.

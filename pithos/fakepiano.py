@@ -62,7 +62,7 @@ class PianoPandora(object):
         
 class PianoStation(object):
     def __init__(self, name, qm=False):
-        self.id = id(self)
+        self.id = str(hash(name))
         self.isCreator = True
         self.isQuickMix = qm
         self.name = name

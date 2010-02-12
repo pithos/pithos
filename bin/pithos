@@ -172,7 +172,7 @@ class PithosWindow(gtk.Window):
         self.playing = False
         self.current_song_index = None
         self.current_station_index = None
-        self.current_station_id = None
+        self.current_station_id = self.preferences['last_station_id']
         
         self.retrying = False
         self.waiting_for_playlist = False
@@ -484,7 +484,8 @@ class PithosWindow(gtk.Window):
     def on_destroy(self, widget, data=None):
         """on_destroy - called when the PithosWindow is close. """
         #clean up code for saving application state should be added here
-
+        self.preferences['last_station_id'] = self.current_station_id
+        self.prefs_dlg.save()
         gtk.main_quit()
 
 def NewPithosWindow(pandora_class):
