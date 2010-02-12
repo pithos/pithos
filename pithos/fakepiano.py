@@ -82,6 +82,7 @@ class PianoSong(object):
         self.tired=False
         self.songDetailURL = 'http://launchpad.net/pithos'
         self.artRadio = 'http://i.imgur.com/H3Z8x.jpg'
+        self.message = ''
         
     def rate(self, rating):
         time.sleep(1)

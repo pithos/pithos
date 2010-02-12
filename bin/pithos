@@ -175,6 +175,7 @@ class PithosWindow(gtk.Window):
         self.current_station_index = None
         self.current_station_id = self.preferences['last_station_id']
         
+        self.buffer_percent = 100
         self.retrying = False
         self.playcount = 0
         self.gstreamer_errorcount_1 = 0
@@ -222,6 +223,7 @@ class PithosWindow(gtk.Window):
             return
         
         logging.debug("Starting song: index = %i"%(song_index))
+        self.buffer_percent = 100
         self.player.set_property("uri", self.current_song.audioUrl)
         self.play()
         self.playcount += 1
@@ -383,10 +385,18 @@ class PithosWindow(gtk.Window):
         if t == gst.MESSAGE_EOS:
             self.stop()
             self.next_song()
+        elif message.type == gst.MESSAGE_BUFFERING:
+            percent = message.parse_buffering()
+            self.buffer_percent = percent
+            if percent < 100:
+                self.player.set_state(gst.STATE_PAUSED)
+            else:
+                self.player.set_state(gst.STATE_PLAYING)
         elif t == gst.MESSAGE_ERROR:
             self.stop()
             err, debug = message.parse_error()
             logging.error("Gstreamer error: %s, %s" % (err, debug))
+            self.current_song.message = "Error: "+str(err)
             self.gstreamer_error = str(err)
             self.gstreamer_errorcount_1 += 1
             self.next_song()
@@ -395,21 +405,26 @@ class PithosWindow(gtk.Window):
         title = cgi.escape(song.title)
         artist = cgi.escape(song.artist)
         album = cgi.escape(song.album)
+        msg = []
         if song is self.current_song:
             try:
-                p = ' '
-                if not self.playing:
-                    p = '- Paused'
                 dur_int = self.player.query_duration(self.time_format, None)[0]
                 dur_str = self.format_time(dur_int)
                 pos_int = self.player.query_position(self.time_format, None)[0]
                 pos_str = self.format_time(pos_int)
-                msg = "%s / %s %s" %(pos_str, dur_str, p)
+                msg.append("%s / %s" %(pos_str, dur_str))
+                if not self.playing:
+                    msg.append("Paused")
             except gst.QueryError:
-                msg = " "
-            return "<b><big>%s</big></b>\nby <b>%s</b> on <b>%s</b>\n<small>%s</small>"%(title, artist, album, msg)
-        else:
-            return "<b><big>%s</big></b>\nby <b>%s</b> on <b>%s</b>"%(title, artist, album)
+                pass
+        if self.buffer_percent < 100:
+            msg.append("Buffering (%i%%)"%self.buffer_percent)
+        if song.message:
+            msg.append(song.message)
+        msg = " - ".join(msg)
+        if not msg:
+            msg = " "
+        return "<b><big>%s</big></b>\nby <b>%s</b> on <b>%s</b>\n<small>%s</small>"%(title, artist, album, msg)
             
     def song_icon(self, song):
         if song.tired:

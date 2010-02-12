@@ -118,6 +118,7 @@ class PianoSong(object):
         self.songDetailURL = c_obj.songDetailURL
         self.artRadio = c_obj.artRadio
         self.tired=False
+        self.message=''
         
     @property
     def station(self):
