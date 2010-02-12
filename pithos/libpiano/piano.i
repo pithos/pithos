@@ -3,6 +3,9 @@
  /* Includes the header in the wrapper code */
  
  #include "piano.h"
+ typedef char bool;
+ #define true 1
+ #define false 0
  %}
  
 %include "typemaps.i"
@@ -14,9 +17,9 @@ typedef struct PianoUserInfo {
 } PianoUserInfo_t;
 
 typedef struct PianoStation {
-	char isCreator;
-	char isQuickMix;
-	char useQuickMix; /* station will be included in quickmix */
+	bool isCreator;
+	bool isQuickMix;
+	bool useQuickMix; /* station will be included in quickmix */
 	char *name;
 	char *id;
 	char *idToken;

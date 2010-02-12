@@ -321,17 +321,16 @@ class PithosWindow(gtk.Window):
         index = 0
         logging.debug("Pandora connected")
         
-        def ins_station(i):
-            i.index = len(self.stations_model)
-            self.stations_model.append((i, i.name))
-        
         for i in self.pandora.stations:
             if i.isQuickMix:
-                ins_station(i)
+                i.index = len(self.stations_model)
+                self.stations_model.append((i, "QuickMix"))
+                logging.debug("Quickmix is index=%s"%i.index)
         self.stations_model.append((None, 'sep'))
         for i in self.pandora.stations:
             if not i.isQuickMix:
-                ins_station(i)
+                i.index = len(self.stations_model)
+                self.stations_model.append((i, i.name))
             if i.id == self.current_station_id:
                 logging.debug("Restoring saved station: id = %s, index = %s"%(i.id, i.index))
                 index = i.index
