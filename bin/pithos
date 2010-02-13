@@ -186,7 +186,7 @@ class PithosWindow(gtk.Window):
         self.start_new_playlist = False
         
         if not self.preferences['username']:
-            self.show_preferences()
+            self.show_preferences(is_startup=True)
         
         self.pandora = pandora_class()
         self.worker = GObjectWorker()
@@ -341,6 +341,7 @@ class PithosWindow(gtk.Window):
             
     def errback(self, e):
         self.statusbar.pop(self.statusbar.get_context_id('net'))
+        self.statusbar.pop(self.statusbar.get_context_id('login'))
         if isinstance(e, PianoAuthTokenInvalid) and not self.retrying:
             self.retrying = True
             logging.debug("Automatic retry")
@@ -530,7 +531,7 @@ class PithosWindow(gtk.Window):
         response = about.run()
         about.destroy()
 
-    def show_preferences(self, widget=None, data=None):
+    def show_preferences(self, widget=None, data=None, is_startup=False):
         """preferences - display the preferences window for pithos """
         old_prefs = dict(self.preferences)
         response = self.prefs_dlg.run()
@@ -538,9 +539,10 @@ class PithosWindow(gtk.Window):
         
         if response == gtk.RESPONSE_OK:
             self.preferences = self.prefs_dlg.get_preferences()
-            if (   self.preferences['username'] != old_prefs['username']
+            if (not is_startup and (
+                   self.preferences['username'] != old_prefs['username']
                 or self.preferences['password'] != old_prefs['password']
-                or self.preferences['proxy']    != old_prefs['proxy']):
+                or self.preferences['proxy']    != old_prefs['proxy'])):
                     self.connect()
         
 
