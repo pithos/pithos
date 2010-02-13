@@ -162,6 +162,7 @@ class PithosWindow(gtk.Window):
         self.time_format = gst.Format(gst.FORMAT_TIME)
         
         pynotify.init('pithos')
+        self.notification = pynotify.Notification("Pithos","Pithos")
         
         try:
             bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
@@ -237,9 +238,9 @@ class PithosWindow(gtk.Window):
         if self.preferences['notify'] and not self.is_active():
             # popup notification if enabled and the window isn't active
             msg = "by %s from %s"%(self.current_song.artist, self.current_song.album)
-            n = pynotify.Notification(self.current_song.title, msg, "audio-x-generic")
-            n.set_icon_from_pixbuf(self.songs_model[song_index][3])
-            n.show()
+            self.notification.update(self.current_song.title, msg, "audio-x-generic")
+            self.notification.set_icon_from_pixbuf(self.songs_model[song_index][3])
+            self.notification.show()
             
     def next_song(self, *ignore):
         next_index = self.current_song_index+1
