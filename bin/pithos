@@ -420,8 +420,8 @@ class PithosWindow(gtk.Window):
                     msg.append("Paused")
             except gst.QueryError:
                 pass
-        if self.buffer_percent < 100:
-            msg.append("Buffering (%i%%)"%self.buffer_percent)
+            if self.buffer_percent < 100:
+                msg.append("Buffering (%i%%)"%self.buffer_percent)
         if song.message:
             msg.append(song.message)
         msg = " - ".join(msg)
