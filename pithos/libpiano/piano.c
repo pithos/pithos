@@ -897,7 +897,7 @@ const char *PianoErrorToStr (PianoReturn_t ret) {
 			break;
 		
 		case WAITRESS_RET_GETADDR_ERR:
-			return "Getaddr error";
+			return "DNS error";
 			break;
 	
 		case WAITRESS_RET_CB_ABORT:
