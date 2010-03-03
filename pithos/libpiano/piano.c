@@ -875,6 +875,50 @@ const char *PianoErrorToStr (PianoReturn_t ret) {
 		case PIANO_RET_OUT_OF_SYNC:
 			return "Out of sync. Please correct your system's time.";
 			break;
+			
+		case WAITRESS_RET_STATUS_UNKNOWN:
+			return "Unknown HTTP response status";
+			break;
+		
+		case WAITRESS_RET_NOTFOUND:
+			return "HTTP 404: File not found";
+			break;
+		
+		case WAITRESS_RET_FORBIDDEN:
+			return "HTTP 401: Forbidden";
+			break;
+		
+		case WAITRESS_RET_CONNECT_REFUSED:
+			return "Connection refused";
+			break;
+		
+		case WAITRESS_RET_SOCK_ERR:
+			return "Socket error";
+			break;
+		
+		case WAITRESS_RET_GETADDR_ERR:
+			return "Getaddr error";
+			break;
+	
+		case WAITRESS_RET_CB_ABORT:
+			return "Aborted";
+			break;
+			
+		case WAITRESS_RET_HDR_OVERFLOW:
+			return "Header overflow";
+			break;
+			
+		case WAITRESS_RET_PARTIAL_FILE:
+			return "Partial file";
+			break;
+			
+		case WAITRESS_RET_TIMEOUT:
+			return "Network timeout";
+			break;
+			
+		case WAITRESS_RET_READ_ERR:
+			return "Network read error";
+			break;
 
 		default:
 			return "No error message available.";

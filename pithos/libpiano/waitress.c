@@ -45,7 +45,7 @@ typedef struct {
 
 inline void WaitressInit (WaitressHandle_t *waith) {
 	memset (waith, 0, sizeof (*waith));
-	waith->socktimeout = 30000;
+	waith->socktimeout = 45000;
 }
 
 inline void WaitressFree (WaitressHandle_t *waith) {

@@ -50,10 +50,13 @@ PianoReturn_t PianoHttpPost (WaitressHandle_t *waith, const char *postData,
 	waith->extraHeaders = "Content-Type: text/xml\r\n";
 	waith->postData = reqPostData;
 	waith->method = WAITRESS_METHOD_POST;
-
-	if (WaitressFetchBuf (waith, retData) == WAITRESS_RET_OK &&
+	
+	WaitressReturn_t wRet = WaitressFetchBuf (waith, retData);
+	if (wRet == WAITRESS_RET_OK &&
 			*retData != NULL) {
 		pRet = PIANO_RET_OK;
+	}else{
+		pRet = (PianoReturn_t) wRet;
 	}
 
 	PianoFree (reqPostData, 0);
@@ -71,10 +74,11 @@ PianoReturn_t PianoHttpGet (WaitressHandle_t *waith, char **retData) {
 	waith->extraHeaders = NULL;
 	waith->postData = NULL;
 	waith->method = WAITRESS_METHOD_GET;
-
-	if (WaitressFetchBuf (waith, retData) == WAITRESS_RET_OK &&
+	
+	WaitressReturn_t wRet = WaitressFetchBuf (waith, retData);
+	if (wRet == WAITRESS_RET_OK &&
 			*retData != NULL) {
 		return PIANO_RET_OK;
 	}
-	return PIANO_RET_NET_ERROR;
+	return (PianoReturn_t) wRet;
 }
