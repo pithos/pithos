@@ -4,9 +4,9 @@
   <!-- interface-requires stations_dialog 1.0 -->
   <!-- interface-naming-policy project-wide -->
   <object class="StationsDialog" id="stations_dialog">
-    <property name="width_request">470</property>
+    <property name="width_request">480</property>
     <property name="height_request">420</property>
-    <property name="border_width">5</property>
+    <property name="border_width">1</property>
     <property name="title" translatable="yes">Manage Stations</property>
     <property name="icon">../media/icon.png</property>
     <property name="type_hint">normal</property>
@@ -42,6 +42,7 @@
               <object class="GtkButton" id="add_station">
                 <property name="label" translatable="yes">Add Station</property>
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <signal name="clicked" handler="add_station"/>
@@ -55,8 +56,9 @@
             </child>
             <child>
               <object class="GtkButton" id="add_genre_station">
-                <property name="label" translatable="yes">Add Genre Station</property>
+                <property name="label" translatable="yes">Genre Stations</property>
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <signal name="clicked" handler="add_genre_station"/>

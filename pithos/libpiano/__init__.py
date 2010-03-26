@@ -101,9 +101,10 @@ class PianoStation(object):
         return 'http://www.pandora.com/stations/'+self.idToken
         
     def rename(self, new_name):
-        logging.debug("libpiano: Renaming station")
-        pianoCheck(piano.PianoRenameStation(self.piano.p, self.id, new_name))
-        self.name = new_name
+        if new_name != self.name:
+            logging.debug("libpiano: Renaming station")
+            pianoCheck(piano.PianoRenameStation(self.piano.p, self.id, new_name))
+            self.name = new_name
         
     def delete(self):
         logging.debug("libpiano: Deleting Station")
