@@ -51,7 +51,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkMenuToolButton" id="toolbutton3">
+              <object class="GtkMenuToolButton" id="toolbutton_options">
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Options</property>
                 <property name="use_underline">True</property>
