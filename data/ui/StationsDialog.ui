@@ -4,6 +4,8 @@
   <!-- interface-requires stations_dialog 1.0 -->
   <!-- interface-naming-policy project-wide -->
   <object class="StationsDialog" id="stations_dialog">
+    <property name="width_request">470</property>
+    <property name="height_request">420</property>
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Manage Stations</property>
     <property name="icon">../media/icon.png</property>
@@ -16,9 +18,17 @@
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
-          <object class="GtkTreeView" id="treeview">
+          <object class="GtkScrolledWindow" id="scrolledwindow1">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="hscrollbar_policy">automatic</property>
+            <property name="vscrollbar_policy">automatic</property>
+            <child>
+              <object class="GtkTreeView" id="treeview">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+              </object>
+            </child>
           </object>
           <packing>
             <property name="position">1</property>

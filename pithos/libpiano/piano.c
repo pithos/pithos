@@ -577,13 +577,14 @@ PianoReturn_t PianoSongTired (PianoHandle_t *ph, const char *songIdentity) {
 
 /*	set stations use by quickmix
  *	@param piano handle
+ *  @param stationList comma separated station IDs
  *	@return _OK or error
  */
-PianoReturn_t PianoSetQuickmix (PianoHandle_t *ph, const char **stationIds, int n_stations) {
+PianoReturn_t PianoSetQuickmix (PianoHandle_t *ph, char *stationList) {
 	char xmlSendBuf[PIANO_SEND_BUFFER_SIZE], valueBuf[1000], urlArgBuf[1000],
 			*retStr;
 	PianoReturn_t ret;
-	int i;
+	int done=0;
 
 	memset (urlArgBuf, 0, sizeof (urlArgBuf));
 	snprintf (xmlSendBuf, sizeof (xmlSendBuf), "<?xml version=\"1.0\"?>"
@@ -592,18 +593,32 @@ PianoReturn_t PianoSetQuickmix (PianoHandle_t *ph, const char **stationIds, int 
 			"<param><value><string>%s</string></value></param>"
 			"<param><value><string>RANDOM</string></value></param>"
 			"<param><value><array><data>", time (NULL), ph->user.authToken);
-	for (i=0; i<n_stations; i++) {
+	while (!done) {
+		char *base = stationList;
+		while (1){
+			if (*stationList == '\0'){
+				done=1;
+				break;
+			}else if (*stationList == ','){
+				*stationList = '\0';
+				stationList++;
+				break;
+			}else{
+				stationList++;
+			}
+		}
+		
 		/* append to xml doc */
 		snprintf (valueBuf, sizeof (valueBuf),
-				"<value><string>%s</string></value>", stationIds[i]);
+				"<value><string>%s</string></value>", base);
 		strncat (xmlSendBuf, valueBuf, sizeof (xmlSendBuf) -
 				strlen (xmlSendBuf) - 1);
 		/* append to url arg */
-		strncat (urlArgBuf, stationIds[i], sizeof (urlArgBuf) -
+		strncat (urlArgBuf, base, sizeof (urlArgBuf) -
 				strlen (urlArgBuf) - 1);
 
 		/* if not last item: append "," */
-		if (i+1 != n_stations) {
+		if (!done) {
 			strncat (urlArgBuf, "%2C", sizeof (urlArgBuf) -
 					strlen (urlArgBuf) - 1);
 		}

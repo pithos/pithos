@@ -67,7 +67,10 @@ class PianoPandora(object):
             self.stations_dict[i.id] = i
             
     def save_quick_mix(self):
-        qm_stations = [i for i in self.stations if i.useQuickMix]
+        qm_stations = [i.id for i in self.stations if i.useQuickMix]
+        qm_stations = ','.join(qm_stations)
+        logging.debug("libpiano: Set QuickMix Stations "+qm_stations)
+        pianoCheck(piano.PianoSetQuickmix(self.p, qm_stations))
 
         
 class PianoStation(object):
@@ -96,6 +99,15 @@ class PianoStation(object):
     @property
     def info_url(self):
         return 'http://www.pandora.com/stations/'+self.idToken
+        
+    def rename(self, new_name):
+        logging.debug("libpiano: Renaming station")
+        pianoCheck(piano.PianoRenameStation(self.piano.p, self.id, new_name))
+        self.name = new_name
+        
+    def delete(self):
+        logging.debug("libpiano: Deleting Station")
+        pianoCheck(piano.PianoDeleteStation(self.piano.p, self.id))
         
 class PianoSong(object):
     def __init__(self, piano, c_obj):

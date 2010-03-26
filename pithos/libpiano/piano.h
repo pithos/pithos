@@ -133,7 +133,7 @@ PianoReturn_t PianoCreateStation (PianoHandle_t *ph, const char *type,
 PianoReturn_t PianoStationAddMusic (PianoHandle_t *ph,
 		const char *stationId, const char *musicId, PianoStation_t **ret_station);
 PianoReturn_t PianoSongTired (PianoHandle_t *, const char *);
-PianoReturn_t PianoSetQuickmix (PianoHandle_t *ph, const char **stationIds, int n_stations);
+PianoReturn_t PianoSetQuickmix (PianoHandle_t *ph, char *);
 PianoStation_t *PianoFindStationById (PianoStation_t *, const char *);
 PianoReturn_t PianoGetGenreStations (PianoHandle_t *);
 PianoReturn_t PianoTransformShared (PianoHandle_t *ph,
