@@ -42,8 +42,6 @@ THE SOFTWARE.
 #define PIANO_SEND_BUFFER_SIZE 10000
 
 /* prototypes */
-static PianoReturn_t PianoAddFeedback (PianoHandle_t *, const char *, const char *,
-		const char *, const char *, const char *, PianoSongRating_t);
 const char *PianoAudioFormatToString (PianoAudioFormat_t);
 
 /*	more "secure" free version
@@ -290,27 +288,7 @@ PianoReturn_t PianoGetPlaylist (PianoHandle_t *ph, const char *stationId,
 	return ret;
 }
 
-/*	love or ban track (you cannot remove your rating, so PIANO_RATE_NONE is
- *	not allowed)
- *	@public yes
- *	@param piano handle
- *	@param rate this track
- *	@param your rating
- */
-PianoReturn_t PianoRateTrack (PianoHandle_t *ph, PianoSong_t *song,
-		PianoSongRating_t rating) {
-	PianoReturn_t ret;
-
-	ret = PianoAddFeedback (ph, song->stationId, song->musicId,
-			song->matchingSeed, song->userSeed, song->focusTraitId, rating);
-
-	if (ret == PIANO_RET_OK) {
-		song->rating = rating;
-	}
-
-	return ret;
-}
-
+#if 0
 /*	move song to another station
  *	@param piano handle
  *	@param move from
@@ -331,6 +309,7 @@ PianoReturn_t PianoMoveSong (PianoHandle_t *ph,
 	}
 	return ret;
 }
+#endif
 
 /*	add feedback
  *	@param piano handle
@@ -341,7 +320,7 @@ PianoReturn_t PianoMoveSong (PianoHandle_t *ph,
  *	@param song focus trait id or NULL
  *	@param rating
  */
-static PianoReturn_t PianoAddFeedback (PianoHandle_t *ph, const char *stationId,
+PianoReturn_t PianoAddFeedback (PianoHandle_t *ph, const char *stationId,
 		const char *songMusicId, const char *songMatchingSeed,
 		const char *songUserSeed, const char *songFocusTraitId,
 		PianoSongRating_t rating) {
@@ -593,7 +572,7 @@ PianoReturn_t PianoStationAddMusic (PianoHandle_t *ph,
  *	@param song to be banned
  *	@return _OK or error
  */
-PianoReturn_t PianoSongTired (PianoHandle_t *ph, const PianoSong_t *song) {
+PianoReturn_t PianoSongTired (PianoHandle_t *ph, const char *songIdentity) {
 	char xmlSendBuf[PIANO_SEND_BUFFER_SIZE], *retStr;
 	PianoReturn_t ret;
 
@@ -603,11 +582,11 @@ PianoReturn_t PianoSongTired (PianoHandle_t *ph, const PianoSong_t *song) {
 			"<param><value><string>%s</string></value></param>"
 			"<param><value><string>%s</string></value></param>"
 			"</params></methodCall>", time (NULL), ph->user.authToken,
-			song->identity);
+			songIdentity);
 
 	snprintf (ph->waith.path, sizeof (ph->waith.path), PIANO_RPC_PATH
 			"rid=%s&lid=%s&method=addTiredSong&arg1=%s", ph->routeId,
-			ph->user.listenerId, song->identity);
+			ph->user.listenerId, songIdentity);
 
 	if ((ret = PianoHttpPost (&ph->waith, xmlSendBuf, &retStr)) ==
 			PIANO_RET_OK) {

@@ -111,10 +111,11 @@ PianoReturn_t PianoGetStations (PianoHandle_t *);
 PianoReturn_t PianoGetPlaylist (PianoHandle_t *, const char *,
 		PianoAudioFormat_t, PianoSong_t **ret);
 
-PianoReturn_t PianoRateTrack (PianoHandle_t *, PianoSong_t *,
-		PianoSongRating_t);
-PianoReturn_t PianoMoveSong (PianoHandle_t *, const PianoStation_t *,
-		const PianoStation_t *, const PianoSong_t *);
+PianoReturn_t PianoAddFeedback (PianoHandle_t *ph, const char *stationId,
+		const char *songMusicId, const char *songMatchingSeed,
+		const char *songUserSeed, const char *songFocusTraitId,
+		PianoSongRating_t rating);
+
 PianoReturn_t PianoRenameStation (PianoHandle_t *, PianoStation_t *,
 		const char *);
 PianoReturn_t PianoDeleteStation (PianoHandle_t *, PianoStation_t *);
@@ -124,7 +125,7 @@ PianoReturn_t PianoCreateStation (PianoHandle_t *, const char *,
 		const char *);
 PianoReturn_t PianoStationAddMusic (PianoHandle_t *, PianoStation_t *,
 		const char *);
-PianoReturn_t PianoSongTired (PianoHandle_t *, const PianoSong_t *);
+PianoReturn_t PianoSongTired (PianoHandle_t *, const char *);
 PianoReturn_t PianoSetQuickmix (PianoHandle_t *);
 PianoStation_t *PianoFindStationById (PianoStation_t *, const char *);
 PianoReturn_t PianoGetGenreStations (PianoHandle_t *);

@@ -99,7 +99,6 @@ class PianoStation(object):
         
 class PianoSong(object):
     def __init__(self, piano, c_obj):
-        self._c_obj = c_obj
         self.piano = piano
         
         self.album = c_obj.album
@@ -127,12 +126,15 @@ class PianoSong(object):
     def rate(self, rating):
         if self.rating != rating:
             self.station.transformIfShared()
-            pianoCheck(piano.PianoRateTrack(self.piano.p, self._c_obj, rating))
+            pianoCheck(piano.PianoAddFeedback(
+                self.piano.p, self.stationId,
+                self.musicId, self.matchingSeed, self.userSeed, self.focusTraitId, rating
+            ))
             self.rating = rating
         
     def set_tired(self):
         if not self.tired:
-            pianoCheck(piano.PianoSongTired(self.piano.p, self._c_obj))
+            pianoCheck(piano.PianoSongTired(self.piano.p, self.identity))
             self.tired = True
         
         
