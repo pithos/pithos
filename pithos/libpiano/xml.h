@@ -27,16 +27,15 @@ THE SOFTWARE.
 #include "piano.h"
 
 PianoReturn_t PianoXmlParseUserinfo (PianoHandle_t *ph, const char *xml);
-PianoReturn_t PianoXmlParseStations (PianoHandle_t *ph, const char *xml);
+PianoReturn_t PianoXmlParseStations (PianoHandle_t *ph, const char *xml, PianoStation_t**);
 PianoReturn_t PianoXmlParsePlaylist (PianoHandle_t *ph, const char *xml,
 		PianoSong_t **);
 PianoReturn_t PianoXmlParseSearch (const char *searchXml,
 		PianoSearchResult_t *searchResult);
 PianoReturn_t PianoXmlParseSimple (const char *xml);
 PianoReturn_t PianoXmlParseCreateStation (PianoHandle_t *ph,
-		const char *xml);
-PianoReturn_t PianoXmlParseAddSeed (PianoHandle_t *ph, const char *xml,
-		PianoStation_t *station);
+		const char *xml, PianoStation_t **);
+PianoReturn_t PianoXmlParseAddSeed (PianoHandle_t *ph, const char *xml, PianoStation_t **);
 PianoReturn_t PianoXmlParseGenreExplorer (PianoHandle_t *ph,
 		const char *xmlContent);
 PianoReturn_t PianoXmlParseTranformStation (const char *searchXml);

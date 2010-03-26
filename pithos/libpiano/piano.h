@@ -38,9 +38,9 @@ typedef struct PianoUserInfo {
 } PianoUserInfo_t;
 
 typedef struct PianoStation {
-	char isCreator;
-	char isQuickMix;
-	char useQuickMix; /* station will be included in quickmix */
+	int isCreator;
+	int isQuickMix;
+	int useQuickMix; /* station will be included in quickmix */
 	char *name;
 	char *id;
 	char *idToken;
@@ -92,7 +92,6 @@ typedef struct PianoHandle {
 	char routeId[9];
 	PianoUserInfo_t user;
 	/* linked lists */
-	PianoStation_t *stations;
 	PianoGenreCategory_t *genreStations;
 } PianoHandle_t;
 
@@ -115,7 +114,7 @@ void PianoDestroyPlaylist (PianoSong_t *);
 void PianoDestroySearchResult (PianoSearchResult_t *);
 PianoReturn_t PianoConnect (PianoHandle_t *, const char *, const char *);
 
-PianoReturn_t PianoGetStations (PianoHandle_t *);
+PianoReturn_t PianoGetStations (PianoHandle_t *ph, PianoStation_t **stations);
 PianoReturn_t PianoGetPlaylist (PianoHandle_t *, const char *,
 		PianoAudioFormat_t, PianoSong_t **);
 
@@ -124,21 +123,23 @@ PianoReturn_t PianoAddFeedback (PianoHandle_t *ph, const char *stationId,
 		const char *songUserSeed, const char *songFocusTraitId,
 		PianoSongRating_t rating);
 
-PianoReturn_t PianoRenameStation (PianoHandle_t *, PianoStation_t *,
-		const char *);
-PianoReturn_t PianoDeleteStation (PianoHandle_t *, PianoStation_t *);
+PianoReturn_t PianoRenameStation (PianoHandle_t *ph, const char *stationId,
+		const char *newName);
+PianoReturn_t PianoDeleteStation (PianoHandle_t *ph, const char *stationId);
 PianoReturn_t PianoSearchMusic (PianoHandle_t *, const char *,
 		PianoSearchResult_t *);
-PianoReturn_t PianoCreateStation (PianoHandle_t *, const char *,
-		const char *);
-PianoReturn_t PianoStationAddMusic (PianoHandle_t *, PianoStation_t *,
-		const char *);
+PianoReturn_t PianoCreateStation (PianoHandle_t *ph, const char *type,
+		const char *id, PianoStation_t **stations);
+PianoReturn_t PianoStationAddMusic (PianoHandle_t *ph,
+		const char *stationId, const char *musicId, PianoStation_t **ret_station);
 PianoReturn_t PianoSongTired (PianoHandle_t *, const char *);
-PianoReturn_t PianoSetQuickmix (PianoHandle_t *);
+PianoReturn_t PianoSetQuickmix (PianoHandle_t *ph, const char **stationIds, int n_stations);
 PianoStation_t *PianoFindStationById (PianoStation_t *, const char *);
 PianoReturn_t PianoGetGenreStations (PianoHandle_t *);
-PianoReturn_t PianoTransformShared (PianoHandle_t *, PianoStation_t *);
-PianoReturn_t PianoExplain (PianoHandle_t *, const PianoSong_t *, char **);
+PianoReturn_t PianoTransformShared (PianoHandle_t *ph,
+		const char *stationId);
+PianoReturn_t PianoExplain (PianoHandle_t *ph, const char* stationId, const char *musicId,
+		char **retExplain);
 const char *PianoErrorToStr (PianoReturn_t);
 PianoReturn_t PianoSeedSuggestions (PianoHandle_t *, const char *,
 		unsigned int, PianoSearchResult_t *);

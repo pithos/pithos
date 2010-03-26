@@ -59,8 +59,8 @@ class PianoPandora(object):
         logging.debug("libpiano: Connecting")
         pianoCheck(piano.PianoConnect(self.p, user, password))
         logging.debug("libpiano: Get Stations")
-        pianoCheck(piano.PianoGetStations(self.p))
-        self.stations = [PianoStation(self, x) for x in linkedList(self.p.stations)]
+        stations = pianoCheck(piano.PianoGetStations(self.p))
+        self.stations = [PianoStation(self, x) for x in linkedList(stations)]
         logging.debug("libpiano: found %i stations"%(len(self.stations)))
         self.stations_dict = {}
         for i in self.stations:
@@ -77,7 +77,6 @@ class PianoPandora(object):
         
 class PianoStation(object):
     def __init__(self, piano, c_obj):
-        self._c_obj = c_obj
         self.piano = piano
         
         self.id = c_obj.id
@@ -90,7 +89,7 @@ class PianoStation(object):
     def transformIfShared(self):
         if not self.isCreator:
             logging.debug("libpiano: transforming station")
-            pianoCheck(piano.PianoTransformShared(self.piano.p, self._c_obj))
+            pianoCheck(piano.PianoTransformShared(self.piano.p, self.id))
             self.isCreator = True
             
     @property

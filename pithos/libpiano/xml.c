@@ -369,7 +369,7 @@ static void PianoXmlParseQuickMixStationsCb (const char *key, const ezxml_t valu
  *	@param xml returned by pandora
  *	@return _RET_OK or error
  */
-PianoReturn_t PianoXmlParseStations (PianoHandle_t *ph, char *xml) {
+PianoReturn_t PianoXmlParseStations (PianoHandle_t *ph, char *xml, PianoStation_t** stations) {
 	ezxml_t xmlDoc, dataNode;
 	PianoReturn_t ret;
 	char **quickMixIds = NULL, **curQuickMixId = NULL;
@@ -399,10 +399,10 @@ PianoReturn_t PianoXmlParseStations (PianoHandle_t *ph, char *xml) {
 					PianoXmlParseQuickMixStationsCb, &quickMixIds);
 		}
 		/* start new linked list or append */
-		if (ph->stations == NULL) {
-			ph->stations = tmpStation;
+		if (*stations == NULL) {
+			*stations = tmpStation;
 		} else {
-			PianoStation_t *curStation = ph->stations;
+			PianoStation_t *curStation = *stations;
 			while (curStation->next != NULL) {
 				curStation = curStation->next;
 			}
@@ -413,7 +413,7 @@ PianoReturn_t PianoXmlParseStations (PianoHandle_t *ph, char *xml) {
 	if (quickMixIds != NULL) {
 		curQuickMixId = quickMixIds;
 		while (*curQuickMixId != NULL) {
-			PianoStation_t *curStation = PianoFindStationById (ph->stations,
+			PianoStation_t *curStation = PianoFindStationById (*stations,
 					*curQuickMixId);
 			if (curStation != NULL) {
 				curStation->useQuickMix = 1;
@@ -434,9 +434,8 @@ PianoReturn_t PianoXmlParseStations (PianoHandle_t *ph, char *xml) {
  *	@param xml document
  *	@return nothing yet
  */
-PianoReturn_t PianoXmlParseCreateStation (PianoHandle_t *ph, char *xml) {
+PianoReturn_t PianoXmlParseCreateStation (PianoHandle_t *ph, char *xml, PianoStation_t **station) {
 	ezxml_t xmlDoc, dataNode;
-	PianoStation_t *tmpStation;
 	PianoReturn_t ret;
 
 	if ((ret = PianoXmlInitDoc (xml, &xmlDoc)) != PIANO_RET_OK) {
@@ -445,22 +444,11 @@ PianoReturn_t PianoXmlParseCreateStation (PianoHandle_t *ph, char *xml) {
 
 	dataNode = ezxml_get (xmlDoc, "params", 0, "param", 0, "value", 0, "struct", -1);
 
-	if ((tmpStation = calloc (1, sizeof (*tmpStation))) == NULL) {
+	if ((*station = calloc (1, sizeof (*station))) == NULL) {
 		ezxml_free (xmlDoc);
 		return PIANO_RET_OUT_OF_MEMORY;
 	}
-	PianoXmlStructParser (dataNode, PianoXmlParseStationsCb, tmpStation);
-	/* FIXME: copy & waste */
-	/* start new linked list or append */
-	if (ph->stations == NULL) {
-		ph->stations = tmpStation;
-	} else {
-		PianoStation_t *curStation = ph->stations;
-		while (curStation->next != NULL) {
-			curStation = curStation->next;
-		}
-		curStation->next = tmpStation;
-	}
+	PianoXmlStructParser (dataNode, PianoXmlParseStationsCb, *station);
 	
 	ezxml_free (xmlDoc);
 
@@ -470,10 +458,10 @@ PianoReturn_t PianoXmlParseCreateStation (PianoHandle_t *ph, char *xml) {
 /*	parse "add seed" answer, nearly the same as ParseCreateStation
  *	@param piano handle
  *	@param xml document
- *	@param update this station
+ *	@param return station (replace previous)
  */
 PianoReturn_t PianoXmlParseAddSeed (PianoHandle_t *ph, char *xml,
-		PianoStation_t *station) {
+		PianoStation_t **station) {
 	ezxml_t xmlDoc, dataNode;
 	PianoReturn_t ret;
 
@@ -482,8 +470,13 @@ PianoReturn_t PianoXmlParseAddSeed (PianoHandle_t *ph, char *xml,
 	}
 
 	dataNode = ezxml_get (xmlDoc, "params", 0, "param", 0, "value", 0, "struct", -1);
-	PianoDestroyStation (station);
-	PianoXmlStructParser (dataNode, PianoXmlParseStationsCb, station);
+	
+	if ((*station = calloc (1, sizeof (*station))) == NULL) {
+		ezxml_free (xmlDoc);
+		return PIANO_RET_OUT_OF_MEMORY;
+	}
+	
+	PianoXmlStructParser (dataNode, PianoXmlParseStationsCb, *station);
 	
 	ezxml_free (xmlDoc);
 

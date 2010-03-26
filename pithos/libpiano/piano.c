@@ -163,7 +163,6 @@ void PianoDestroy (PianoHandle_t *ph) {
 	PianoFree (ph->user.authToken, 0);
 	PianoFree (ph->user.listenerId, 0);
 
-	PianoDestroyStations (ph->stations);
 	/* destroy genre stations */
 	PianoGenreCategory_t *curGenreCat = ph->genreStations, *lastGenreCat;
 	while (curGenreCat != NULL) {
@@ -226,7 +225,7 @@ PianoReturn_t PianoConnect (PianoHandle_t *ph, const char *user,
  *	be run before)
  *	@param piano handle filled with some authentication data by PianoConnect
  */
-PianoReturn_t PianoGetStations (PianoHandle_t *ph) {
+PianoReturn_t PianoGetStations (PianoHandle_t *ph, PianoStation_t **stations) {
 	char xmlSendBuf[PIANO_SEND_BUFFER_SIZE], *retStr;
 	PianoReturn_t ret;
 
@@ -241,7 +240,7 @@ PianoReturn_t PianoGetStations (PianoHandle_t *ph) {
 
 	if ((ret = PianoHttpPost (&ph->waith, xmlSendBuf, &retStr)) ==
 			PIANO_RET_OK) {
-		ret = PianoXmlParseStations (ph, retStr);
+		ret = PianoXmlParseStations (ph, retStr, stations);
 		PianoFree (retStr, 0);
 	}
 
@@ -370,7 +369,7 @@ PianoReturn_t PianoAddFeedback (PianoHandle_t *ph, const char *stationId,
  *	@param new name
  *	@return
  */
-PianoReturn_t PianoRenameStation (PianoHandle_t *ph, PianoStation_t *station,
+PianoReturn_t PianoRenameStation (PianoHandle_t *ph, const char *stationId,
 		const char *newName) {
 	char xmlSendBuf[PIANO_SEND_BUFFER_SIZE], *retStr;
 	char *urlencodedNewName, *xmlencodedNewName;
@@ -387,19 +386,16 @@ PianoReturn_t PianoRenameStation (PianoHandle_t *ph, PianoStation_t *station,
 			"<param><value><string>%s</string></value></param>"
 			"<param><value><string>%s</string></value></param>"
 			"</params></methodCall>", time (NULL), ph->user.authToken,
-			station->id, xmlencodedNewName);
+			stationId, xmlencodedNewName);
 
 	urlencodedNewName = WaitressUrlEncode (newName);
 	snprintf (ph->waith.path, sizeof (ph->waith.path), PIANO_RPC_PATH
 			"rid=%s&lid=%s&method=setStationName&arg1=%s&arg2=%s",
-			ph->routeId, ph->user.listenerId, station->id, urlencodedNewName);
+			ph->routeId, ph->user.listenerId, stationId, urlencodedNewName);
 
 	if ((ret = PianoHttpPost (&ph->waith, xmlSendBuf, &retStr)) ==
 			PIANO_RET_OK) {
-		if ((ret = PianoXmlParseSimple (retStr)) == PIANO_RET_OK) {
-			PianoFree (station->name, 0);
-			station->name = strdup (newName);
-		}
+		ret = PianoXmlParseSimple (retStr);
 		PianoFree (retStr, 0);
 	}
 
@@ -414,7 +410,7 @@ PianoReturn_t PianoRenameStation (PianoHandle_t *ph, PianoStation_t *station,
  *	@param piano handle
  *	@param station you want to delete
  */
-PianoReturn_t PianoDeleteStation (PianoHandle_t *ph, PianoStation_t *station) {
+PianoReturn_t PianoDeleteStation (PianoHandle_t *ph, const char *stationId) {
 	char xmlSendBuf[PIANO_SEND_BUFFER_SIZE], *retStr;
 	PianoReturn_t ret = PIANO_RET_ERR;
 
@@ -424,32 +420,14 @@ PianoReturn_t PianoDeleteStation (PianoHandle_t *ph, PianoStation_t *station) {
 			"<param><value><string>%s</string></value></param>"
 			"<param><value><string>%s</string></value></param>"
 			"</params></methodCall>", time (NULL), ph->user.authToken,
-			station->id);
+			stationId);
 
 	snprintf (ph->waith.path, sizeof (ph->waith.path), PIANO_RPC_PATH
 			"rid=%s&lid=%s&method=removeStation&arg1=%s", ph->routeId,
-			ph->user.listenerId, station->id);
+			ph->user.listenerId, stationId);
 	if ((ret = PianoHttpPost (&ph->waith, xmlSendBuf, &retStr)) ==
 			PIANO_RET_OK) {
-		if ((ret = PianoXmlParseSimple (retStr)) == PIANO_RET_OK) {
-			/* delete station from local station list */
-			PianoStation_t *curStation = ph->stations, *lastStation = NULL;
-			while (curStation != NULL) {
-				if (curStation == station) {
-					if (lastStation != NULL) {
-						lastStation->next = curStation->next;
-					} else {
-						/* first station in list */
-						ph->stations = curStation->next;
-					}
-					PianoDestroyStation (curStation);
-					PianoFree (curStation, sizeof (*curStation));
-					break;
-				}
-				lastStation = curStation;
-				curStation = curStation->next;
-			}
-		}
+		ret = PianoXmlParseSimple (retStr);
 	}
 
 	return ret;
@@ -506,7 +484,7 @@ PianoReturn_t PianoSearchMusic (PianoHandle_t *ph,
  *	@param id
  */
 PianoReturn_t PianoCreateStation (PianoHandle_t *ph, const char *type,
-		const char *id) {
+		const char *id, PianoStation_t **stations) {
 	char xmlSendBuf[PIANO_SEND_BUFFER_SIZE], *retStr;
 	PianoReturn_t ret;
 
@@ -524,7 +502,7 @@ PianoReturn_t PianoCreateStation (PianoHandle_t *ph, const char *type,
 	
 	if ((ret = PianoHttpPost (&ph->waith, xmlSendBuf, &retStr)) ==
 			PIANO_RET_OK) {
-		ret = PianoXmlParseCreateStation (ph, retStr);
+		ret = PianoXmlParseCreateStation (ph, retStr, stations);
 		PianoFree (retStr, 0);
 	}
 
@@ -541,7 +519,7 @@ PianoReturn_t PianoCreateStation (PianoHandle_t *ph, const char *type,
  *	@param music id; can be obtained with PianoSearchMusic ()
  */
 PianoReturn_t PianoStationAddMusic (PianoHandle_t *ph,
-		PianoStation_t *station, const char *musicId) {
+		const char *stationId, const char *musicId, PianoStation_t **ret_station) {
 	char xmlSendBuf[PIANO_SEND_BUFFER_SIZE], *retStr;
 	PianoReturn_t ret;
 
@@ -552,15 +530,15 @@ PianoReturn_t PianoStationAddMusic (PianoHandle_t *ph,
 			"<param><value><string>%s</string></value></param>"
 			"<param><value><string>%s</string></value></param>"
 			"</params></methodCall>", time (NULL), ph->user.authToken,
-			station->id, musicId);
+			stationId, musicId);
 
 	snprintf (ph->waith.path, sizeof (ph->waith.path), PIANO_RPC_PATH
 			"rid=%s&lid=%s&method=addSeed&arg1=%s&arg2=%s", ph->routeId,
-			ph->user.listenerId, station->id, musicId);
+			ph->user.listenerId, stationId, musicId);
 	
 	if ((ret = PianoHttpPost (&ph->waith, xmlSendBuf, &retStr)) ==
 			PIANO_RET_OK) {
-		ret = PianoXmlParseAddSeed (ph, retStr, station);
+		ret = PianoXmlParseAddSeed (ph, retStr, ret_station);
 		PianoFree (retStr, 0);
 	}
 
@@ -601,11 +579,11 @@ PianoReturn_t PianoSongTired (PianoHandle_t *ph, const char *songIdentity) {
  *	@param piano handle
  *	@return _OK or error
  */
-PianoReturn_t PianoSetQuickmix (PianoHandle_t *ph) {
+PianoReturn_t PianoSetQuickmix (PianoHandle_t *ph, const char **stationIds, int n_stations) {
 	char xmlSendBuf[PIANO_SEND_BUFFER_SIZE], valueBuf[1000], urlArgBuf[1000],
 			*retStr;
 	PianoReturn_t ret;
-	PianoStation_t *curStation = ph->stations;
+	int i;
 
 	memset (urlArgBuf, 0, sizeof (urlArgBuf));
 	snprintf (xmlSendBuf, sizeof (xmlSendBuf), "<?xml version=\"1.0\"?>"
@@ -614,23 +592,18 @@ PianoReturn_t PianoSetQuickmix (PianoHandle_t *ph) {
 			"<param><value><string>%s</string></value></param>"
 			"<param><value><string>RANDOM</string></value></param>"
 			"<param><value><array><data>", time (NULL), ph->user.authToken);
-	while (curStation != NULL) {
-		/* quick mix can't contain itself */
-		if (!curStation->useQuickMix || curStation->isQuickMix) {
-			curStation = curStation->next;
-			continue;
-		}
+	for (i=0; i<n_stations; i++) {
 		/* append to xml doc */
 		snprintf (valueBuf, sizeof (valueBuf),
-				"<value><string>%s</string></value>", curStation->id);
+				"<value><string>%s</string></value>", stationIds[i]);
 		strncat (xmlSendBuf, valueBuf, sizeof (xmlSendBuf) -
 				strlen (xmlSendBuf) - 1);
 		/* append to url arg */
-		strncat (urlArgBuf, curStation->id, sizeof (urlArgBuf) -
+		strncat (urlArgBuf, stationIds[i], sizeof (urlArgBuf) -
 				strlen (urlArgBuf) - 1);
-		curStation = curStation->next;
+
 		/* if not last item: append "," */
-		if (curStation != NULL) {
+		if (i+1 != n_stations) {
 			strncat (urlArgBuf, "%2C", sizeof (urlArgBuf) -
 					strlen (urlArgBuf) - 1);
 		}
@@ -695,7 +668,7 @@ PianoReturn_t PianoGetGenreStations (PianoHandle_t *ph) {
  *	@return _OK or error
  */
 PianoReturn_t PianoTransformShared (PianoHandle_t *ph,
-		PianoStation_t *station) {
+		const char *stationId) {
 	char xmlSendBuf[PIANO_SEND_BUFFER_SIZE], *retStr;
 	PianoReturn_t ret;
 
@@ -705,20 +678,19 @@ PianoReturn_t PianoTransformShared (PianoHandle_t *ph,
 			"<param><value><string>%s</string></value></param>"
 			"<param><value><string>%s</string></value></param>"
 			"</params></methodCall>", time (NULL), ph->user.authToken,
-			station->id);
+			stationId);
 
 	snprintf (ph->waith.path, sizeof (ph->waith.path), PIANO_RPC_PATH
 			"rid=%s&lid=%s&method=transformShared&arg1=%s", ph->routeId,
-			ph->user.listenerId, station->id);
+			ph->user.listenerId, stationId);
 	
 	if ((ret = PianoHttpPost (&ph->waith, xmlSendBuf, &retStr)) ==
 			PIANO_RET_OK) {
 		ret = PianoXmlParseTranformStation (retStr);
 		/* though this call returns a bunch of "new" data only this one is
-		 * changed and important (at the moment) */
-		if (ret == PIANO_RET_OK) {
-			station->isCreator = 1;
-		}
+		 * changed and important (at the moment) 
+		 change isCreator in python object
+		 */
 		PianoFree (retStr, 0);
 	}
 
@@ -731,7 +703,7 @@ PianoReturn_t PianoTransformShared (PianoHandle_t *ph,
  *	@param return allocated string; you have to free it yourself
  *	@return _OK or error
  */
-PianoReturn_t PianoExplain (PianoHandle_t *ph, const PianoSong_t *song,
+PianoReturn_t PianoExplain (PianoHandle_t *ph, const char* stationId, const char *musicId,
 		char **retExplain) {
 	char xmlSendBuf[PIANO_SEND_BUFFER_SIZE], *retStr;
 	PianoReturn_t ret;
@@ -743,11 +715,11 @@ PianoReturn_t PianoExplain (PianoHandle_t *ph, const PianoSong_t *song,
 			"<param><value><string>%s</string></value></param>"
 			"<param><value><string>%s</string></value></param>"
 			"</params></methodCall>", time (NULL), ph->user.authToken,
-			song->stationId, song->musicId);
+			stationId, musicId);
 	
 	snprintf (ph->waith.path, sizeof (ph->waith.path), PIANO_RPC_PATH
 			"rid=%s&lid=%s&method=method=narrative&arg1=%s&arg2=%s",
-			ph->routeId, ph->user.listenerId, song->stationId, song->musicId);
+			ph->routeId, ph->user.listenerId, stationId, musicId);
 	
 	if ((ret = PianoHttpPost (&ph->waith, xmlSendBuf, &retStr)) ==
 			PIANO_RET_OK) {
