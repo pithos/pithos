@@ -558,7 +558,7 @@ class PithosWindow(gtk.Window):
         if self.stations_dlg:
             self.stations_dlg.show()
         else:
-            self.stations_dlg = StationsDialog.NewStationsDialog(self.stations_model, self.worker_run)
+            self.stations_dlg = StationsDialog.NewStationsDialog(self)
             self.stations_dlg.show_all()
         
 

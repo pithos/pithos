@@ -37,7 +37,7 @@ class StationsDialog(gtk.Dialog):
         """
         pass
 
-    def finish_initializing(self, builder, model, worker_run):
+    def finish_initializing(self, builder, pithos):
         """finish_initalizing should be called after parsing the ui definition
         and creating a StationsDialog object with it in order to finish
         initializing the start of the new StationsDialog instance.
@@ -47,8 +47,9 @@ class StationsDialog(gtk.Dialog):
         self.builder = builder
         self.builder.connect_signals(self)
         
-        self.model = model
-        self.worker_run = worker_run
+        self.pithos = pithos
+        self.model = pithos.stations_model
+        self.worker_run = pithos.worker_run
         self.quickmix_changed = False
         
         self.modelfilter = self.model.filter_new()
@@ -132,6 +133,8 @@ class StationsDialog(gtk.Dialog):
         if response:
             self.worker_run(station.delete, context='net', message="Deleting Station...")
             self.model.remove(iter)
+            if self.pithos.current_station is station:
+                self.pithos.station_changed(self.model[0][0])
         
     def on_close(self, widget, data=None):
         self.hide()
@@ -143,7 +146,7 @@ class StationsDialog(gtk.Dialog):
         logging.debug("closed dialog")
         return True
 
-def NewStationsDialog(model, worker_run):
+def NewStationsDialog(pithos):
     """NewStationsDialog - returns a fully instantiated
     Dialog object. Use this function rather than
     creating StationsDialog instance directly.
@@ -158,7 +161,7 @@ def NewStationsDialog(model, worker_run):
     builder = gtk.Builder()
     builder.add_from_file(ui_filename)    
     dialog = builder.get_object("stations_dialog")
-    dialog.finish_initializing(builder, model, worker_run)
+    dialog.finish_initializing(builder, pithos)
     return dialog
 
 if __name__ == "__main__":
