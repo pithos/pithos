@@ -6,8 +6,8 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:xlink="http://www.w3.org/1999/xlink"
    version="1.1"
-   width="24"
-   height="24"
+   width="120"
+   height="120"
    id="svg2">
   <defs
      id="defs4">
@@ -41,8 +41,8 @@
        color-interpolation-filters="sRGB"
        id="filter3976">
       <feGaussianBlur
-         id="feGaussianBlur3978"
-         stdDeviation="59.727273" />
+         stdDeviation="59.727273"
+         id="feGaussianBlur3978" />
     </filter>
     <filter
        x="-0.034195937"
@@ -52,8 +52,8 @@
        color-interpolation-filters="sRGB"
        id="filter6837">
       <feGaussianBlur
-         id="feGaussianBlur6839"
-         stdDeviation="0.12823476" />
+         stdDeviation="0.12823476"
+         id="feGaussianBlur6839" />
     </filter>
     <linearGradient
        x1="95.224609"
@@ -120,12 +120,12 @@
        color-interpolation-filters="sRGB"
        id="filter3948-5">
       <feGaussianBlur
-         id="feGaussianBlur3950-3"
-         stdDeviation="78.801499" />
+         stdDeviation="78.801499"
+         id="feGaussianBlur3950-3" />
     </filter>
   </defs>
   <g
-     transform="translate(338.6861,-1634.7627)"
+     transform="matrix(5,0,0,5,1692.566,-8174.9847)"
      id="layer1">
     <g
        transform="translate(-3.8125,0.3125)"
