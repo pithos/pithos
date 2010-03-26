@@ -315,7 +315,7 @@ class PithosWindow(gtk.Window):
             
         self.statusbar.push(self.statusbar.get_context_id('net'), "Getting songs...")
         self.waiting_for_playlist = True
-        self.worker.send(self.pandora.get_playlist, (self.current_station,), callback, self.errback)
+        self.worker.send(self.current_station.get_playlist, (), callback, self.errback)
         
     def pandora_ready(self, ignore):
         self.statusbar.pop(self.statusbar.get_context_id('login'))

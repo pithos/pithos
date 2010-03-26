@@ -64,15 +64,7 @@ class PianoPandora(object):
         logging.debug("libpiano: found %i stations"%(len(self.stations)))
         self.stations_dict = {}
         for i in self.stations:
-            self.stations_dict[i.id] = i
-        
-    def get_playlist(self, station):
-        logging.debug("libpiano: Get Playlist")
-        l = pianoCheck(piano.PianoGetPlaylist(self.p, station.id, piano.PIANO_AF_AACPLUS))
-        r = [PianoSong(self, x) for x in linkedList(l)]
-        return r
-        
-        
+            self.stations_dict[i.id] = i        
 
         
 class PianoStation(object):
@@ -92,6 +84,12 @@ class PianoStation(object):
             pianoCheck(piano.PianoTransformShared(self.piano.p, self.id))
             self.isCreator = True
             
+    def get_playlist(self):
+        logging.debug("libpiano: Get Playlist")
+        l = pianoCheck(piano.PianoGetPlaylist(self.piano.p, self.id, piano.PIANO_AF_AACPLUS))
+        r = [PianoSong(self.piano, x) for x in linkedList(l)]
+        return r
+            
     @property
     def info_url(self):
         return 'http://www.pandora.com/stations/'+self.idToken
@@ -105,7 +103,7 @@ class PianoSong(object):
         self.audioFormat = c_obj.audioFormat
         self.audioUrl = c_obj.audioUrl
         self.fileGain = c_obj.fileGain
-        self.focusTraiId = c_obj.focusTraitId
+        self.focusTraitId = c_obj.focusTraitId
         self.identity = c_obj.identity
         self.matchingSeed = c_obj.matchingSeed
         self.musicId = c_obj.musicId
