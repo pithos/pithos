@@ -175,7 +175,7 @@ class PithosWindow(gtk.Window):
         
         self.playing = False
         self.current_song_index = None
-        self.current_station_index = None
+        self.current_station = None
         self.current_station_id = self.preferences['last_station_id']
         
         self.buffer_percent = 100
@@ -218,10 +218,6 @@ class PithosWindow(gtk.Window):
     def current_song(self):
         if self.current_song_index is not None:
             return self.songs_model[self.current_song_index][0]
-        
-    @property
-    def current_station(self):
-        return self.stations_model[self.current_station_index][0]
     
     def song_changed(self, song_index):
         if song_index >= len(self.songs_model): return False
@@ -331,24 +327,23 @@ class PithosWindow(gtk.Window):
     def pandora_ready(self, ignore):
         self.statusbar.pop(self.statusbar.get_context_id('login'))
         self.stations_model.clear()
-        self.current_station_index = None
-        index = 0
+        self.current_station = None
+        selected = None
         logging.debug("Pandora connected")
         
         for i in self.pandora.stations:
             if i.isQuickMix:
-                i.index = len(self.stations_model)
                 self.stations_model.append((i, "QuickMix"))
-                logging.debug("Quickmix is index=%s"%i.index)
         self.stations_model.append((None, 'sep'))
         for i in self.pandora.stations:
             if not i.isQuickMix:
-                i.index = len(self.stations_model)
                 self.stations_model.append((i, i.name))
             if i.id == self.current_station_id:
-                logging.debug("Restoring saved station: id = %s, index = %s"%(i.id, i.index))
-                index = i.index
-        self.station_changed(index, reconnecting = self.retrying)
+                logging.debug("Restoring saved station: id = %s"%(i.id))
+                selected = i
+        if not selected:
+            selected=self.stations_model[0][0]
+        self.station_changed(selected, reconnecting = self.retrying)
             
     def errback(self, e):
         self.statusbar.pop(self.statusbar.get_context_id('net'))
@@ -378,19 +373,22 @@ class PithosWindow(gtk.Window):
         elif response == 3:
             self.retrying = False
             self.show_preferences()
-        
-    def station_changed(self, station_index, reconnecting=False):
-        if station_index is self.current_station_index: return
+    
+    def station_index(self, station):
+        return [i[0] for i in self.stations_model].index(station)
+       
+    def station_changed(self, station, reconnecting=False):
+        if station is self.current_station: return
         self.waiting_for_playlist = False
         if not reconnecting:
             self.current_song_index = None
             self.songs_model.clear()
             self.stop()
-        self.current_station_index = station_index
-        logging.debug("Selecting station index = %i; total = %i" % (self.current_station_index, len(self.stations_model)))
-        self.current_station_id = self.current_station.id
+        logging.debug("Selecting station %s; total = %i" % (station.id, len(self.stations_model)))
+        self.current_station_id = station.id
+        self.current_station = station
         self.get_playlist(start = not reconnecting)
-        self.stations_combo.set_active(station_index)
+        self.stations_combo.set_active(self.station_index(station))
         
         
     def on_message(self, bus, message):
@@ -459,7 +457,7 @@ class PithosWindow(gtk.Window):
     def stations_combo_changed(self, widget):
         index = widget.get_active()
         if index>=0:
-            self.station_changed(index)
+            self.station_changed(self.stations_model[index][0])
                     
     def format_time(self, time_int):
         time_int = time_int / 1000000000
