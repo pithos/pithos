@@ -51,16 +51,15 @@
               </packing>
             </child>
             <child>
-              <object class="GtkToolButton" id="toolbutton3">
+              <object class="GtkMenuToolButton" id="toolbutton3">
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Options</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-preferences</property>
-                <signal name="clicked" handler="show_preferences"/>
+                <property name="stock_id">gtk-properties</property>
+                <property name="menu">menu_options</property>
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="homogeneous">True</property>
               </packing>
             </child>
             <child>
@@ -78,7 +77,7 @@
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Station Properties</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-properties</property>
+                <property name="stock_id">gtk-dialog-info</property>
                 <signal name="clicked" handler="station_properties"/>
               </object>
               <packing>
@@ -285,5 +284,43 @@
   <object class="GtkImage" id="image5">
     <property name="visible">True</property>
     <property name="stock">gtk-refresh</property>
+  </object>
+  <object class="GtkMenu" id="menu_options">
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_prefs">
+        <property name="label" translatable="yes">Settings</property>
+        <property name="visible">True</property>
+        <property name="image">image6</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="show_preferences"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_stations">
+        <property name="label" translatable="yes">Manage Stations</property>
+        <property name="visible">True</property>
+        <property name="image">image7</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="stations_dialog"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_about">
+        <property name="label">gtk-about</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
+        <signal name="activate" handler="about"/>
+      </object>
+    </child>
+  </object>
+  <object class="GtkImage" id="image6">
+    <property name="visible">True</property>
+    <property name="stock">gtk-preferences</property>
+  </object>
+  <object class="GtkImage" id="image7">
+    <property name="visible">True</property>
+    <property name="stock">gtk-index</property>
   </object>
 </interface>

@@ -39,27 +39,16 @@ class PianoPandora(object):
             PianoStation("Errors"),
             PianoStation("QuickMix", 1),
         ]
-        self.authError = False
         
     def connect(self, user, password, proxy):
         logging.debug("fakepiano: logging in")
         if proxy:
             logging.debug("fakepiano: using proxy %s"%proxy)
+        time.sleep(1)    
+        
+    def save_quick_mix(self):
         time.sleep(1)
-        
-    def get_playlist(self, station):
-        if station.name=='Errors':
-            if self.authError:
-                self.authError=False
-                raise PianoAuthTokenInvalid("Invalid Auth Token")
-            else:
-                self.authError = True
-        r = [PianoSong("Test  &song %i"%count(), "Test Artist", "Album %s"%station.name, i%3-1) for i in range(4)]        
-        time.sleep(1)
-        return r
-        
-        
-        
+        logging.debug("fakepiano: Saving QuickMix")    
 
         
 class PianoStation(object):
@@ -68,8 +57,30 @@ class PianoStation(object):
         self.isCreator = True
         self.isQuickMix = qm
         self.name = name
-        self.useQuickMix = True
+        self.useQuickMix = (name != "Errors")
         self.info_url = 'http://launchpad.net/pithos'
+        
+        self.authError = False
+        
+    def get_playlist(self):
+        if self.name=='Errors':
+            if self.authError:
+                self.authError=False
+                raise PianoAuthTokenInvalid("Invalid Auth Token")
+            else:
+                self.authError = True
+        r = [PianoSong("Test  &song %i"%count(), "Test Artist", "Album %s"%self.name, i%3-1) for i in range(4)]        
+        time.sleep(1)
+        return r
+        
+    def rename(self, new_name):
+        self.name = new_name
+        logging.debug("fakepiano: Rename station")
+        time.sleep(1)
+        
+    def delete(self):
+        logging.debug("fakepiano: Delete station")
+        time.sleep(1)
         
 class PianoSong(object):
     def __init__(self, title, artist, album, rating):

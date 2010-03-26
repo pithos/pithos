@@ -64,7 +64,10 @@ class PianoPandora(object):
         logging.debug("libpiano: found %i stations"%(len(self.stations)))
         self.stations_dict = {}
         for i in self.stations:
-            self.stations_dict[i.id] = i        
+            self.stations_dict[i.id] = i
+            
+    def save_quick_mix(self):
+        qm_stations = [i for i in self.stations if i.useQuickMix]
 
         
 class PianoStation(object):

@@ -38,7 +38,7 @@ else:
     fullPath = os.getcwd()
 sys.path.insert(0, os.path.dirname(fullPath))
 
-from pithos import AboutPithosDialog, PreferencesPithosDialog
+from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from pithos.pithosconfig import getdatapath
 from pithos.gobject_worker import GObjectWorker
 
@@ -112,6 +112,8 @@ class PithosWindow(gtk.Window):
 
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         self.preferences = self.prefs_dlg.get_preferences()
+        
+        self.stations_dlg = None
 
         self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str, str, gtk.gdk.Pixbuf)
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
@@ -195,6 +197,15 @@ class PithosWindow(gtk.Window):
 
         aa = gtk.gdk.pixbuf_new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, gtk.gdk.INTERP_BILINEAR)
+    
+    def worker_run(self, fn, args=(), callback=None, context=None, message=None):
+        if context: self.statusbar.push(self.statusbar.get_context_id(context), message)
+        if isinstance(fn,str):
+            fn = getattr(self.pandora, fn)
+        def cb(v):
+            if context: self.statusbar.pop(self.statusbar.get_context_id(context))
+            if callback: callback(v)
+        self.worker.send(fn, args, cb, self.errback)
     
     def connect(self, message="Logging in..."):
         self.statusbar.push(self.statusbar.get_context_id('login'), message)
@@ -544,6 +555,13 @@ class PithosWindow(gtk.Window):
                 or self.preferences['password'] != old_prefs['password']
                 or self.preferences['proxy']    != old_prefs['proxy'])):
                     self.connect()
+                    
+    def stations_dialog(self, *ignore):
+        if self.stations_dlg:
+            self.stations_dlg.show()
+        else:
+            self.stations_dlg = StationsDialog.NewStationsDialog(self.stations_model, self.worker_run)
+            self.stations_dlg.show_all()
         
 
     def quit(self, widget=None, data=None):
