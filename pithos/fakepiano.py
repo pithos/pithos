@@ -48,7 +48,23 @@ class PianoPandora(object):
         
     def save_quick_mix(self):
         time.sleep(1)
-        logging.debug("fakepiano: Saving QuickMix")    
+        logging.debug("fakepiano: Saving QuickMix")
+        
+    def search(self, query):
+        time.sleep(1)
+        logging.debug("fakepiano: search")
+        return [
+            PianoArtist("Test Artist"),
+            PianoArtist("Another Result"),
+            PianoSong("Test Song", "Song Artist", '', None),
+            PianoSong(query, "Songwriter", '', None),
+         ]
+         
+    def add_station_by_music_id(self, musicid):
+        time.sleep(1)
+        logging.debug("fakepiano: add station by music id %s"%musicid)
+        return PianoStation(musicid)
+            
 
         
 class PianoStation(object):
@@ -81,10 +97,11 @@ class PianoStation(object):
     def delete(self):
         logging.debug("fakepiano: Delete station")
         time.sleep(1)
+
         
 class PianoSong(object):
     def __init__(self, title, artist, album, rating):
-        self.id=id(self)
+        self.musicId=id(self)
         self.album = album
         self.artist = artist
         self.audioUrl = 'file:///home/km/Downloads/download'
@@ -94,6 +111,7 @@ class PianoSong(object):
         self.songDetailURL = 'http://launchpad.net/pithos'
         self.artRadio = 'http://i.imgur.com/H3Z8x.jpg'
         self.message = ''
+        self.resultType = 'song'
         
     def rate(self, rating):
         time.sleep(1)
@@ -104,6 +122,12 @@ class PianoSong(object):
         time.sleep(1)
         print "tired", self.title
         self.tired = True
+        
+class PianoArtist(object):
+    def __init__(self, name):
+        self.name = name
+        self.musicId = id(self)
+        self.resultType = 'artist'
         
         
         

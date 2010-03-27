@@ -375,7 +375,7 @@ class PithosWindow(gtk.Window):
         elif isinstance(e, PianoError):
            self.error_dialog(e.message)
         else:
-            logging.warn(e)
+            logging.warn(e.traceback)
       
     def error_dialog(self, message):
         dialog = self.builder.get_object("error_dialog")

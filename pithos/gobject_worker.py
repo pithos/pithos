@@ -17,6 +17,7 @@
 import threading
 import Queue
 import gobject
+import traceback
 gobject.threads_init()
 
 class GObjectWorker():
@@ -33,6 +34,7 @@ class GObjectWorker():
                 result = command(*args)
                 gobject.idle_add(callback, result)
             except Exception, e:
+                e.traceback = traceback.format_exc()
                 gobject.idle_add(errorback, e)
                 
     def send(self, command, args, callback, errorback=None):
@@ -40,7 +42,7 @@ class GObjectWorker():
         self.queue.put((command, args, callback, errorback))
         
     def _default_errorback(self, error):
-        print "Unhandled exception in worker thread:", error
+        print "Unhandled exception in worker thread:\n", error.traceback
         
 if __name__ == '__main__':
     worker = GObjectWorker()

@@ -21,6 +21,7 @@ import logging
 import webbrowser
 
 from pithos.pithosconfig import getdatapath
+from pithos import SearchDialog
 
 class StationsDialog(gtk.Dialog):
     __gtype_name__ = "StationsDialog"
@@ -51,6 +52,7 @@ class StationsDialog(gtk.Dialog):
         self.model = pithos.stations_model
         self.worker_run = pithos.worker_run
         self.quickmix_changed = False
+        self.searchDialog = None
         
         self.modelfilter = self.model.filter_new()
         self.modelfilter.set_visible_func(lambda m, i: m.get_value(i, 0) and not  m.get_value(i, 0).isQuickMix)
@@ -135,6 +137,33 @@ class StationsDialog(gtk.Dialog):
             self.model.remove(iter)
             if self.pithos.current_station is station:
                 self.pithos.station_changed(self.model[0][0])
+                
+    def add_station(self, widget):
+        if self.searchDialog:
+            self.searchDialog.present()
+        else:
+            self.searchDialog = SearchDialog.NewSearchDialog(self.worker_run)
+            self.searchDialog.show_all()
+            self.searchDialog.connect("response", self.add_station_cb)
+        
+    def add_station_cb(self, dialog, response):
+        print "in add_station_cb", dialog.result, response
+        if response == 1:
+            self.worker_run("add_station_by_music_id", (dialog.result.musicId,), self.station_added, 'net', "Creating station...")
+        dialog.hide()
+        dialog.destroy()
+        self.searchDialog = None
+        
+    def station_added(self, station):
+        logging.debug("1 "+ repr(station))
+        it = self.model.insert_after(self.model.get_iter(1), (station, station.name))
+        logging.debug("2 "+ repr(it))
+        self.pithos.station_changed(station)
+        logging.debug("3 ")
+        self.modelfilter.refilter()
+        logging.debug("4")
+        self.treeview.set_cursor(0)
+        logging.debug("5 ")
         
     def on_close(self, widget, data=None):
         self.hide()

@@ -71,6 +71,21 @@ class PianoPandora(object):
         qm_stations = ','.join(qm_stations)
         logging.debug("libpiano: Set QuickMix Stations "+qm_stations)
         pianoCheck(piano.PianoSetQuickmix(self.p, qm_stations))
+        
+    def search(self, query):
+        cr = piano.PianoSearchResult_t()
+        pianoCheck(piano.PianoSearchMusic(self.p, query, cr))
+        songs = [PianoSongResult(x) for x in linkedList(cr.songs)]
+        artists = [PianoArtistResult(x) for x in linkedList(cr.artists)]
+        return songs+artists
+         
+    def add_station_by_music_id(self, musicid):
+        logging.debug("libpiano: Adding station by music id %s"%musicid)
+        cs = pianoCheck(piano.PianoCreateStation(self.p, "mi", musicid))
+        station = PianoStation(self, cs)
+        self.stations.append(station)
+        self.stations_dict[station.id] = station
+        return station
 
         
 class PianoStation(object):
@@ -150,7 +165,21 @@ class PianoSong(object):
             pianoCheck(piano.PianoSongTired(self.piano.p, self.identity))
             self.tired = True
         
+class PianoSongResult(object):
+    resultType = "song"
+    def __init__(self, c_obj):
+        self.title = c_obj.title
+        self.musicId = c_obj.musicId
+        self.artist = c_obj.artist
         
+        
+class PianoArtistResult(object):
+    resultType = "artist"
+    def __init__(self, c_obj):
+        self.name = c_obj.name
+        self.musicId = c_obj.musicId
+        self.score = c_obj.score
+
     
 
 
