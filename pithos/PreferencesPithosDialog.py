@@ -66,8 +66,8 @@ class PreferencesPithosDialog(gtk.Dialog):
     def __load_preferences(self):
         #default preferences that will be overwritten if some are saved
         self.__preferences = {
-            "username":None,
-            "password":None,
+            "username":'',
+            "password":'',
             "notify":True,
             "last_station_id":None,
             "proxy":'',
