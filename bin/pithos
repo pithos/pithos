@@ -128,11 +128,6 @@ class PithosWindow(gtk.Window):
         self.builder = builder
         self.builder.connect_signals(self)
 
-        self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
-        self.preferences = self.prefs_dlg.get_preferences()
-        
-        self.stations_dlg = None
-
         self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str, str, gtk.gdk.Pixbuf)
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
         
@@ -192,6 +187,11 @@ class PithosWindow(gtk.Window):
             mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
         except dbus.DBusException:
             print "Could not bind media keys"
+        
+        self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
+        self.preferences = self.prefs_dlg.get_preferences()
+        
+        self.stations_dlg = None
         
         self.playing = False
         self.current_song_index = None
