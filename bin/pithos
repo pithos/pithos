@@ -170,7 +170,7 @@ class PithosWindow(gtk.Window):
         self.stations_combo.add_attribute(render_text, "text", 1)
         self.stations_combo.set_row_separator_func(lambda model, iter: model.get_value(iter, 0) is None)
         
-        unifyMenuToolButton(self.builder.get_object("toolbutton_options"))
+        #unifyMenuToolButton(self.builder.get_object("toolbutton_options"))
         
         self.player = gst.element_factory_make("playbin", "player")
         bus = self.player.get_bus()
