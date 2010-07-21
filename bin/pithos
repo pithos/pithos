@@ -95,8 +95,9 @@ class CellRendererAlbumArt(gtk.GenericCellRenderer):
             y = cell_area.y+(cell_area.height-pixbuf.get_height())-5 # bottom
             window.draw_pixbuf(None, pixbuf, 0, 0, x, y, width=-1, height=-1, dither=gtk.gdk.RGB_DITHER_NORMAL, x_dither=0, y_dither=0)
         
-def get_album_art(url, *extra):
-     content = urllib.urlopen(url).read()
+def get_album_art(url, proxy, *extra):
+     proxies = {"http": proxy} if proxy else {}
+     content = urllib.urlopen(url, proxies=proxies).read()
      l = gtk.gdk.PixbufLoader()
      l.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
      l.write(content)
@@ -329,7 +330,11 @@ class PithosWindow(gtk.Window):
                 i.index = len(self.songs_model)
                 self.songs_model.append((i, '', '', self.default_album_art))
                 self.update_song_row(i)
-                if i.artRadio: self.art_worker.send(get_album_art, (i.artRadio, i, i.index), art_callback)
+                
+                if i.artRadio: 
+                    proxy = self.preferences['proxy']
+                    self.art_worker.send(get_album_art, (i.artRadio, proxy, i, i.index), art_callback)
+
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if self.start_new_playlist:
                 self.song_changed(start_index)
