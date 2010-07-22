@@ -22,6 +22,9 @@ class PithosNotificationIcon:
 		self.window = window
 		
 		self.delete_callback_handle = self.window.connect("delete-event", self.window.hide_on_delete)
+		self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
+		self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
+		
 		self.statusicon = gtk.status_icon_new_from_stock(gtk.STOCK_CDROM) #TODO get better icon 
 		self.statusicon.connect('activate', self.statusicon_clicked )
 		self.build_context_menu()
@@ -44,32 +47,34 @@ class PithosNotificationIcon:
 
 		# build out the menu
 		menu = gtk.Menu()
+		self.buttons = {}
 		for button in buttons:
 			item = gtk.ImageMenuItem(button[0])
 			item.connect('activate', button[1])
 			if len(button) > 2:
 				item.set_image(button[2])
 			menu.append(item)
+			self.buttons[button[0]] = item
 
 		# connect our new menu to the statusicon
 		self.statusicon.connect('popup-menu', self.context_menu, menu)
 
 
-	def play_or_pause(self, button):
+	def play_state_changed(self, window, playing):
 		""" play or pause and rotate the text """
-
-		current_label = button.get_label()
-		if current_label == "Pause":
+		
+        button = self.buttons['Pause']
+		if not playing:
 			button.set_label("Play")
-			self.window.pause()
 			button.set_image(gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU))
 
 		else:
 			button.set_label("Pause")
-			self.window.play()
 			button.set_image(gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_MENU))
 
-
+    def song_changed(self, window, song):
+        self.statusicon.set_tooltip("%s by %s"%(song.title, song.artist))
+        
 	def statusicon_clicked(self, status):
 		""" hide/unhide the window 
 		@param status: the statusicon
@@ -90,5 +95,6 @@ class PithosNotificationIcon:
     def remove(self):
         self.statusicon.set_visible(False)
         self.window.disconnect(self.delete_callback_handle)
-        
+        self.window.disconnect(self.state_callback_handle)
+        self.window.disconnect(self.song_callback_handle)
 

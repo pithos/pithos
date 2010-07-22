@@ -116,6 +116,10 @@ def get_album_art(url, proxy, *extra):
 
 class PithosWindow(gtk.Window):
     __gtype_name__ = "PithosWindow"
+    __gsignals__ = {
+        "song-changed": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "play-state-changed": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,)),
+    }
 
     def __init__(self):
         """__init__ - This function is typically not called directly.
@@ -297,6 +301,8 @@ class PithosWindow(gtk.Window):
             self.notification.set_icon_from_pixbuf(self.songs_model[song_index][3])
             self.notification.show()
             
+        self.emit('song-changed', self.current_song)
+            
     def next_song(self, *ignore):
         next_index = self.current_song_index+1
         songs_remaining = len(self.songs_model) - next_index 
@@ -317,16 +323,19 @@ class PithosWindow(gtk.Window):
             gobject.timeout_add_seconds(1, self.update_song_row)
         self.playpause_button.set_stock_id(gtk.STOCK_MEDIA_PAUSE)
         self.update_song_row()
+        self.emit('play-state-changed', True)
         
     def pause(self):
         self.playing = False
         self.player.set_state(gst.STATE_PAUSED)
         self.playpause_button.set_stock_id(gtk.STOCK_MEDIA_PLAY)
         self.update_song_row()
+        self.emit('play-state-changed', False)
         
     def stop(self):
         self.playing = False
         self.player.set_state(gst.STATE_NULL)
+        self.emit('play-state-changed', False)
         
     def playpause(self, *ignore):
         if self.playing:
