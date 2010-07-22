@@ -8,7 +8,7 @@
     <property name="width_request">600</property>
     <property name="title" translatable="yes">Pithos</property>
     <property name="icon">../media/icon.png</property>
-    <signal name="destroy" handler="on_destroy"/>
+    <signal name="delete-event" handler="hide_on_delete"/>
     <child>
       <object class="GtkVBox" id="vbox1">
         <property name="visible">True</property>

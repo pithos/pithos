@@ -593,22 +593,18 @@ class PithosWindow(gtk.Window):
         self.preferences['last_station_id'] = self.current_station_id
         self.prefs_dlg.save()
         gtk.main_quit()
+        print "quit called"
 
-    def on_destroy(self, widget, data=None):
-        """on_destroy - called when the PithosWindow is close. """
-        #clean up code for saving application state should be added here
-        # self.preferences['last_station_id'] = self.current_station_id
-        # self.prefs_dlg.save()
-        # gtk.main_quit()
-        self.hide()
 
     def showhide(self,widget):
         if self.showing == True:
             self.showing = False
-            self.hide()
+            self.hide_all()
         else:
             self.showing = True
-            self.show()
+            self.show_all()
+            # self = NewPithosWindow(PianoPandora)
+            # self.show()
 
 def NewPithosWindow(pandora_class):
     """NewPithosWindow - returns a fully instantiated
@@ -654,7 +650,7 @@ if __name__ == "__main__":
     window.show()
 
     # App Indicator
-    ind = appindicator.Indicator("example-simple-client","icon",appindicator.CATEGORY_APPLICATION_STATUS,getmediapath())
+    ind = appindicator.Indicator("example-simple-client","pithos-mono",appindicator.CATEGORY_APPLICATION_STATUS,getmediapath())
     print getdatapath()
     ind.set_status (appindicator.STATUS_ACTIVE)
     # ind.set_attention_icon ("indicator-messages-new")
