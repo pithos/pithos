@@ -35,8 +35,7 @@ import urllib
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
-import appindicator
-from PithosAppIndicator import PithosAppIndicator
+
 
 # Check if we are working in the source tree or from the installed 
 # package and mangle the python path accordingly

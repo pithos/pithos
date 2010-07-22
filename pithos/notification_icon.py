@@ -138,10 +138,10 @@ class PithosNotificationIcon:
 			   data.popup(None, None, None, 3, time)
     
     def remove(self):
-		if indicator_capable:
-			self.ind.set_status(appindicator.STATUS_PASSIVE)
-		else:
-			self.statusicon.set_visible(False)
+        if indicator_capable:
+            self.ind.set_status(appindicator.STATUS_PASSIVE)
+        else:
+            self.statusicon.set_visible(False)
 			
         self.window.disconnect(self.delete_callback_handle)
         self.window.disconnect(self.state_callback_handle)
