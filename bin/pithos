@@ -50,6 +50,7 @@ sys.path.insert(0, os.path.dirname(fullPath))
 from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from pithos.pithosconfig import getdatapath
 from pithos.gobject_worker import GObjectWorker
+from pithos.notification_icon import PithosNotificationIcon
 
 def unifyMenuToolButton(menu_button):
     """Rearranges the subwidgets of a MenuToolButton so it is one single button
@@ -234,10 +235,16 @@ class PithosWindow(gtk.Window):
         self.pandora = pandora_class()
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
-        self.connect()
 
         aa = gtk.gdk.pixbuf_new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, gtk.gdk.INTERP_BILINEAR)
+        
+        if self.preferences.get('show_icon', False):
+            self.notification_icon = PithosNotificationIcon(self)
+        else:
+            self.notification_icon = None
+        
+        self.piano_connect()
     
     def worker_run(self, fn, args=(), callback=None, context=None, message=None):
         if context: self.statusbar.push(self.statusbar.get_context_id(context), message)
@@ -248,7 +255,7 @@ class PithosWindow(gtk.Window):
             if callback: callback(v)
         self.worker.send(fn, args, cb, self.errback)
     
-    def connect(self, message="Logging in..."):
+    def piano_connect(self, message="Logging in..."):
         self.statusbar.push(self.statusbar.get_context_id('login'), message)
         args = (self.preferences['username'],
                 self.preferences['password'],
@@ -396,7 +403,7 @@ class PithosWindow(gtk.Window):
         if isinstance(e, PianoAuthTokenInvalid) and not self.retrying:
             self.retrying = True
             logging.debug("Automatic retry")
-            self.connect("Reconnecting...")
+            self.piano_connect("Reconnecting...")
         elif isinstance(e, PianoError):
            self.error_dialog(e.message)
         else:
@@ -414,7 +421,7 @@ class PithosWindow(gtk.Window):
             self.retrying = True
             self.gstreamer_errorcount_2 = 0
             logging.debug("Manual retry")
-            self.connect("Reconnecting...")
+            self.piano_connect("Reconnecting...")
         elif response == 3:
             self.retrying = False
             self.show_preferences()
@@ -593,11 +600,17 @@ class PithosWindow(gtk.Window):
         
         if response == gtk.RESPONSE_OK:
             self.preferences = self.prefs_dlg.get_preferences()
-            if (not is_startup and (
-                   self.preferences['username'] != old_prefs['username']
-                or self.preferences['password'] != old_prefs['password']
-                or self.preferences['proxy']    != old_prefs['proxy'])):
-                    self.connect()
+            if not is_startup:
+                if (self.preferences['username'] != old_prefs['username']
+                    or self.preferences['password'] != old_prefs['password']
+                    or self.preferences['proxy']    != old_prefs['proxy']):
+                        self.piano_connect()
+                if self.preferences['show_icon'] != old_prefs['show_icon']:
+                    if self.preferences['show_icon'] and not self.notification_icon:
+                        self.notification_icon = PithosNotificationIcon(self)
+                    elif not self.preferences['show_icon'] and self.notification_icon:
+                        self.notification_icon.remove()
+                        self.notification_icon = None
                     
     def stations_dialog(self, *ignore):
         if self.stations_dlg:
@@ -606,7 +619,6 @@ class PithosWindow(gtk.Window):
             self.stations_dlg = StationsDialog.NewStationsDialog(self)
             self.stations_dlg.show_all()
         
-
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
         self.destroy()
