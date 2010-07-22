@@ -5,8 +5,9 @@
   <!-- interface-naming-policy project-wide -->
   <!-- interface-local-resource-path ../media -->
   <object class="PithosWindow" id="pithos_window">
-    <property name="width_request">600</property>
     <property name="title" translatable="yes">Pithos</property>
+    <property name="default_width">500</property>
+    <property name="default_height">350</property>
     <property name="icon">../media/icon.png</property>
     <signal name="destroy" handler="on_destroy"/>
     <child>
@@ -15,6 +16,8 @@
         <child>
           <object class="GtkToolbar" id="toolbar1">
             <property name="visible">True</property>
+            <property name="toolbar_style">icons</property>
+            <property name="show_arrow">False</property>
             <child>
               <object class="GtkToolButton" id="playpause_button">
                 <property name="visible">True</property>
@@ -58,6 +61,7 @@
               </object>
               <packing>
                 <property name="expand">False</property>
+                <property name="homogeneous">True</property>
               </packing>
             </child>
             <child>
@@ -95,7 +99,7 @@
                 </child>
               </object>
               <packing>
-                <property name="expand">False</property>
+                <property name="expand">True</property>
               </packing>
             </child>
           </object>
@@ -106,7 +110,6 @@
         </child>
         <child>
           <object class="GtkScrolledWindow" id="scrolledwindow1">
-            <property name="height_request">396</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="vadjustment">adjustment1</property>
