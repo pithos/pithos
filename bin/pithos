@@ -139,7 +139,7 @@ class PithosWindow(gtk.Window):
         self.builder.connect_signals(self)
 
         global launchpad_available
-        if launchpad_available:
+        if False and launchpad_available: # Disable this
             # see https://wiki.ubuntu.com/UbuntuDevelopment/Internationalisation/Coding for more information
             # about LaunchpadIntegration
             helpmenu = self.builder.get_object('menu_options')
