@@ -26,6 +26,7 @@ import urllib
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
+import appindicator
 
 # Check if we are working in the source tree or from the installed 
 # package and mangle the python path accordingly
@@ -217,6 +218,8 @@ class PithosWindow(gtk.Window):
 
         aa = gtk.gdk.pixbuf_new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, gtk.gdk.INTERP_BILINEAR)
+
+        self.showing = True
     
     def worker_run(self, fn, args=(), callback=None, context=None, message=None):
         if context: self.statusbar.push(self.statusbar.get_context_id(context), message)
@@ -584,14 +587,28 @@ class PithosWindow(gtk.Window):
 
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
-        self.destroy()
-
-    def on_destroy(self, widget, data=None):
-        """on_destroy - called when the PithosWindow is close. """
+        # self.destroy()
+        # self.hide()
         #clean up code for saving application state should be added here
         self.preferences['last_station_id'] = self.current_station_id
         self.prefs_dlg.save()
         gtk.main_quit()
+
+    def on_destroy(self, widget, data=None):
+        """on_destroy - called when the PithosWindow is close. """
+        #clean up code for saving application state should be added here
+        # self.preferences['last_station_id'] = self.current_station_id
+        # self.prefs_dlg.save()
+        # gtk.main_quit()
+        self.hide()
+
+    def showhide(self,widget):
+        if self.showing == True:
+            self.showing = False
+            self.hide()
+        else:
+            self.showing = True
+            self.show()
 
 def NewPithosWindow(pandora_class):
     """NewPithosWindow - returns a fully instantiated
@@ -609,6 +626,10 @@ def NewPithosWindow(pandora_class):
     window = builder.get_object("pithos_window")
     window.finish_initializing(builder, pandora_class)
     return window
+
+def getmediapath():
+    return getdatapath() + "/media"
+
 
 if __name__ == "__main__":
     #support for command line options
@@ -631,5 +652,47 @@ if __name__ == "__main__":
     #run the application
     window = NewPithosWindow(PianoPandora)
     window.show()
+
+    # App Indicator
+    ind = appindicator.Indicator("example-simple-client","icon",appindicator.CATEGORY_APPLICATION_STATUS,getmediapath())
+    print getdatapath()
+    ind.set_status (appindicator.STATUS_ACTIVE)
+    # ind.set_attention_icon ("indicator-messages-new")
+    # ind.set_attention_icon("data/media/icon.png")
+    # ind.set_property("icon-theme-path","data/media")
+    # ind.set_icon("icon.png")
+
+    # create a menu
+    menu = gtk.Menu()
+
+    # Play/Pause menu item
+    PlayPauseMenuItem = gtk.ImageMenuItem("Play/Pause")
+    PlayPauseMenuItem.connect("activate",window.playpause)
+    PlayPauseMenuItem.show()
+
+    skipMenuItem = gtk.MenuItem("Skip")
+    skipMenuItem.connect("activate",window.next_song)
+    skipMenuItem.show();
+
+    showhideMenuItem = gtk.MenuItem("Show/Hide")
+    showhideMenuItem.connect("activate",window.showhide)
+    showhideMenuItem.show();
+
+    quitMenuItem = gtk.MenuItem("Quit")
+    quitMenuItem.connect("activate",window.quit)
+    quitMenuItem.show()
+    
+    menu.append(PlayPauseMenuItem)
+    menu.append(skipMenuItem)
+    menu.append(showhideMenuItem)
+    menu.append(quitMenuItem)
+
+    # this is where you would connect your menu item up with a function:
+    
+    # menu_items.connect("activate", self.menuitem_response, buf)
+
+    # show the items
+    
+    ind.set_menu(menu)
     gtk.main()
 
