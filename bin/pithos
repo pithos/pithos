@@ -27,6 +27,7 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
 import appindicator
+from PithosAppIndicator import PithosAppIndicator
 
 # Check if we are working in the source tree or from the installed 
 # package and mangle the python path accordingly
@@ -40,7 +41,7 @@ else:
 sys.path.insert(0, os.path.dirname(fullPath))
 
 from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
-from pithos.pithosconfig import getdatapath
+from pithos.pithosconfig import getdatapath, getmediapath
 from pithos.gobject_worker import GObjectWorker
 
 def unifyMenuToolButton(menu_button):
@@ -623,9 +624,6 @@ def NewPithosWindow(pandora_class):
     window.finish_initializing(builder, pandora_class)
     return window
 
-def getmediapath():
-    return getdatapath() + "/media"
-
 
 if __name__ == "__main__":
     #support for command line options
@@ -648,47 +646,9 @@ if __name__ == "__main__":
     #run the application
     window = NewPithosWindow(PianoPandora)
     window.show()
-
-    # App Indicator
-    ind = appindicator.Indicator("example-simple-client","pithos-mono",appindicator.CATEGORY_APPLICATION_STATUS,getmediapath())
-    print getdatapath()
-    ind.set_status (appindicator.STATUS_ACTIVE)
-    # ind.set_attention_icon ("indicator-messages-new")
-    # ind.set_attention_icon("data/media/icon.png")
-    # ind.set_property("icon-theme-path","data/media")
-    # ind.set_icon("icon.png")
-
-    # create a menu
-    menu = gtk.Menu()
-
-    # Play/Pause menu item
-    PlayPauseMenuItem = gtk.ImageMenuItem("Play/Pause")
-    PlayPauseMenuItem.connect("activate",window.playpause)
-    PlayPauseMenuItem.show()
-
-    skipMenuItem = gtk.MenuItem("Skip")
-    skipMenuItem.connect("activate",window.next_song)
-    skipMenuItem.show();
-
-    showhideMenuItem = gtk.MenuItem("Show/Hide")
-    showhideMenuItem.connect("activate",window.showhide)
-    showhideMenuItem.show();
-
-    quitMenuItem = gtk.MenuItem("Quit")
-    quitMenuItem.connect("activate",window.quit)
-    quitMenuItem.show()
     
-    menu.append(PlayPauseMenuItem)
-    menu.append(skipMenuItem)
-    menu.append(showhideMenuItem)
-    menu.append(quitMenuItem)
-
-    # this is where you would connect your menu item up with a function:
-    
-    # menu_items.connect("activate", self.menuitem_response, buf)
-
-    # show the items
-    
-    ind.set_menu(menu)
-    gtk.main()
+	# Add the appindicator
+	ind = PithosAppIndicator(window)
+	
+	gtk.main()
 

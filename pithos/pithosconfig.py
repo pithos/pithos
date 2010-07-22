@@ -43,4 +43,7 @@ def getdatapath():
         return abs_data_path
     else:
         raise project_path_not_found
+        
+def getmediapath():
+    return getdatapath() + "/media"
 
