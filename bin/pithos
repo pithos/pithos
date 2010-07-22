@@ -52,23 +52,15 @@ from pithos.pithosconfig import getdatapath
 from pithos.gobject_worker import GObjectWorker
 from pithos.notification_icon import PithosNotificationIcon
 
-def unifyMenuToolButton(menu_button):
-    """Rearranges the subwidgets of a MenuToolButton so it is one single button
-    with a menu dropdown instead of a seperate button and arrow"""
-    # credit: http://www.daa.com.au/pipermail/pygtk/2008-September/015916.html
-    hbox = menu_button.get_child()
-    button, toggle_button = hbox.get_children()  
-    img = button.get_child()
-    button.remove(img)
-    hbox.remove(button)
-    arrow = toggle_button.get_child()
-    toggle_button.remove(arrow)
-    hbox = gtk.HBox()
-    hbox.set_spacing(4)
-    hbox.add(img)
-    hbox.add(arrow)
-    toggle_button.add(hbox)
-    hbox.show_all()
+def buttonMenu(button, menu):
+    def cb(button):
+        allocation = button.get_allocation()
+        x, y = button.window.get_origin()
+        x += allocation.x
+        y += allocation.y + allocation.height
+        menu.popup(None, None, (lambda *ignore: (x, y, True)), 1, gtk.get_current_event_time())
+    
+    button.connect('clicked', cb)
 
 ALBUM_ART_SIZE = 64
 ALBUM_ART_X_PAD = 6
@@ -196,7 +188,7 @@ class PithosWindow(gtk.Window):
         self.stations_combo.add_attribute(render_text, "text", 1)
         self.stations_combo.set_row_separator_func(lambda model, iter: model.get_value(iter, 0) is None)
         
-        #unifyMenuToolButton(self.builder.get_object("toolbutton_options"))
+        buttonMenu(self.builder.get_object("toolbutton_options"), self.builder.get_object("menu_options"))
         
         self.player = gst.element_factory_make("playbin", "player")
         bus = self.player.get_bus()

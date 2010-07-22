@@ -12,7 +12,6 @@
     <child>
       <object class="GtkVBox" id="vbox1">
         <property name="visible">True</property>
-        <property name="orientation">vertical</property>
         <child>
           <object class="GtkToolbar" id="toolbar1">
             <property name="visible">True</property>
@@ -51,12 +50,11 @@
               </packing>
             </child>
             <child>
-              <object class="GtkMenuToolButton" id="toolbutton_options">
+              <object class="GtkToolButton" id="toolbutton_options">
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Options</property>
                 <property name="use_underline">True</property>
-                <property name="stock_id">gtk-properties</property>
-                <property name="menu">menu_options</property>
+                <property name="icon_widget">hbox_settingsmenu</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -69,7 +67,6 @@
               </object>
               <packing>
                 <property name="expand">True</property>
-                <property name="homogeneous">True</property>
               </packing>
             </child>
             <child>
@@ -220,7 +217,6 @@
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox1">
         <property name="visible">True</property>
-        <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
           <object class="GtkHButtonBox" id="dialog-action_area1">
@@ -324,5 +320,29 @@
   <object class="GtkImage" id="image7">
     <property name="visible">True</property>
     <property name="stock">gtk-index</property>
+  </object>
+  <object class="GtkHBox" id="hbox_settingsmenu">
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkImage" id="image8">
+        <property name="visible">True</property>
+        <property name="stock">gtk-properties</property>
+        <property name="icon-size">3</property>
+      </object>
+      <packing>
+        <property name="position">0</property>
+      </packing>
+    </child>
+    <child>
+      <object class="GtkArrow" id="arrow1">
+        <property name="visible">True</property>
+        <property name="xpad">3</property>
+        <property name="arrow_type">down</property>
+        <property name="shadow_type">in</property>
+      </object>
+      <packing>
+        <property name="position">1</property>
+      </packing>
+    </child>
   </object>
 </interface>
