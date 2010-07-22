@@ -16,6 +16,7 @@
 ### END LICENSE
 
 import gtk
+import pithosconfig
 
 class PithosNotificationIcon:
 	def __init__(self, window):
@@ -25,7 +26,7 @@ class PithosNotificationIcon:
 		self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
 		self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
 		
-		self.statusicon = gtk.status_icon_new_from_stock(gtk.STOCK_CDROM) #TODO get better icon 
+		self.statusicon = gtk.status_icon_new_from_file(pithosconfig.get_data_file('media', 'icon.png'))
 		self.statusicon.connect('activate', self.statusicon_clicked )
 		self.build_context_menu()
 	   
