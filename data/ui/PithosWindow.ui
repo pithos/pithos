@@ -7,7 +7,7 @@
   <object class="PithosWindow" id="pithos_window">
     <property name="title" translatable="yes">Pithos</property>
     <property name="default_width">500</property>
-    <property name="default_height">350</property>
+    <property name="default_height">360</property>
     <property name="icon">../media/icon.png</property>
     <signal name="destroy" handler="on_destroy"/>
     <child>

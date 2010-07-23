@@ -67,7 +67,7 @@ def buttonMenu(button, menu):
     
     button.connect('clicked', cb)
 
-ALBUM_ART_SIZE = 64
+ALBUM_ART_SIZE = 96
 ALBUM_ART_X_PAD = 6
 
 class CellRendererAlbumArt(gtk.GenericCellRenderer):  
