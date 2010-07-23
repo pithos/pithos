@@ -149,7 +149,7 @@ class StationsDialog(gtk.Dialog):
     def add_station_cb(self, dialog, response):
         print "in add_station_cb", dialog.result, response
         if response == 1:
-            self.worker_run("add_station_by_music_id", (dialog.result.musicId,), self.station_added, 'net', "Creating station...")
+            self.worker_run("add_station_by_music_id", (dialog.result.musicId,), self.station_added, "Creating station...")
         dialog.hide()
         dialog.destroy()
         self.searchDialog = None
@@ -169,7 +169,7 @@ class StationsDialog(gtk.Dialog):
         self.hide()
         
         if self.quickmix_changed:
-            self.worker_run("save_quick_mix", context='net', message="Saving QuickMix...")
+            self.worker_run("save_quick_mix",  message="Saving QuickMix...")
             self.quickmix_changed = False
         
         logging.debug("closed dialog")

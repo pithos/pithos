@@ -77,7 +77,7 @@ class SearchDialog(gtk.Dialog):
     		self.treeview.show()
     		self.searchbtn.set_sensitive(True)
     		self.searchbtn.set_label("Search")
-    	self.worker_run('search', (query,), callback, 'net', "Searching...")
+    	self.worker_run('search', (query,), callback, "Searching...")
     	self.searchbtn.set_sensitive(False)
     	self.searchbtn.set_label("Searching...")
     	
