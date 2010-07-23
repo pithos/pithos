@@ -466,7 +466,7 @@ class PithosWindow(gtk.Window):
             self.buffer_percent = percent
             if percent < 100:
                 self.player.set_state(gst.STATE_PAUSED)
-            else:
+            elif self.playing:
                 self.player.set_state(gst.STATE_PLAYING)
             self.update_song_row()
         elif t == gst.MESSAGE_ERROR:
