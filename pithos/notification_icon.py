@@ -17,6 +17,7 @@
 
 import gtk
 import pithosconfig
+from pithos.plugin import PithosPlugin
 
 # Check if appindicator is available on the system
 try:
@@ -25,36 +26,21 @@ try:
 except:
     indicator_capable = False
 
-class PithosNotificationIcon:
-    class Borg:
-        """Application indicator can be instantiated only
-           once. The plugin api, when toggling the activation
-           state of a plugin, instantiates different instances
-           of the plugin class. Therefore, we need to keep
-           a reference to the indicator object. This class does that."""
-        __shared_state = {}
-        def __init__(self):
-            self.__dict__ = self.__shared_state
-            if not hasattr(self, "indicator"):
-                self.indicator = appindicator.Indicator("pithos", \
+class PithosNotificationIcon(PithosPlugin):            
+    def on_prepare(self):
+        if indicator_capable:
+            self.ind = appindicator.Indicator("pithos", \
                                   "pithos-mono", \
                                    appindicator.CATEGORY_APPLICATION_STATUS, \
                                    pithosconfig.get_data_file('media'))
-                self.indicator.set_status(appindicator.STATUS_ACTIVE)
-
-        def get_indicator(self):
-            return self.indicator    
     
-    def __init__(self, window):
-        
-        self.window = window
-        
+    def on_enable(self):
         self.delete_callback_handle = self.window.connect("delete-event", self.window.hide_on_delete)
         self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
         self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
         
         if indicator_capable:
-            self.ind = self.Borg().get_indicator()        
+            self.ind.set_status(appindicator.STATUS_ACTIVE)      
         else:
             self.statusicon = gtk.status_icon_new_from_file(pithosconfig.get_data_file('media', 'icon.png'))
             self.statusicon.connect('activate', self.toggle_visible)
@@ -132,7 +118,7 @@ class PithosNotificationIcon:
                data.show_all() 
                data.popup(None, None, None, 3, time)
     
-    def remove(self):
+    def on_disable(self):
         if indicator_capable:
             self.ind.set_status(appindicator.STATUS_PASSIVE)
         else:

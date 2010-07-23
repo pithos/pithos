@@ -29,7 +29,6 @@ except:
 
 import gst
 import cgi
-import pynotify
 import webbrowser
 import urllib
 import dbus
@@ -50,7 +49,13 @@ sys.path.insert(0, os.path.dirname(fullPath))
 from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from pithos.pithosconfig import getdatapath
 from pithos.gobject_worker import GObjectWorker
-from pithos.notification_icon import PithosNotificationIcon
+from pithos.plugin import load_plugins
+
+pluginMap = {
+    # name               #preference item
+    'song_notify':       'notify',
+    'notification_icon': 'show_icon',
+}
 
 def buttonMenu(button, menu):
     def cb(button):
@@ -196,9 +201,6 @@ class PithosWindow(gtk.Window):
         bus.connect("message", self.on_message)
         self.time_format = gst.Format(gst.FORMAT_TIME)
         
-        pynotify.init('pithos')
-        self.notification = pynotify.Notification("Pithos","Pithos")
-        
         try:
             bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
             mk = bus.get_object("org.gnome.SettingsDaemon","/org/gnome/SettingsDaemon/MediaKeys")
@@ -208,6 +210,9 @@ class PithosWindow(gtk.Window):
         
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         self.preferences = self.prefs_dlg.get_preferences()
+        
+        self.plugins = {}
+        load_plugins(self, pluginMap)
         
         self.stations_dlg = None
         
@@ -234,11 +239,6 @@ class PithosWindow(gtk.Window):
 
         aa = gtk.gdk.pixbuf_new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, gtk.gdk.INTERP_BILINEAR)
-        
-        if self.preferences.get('show_icon', False):
-            self.notification_icon = PithosNotificationIcon(self)
-        else:
-            self.notification_icon = None
         
         self.piano_connect()
     
@@ -329,14 +329,7 @@ class PithosWindow(gtk.Window):
         
         self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
         self.songs_treeview.set_cursor(song_index, None, 0)
-        
-        if self.preferences['notify'] and not self.is_active():
-            # popup notification if enabled and the window isn't active
-            msg = "by %s from %s"%(self.current_song.artist, self.current_song.album)
-            self.notification.update(self.current_song.title, msg, "audio-x-generic")
-            self.notification.set_icon_from_pixbuf(self.songs_model[song_index][3])
-            self.notification.show()
-            
+                    
         self.emit('song-changed', self.current_song)
             
     def next_song(self, *ignore):
@@ -393,6 +386,7 @@ class PithosWindow(gtk.Window):
             pixbuf, song, index = t
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
                 logging.debug("Downloaded album art for %i"%song.index)
+                song.art_pixbuf = pixbuf
                 self.songs_model[index][3]=pixbuf
                 self.update_song_row(song)
             
@@ -620,12 +614,7 @@ class PithosWindow(gtk.Window):
                     or self.preferences['password'] != old_prefs['password']
                     or self.preferences['proxy']    != old_prefs['proxy']):
                         self.piano_connect()
-                if self.preferences['show_icon'] != old_prefs['show_icon']:
-                    if self.preferences['show_icon'] and not self.notification_icon:
-                        self.notification_icon = PithosNotificationIcon(self)
-                    elif not self.preferences['show_icon'] and self.notification_icon:
-                        self.notification_icon.remove()
-                        self.notification_icon = None
+            load_plugins(self, pluginMap)
                     
     def stations_dialog(self, *ignore):
         if self.stations_dlg:
