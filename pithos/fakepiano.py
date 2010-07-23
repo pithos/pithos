@@ -26,7 +26,22 @@ def count():
     counter +=1
     return counter
 
-class PianoError(IOError): pass
+failmode = False
+import random
+    
+def maybe_fail():
+    global failmode
+    if failmode:
+        if random.randint(0, 100) < 30:
+            logging.debug("fakepiano: Looks like a failure...")
+            raise PianoAuthTokenInvalid(123, "Auth token invalid")
+        
+
+class PianoError(IOError):
+    def __init__(self, status, message):
+        self.status = status
+        self.message = message
+        
 class PianoAuthTokenInvalid(PianoError): pass
 class PianoUserPasswordInvalid(PianoError): pass
 
@@ -39,6 +54,7 @@ class PianoPandora(object):
             PianoStation("Errors"),
             PianoStation("QuickMix", 1),
         ]
+        self.test_failing = False
         
     def connect(self, user, password, proxy):
         logging.debug("fakepiano: logging in")
@@ -64,8 +80,7 @@ class PianoPandora(object):
         time.sleep(1)
         logging.debug("fakepiano: add station by music id %s"%musicid)
         return PianoStation(musicid)
-            
-
+        
         
 class PianoStation(object):
     def __init__(self, name, qm=False):
@@ -79,12 +94,9 @@ class PianoStation(object):
         self.authError = False
         
     def get_playlist(self):
-        if self.name=='Errors':
-            if self.authError:
-                self.authError=False
-                raise PianoAuthTokenInvalid("Invalid Auth Token")
-            else:
-                self.authError = True
+        global failmode
+        failmode = (self.name == "Errors")
+        maybe_fail()
         r = [PianoSong("Test  &song %i"%count(), "Test Artist", "Album %s"%self.name, i%3-1) for i in range(4)]        
         time.sleep(1)
         return r
@@ -115,12 +127,14 @@ class PianoSong(object):
         
     def rate(self, rating):
         time.sleep(1)
-        print "rating song", self.title, rating
+        maybe_fail()
+        logging.debug("rating song %s %s"%(self.title, rating))
         self.rating = rating
             
     def set_tired(self):
         time.sleep(1)
-        print "tired", self.title
+        maybe_fail()
+        logging.debug("tired %s"%self.title)
         self.tired = True
         
 class PianoArtist(object):

@@ -243,20 +243,65 @@ class PithosWindow(gtk.Window):
         self.piano_connect()
     
     def worker_run(self, fn, args=(), callback=None, context=None, message=None):
-        if context: self.statusbar.push(self.statusbar.get_context_id(context), message)
+        if context and message:
+            self.statusbar.push(self.statusbar.get_context_id(context), message)
+        
         if isinstance(fn,str):
             fn = getattr(self.pandora, fn)
+            
         def cb(v):
             if context: self.statusbar.pop(self.statusbar.get_context_id(context))
             if callback: callback(v)
-        self.worker.send(fn, args, cb, self.errback)
+            
+        def eb(e):
+            if context and message:
+                self.statusbar.pop(self.statusbar.get_context_id(context))
+                
+            if isinstance(e, PianoAuthTokenInvalid) and not self.retrying:
+                self.retrying = True
+                logging.debug("Automatic retry")
+                
+                def retry_cb():
+                    self.retrying = False
+                    if fn is not self.pandora.connect:
+                        self.worker_run(fn, args, callback, context, message)
+                
+                self.piano_connect("Reconnecting...", retry_cb)
+            elif isinstance(e, PianoError):
+                self.error_dialog(e.message)
+            else:
+                logging.warn(e.traceback)
+                
+        self.worker.send(fn, args, cb, eb)
     
-    def piano_connect(self, message="Logging in..."):
-        self.statusbar.push(self.statusbar.get_context_id('login'), message)
+    def piano_connect(self, message="Logging in...", callback=None):
         args = (self.preferences['username'],
                 self.preferences['password'],
                 self.preferences['proxy'])
-        self.worker.send(self.pandora.connect, args, self.pandora_ready, self.errback)
+                
+        def pandora_ready(*ignore):
+            self.stations_model.clear()
+            self.current_station = None
+            selected = None
+            logging.debug("Pandora connected")
+            
+            for i in self.pandora.stations:
+                if i.isQuickMix:
+                    self.stations_model.append((i, "QuickMix"))
+            self.stations_model.append((None, 'sep'))
+            for i in self.pandora.stations:
+                if not i.isQuickMix:
+                    self.stations_model.append((i, i.name))
+                if i.id == self.current_station_id:
+                    logging.debug("Restoring saved station: id = %s"%(i.id))
+                    selected = i
+            if not selected:
+                selected=self.stations_model[0][0]
+            self.station_changed(selected, reconnecting = self.retrying)
+            if callback:
+                callback()       
+                
+        self.worker_run('connect', args, pandora_ready, 'login', message)
         
     @property
     def current_song(self):
@@ -366,50 +411,16 @@ class PithosWindow(gtk.Window):
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if self.start_new_playlist:
                 self.song_changed(start_index)
-            self.retrying = False
+                
             self.gstreamer_errorcount_2 = self.gstreamer_errorcount_1
             self.gstreamer_errorcount_1 = 0
             self.playcount = 0
             self.waiting_for_playlist = False
             self.start_new_playlist = False
             
-        self.statusbar.push(self.statusbar.get_context_id('net'), "Getting songs...")
         self.waiting_for_playlist = True
-        self.worker.send(self.current_station.get_playlist, (), callback, self.errback)
-        
-    def pandora_ready(self, ignore):
-        self.statusbar.pop(self.statusbar.get_context_id('login'))
-        self.stations_model.clear()
-        self.current_station = None
-        selected = None
-        logging.debug("Pandora connected")
-        
-        for i in self.pandora.stations:
-            if i.isQuickMix:
-                self.stations_model.append((i, "QuickMix"))
-        self.stations_model.append((None, 'sep'))
-        for i in self.pandora.stations:
-            if not i.isQuickMix:
-                self.stations_model.append((i, i.name))
-            if i.id == self.current_station_id:
-                logging.debug("Restoring saved station: id = %s"%(i.id))
-                selected = i
-        if not selected:
-            selected=self.stations_model[0][0]
-        self.station_changed(selected, reconnecting = self.retrying)
-            
-    def errback(self, e):
-        self.statusbar.pop(self.statusbar.get_context_id('net'))
-        self.statusbar.pop(self.statusbar.get_context_id('login'))
-        if isinstance(e, PianoAuthTokenInvalid) and not self.retrying:
-            self.retrying = True
-            logging.debug("Automatic retry")
-            self.piano_connect("Reconnecting...")
-        elif isinstance(e, PianoError):
-           self.error_dialog(e.message)
-        else:
-            logging.warn(e.traceback)
-      
+        self.worker_run(self.current_station.get_playlist, (), callback, 'net', "Getting songs...")
+          
     def error_dialog(self, message):
         dialog = self.builder.get_object("error_dialog")
         dialog.format_secondary_text(message)
@@ -440,7 +451,8 @@ class PithosWindow(gtk.Window):
         logging.debug("Selecting station %s; total = %i" % (station.id, len(self.stations_model)))
         self.current_station_id = station.id
         self.current_station = station
-        self.get_playlist(start = not reconnecting)
+        if not reconnecting:
+            self.get_playlist(start = True)
         self.stations_combo.set_active(self.station_index(station))
         
         
@@ -535,16 +547,14 @@ class PithosWindow(gtk.Window):
         def callback(l):
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             self.update_song_row(sel)
-        self.statusbar.push(self.statusbar.get_context_id('net'), "Loving song...")
-        self.worker.send(sel.rate, (RATE_LOVE,), callback, self.errback)
+        self.worker_run(sel.rate, (RATE_LOVE,), callback, 'net', "Loving song...")
         
     def on_menuitem_ban(self, widget):
         sel = self.selected_song()
         def callback(l):
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             self.update_song_row(sel)
-        self.statusbar.push(self.statusbar.get_context_id('net'), "Banning song...")
-        self.worker.send(sel.rate, (RATE_BAN,), callback, self.errback)
+        self.worker_run(sel.rate, (RATE_BAN,), callback, 'net', "Banning song...")
         if sel is self.current_song:
             self.next_song()
         
@@ -553,8 +563,7 @@ class PithosWindow(gtk.Window):
         def callback(l):
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             self.update_song_row(sel)
-        self.statusbar.push(self.statusbar.get_context_id('net'), "Putting song on shelf...")
-        self.worker.send(sel.set_tired, (), callback, self.errback)
+        self.worker_run(sel.set_tired, (), callback, 'net', "Putting song on shelf...")
         if sel is self.current_song:
             self.next_song()
     
