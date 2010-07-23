@@ -27,7 +27,6 @@ class NotifyPlugin(PithosPlugin):
 		self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
 		
 	def song_changed(self, window,  song):
-	    print "changed", song
 		if not self.window.is_active():
 			msg = "by %s from %s"%(song.artist, song.album)
 			self.notification.update(song.title, msg, "audio-x-generic")

@@ -150,10 +150,64 @@ class PithosWindow(gtk.Window):
                 LaunchpadIntegration.add_items(helpmenu, 0, False, True)
             else:
                 launchpad_available = False
-
-        self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str, str, gtk.gdk.Pixbuf)
-        self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
+                
+        self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
+        self.preferences = self.prefs_dlg.get_preferences()
         
+        self.init_core(pandora_class)
+        self.init_ui()
+        
+        self.plugins = {}
+        load_plugins(self, pluginMap)
+        
+        if not self.preferences['username']:
+            self.show_preferences(is_startup=True)
+                    
+        self.piano_connect()
+         
+    def init_core(self, pandora_class):
+        #                                Song object            display text  icon  album art
+        self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str,          str,  gtk.gdk.Pixbuf)
+        #                                   Station object         station name
+        self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
+    
+        self.player = gst.element_factory_make("playbin", "player")
+        bus = self.player.get_bus()
+        bus.add_signal_watch()
+        bus.connect("message", self.on_message)
+        self.time_format = gst.Format(gst.FORMAT_TIME)
+        
+        try:
+            bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
+            mk = bus.get_object("org.gnome.SettingsDaemon","/org/gnome/SettingsDaemon/MediaKeys")
+            mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
+        except dbus.DBusException:
+            logging.error("Could not bind media keys")
+                
+        self.stations_dlg = None
+        
+        self.playing = False
+        self.current_song_index = None
+        self.current_station = None
+        self.current_station_id = self.preferences['last_station_id']
+        
+        self.buffer_percent = 100
+        self.retrying = False
+        self.playcount = 0
+        self.gstreamer_errorcount_1 = 0
+        self.gstreamer_errorcount_2 = 0
+        self.gstreamer_error = ''
+        self.waiting_for_playlist = False
+        self.start_new_playlist = False
+                
+        self.pandora = pandora_class()
+        self.worker = GObjectWorker()
+        self.art_worker = GObjectWorker()
+
+        aa = gtk.gdk.pixbuf_new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
+        self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, gtk.gdk.INTERP_BILINEAR)
+        
+    def init_ui(self):
         self.playpause_button = self.builder.get_object('playpause_button')
         self.statusbar = self.builder.get_object('statusbar1')
         
@@ -194,53 +248,6 @@ class PithosWindow(gtk.Window):
         self.stations_combo.set_row_separator_func(lambda model, iter: model.get_value(iter, 0) is None)
         
         buttonMenu(self.builder.get_object("toolbutton_options"), self.builder.get_object("menu_options"))
-        
-        self.player = gst.element_factory_make("playbin", "player")
-        bus = self.player.get_bus()
-        bus.add_signal_watch()
-        bus.connect("message", self.on_message)
-        self.time_format = gst.Format(gst.FORMAT_TIME)
-        
-        try:
-            bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
-            mk = bus.get_object("org.gnome.SettingsDaemon","/org/gnome/SettingsDaemon/MediaKeys")
-            mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
-        except dbus.DBusException:
-            logging.error("Could not bind media keys")
-        
-        self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
-        self.preferences = self.prefs_dlg.get_preferences()
-        
-        self.plugins = {}
-        load_plugins(self, pluginMap)
-        
-        self.stations_dlg = None
-        
-        self.playing = False
-        self.current_song_index = None
-        self.current_station = None
-        self.current_station_id = self.preferences['last_station_id']
-        
-        self.buffer_percent = 100
-        self.retrying = False
-        self.playcount = 0
-        self.gstreamer_errorcount_1 = 0
-        self.gstreamer_errorcount_2 = 0
-        self.gstreamer_error = ''
-        self.waiting_for_playlist = False
-        self.start_new_playlist = False
-        
-        if not self.preferences['username']:
-            self.show_preferences(is_startup=True)
-        
-        self.pandora = pandora_class()
-        self.worker = GObjectWorker()
-        self.art_worker = GObjectWorker()
-
-        aa = gtk.gdk.pixbuf_new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
-        self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, gtk.gdk.INTERP_BILINEAR)
-        
-        self.piano_connect()
     
     def worker_run(self, fn, args=(), callback=None, message=None, context='net'):
         if context and message:
