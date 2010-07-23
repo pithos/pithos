@@ -62,51 +62,43 @@ class PithosNotificationIcon:
         self.build_context_menu()
        
     def build_context_menu(self):
-    
-        def icon(image):
-            """ create an icon from a stock image """
-            return gtk.image_new_from_stock(image, gtk.ICON_SIZE_MENU)
-
-        buttons = ( # text     click action         image icon [optional]
-                   ("Pause", self.window.playpause,            icon(gtk.STOCK_MEDIA_PAUSE)),
-                   ("Skip",  self.window.next_song,            icon(gtk.STOCK_MEDIA_NEXT)),
-                   ("Love",  self.window.on_menuitem_love,  icon(gtk.STOCK_ABOUT)),
-                   ("Ban",   self.window.on_menuitem_ban,   icon(gtk.STOCK_CANCEL)),
-                   ("Tired", self.window.on_menuitem_tired, icon(gtk.STOCK_JUMP_TO)),
-                   (gtk.STOCK_QUIT, self.window.quit )
-                 )   
-
-        # build out the menu
         menu = gtk.Menu()
-        self.buttons = {}
+        
+        def button(text, action, icon=None):
+            if icon:
+                item = gtk.ImageMenuItem(text)
+                item.set_image(gtk.image_new_from_stock(icon, gtk.ICON_SIZE_MENU))
+            else:
+                item = gtk.MenuItem(text)
+            item.connect('activate', action) 
+            item.show()
+            menu.append(item)
+            return item
         
         if indicator_capable:
             # We have to add another entry for show / hide Pithos window
-            item = gtk.MenuItem("Show/Hide Pithos")
-            item.connect('activate', self.toggle_visible)
-            item.show()
-            menu.append(item)
+            button("Show/Hide Pithos", self.toggle_visible)
         
-        for button in buttons:
-            item = gtk.ImageMenuItem(button[0])
-            item.connect('activate', button[1])
-            if len(button) > 2:
-                item.set_image(button[2])
-            item.show()
-            menu.append(item)
-            self.buttons[button[0]] = item
+        self.playpausebtn = button("Pause", self.window.playpause,          gtk.STOCK_MEDIA_PAUSE)
+        button("Skip",  self.window.next_song,          gtk.STOCK_MEDIA_NEXT)
+        button("Love",  self.window.on_menuitem_love,   gtk.STOCK_ABOUT)
+        button("Ban",   self.window.on_menuitem_ban,    gtk.STOCK_CANCEL)
+        button("Tired", self.window.on_menuitem_tired,  gtk.STOCK_JUMP_TO)
+        button("Quit",  self.window.quit,               gtk.STOCK_QUIT )
 
         # connect our new menu to the statusicon or the appindicator
         if indicator_capable:
             self.ind.set_menu(menu)
         else:
             self.statusicon.connect('popup-menu', self.context_menu, menu)
+            
+        self.menu = menu
 
 
     def play_state_changed(self, window, playing):
         """ play or pause and rotate the text """
         
-        button = self.buttons['Pause']
+        button = self.playpausebtn
         if not playing:
             button.set_label("Play")
             button.set_image(gtk.image_new_from_stock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_MENU))
@@ -114,6 +106,9 @@ class PithosNotificationIcon:
         else:
             button.set_label("Pause")
             button.set_image(gtk.image_new_from_stock(gtk.STOCK_MEDIA_PAUSE, gtk.ICON_SIZE_MENU))
+            
+        if indicator_capable: # menu needs to be reset to get updated icon
+            self.ind.set_menu(self.menu)
 
     def song_changed(self, window, song):
         if not indicator_capable:
@@ -129,6 +124,7 @@ class PithosNotificationIcon:
             self.window.hide()
         else:
             self.window.show_all()
+            self.window.present()
 
     def context_menu(self, widget, button, time, data=None): 
        if button == 3: 
