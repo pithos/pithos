@@ -204,7 +204,7 @@ class PithosWindow(gtk.Window):
             mk = bus.get_object("org.gnome.SettingsDaemon","/org/gnome/SettingsDaemon/MediaKeys")
             mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
         except dbus.DBusException:
-            print "Could not bind media keys"
+            logging.error("Could not bind media keys")
         
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         self.preferences = self.prefs_dlg.get_preferences()
@@ -541,30 +541,36 @@ class PithosWindow(gtk.Window):
         if sel:
             return self.songs_treeview.get_model().get_value(sel[1], 0)
             
-    def on_menuitem_love(self, widget):
-        sel = self.selected_song()
+    def love_song(self, song=None):
+        song = song or self.current_song
         def callback(l):
-            self.statusbar.pop(self.statusbar.get_context_id('net'))
-            self.update_song_row(sel)
-        self.worker_run(sel.rate, (RATE_LOVE,), callback, "Loving song...")
+            self.update_song_row(song)
+        self.worker_run(song.rate, (RATE_LOVE,), callback, "Loving song...")
+                
+    def ban_song(self, song=None):
+        song = song or self.current_song
+        def callback(l):
+            self.update_song_row(song)
+        self.worker_run(song.rate, (RATE_BAN,), callback, "Banning song...")
+        if song is self.current_song:
+            self.next_song()
+        
+    def tired_song(self, song=None):
+        song = song or self.current_song
+        def callback(l):
+            self.update_song_row(song)
+        self.worker_run(song.set_tired, (), callback, "Putting song on shelf...")
+        if song is self.current_song:
+            self.next_song()
+    
+    def on_menuitem_love(self, widget):
+        self.love_song(self.selected_song())
         
     def on_menuitem_ban(self, widget):
-        sel = self.selected_song()
-        def callback(l):
-            self.statusbar.pop(self.statusbar.get_context_id('net'))
-            self.update_song_row(sel)
-        self.worker_run(sel.rate, (RATE_BAN,), callback, "Banning song...")
-        if sel is self.current_song:
-            self.next_song()
+        self.ban_song(self.selected_song())       
         
     def on_menuitem_tired(self, widget):
-        sel = self.selected_song()
-        def callback(l):
-            self.statusbar.pop(self.statusbar.get_context_id('net'))
-            self.update_song_row(sel)
-        self.worker_run(sel.set_tired, (), callback, "Putting song on shelf...")
-        if sel is self.current_song:
-            self.next_song()
+        self.tired_song(self.selected_song())
     
     def on_menuitem_info(self, widget):
         song = self.selected_song()
@@ -634,7 +640,6 @@ class PithosWindow(gtk.Window):
 
     def on_destroy(self, widget, data=None):
         """on_destroy - called when the PithosWindow is close. """
-        #clean up code for saving application state should be added here
         self.preferences['last_station_id'] = self.current_station_id
         self.prefs_dlg.save()
         gtk.main_quit()

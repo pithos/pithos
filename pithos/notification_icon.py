@@ -79,12 +79,12 @@ class PithosNotificationIcon:
             # We have to add another entry for show / hide Pithos window
             button("Show/Hide Pithos", self.toggle_visible)
         
-        self.playpausebtn = button("Pause", self.window.playpause,          gtk.STOCK_MEDIA_PAUSE)
-        button("Skip",  self.window.next_song,          gtk.STOCK_MEDIA_NEXT)
-        button("Love",  self.window.on_menuitem_love,   gtk.STOCK_ABOUT)
-        button("Ban",   self.window.on_menuitem_ban,    gtk.STOCK_CANCEL)
-        button("Tired", self.window.on_menuitem_tired,  gtk.STOCK_JUMP_TO)
-        button("Quit",  self.window.quit,               gtk.STOCK_QUIT )
+        self.playpausebtn = button("Pause", self.window.playpause, gtk.STOCK_MEDIA_PAUSE)
+        button("Skip",  self.window.next_song,                     gtk.STOCK_MEDIA_NEXT)
+        button("Love",  (lambda *i: self.window.love_song()),      gtk.STOCK_ABOUT)
+        button("Ban",   (lambda *i: self.window.ban_song()),       gtk.STOCK_CANCEL)
+        button("Tired", (lambda *i: self.window.tired_song()),     gtk.STOCK_JUMP_TO)
+        button("Quit",  self.window.quit,                          gtk.STOCK_QUIT )
 
         # connect our new menu to the statusicon or the appindicator
         if indicator_capable:
