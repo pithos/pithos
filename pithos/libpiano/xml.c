@@ -444,7 +444,7 @@ PianoReturn_t PianoXmlParseCreateStation (PianoHandle_t *ph, char *xml, PianoSta
 
 	dataNode = ezxml_get (xmlDoc, "params", 0, "param", 0, "value", 0, "struct", -1);
 
-	if ((*station = calloc (1, sizeof (*station))) == NULL) {
+	if ((*station = calloc (1, sizeof (**station))) == NULL) {
 		ezxml_free (xmlDoc);
 		return PIANO_RET_OUT_OF_MEMORY;
 	}
