@@ -30,7 +30,8 @@ class NotifyPlugin(PithosPlugin):
 		if not self.window.is_active():
 			msg = "by %s from %s"%(song.artist, song.album)
 			self.notification.update(song.title, msg, "audio-x-generic")
-			if hasattr(song, 'art_pixbuf'):
+			if song.art_pixbuf:
+			    #logging.debug("has albumart", song.art_pixbuf, song.art_pixbuf.get_width())
 			    self.notification.set_icon_from_pixbuf(song.art_pixbuf)
 			self.notification.show()
 		

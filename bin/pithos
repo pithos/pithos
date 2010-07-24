@@ -50,6 +50,7 @@ from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from pithos.pithosconfig import getdatapath
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import load_plugins
+from pithos.dbus_service import PithosDBusProxy
 
 pluginMap = {
     # name               #preference item
@@ -111,6 +112,7 @@ def get_album_art(url, proxy, *extra):
      l.close()
      return (l.get_pixbuf(),) + extra
 
+
 class PithosWindow(gtk.Window):
     __gtype_name__ = "PithosWindow"
     __gsignals__ = {
@@ -159,6 +161,8 @@ class PithosWindow(gtk.Window):
         
         self.plugins = {}
         load_plugins(self, pluginMap)
+        
+        self.dbus_service = PithosDBusProxy(self)
         
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
@@ -404,6 +408,7 @@ class PithosWindow(gtk.Window):
                 self.songs_model.append((i, '', '', self.default_album_art))
                 self.update_song_row(i)
                 
+                i.art_pixbuf = None
                 if i.artRadio: 
                     proxy = self.preferences['proxy']
                     self.art_worker.send(get_album_art, (i.artRadio, proxy, i, i.index), art_callback)
