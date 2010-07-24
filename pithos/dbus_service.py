@@ -65,7 +65,7 @@ class PithosDBusProxy(dbus.service.Object):
 	def GetCurrentSong(self):
 		return song_to_dict(self.window.current_song)
 		
-	@dbus.service.method(DBUS_BUS)
+	@dbus.service.method(DBUS_BUS, out_signature='b')
 	def IsPlaying(self):
 		return self.window.playing
 		
