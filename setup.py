@@ -107,7 +107,7 @@ libpiano = Extension('pithos.libpiano._piano', [
 
 DistUtilsExtra.auto.setup(
     name='pithos',
-    version='0.1-public6',
+    version='0.2-beta',
     ext_modules=[libpiano],
     license='GPL-3',
     author='Kevin Mehall',
