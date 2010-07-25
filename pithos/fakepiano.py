@@ -26,16 +26,31 @@ def count():
     counter +=1
     return counter
 
-failmode = False
-import random
+import gtk      
+window = gtk.Window()
+window.set_size_request(200, 100)
+window.set_title("Pithos failure tester")
+window.set_opacity(0.7)
+auth_check = gtk.CheckButton("Authenticated")
+time_check = gtk.CheckButton("Be really slow")
+vbox = gtk.VBox()
+window.add(vbox)
+vbox.pack_start(auth_check)
+vbox.pack_start(time_check)
+window.show_all()
+
     
 def maybe_fail():
-    global failmode
-    if failmode:
-        if random.randint(0, 100) < 30:
-            logging.debug("fakepiano: Looks like a failure...")
-            raise PianoAuthTokenInvalid(123, "Auth token invalid")
-        
+    if time_check.get_active():
+        logging.debug("fakepiano: Going to sleep for 10s")
+        time.sleep(10)
+    if not auth_check.get_active():
+        logging.debug("fakepiano: We're deauthenticated...")
+        raise PianoAuthTokenInvalid(123, "Auth token invalid")
+
+def set_authenticated():
+    auth_check.set_active(True)
+
 
 class PianoError(IOError):
     def __init__(self, status, message):
@@ -57,6 +72,7 @@ class PianoPandora(object):
         self.test_failing = False
         
     def connect(self, user, password, proxy):
+        set_authenticated()
         logging.debug("fakepiano: logging in")
         if proxy:
             logging.debug("fakepiano: using proxy %s"%proxy)
