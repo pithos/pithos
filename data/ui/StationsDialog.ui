@@ -102,6 +102,15 @@
   <object class="GtkMenu" id="station_menu">
     <property name="visible">True</property>
     <child>
+      <object class="GtkImageMenuItem" id="menuitem_listen">
+        <property name="label" translatable="yes">Listen Now</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
+        <signal name="activate" handler="on_menuitem_listen"/>
+      </object>
+    </child>
+    <child>
       <object class="GtkImageMenuItem" id="menuitem_info">
         <property name="label">gtk-info</property>
         <property name="visible">True</property>

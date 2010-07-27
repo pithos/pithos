@@ -114,6 +114,14 @@ class StationsDialog(gtk.Dialog):
                 self.station_menu.popup( None, None, None, event.button, time)
             return True
             
+    def on_menuitem_listen(self, widget):
+        list_model = self.pithos.stations_combo.get_model()
+        for row in list_model:
+            if row[1] == self.selected_station().name:
+                self.pithos.stations_combo.set_active_iter(row.iter)
+                break
+        self.hide()
+        
     def on_menuitem_info(self, widget):
         webbrowser.open(self.selected_station().info_url)
         
