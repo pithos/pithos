@@ -114,6 +114,14 @@ class StationsDialog(gtk.Dialog):
                 self.station_menu.popup( None, None, None, event.button, time)
             return True
             
+    def on_menuitem_listen(self, widget):
+        sel = self.treeview.get_selection().get_selected()
+        if sel:
+            model, iter = sel
+            stationslist_iter = model.convert_iter_to_child_iter(iter)
+            self.pithos.stations_combo.set_active_iter(stationslist_iter)
+            self.hide()
+        
     def on_menuitem_info(self, widget):
         webbrowser.open(self.selected_station().info_url)
         
