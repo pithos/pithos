@@ -113,7 +113,7 @@ class PianoStation(object):
         global failmode
         failmode = (self.name == "Errors")
         maybe_fail()
-        r = [PianoSong("Test  &song %i"%count(), "Test Artist", "Album %s"%self.name, i%3-1) for i in range(4)]        
+        r = [PianoSong("Test  &song %i"%count(), "Test Artist", "The reall really really really really really long Album %s"%self.name, i%3-1) for i in range(4)]        
         time.sleep(1)
         return r
         

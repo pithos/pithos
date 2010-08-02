@@ -17,7 +17,7 @@
 
 import sys
 import os
-import gtk, gobject
+import gtk, gobject, pango
 
 # optional Launchpad integration
 # this shouldn't crash if not found as it is simply used for bug reporting
@@ -236,6 +236,7 @@ class PithosWindow(gtk.Window):
         title_col.set_cell_data_func(render_icon, bgcolor_data_func)
         
         render_text = gtk.CellRendererText()
+        render_text.props.ellipsize = pango.ELLIPSIZE_END
         title_col.pack_start(render_text, expand=True)
         title_col.add_attribute(render_text, "markup", 1)
         title_col.set_cell_data_func(render_text, bgcolor_data_func)
