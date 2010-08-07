@@ -29,6 +29,7 @@ class NotifyPlugin(PithosPlugin):
 		self.state_changed_handle = self.window.connect("user-changed-play-state", self.playstate_changed)
 		
     def set_for_song(self, song):
+        self.notification.clear_hints()
         msg = "by %s from %s"%(song.artist, song.album)
 	    self.notification.update(song.title, msg, 'audio-x-generic')
 		
