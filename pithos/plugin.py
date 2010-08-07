@@ -55,6 +55,7 @@ class ErrorPlugin(PithosPlugin):
 		self.prepared = True
 		self.error = error
 		self.name = name
+		self.enabled = False
 		
 def load_plugin(name, window):
 	try:

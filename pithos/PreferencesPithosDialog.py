@@ -19,6 +19,7 @@ import os
 import gtk
 
 from pithos.pithosconfig import getdatapath
+from pithos.scrobble import LastFmAuth
 
 try:
     from xdg.BaseDirectory import xdg_config_home
@@ -72,6 +73,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             "last_station_id":None,
             "proxy":'',
             "show_icon": False,
+            "lastfm_key": False,
         }
         
         try:
@@ -102,6 +104,8 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.builder.get_object('checkbutton_notify').set_active(self.__preferences["notify"])
         self.builder.get_object('checkbutton_icon').set_active(self.__preferences["show_icon"])
         
+        self.lastfm_auth = LastFmAuth(self.__preferences, "lastfm_key", self.builder.get_object('lastfm_btn'))
+        
     def ok(self, widget, data=None):
         """ok - The user has elected to save the changes.
         Called before the dialog returns gtk.RESONSE_OK from run().
@@ -122,6 +126,7 @@ class PreferencesPithosDialog(gtk.Dialog):
 
         #restore any changes to self.__preferences here
         pass
+            
 
 def NewPreferencesPithosDialog():
     """NewPreferencesPithosDialog - returns a fully instantiated

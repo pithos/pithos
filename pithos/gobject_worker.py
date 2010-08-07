@@ -32,12 +32,14 @@ class GObjectWorker():
             command, args, callback, errorback = self.queue.get()
             try:
                 result = command(*args)
-                gobject.idle_add(callback, result)
+                if callback:
+                    gobject.idle_add(callback, result)
             except Exception, e:
                 e.traceback = traceback.format_exc()
-                gobject.idle_add(errorback, e)
+                if errorback:
+                    gobject.idle_add(errorback, e)
                 
-    def send(self, command, args, callback, errorback=None):
+    def send(self, command, args=(), callback=None, errorback=None):
         if errorback is None: errorback = self._default_errorback
         self.queue.put((command, args, callback, errorback))
         

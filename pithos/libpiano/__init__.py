@@ -146,6 +146,7 @@ class PianoSong(object):
         self.artRadio = c_obj.artRadio
         self.tired=False
         self.message=''
+        self.start_time = None
         
     @property
     def station(self):
@@ -164,6 +165,15 @@ class PianoSong(object):
         if not self.tired:
             pianoCheck(piano.PianoSongTired(self.piano.p, self.identity))
             self.tired = True
+            
+    @property
+    def rating_str(self):
+        if self.rating == RATE_LOVE:
+            return 'love'
+        elif self.rating == RATE_BAN:
+            return 'ban'
+        else:
+            return None
         
 class PianoSongResult(object):
     resultType = "song"

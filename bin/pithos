@@ -16,7 +16,7 @@
 ### END LICENSE
 
 import sys
-import os
+import os, time
 import gtk, gobject, pango
 
 # optional Launchpad integration
@@ -56,6 +56,7 @@ pluginMap = {
     # name               #preference item
     'song_notify':       'notify',
     'notification_icon': 'show_icon',
+    'scrobble':          'lastfm_key',
 }
 
 def buttonMenu(button, menu):
@@ -117,6 +118,7 @@ class PithosWindow(gtk.Window):
     __gtype_name__ = "PithosWindow"
     __gsignals__ = {
         "song-changed": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "song-ended": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "play-state-changed": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,)),
     }
 
@@ -338,6 +340,8 @@ class PithosWindow(gtk.Window):
         
         if prev:
             self.update_song_row(prev)
+            
+        self.current_song.start_time = time.time()
         
         self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
         self.songs_treeview.set_cursor(song_index, None, 0)
@@ -374,6 +378,15 @@ class PithosWindow(gtk.Window):
         self.emit('play-state-changed', False)
         
     def stop(self):
+        prev = self.current_song
+        if prev and prev.start_time:
+            try:
+                prev.duration = self.player.query_duration(self.time_format, None)[0] / 1000000000
+                prev.position = self.player.query_position(self.time_format, None)[0] / 1000000000
+            except gst.QueryError:
+                prev.duration = prev.position = None
+            self.emit("song-ended", prev)
+        
         self.playing = False
         self.player.set_state(gst.STATE_NULL)
         self.emit('play-state-changed', False)

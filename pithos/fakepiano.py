@@ -140,6 +140,7 @@ class PianoSong(object):
         self.artRadio = 'http://i.imgur.com/H3Z8x.jpg'
         self.message = ''
         self.resultType = 'song'
+        self.start_time = None
         
     def rate(self, rating):
         time.sleep(1)
@@ -152,6 +153,15 @@ class PianoSong(object):
         maybe_fail()
         logging.debug("tired %s"%self.title)
         self.tired = True
+        
+    @property
+    def rating_str(self):
+        if self.rating == RATE_LOVE:
+            return 'love'
+        elif self.rating == RATE_BAN:
+            return 'ban'
+        else:
+            return None
         
 class PianoArtist(object):
     def __init__(self, name):
