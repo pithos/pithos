@@ -464,9 +464,9 @@ class PithosWindow(gtk.Window):
         if station is self.current_station: return
         self.waiting_for_playlist = False
         if not reconnecting:
+            self.stop()
             self.current_song_index = None
             self.songs_model.clear()
-            self.stop()
         logging.debug("Selecting station %s; total = %i" % (station.id, len(self.stations_model)))
         self.current_station_id = station.id
         self.current_station = station
@@ -478,7 +478,6 @@ class PithosWindow(gtk.Window):
     def on_message(self, bus, message):
         t = message.type
         if t == gst.MESSAGE_EOS:
-            self.stop()
             self.next_song()
         elif message.type == gst.MESSAGE_BUFFERING:
             percent = message.parse_buffering()
@@ -489,7 +488,6 @@ class PithosWindow(gtk.Window):
                 self.player.set_state(gst.STATE_PLAYING)
             self.update_song_row()
         elif t == gst.MESSAGE_ERROR:
-            self.stop()
             err, debug = message.parse_error()
             logging.error("Gstreamer error: %s, %s" % (err, debug))
             self.current_song.message = "Error: "+str(err)
@@ -655,6 +653,7 @@ class PithosWindow(gtk.Window):
 
     def on_destroy(self, widget, data=None):
         """on_destroy - called when the PithosWindow is close. """
+        self.stop()
         self.preferences['last_station_id'] = self.current_station_id
         self.prefs_dlg.save()
         gtk.main_quit()
