@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ -z "$@" ]; then
+	args="--test --verbose"
+else
+	args=$@
+fi
+
+mkdir -p debug_config
+export XDG_CONFIG_HOME="./debug_config"
+
+./bin/pithos $args
