@@ -61,7 +61,6 @@ class LastfmPlugin(PithosPlugin):
 
 
     def scrobble(self, song):
-        print (song.artist, song.title, song.start_time, song.duration, song.position, song.album)
         if song.duration > 30 and (song.position > 240 or song.position > song.duration/2):
             logging.debug("Scrobbling song")
             if song.rating_str == 'love':
