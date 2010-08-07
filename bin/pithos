@@ -120,6 +120,7 @@ class PithosWindow(gtk.Window):
         "song-changed": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "song-ended": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "play-state-changed": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,)),
+        "user-changed-play-state": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,)),
     }
 
     def __init__(self):
@@ -361,7 +362,7 @@ class PithosWindow(gtk.Window):
                 # preload next playlist so there's no delay
                 self.get_playlist()
         
-    def play(self):
+    def play(self, is_user_action=False):
         if not self.playing:
             self.playing = True
             self.player.set_state(gst.STATE_PLAYING)
@@ -369,13 +370,17 @@ class PithosWindow(gtk.Window):
         self.playpause_button.set_stock_id(gtk.STOCK_MEDIA_PAUSE)
         self.update_song_row()
         self.emit('play-state-changed', True)
+        if is_user_action:
+            self.emit('user-changed-play-state', True)
         
-    def pause(self):
+    def pause(self, is_user_action=False):
         self.playing = False
         self.player.set_state(gst.STATE_PAUSED)
         self.playpause_button.set_stock_id(gtk.STOCK_MEDIA_PLAY)
         self.update_song_row()
         self.emit('play-state-changed', False)
+        if is_user_action:
+            self.emit('user-changed-play-state', False)
         
     def stop(self):
         prev = self.current_song
@@ -393,9 +398,9 @@ class PithosWindow(gtk.Window):
         
     def playpause(self, *ignore):
         if self.playing:
-            self.pause()
+            self.pause(True)
         else:
-            self.play()
+            self.play(True)
             
     def get_playlist(self, start = False):
         self.start_new_playlist = self.start_new_playlist or start
@@ -617,7 +622,7 @@ class PithosWindow(gtk.Window):
             if i == 'Next':
                 self.next_song()
             if i == 'Stop':
-                self.pause()
+                self.pause(True)
     
     def about(self, widget, data=None):
         """about - display the about box for pithos """
