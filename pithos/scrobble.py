@@ -26,7 +26,7 @@ API_KEY = '997f635176130d5d6fe3a7387de601a8'
 API_SECRET = '3243b876f6bf880b923a3c9fb955720c'
 
 #client id, client version info: http://www.last.fm/api/submissions#1.1
-CLIENT_ID = 'tst'
+CLIENT_ID = 'pth'
 CLIENT_VERSION = '1.0'
 
 _worker = None
