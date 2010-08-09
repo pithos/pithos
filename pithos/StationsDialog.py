@@ -180,7 +180,7 @@ class StationsDialog(gtk.Dialog):
             self.worker_run("save_quick_mix",  message="Saving QuickMix...")
             self.quickmix_changed = False
         
-        logging.debug("closed dialog")
+        logging.info("closed dialog")
         return True
 
 def NewStationsDialog(pithos):

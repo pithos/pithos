@@ -51,6 +51,7 @@ from pithos.pithosconfig import getdatapath
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import load_plugins
 from pithos.dbus_service import PithosDBusProxy
+from pithos.pandora import *
 
 pluginMap = {
     # name               #preference item
@@ -135,12 +136,14 @@ class PithosWindow(gtk.Window):
         """
         pass
 
-    def finish_initializing(self, builder, pandora_class):
+    def finish_initializing(self, builder, cmdopts):
         """finish_initalizing should be called after parsing the ui definition
         and creating a PithosWindow object with it in order to finish
         initializing the start of the new PithosWindow instance.
 
         """
+        self.cmdopts = cmdopts
+        
         #get a reference to the builder and set up the signals
         self.builder = builder
         self.builder.connect_signals(self)
@@ -159,7 +162,7 @@ class PithosWindow(gtk.Window):
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         self.preferences = self.prefs_dlg.get_preferences()
         
-        self.init_core(pandora_class)
+        self.init_core()
         self.init_ui()
         
         self.plugins = {}
@@ -169,10 +172,11 @@ class PithosWindow(gtk.Window):
         
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
-                    
-        self.piano_connect()
+        
+        self.set_proxy()            
+        self.pandora_connect()
          
-    def init_core(self, pandora_class):
+    def init_core(self):
         #                                Song object            display text  icon  album art
         self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str,          str,  gtk.gdk.Pixbuf)
         #                                   Station object         station name
@@ -207,7 +211,7 @@ class PithosWindow(gtk.Window):
         self.waiting_for_playlist = False
         self.start_new_playlist = False
                 
-        self.pandora = pandora_class()
+        self.pandora = make_pandora(self.cmdopts.test)
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
 
@@ -277,27 +281,29 @@ class PithosWindow(gtk.Window):
                 if fn is not self.pandora.connect:
                     self.worker_run(fn, args, callback, message, context)
                 
-            if isinstance(e, PianoAuthTokenInvalid) and not self.retrying:
+            if isinstance(e, PandoraAuthTokenInvalid) and not self.retrying:
                 self.retrying = True
-                logging.debug("Automatic reconnect after invalid auth token")                
-                self.piano_connect("Reconnecting...", retry_cb)
-            elif isinstance(e, PianoError):
+                logging.info("Automatic reconnect after invalid auth token")                
+                self.pandora_connect("Reconnecting...", retry_cb)
+            elif isinstance(e, PandoraError):
                 self.error_dialog(e.message, retry_cb)
             else:
                 logging.warn(e.traceback)
                 
         self.worker.send(fn, args, cb, eb)
     
-    def piano_connect(self, message="Logging in...", callback=None):
+    def set_proxy(self):
+        self.worker_run('set_proxy', (self.preferences['proxy'],))
+    
+    def pandora_connect(self, message="Logging in...", callback=None):
         args = (self.preferences['username'],
-                self.preferences['password'],
-                self.preferences['proxy'])
+                self.preferences['password'])
                 
         def pandora_ready(*ignore):
             self.stations_model.clear()
             self.current_station = None
             selected = None
-            logging.debug("Pandora connected")
+            logging.info("Pandora connected")
             
             for i in self.pandora.stations:
                 if i.isQuickMix:
@@ -307,7 +313,7 @@ class PithosWindow(gtk.Window):
                 if not i.isQuickMix:
                     self.stations_model.append((i, i.name))
                 if i.id == self.current_station_id:
-                    logging.debug("Restoring saved station: id = %s"%(i.id))
+                    logging.info("Restoring saved station: id = %s"%(i.id))
                     selected = i
             if not selected:
                 selected=self.stations_model[0][0]
@@ -333,7 +339,7 @@ class PithosWindow(gtk.Window):
             self.next_song()
             return
         
-        logging.debug("Starting song: index = %i"%(song_index))
+        logging.info("Starting song: index = %i"%(song_index))
         self.buffer_percent = 100
         self.player.set_property("uri", self.current_song.audioUrl)
         self.play()
@@ -415,7 +421,7 @@ class PithosWindow(gtk.Window):
         def art_callback(t):
             pixbuf, song, index = t
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
-                logging.debug("Downloaded album art for %i"%song.index)
+                logging.info("Downloaded album art for %i"%song.index)
                 song.art_pixbuf = pixbuf
                 self.songs_model[index][3]=pixbuf
                 self.update_song_row(song)
@@ -456,7 +462,7 @@ class PithosWindow(gtk.Window):
         elif response == 2:
             self.retrying = True
             self.gstreamer_errorcount_2 = 0
-            logging.debug("Manual retry")
+            logging.info("Manual retry")
             return retry_cb()
         elif response == 3:
             self.retrying = False
@@ -472,7 +478,7 @@ class PithosWindow(gtk.Window):
             self.stop()
             self.current_song_index = None
             self.songs_model.clear()
-        logging.debug("Selecting station %s; total = %i" % (station.id, len(self.stations_model)))
+        logging.info("Selecting station %s; total = %i" % (station.id, len(self.stations_model)))
         self.current_station_id = station.id
         self.current_station = station
         if not reconnecting:
@@ -585,6 +591,14 @@ class PithosWindow(gtk.Window):
         self.worker_run(song.set_tired, (), callback, "Putting song on shelf...")
         if song is self.current_song:
             self.next_song()
+            
+    def bookmark_song(self, song=None):
+        song = song or self.current_song
+        self.worker_run(song.bookmark, (), None, "Bookmarking...")
+        
+    def bookmark_song_artist(self, song=None):
+        song = song or self.current_song
+        self.worker_run(song.bookmark_artist, (), None, "Bookmarking...")
     
     def on_menuitem_love(self, widget):
         self.love_song(self.selected_song())
@@ -598,6 +612,12 @@ class PithosWindow(gtk.Window):
     def on_menuitem_info(self, widget):
         song = self.selected_song()
         webbrowser.open(song.songDetailURL)
+        
+    def on_menuitem_bookmark_song(self, widget):
+        self.bookmark_song(self.selected_song())
+        
+    def on_menuitem_bookmark_artist(self, widget):
+        self.bookmark_song_artist(self.selected_song())
         
     def on_treeview_button_press_event(self, treeview, event):
         if event.button == 3:
@@ -639,10 +659,11 @@ class PithosWindow(gtk.Window):
         if response == gtk.RESPONSE_OK:
             self.preferences = self.prefs_dlg.get_preferences()
             if not is_startup:
-                if (self.preferences['username'] != old_prefs['username']
-                    or self.preferences['password'] != old_prefs['password']
-                    or self.preferences['proxy']    != old_prefs['proxy']):
-                        self.piano_connect()
+                if self.preferences['proxy'] != old_prefs['proxy']:
+                    self.set_proxy()
+                if (   self.preferences['username'] != old_prefs['username']
+                    or self.preferences['password'] != old_prefs['password']):
+                        self.pandora_connect()
             load_plugins(self, pluginMap)
                     
     def stations_dialog(self, *ignore):
@@ -663,7 +684,7 @@ class PithosWindow(gtk.Window):
         self.prefs_dlg.save()
         gtk.main_quit()
 
-def NewPithosWindow(pandora_class):
+def NewPithosWindow(options):
     """NewPithosWindow - returns a fully instantiated
     PithosWindow object. Use this function rather than
     creating a PithosWindow directly.
@@ -677,7 +698,7 @@ def NewPithosWindow(pandora_class):
     builder = gtk.Builder()
     builder.add_from_file(ui_filename)
     window = builder.get_object("pithos_window")
-    window.finish_initializing(builder, pandora_class)
+    window.finish_initializing(builder, options)
     return window
 
 if __name__ == "__main__":
@@ -691,15 +712,10 @@ if __name__ == "__main__":
     #set the logging level to show debug messages
     if options.verbose:
         logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s")
-        logging.debug('logging enabled')
+        logging.info('logging enabled')
         
-    if options.test:
-        from pithos.fakepiano import *
-    else:
-        from pithos.libpiano import *
-
     #run the application
-    window = NewPithosWindow(PianoPandora)
+    window = NewPithosWindow(options)
     window.show()
     gtk.main()
 
