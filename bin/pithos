@@ -279,7 +279,7 @@ class PithosWindow(gtk.Window):
                 
             if isinstance(e, PianoAuthTokenInvalid) and not self.retrying:
                 self.retrying = True
-                logging.debug("Automatic reconnect after invalid auth token")                
+                logging.info("Automatic reconnect after invalid auth token")                
                 self.piano_connect("Reconnecting...", retry_cb)
             elif isinstance(e, PianoError):
                 self.error_dialog(e.message, retry_cb)
@@ -297,7 +297,7 @@ class PithosWindow(gtk.Window):
             self.stations_model.clear()
             self.current_station = None
             selected = None
-            logging.debug("Pandora connected")
+            logging.info("Pandora connected")
             
             for i in self.pandora.stations:
                 if i.isQuickMix:
@@ -307,7 +307,7 @@ class PithosWindow(gtk.Window):
                 if not i.isQuickMix:
                     self.stations_model.append((i, i.name))
                 if i.id == self.current_station_id:
-                    logging.debug("Restoring saved station: id = %s"%(i.id))
+                    logging.info("Restoring saved station: id = %s"%(i.id))
                     selected = i
             if not selected:
                 selected=self.stations_model[0][0]
@@ -333,7 +333,7 @@ class PithosWindow(gtk.Window):
             self.next_song()
             return
         
-        logging.debug("Starting song: index = %i"%(song_index))
+        logging.info("Starting song: index = %i"%(song_index))
         self.buffer_percent = 100
         self.player.set_property("uri", self.current_song.audioUrl)
         self.play()
@@ -415,7 +415,7 @@ class PithosWindow(gtk.Window):
         def art_callback(t):
             pixbuf, song, index = t
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
-                logging.debug("Downloaded album art for %i"%song.index)
+                logging.info("Downloaded album art for %i"%song.index)
                 song.art_pixbuf = pixbuf
                 self.songs_model[index][3]=pixbuf
                 self.update_song_row(song)
@@ -456,7 +456,7 @@ class PithosWindow(gtk.Window):
         elif response == 2:
             self.retrying = True
             self.gstreamer_errorcount_2 = 0
-            logging.debug("Manual retry")
+            logging.info("Manual retry")
             return retry_cb()
         elif response == 3:
             self.retrying = False
@@ -472,7 +472,7 @@ class PithosWindow(gtk.Window):
             self.stop()
             self.current_song_index = None
             self.songs_model.clear()
-        logging.debug("Selecting station %s; total = %i" % (station.id, len(self.stations_model)))
+        logging.info("Selecting station %s; total = %i" % (station.id, len(self.stations_model)))
         self.current_station_id = station.id
         self.current_station = station
         if not reconnecting:
@@ -691,7 +691,7 @@ if __name__ == "__main__":
     #set the logging level to show debug messages
     if options.verbose:
         logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s")
-        logging.debug('logging enabled')
+        logging.info('logging enabled')
         
     if options.test:
         from pithos.fakepiano import *

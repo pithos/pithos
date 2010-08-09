@@ -62,7 +62,7 @@ class LastfmPlugin(PithosPlugin):
 
     def scrobble(self, song):
         if song.duration > 30 and (song.position > 240 or song.position > song.duration/2):
-            logging.debug("Scrobbling song")
+            logging.info("Scrobbling song")
             if song.rating_str == 'love':
                 mode = pylast.SCROBBLE_MODE_LOVED
             else:

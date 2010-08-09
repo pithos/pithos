@@ -42,10 +42,10 @@ window.show_all()
     
 def maybe_fail():
     if time_check.get_active():
-        logging.debug("fakepiano: Going to sleep for 10s")
+        logging.info("fakepiano: Going to sleep for 10s")
         time.sleep(10)
     if not auth_check.get_active():
-        logging.debug("fakepiano: We're deauthenticated...")
+        logging.info("fakepiano: We're deauthenticated...")
         raise PianoAuthTokenInvalid(123, "Auth token invalid")
 
 def set_authenticated():
@@ -73,18 +73,18 @@ class PianoPandora(object):
         
     def connect(self, user, password, proxy):
         set_authenticated()
-        logging.debug("fakepiano: logging in")
+        logging.info("fakepiano: logging in")
         if proxy:
-            logging.debug("fakepiano: using proxy %s"%proxy)
+            logging.info("fakepiano: using proxy %s"%proxy)
         time.sleep(1)    
         
     def save_quick_mix(self):
         time.sleep(1)
-        logging.debug("fakepiano: Saving QuickMix")
+        logging.info("fakepiano: Saving QuickMix")
         
     def search(self, query):
         time.sleep(1)
-        logging.debug("fakepiano: search")
+        logging.info("fakepiano: search")
         return [
             PianoArtist("Test Artist"),
             PianoArtist("Another Result"),
@@ -94,7 +94,7 @@ class PianoPandora(object):
          
     def add_station_by_music_id(self, musicid):
         time.sleep(1)
-        logging.debug("fakepiano: add station by music id %s"%musicid)
+        logging.info("fakepiano: add station by music id %s"%musicid)
         return PianoStation(musicid)
         
         
@@ -119,11 +119,11 @@ class PianoStation(object):
         
     def rename(self, new_name):
         self.name = new_name
-        logging.debug("fakepiano: Rename station")
+        logging.info("fakepiano: Rename station")
         time.sleep(1)
         
     def delete(self):
-        logging.debug("fakepiano: Delete station")
+        logging.info("fakepiano: Delete station")
         time.sleep(1)
 
         
@@ -145,13 +145,13 @@ class PianoSong(object):
     def rate(self, rating):
         time.sleep(1)
         maybe_fail()
-        logging.debug("rating song %s %s"%(self.title, rating))
+        logging.info("rating song %s %s"%(self.title, rating))
         self.rating = rating
             
     def set_tired(self):
         time.sleep(1)
         maybe_fail()
-        logging.debug("tired %s"%self.title)
+        logging.info("tired %s"%self.title)
         self.tired = True
         
     @property

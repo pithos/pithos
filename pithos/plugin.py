@@ -30,13 +30,13 @@ class PithosPlugin(object):
 			self.error = self.on_prepare()
 			self.prepared = True
 		if not self.error and not self.enabled:
-		    logging.debug("Enabling module %s"%(self.name))
+		    logging.info("Enabling module %s"%(self.name))
 			self.on_enable()
 			self.enabled = True
 			
 	def disable(self):
 		if self.enabled:
-		    logging.debug("Disabling module %s"%(self.name))
+		    logging.info("Disabling module %s"%(self.name))
 			self.on_disable()
 			self.enabled = False
 		

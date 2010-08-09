@@ -106,7 +106,10 @@ class PianoPandora(object):
         fault = tree.findtext('fault/value/struct/member/value')
         if fault:
             code, msg = fault.split('|')[2:]
-            raise PianoError(code, msg)
+            if code == 'AUTH_INVALID_TOKEN':
+                raise PianoAuthTokenInvalid(msg)
+            else:
+                raise PianoError(code, msg)
         else:
             return xmlrpc_parse(tree)
             
@@ -186,12 +189,12 @@ class Station(object):
     
     def transformIfShared(self):
         if not self.isCreator:
-            logging.debug("libpiano: transforming station")
+            logging.info("libpiano: transforming station")
             self.pandora.xmlrpc_call('station.transformShared', [self.id])
             self.isCreator = True
             
     def get_playlist(self):
-        logging.debug("libpiano: Get Playlist")
+        logging.info("libpiano: Get Playlist")
         playlist = self.pandora.xmlrpc_call('playlist.getFragment', [self.id, '0', '', '', AUDIO_FORMAT, '0', '0'])
         return [Song(self.pandora, i) for i in playlist]
         
@@ -202,12 +205,12 @@ class Station(object):
         
     def rename(self, new_name):
         if new_name != self.name:
-            logging.debug("libpiano: Renaming station")
+            logging.info("libpiano: Renaming station")
             self.pandora.xmlrpc_call('station.setStationName', [self.id, new_name])
             self.name = new_name
         
     def delete(self):
-        logging.debug("libpiano: Deleting Station")
+        logging.info("libpiano: Deleting Station")
         self.pandora.xmlrpc_call('station.removeStation', [self.id])
         
 class Song(object):
