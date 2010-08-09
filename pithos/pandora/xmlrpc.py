@@ -14,7 +14,7 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from urllib import escape
+from cgi import escape
 
 def xmlrpc_value(v):
     if isinstance(v, str):
@@ -26,7 +26,7 @@ def xmlrpc_value(v):
     elif isinstance(v, int):
         return "<value><int>%i</int></value>"%v
     elif isinstance(v, list):
-        return "<value><array><data>%s</data></value></array>"%("".join([xmlrpc_value(i) for i in v]))
+        return "<value><array><data>%s</data></array></value>"%("".join([xmlrpc_value(i) for i in v]))
     else:
         raise ValueError("Can't encode %s of type %s to XMLRPC"%(v, type(v)))
 

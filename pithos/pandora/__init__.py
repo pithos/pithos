@@ -62,14 +62,16 @@ def format_url_arg(v):
     elif isinstance(v, list):
         return "%2C".join(v)
     else:
-        return urllib.quote(v)
+        return urllib.quote(str(v))
 
 class PianoPandora(object):
     def __init__(self):
         self.rid = self.listenerId = self.authToken = None
         self.proxy = None
         
-    def xmlrpc_call(self, method, args=[], url_args=[]):
+    def xmlrpc_call(self, method, args=[], url_args=True):
+        if url_args is True:
+            url_args = args
         args.insert(0, int(time.time()))
         if self.authToken:
             args.insert(1, self.authToken)
@@ -117,7 +119,7 @@ class PianoPandora(object):
         else:
             self.opener = urllib2.build_opener()
             
-        user = self.xmlrpc_call('listener.authenticateListener', [user, password])
+        user = self.xmlrpc_call('listener.authenticateListener', [user, password], [])
         
         self.webAuthToken = user['webAuthToken']
         self.listenerId = user['listenerId']
@@ -137,21 +139,21 @@ class PianoPandora(object):
         for i in self.stations:
             if i.useQuickMix:
                 stationIds.append(i.id)
-        args = ['RANDOM', stationIds]
-        self.xmlrpc_call('station.setQuickMix', args, args)
+        self.xmlrpc_call('station.setQuickMix', ['RANDOM', stationIds])
                 
         
     def search(self, query):
-         args = [query]
-         results = self.xmlrpc_call('music.search', args, args)
-         ## TODO parse results
-         print results
-         notImplemented()
+         results = self.xmlrpc_call('music.search', [query])
+         
+         l =  [SearchResult('artist', i) for i in results['artists']]
+         l += [SearchResult('song',   i) for i in results['songs']]
+         l.sort(key=lambda i: i.score, reverse=True)
+         
+         return l
          
     def create_station(self, reqType, id):
         assert(reqType == 'mi' or requestType == 'sh') # music id or shared station id
-        args = [reqType+id]
-        d = self.xmlrpc_call('station.createStation', args, args)
+        d = self.xmlrpc_call('station.createStation', [reqType+id])
         station = Station(self, d)
         self.stations.append(d)
         return station
@@ -164,8 +166,7 @@ class PianoPandora(object):
             logging.error("Can't set rating to none")
             return
         rating_bool = True if rating == RATE_LOVE else False
-        args = [stationId, musicId, userSeed, testStrategy, rating_bool, False, songType]
-        self.xmlrpc_call('station.addFeedback', args, args)
+        self.xmlrpc_call('station.addFeedback', [stationId, musicId, userSeed, testStrategy, rating_bool, False, songType])
 
         
 class Station(object):
@@ -186,14 +187,12 @@ class Station(object):
     def transformIfShared(self):
         if not self.isCreator:
             logging.debug("libpiano: transforming station")
-            args = [self.id]
-            self.pandora.xmlrpc_call('station.transformShared', args, args)
+            self.pandora.xmlrpc_call('station.transformShared', [self.id])
             self.isCreator = True
             
     def get_playlist(self):
         logging.debug("libpiano: Get Playlist")
-        args = [self.id, '0', '', '', AUDIO_FORMAT, '0', '0']
-        playlist = self.pandora.xmlrpc_call('playlist.getFragment', args, args)
+        playlist = self.pandora.xmlrpc_call('playlist.getFragment', [self.id, '0', '', '', AUDIO_FORMAT, '0', '0'])
         return [Song(self.pandora, i) for i in playlist]
         
             
@@ -204,14 +203,12 @@ class Station(object):
     def rename(self, new_name):
         if new_name != self.name:
             logging.debug("libpiano: Renaming station")
-            args = [self.id, new_name]
-            self.pandora.xmlrpc_call('station.setStationName', args, args)
+            self.pandora.xmlrpc_call('station.setStationName', [self.id, new_name])
             self.name = new_name
         
     def delete(self):
         logging.debug("libpiano: Deleting Station")
-        args = [self.id]
-        self.pandora.xmlrpc_call('station.removeStation', args, args)
+        self.pandora.xmlrpc_call('station.removeStation', [self.id])
         
 class Song(object):
     def __init__(self, pandora, d):
@@ -248,25 +245,23 @@ class Song(object):
         
     def set_tired(self):
         if not self.tired:
-            args = [self.identity]
-            self.pandora.xmlrpc_call('listener.addTiredSong', args, args)
+            self.pandora.xmlrpc_call('listener.addTiredSong', [self.identity])
             self.tired = True
             
     @property
     def rating_str(self):
         return self.rating
         
-class PianoSongResult(object):
-    resultType = "song"
-    def __init__(self, c_obj):
-        self.title = c_obj.title
-        self.musicId = c_obj.musicId
-        self.artist = c_obj.artist
+class SearchResult(object):
+    def __init__(self, resultType, d):
+        self.resultType = resultType
+        self.score = d['score']
+        self.musicId = d['musicId']
+        
+        if resultType == 'song':
+            self.title = d['songTitle']
+            self.artist = d['artistSummary']
+        elif resultType == 'artist':
+            self.name = d['artistName']
         
         
-class PianoArtistResult(object):
-    resultType = "artist"
-    def __init__(self, c_obj):
-        self.name = c_obj.name
-        self.musicId = c_obj.musicId
-        self.score = c_obj.score
