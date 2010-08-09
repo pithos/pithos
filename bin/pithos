@@ -696,7 +696,7 @@ if __name__ == "__main__":
     if options.test:
         from pithos.fakepiano import *
     else:
-        from pithos.libpiano import *
+        from pithos.pandora import *
 
     #run the application
     window = NewPithosWindow(PianoPandora)
