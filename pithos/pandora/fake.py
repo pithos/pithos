@@ -72,7 +72,7 @@ class FakePandora(Pandora):
                 {'stationId':'343', 'stationIdToken':'345435', 'isCreator':True, 'isQuickMix':False, 'stationName':"Test Station 3"},   
             ]
         elif method == 'playlist.getFragment':
-            return [self.makeFakeSong() for i in range(4)]
+            return [self.makeFakeSong(args) for i in range(4)]
         elif method == 'music.search':
             return {'artists': [
                         {'score':90, 'musicId':'988', 'artistName':"artistName"},
@@ -96,7 +96,7 @@ class FakePandora(Pandora):
         else:
             logging.error("Invalid method %s" % method)
             
-    def makeFakeSong(self):
+    def makeFakeSong(self, args):
         c = self.count()
         return {
             'albumTitle':"AlbumName",
@@ -107,7 +107,7 @@ class FakePandora(Pandora):
             'identity':'5908540384',
             'musicId':'4543',
             'rating': 1 if c%3 == 0 else 0,
-            'stationId': '54534',
+            'stationId': args[0],
             'songTitle': 'Test song %i'%c,
             'userSeed': '54543',
             'songDetailURL': 'http://kevinmehall.net/p/pithos/',

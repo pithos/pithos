@@ -167,6 +167,7 @@ class Pandora(object):
          return self.create_station('mi', musicid)
          
     def add_feedback(self, stationId, musicId, rating, userSeed='', testStrategy='', songType=''):
+        self.info("pandora: addFeedback")
         if rating == RATE_NONE:
             logging.error("Can't set rating to none")
             return
