@@ -170,7 +170,7 @@ class PithosWindow(gtk.Window):
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
                     
-        self.piano_connect()
+        self.pandora_connect()
          
     def init_core(self, pandora_class):
         #                                Song object            display text  icon  album art
@@ -277,18 +277,18 @@ class PithosWindow(gtk.Window):
                 if fn is not self.pandora.connect:
                     self.worker_run(fn, args, callback, message, context)
                 
-            if isinstance(e, PianoAuthTokenInvalid) and not self.retrying:
+            if isinstance(e, PandoraAuthTokenInvalid) and not self.retrying:
                 self.retrying = True
                 logging.info("Automatic reconnect after invalid auth token")                
-                self.piano_connect("Reconnecting...", retry_cb)
-            elif isinstance(e, PianoError):
+                self.pandora_connect("Reconnecting...", retry_cb)
+            elif isinstance(e, PandoraError):
                 self.error_dialog(e.message, retry_cb)
             else:
                 logging.warn(e.traceback)
                 
         self.worker.send(fn, args, cb, eb)
     
-    def piano_connect(self, message="Logging in...", callback=None):
+    def pandora_connect(self, message="Logging in...", callback=None):
         args = (self.preferences['username'],
                 self.preferences['password'],
                 self.preferences['proxy'])
@@ -642,7 +642,7 @@ class PithosWindow(gtk.Window):
                 if (self.preferences['username'] != old_prefs['username']
                     or self.preferences['password'] != old_prefs['password']
                     or self.preferences['proxy']    != old_prefs['proxy']):
-                        self.piano_connect()
+                        self.pandora_connect()
             load_plugins(self, pluginMap)
                     
     def stations_dialog(self, *ignore):
@@ -699,7 +699,7 @@ if __name__ == "__main__":
         from pithos.pandora import *
 
     #run the application
-    window = NewPithosWindow(PianoPandora)
+    window = NewPithosWindow(Pandora)
     window.show()
     gtk.main()
 

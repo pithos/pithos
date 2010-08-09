@@ -17,8 +17,8 @@
 import time
 import logging
 
-RATE_BAN = 0
-RATE_LOVE = 1
+RATE_BAN = 'ban'
+RATE_LOVE = 'love'
 
 counter = 0
 def count():
@@ -46,28 +46,27 @@ def maybe_fail():
         time.sleep(10)
     if not auth_check.get_active():
         logging.info("fakepiano: We're deauthenticated...")
-        raise PianoAuthTokenInvalid(123, "Auth token invalid")
+        raise PandoraAuthTokenInvalid(123, "Auth token invalid")
 
 def set_authenticated():
     auth_check.set_active(True)
 
 
-class PianoError(IOError):
+class PandoraError(IOError):
     def __init__(self, status, message):
         self.status = status
         self.message = message
         
-class PianoAuthTokenInvalid(PianoError): pass
-class PianoUserPasswordInvalid(PianoError): pass
+class PandoraAuthTokenInvalid(PandoraError): pass
 
-class PianoPandora(object):
+class Pandora(object):
     def __init__(self):
         self.stations = [
-            PianoStation("Fake 1"),
-            PianoStation("Fake 2"),
-            PianoStation("Fake 3"),
-            PianoStation("Errors"),
-            PianoStation("QuickMix", 1),
+            Station("Fake 1"),
+            Station("Fake 2"),
+            Station("Fake 3"),
+            Station("Errors"),
+            Station("QuickMix", 1),
         ]
         self.test_failing = False
         
@@ -86,19 +85,21 @@ class PianoPandora(object):
         time.sleep(1)
         logging.info("fakepiano: search")
         return [
-            PianoArtist("Test Artist"),
-            PianoArtist("Another Result"),
-            PianoSong("Test Song", "Song Artist", '', None),
-            PianoSong(query, "Songwriter", '', None),
+            Artist("Test Artist"),
+            Artist("Another Result"),
+            Song("Test Song", "Song Artist", '', None),
+            Song(query, "Songwriter", '', None),
          ]
          
     def add_station_by_music_id(self, musicid):
         time.sleep(1)
         logging.info("fakepiano: add station by music id %s"%musicid)
-        return PianoStation(musicid)
+        s = Station(musicid)
+        self.stations.append(s)
+        return s
         
         
-class PianoStation(object):
+class Station(object):
     def __init__(self, name, qm=False):
         self.id = str(hash(name))
         self.isCreator = True
@@ -113,7 +114,7 @@ class PianoStation(object):
         global failmode
         failmode = (self.name == "Errors")
         maybe_fail()
-        r = [PianoSong("Test  &song %i"%count(), "Test Artist", "The reall really really really really really long Album %s"%self.name, i%3-1) for i in range(4)]        
+        r = [Song("Test  &song %i"%count(), "Test Artist", "The really really really really really really long Album %s"%self.name, i%3-1) for i in range(4)]        
         time.sleep(1)
         return r
         
@@ -127,7 +128,7 @@ class PianoStation(object):
         time.sleep(1)
 
         
-class PianoSong(object):
+class Song(object):
     def __init__(self, title, artist, album, rating):
         self.musicId=id(self)
         self.album = album
@@ -156,14 +157,9 @@ class PianoSong(object):
         
     @property
     def rating_str(self):
-        if self.rating == RATE_LOVE:
-            return 'love'
-        elif self.rating == RATE_BAN:
-            return 'ban'
-        else:
-            return None
+        return self.rating
         
-class PianoArtist(object):
+class Artist(object):
     def __init__(self, name):
         self.name = name
         self.musicId = id(self)

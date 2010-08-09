@@ -31,12 +31,12 @@ RATE_BAN = 'ban'
 RATE_LOVE = 'love'
 RATE_NONE = None
 
-class PianoError(IOError):
+class PandoraError(IOError):
     def __init__(self, status, message):
         self.status = status
         self.message = message
         
-class PianoAuthTokenInvalid(PianoError): pass
+class PandoraAuthTokenInvalid(PandoraError): pass
 
 import pandora_keys
 
@@ -64,7 +64,7 @@ def format_url_arg(v):
     else:
         return urllib.quote(str(v))
 
-class PianoPandora(object):
+class Pandora(object):
     def __init__(self):
         self.rid = self.listenerId = self.authToken = None
         self.proxy = None
@@ -107,9 +107,9 @@ class PianoPandora(object):
         if fault:
             code, msg = fault.split('|')[2:]
             if code == 'AUTH_INVALID_TOKEN':
-                raise PianoAuthTokenInvalid(msg)
+                raise PandoraAuthTokenInvalid(msg)
             else:
-                raise PianoError(code, msg)
+                raise PandoraError(code, msg)
         else:
             return xmlrpc_parse(tree)
             
@@ -170,6 +170,11 @@ class PianoPandora(object):
             return
         rating_bool = True if rating == RATE_LOVE else False
         self.xmlrpc_call('station.addFeedback', [stationId, musicId, userSeed, testStrategy, rating_bool, False, songType])
+        
+    def get_station_by_id(self, id):
+        for i in self.stations:
+            if i.id == id:
+                return i
 
         
 class Station(object):
@@ -185,32 +190,30 @@ class Station(object):
         
         if self.isQuickMix:
             self.pandora.quickMixStationIds = d['quickMixStationIds']
-        
-    
+         
     def transformIfShared(self):
         if not self.isCreator:
-            logging.info("libpiano: transforming station")
+            logging.info("pandora: transforming station")
             self.pandora.xmlrpc_call('station.transformShared', [self.id])
             self.isCreator = True
             
     def get_playlist(self):
-        logging.info("libpiano: Get Playlist")
+        logging.info("pandora: Get Playlist")
         playlist = self.pandora.xmlrpc_call('playlist.getFragment', [self.id, '0', '', '', AUDIO_FORMAT, '0', '0'])
         return [Song(self.pandora, i) for i in playlist]
-        
-            
+                  
     @property
     def info_url(self):
         return 'http://www.pandora.com/stations/'+self.idToken
         
     def rename(self, new_name):
         if new_name != self.name:
-            logging.info("libpiano: Renaming station")
+            logging.info("pandora: Renaming station")
             self.pandora.xmlrpc_call('station.setStationName', [self.id, new_name])
             self.name = new_name
         
     def delete(self):
-        logging.info("libpiano: Deleting Station")
+        logging.info("pandora: Deleting Station")
         self.pandora.xmlrpc_call('station.removeStation', [self.id])
         
 class Song(object):
@@ -238,7 +241,7 @@ class Song(object):
         
     @property
     def station(self):
-        return self.piano.stations_dict[self.stationId]
+        return self.pandora.get_station_by_id(self.stationId)
     
     def rate(self, rating):
         if self.rating != rating:
