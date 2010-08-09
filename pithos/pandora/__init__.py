@@ -17,8 +17,8 @@
 from .pandora import *
 
 def make_pandora(testing=False):
-	if testing:
-		from .fake import *
-		return FakePandora()
-	else:
-		return Pandora()
+    if testing:
+        from .fake import *
+        return FakePandora()
+    else:
+        return Pandora()

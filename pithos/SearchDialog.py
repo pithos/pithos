@@ -62,34 +62,34 @@ class SearchDialog(gtk.Dialog):
         pass
         
     def search_clicked(self, widget):
-    	self.search(self.entry.get_text())
-    	
+        self.search(self.entry.get_text())
+        
     def search(self, query):
-    	if not query: return
-    	def callback(results):
-    		self.model.clear()
-    		for i in results:
-    			if i.resultType is 'song':
-    				mk = "<b>%s</b> by %s"%(cgi.escape(i.title), cgi.escape(i.artist))
-    			elif i.resultType is 'artist':
-    				mk = "<b>%s</b> (artist)"%(cgi.escape(i.name))
-    			self.model.append((i, mk))
-    		self.treeview.show()
-    		self.searchbtn.set_sensitive(True)
-    		self.searchbtn.set_label("Search")
-    	self.worker_run('search', (query,), callback, "Searching...")
-    	self.searchbtn.set_sensitive(False)
-    	self.searchbtn.set_label("Searching...")
-    	
+        if not query: return
+        def callback(results):
+            self.model.clear()
+            for i in results:
+                if i.resultType is 'song':
+                    mk = "<b>%s</b> by %s"%(cgi.escape(i.title), cgi.escape(i.artist))
+                elif i.resultType is 'artist':
+                    mk = "<b>%s</b> (artist)"%(cgi.escape(i.name))
+                self.model.append((i, mk))
+            self.treeview.show()
+            self.searchbtn.set_sensitive(True)
+            self.searchbtn.set_label("Search")
+        self.worker_run('search', (query,), callback, "Searching...")
+        self.searchbtn.set_sensitive(False)
+        self.searchbtn.set_label("Searching...")
+        
     def get_selected(self):
-    	sel = self.treeview.get_selection().get_selected()
+        sel = self.treeview.get_selection().get_selected()
         if sel:
             return self.treeview.get_model().get_value(sel[1], 0)
             
     def cursor_changed(self, *ignore):
-    	self.result = self.get_selected()
+        self.result = self.get_selected()
         self.okbtn.set_sensitive(not not self.result)
-    	
+        
 
 def NewSearchDialog(worker_run):
     """NewSearchDialog - returns a fully instantiated
