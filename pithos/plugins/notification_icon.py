@@ -26,7 +26,9 @@ try:
 except:
     indicator_capable = False
 
-class PithosNotificationIcon(PithosPlugin):            
+class PithosNotificationIcon(PithosPlugin):    
+    preference = 'show_icon'
+            
     def on_prepare(self):
         if indicator_capable:
             self.ind = appindicator.Indicator("pithos", \

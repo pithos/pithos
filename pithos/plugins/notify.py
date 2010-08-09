@@ -20,6 +20,8 @@ from pithos.plugin import PithosPlugin
 from pithos.pithosconfig import get_data_file
 
 class NotifyPlugin(PithosPlugin):
+    preference = 'notify'
+    
     def on_prepare(self):
         pynotify.init('pithos')
         self.notification = pynotify.Notification("Pithos","Pithos")

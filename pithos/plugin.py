@@ -16,9 +16,12 @@
 ### END LICENSE
 
 import logging
+import glob
+import os
 
 class PithosPlugin(object):
     _PITHOS_PLUGIN = True # used to find the plugin class in a module
+    preference = None
     def __init__(self, name, window):
         self.name = name
         self.window = window
@@ -75,16 +78,20 @@ def load_plugin(name, window):
         
     return plugin_class(name, window)
 
-def load_plugins(window, definedPlugins):
+def load_plugins(window):
     plugins = window.plugins
     prefs = window.preferences
-    for name in definedPlugins:
+    
+    plugins_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
+    discovered_plugins = [ fname.replace(".py", "") for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("__") ]
+    
+    for name in discovered_plugins:
         if not name in plugins:
             plugin = plugins[name] = load_plugin(name, window)
         else:
             plugin = plugins[name]
 
-        if prefs[definedPlugins[name]]:
+        if plugin.preference and prefs.get(plugin.preference, False):
             plugin.enable()
         else:
             plugin.disable()
