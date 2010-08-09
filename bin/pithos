@@ -51,6 +51,7 @@ from pithos.pithosconfig import getdatapath
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import load_plugins
 from pithos.dbus_service import PithosDBusProxy
+from pithos.pandora import *
 
 pluginMap = {
     # name               #preference item
@@ -135,12 +136,14 @@ class PithosWindow(gtk.Window):
         """
         pass
 
-    def finish_initializing(self, builder, pandora_class):
+    def finish_initializing(self, builder, cmdopts):
         """finish_initalizing should be called after parsing the ui definition
         and creating a PithosWindow object with it in order to finish
         initializing the start of the new PithosWindow instance.
 
         """
+        self.cmdopts = cmdopts
+        
         #get a reference to the builder and set up the signals
         self.builder = builder
         self.builder.connect_signals(self)
@@ -159,7 +162,7 @@ class PithosWindow(gtk.Window):
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         self.preferences = self.prefs_dlg.get_preferences()
         
-        self.init_core(pandora_class)
+        self.init_core()
         self.init_ui()
         
         self.plugins = {}
@@ -173,7 +176,7 @@ class PithosWindow(gtk.Window):
         self.set_proxy()            
         self.pandora_connect()
          
-    def init_core(self, pandora_class):
+    def init_core(self):
         #                                Song object            display text  icon  album art
         self.songs_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str,          str,  gtk.gdk.Pixbuf)
         #                                   Station object         station name
@@ -208,7 +211,7 @@ class PithosWindow(gtk.Window):
         self.waiting_for_playlist = False
         self.start_new_playlist = False
                 
-        self.pandora = pandora_class()
+        self.pandora = make_pandora(self.cmdopts.test)
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
 
@@ -681,7 +684,7 @@ class PithosWindow(gtk.Window):
         self.prefs_dlg.save()
         gtk.main_quit()
 
-def NewPithosWindow(pandora_class):
+def NewPithosWindow(options):
     """NewPithosWindow - returns a fully instantiated
     PithosWindow object. Use this function rather than
     creating a PithosWindow directly.
@@ -695,7 +698,7 @@ def NewPithosWindow(pandora_class):
     builder = gtk.Builder()
     builder.add_from_file(ui_filename)
     window = builder.get_object("pithos_window")
-    window.finish_initializing(builder, pandora_class)
+    window.finish_initializing(builder, options)
     return window
 
 if __name__ == "__main__":
@@ -711,13 +714,8 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s")
         logging.info('logging enabled')
         
-    if options.test:
-        from pithos.fakepiano import *
-    else:
-        from pithos.pandora import *
-
     #run the application
-    window = NewPithosWindow(Pandora)
+    window = NewPithosWindow(options)
     window.show()
     gtk.main()
 
