@@ -14,11 +14,19 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
+from urllib import escape
+
 def xmlrpc_value(v):
     if isinstance(v, str):
-        return "<value><string>%s</string></value>"%v
+        return "<value><string>%s</string></value>"%escape(v)
+    elif v is True:
+        return "<value><boolean>1</boolean></value>"
+    elif v is False:
+        return "<value><boolean>0</boolean></value>"
     elif isinstance(v, int):
         return "<value><int>%i</int></value>"%v
+    elif isinstance(v, list):
+        return "<value><array><data>%s</data></value></array>"%("".join([xmlrpc_value(i) for i in v]))
     else:
         raise ValueError("Can't encode %s of type %s to XMLRPC"%(v, type(v)))
 

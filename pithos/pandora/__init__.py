@@ -15,7 +15,7 @@
 ### END LICENSE
 import logging
 import time
-import urllib2
+import urllib2, urllib
 import xml.etree.ElementTree as etree
 
 from xmlrpc import *
@@ -29,6 +29,7 @@ AUDIO_FORMAT = 'aacplus'
 
 RATE_BAN = 'ban'
 RATE_LOVE = 'love'
+RATE_NONE = None
 
 class PianoError(IOError):
     def __init__(self, status, message):
@@ -53,6 +54,16 @@ def pandora_decrypt(s):
 	return "".join([blowfish_decode.decrypt(pad(s[i:i+16].decode('hex'), 8)) for i in xrange(0, len(s), 16)]).rstrip('\x08')
 
 
+def format_url_arg(v):
+    if v is True:
+        return 'true'
+    elif v is False:
+        return 'false'
+    elif isinstance(v, list):
+        return "%2C".join(v)
+    else:
+        return urllib.quote(v)
+
 class PianoPandora(object):
     def __init__(self):
         self.rid = self.listenerId = self.authToken = None
@@ -75,7 +86,7 @@ class PianoPandora(object):
         url_arg_strings.append('method=%s'%method)
         count = 1
         for i in url_args:
-            url_arg_strings.append("arg%i=%s"%(count, i))
+            url_arg_strings.append("arg%i=%s"%(count, format_url_arg(i)))
             count+=1
         
         url = RPC_URL + '&'.join(url_arg_strings)
@@ -122,13 +133,39 @@ class PianoPandora(object):
                     i.useQuickMix = True
                    
     def save_quick_mix(self):
-        notImplemented()
+        stationIds = []
+        for i in self.stations:
+            if i.useQuickMix:
+                stationIds.append(i.id)
+        args = ['RANDOM', stationIds]
+        self.xmlrpc_call('station.setQuickMix', args, args)
+                
         
     def search(self, query):
+         args = [query]
+         results = self.xmlrpc_call('music.search', args, args)
+         ## TODO parse results
+         print results
          notImplemented()
          
+    def create_station(self, reqType, id):
+        assert(reqType == 'mi' or requestType == 'sh') # music id or shared station id
+        args = [reqType+id]
+        d = self.xmlrpc_call('station.createStation', args, args)
+        station = Station(self, d)
+        self.stations.append(d)
+        return station
+        
     def add_station_by_music_id(self, musicid):
-         notImplemented()
+         return self.create_station('mi', musicid)
+         
+    def add_feedback(self, stationId, musicId, rating, userSeed='', testStrategy='', songType=''):
+        if rating == RATE_NONE:
+            logging.error("Can't set rating to none")
+            return
+        rating_bool = True if rating == RATE_LOVE else False
+        args = [stationId, musicId, userSeed, testStrategy, rating_bool, False, songType]
+        self.xmlrpc_call('station.addFeedback', args, args)
 
         
 class Station(object):
@@ -149,7 +186,8 @@ class Station(object):
     def transformIfShared(self):
         if not self.isCreator:
             logging.debug("libpiano: transforming station")
-            notImplemented()
+            args = [self.id]
+            self.pandora.xmlrpc_call('station.transformShared', args, args)
             self.isCreator = True
             
     def get_playlist(self):
@@ -166,12 +204,14 @@ class Station(object):
     def rename(self, new_name):
         if new_name != self.name:
             logging.debug("libpiano: Renaming station")
-            notImplemented()
+            args = [self.id, new_name]
+            self.pandora.xmlrpc_call('station.setStationName', args, args)
             self.name = new_name
         
     def delete(self):
         logging.debug("libpiano: Deleting Station")
-        notImplemented()
+        args = [self.id]
+        self.pandora.xmlrpc_call('station.removeStation', args, args)
         
 class Song(object):
     def __init__(self, pandora, d):
@@ -183,7 +223,7 @@ class Song(object):
         self.fileGain = d['fileGain']
         self.identity = d['identity']
         self.musicId = d['musicId']
-        self.rating = d['rating']
+        self.rating = RATE_LOVE if d['rating'] else RATE_NONE # banned songs won't play, so we don't care about them
         self.stationId = d['stationId']
         self.title = d['songTitle']
         self.userSeed = d['userSeed']
@@ -203,26 +243,18 @@ class Song(object):
     def rate(self, rating):
         if self.rating != rating:
             self.station.transformIfShared()
-            notImplemented()
-            pianoCheck(piano.PianoAddFeedback(
-                self.piano.p, self.stationId,
-                self.musicId, self.matchingSeed, self.userSeed, self.focusTraitId, rating
-            ))
+            self.pandora.add_feedback(self.stationId, self.musicId, rating, self.userSeed, songType=self.songType)
             self.rating = rating
         
     def set_tired(self):
         if not self.tired:
-            notImplemented()
+            args = [self.identity]
+            self.pandora.xmlrpc_call('listener.addTiredSong', args, args)
             self.tired = True
             
     @property
     def rating_str(self):
-        if self.rating == RATE_LOVE:
-            return 'love'
-        elif self.rating == RATE_BAN:
-            return 'ban'
-        else:
-            return None
+        return self.rating
         
 class PianoSongResult(object):
     resultType = "song"
