@@ -61,6 +61,10 @@ class PithosDBusProxy(dbus.service.Object):
     def TiredCurrentSong(self):
         self.window.tired_song()
         
+    @dbus.service.method(DBUS_BUS)
+    def Present(self):
+        self.window.present()
+        
     @dbus.service.method(DBUS_BUS, out_signature='a{sv}')
     def GetCurrentSong(self):
         return song_to_dict(self.window.current_song)
@@ -76,4 +80,14 @@ class PithosDBusProxy(dbus.service.Object):
     @dbus.service.signal(DBUS_BUS, signature='a{sv}')
     def SongChanged(self, songinfo):
         pass    
-       
+
+
+def try_to_raise():
+    bus = dbus.SessionBus()
+    try:
+        proxy = bus.get_object(DBUS_BUS, DBUS_OBJECT_PATH)
+        proxy.Present()
+        return True
+    except dbus.exceptions.DBusException as e:
+        print e
+        return False

@@ -50,7 +50,7 @@ from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from pithos.pithosconfig import getdatapath
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import load_plugins
-from pithos.dbus_service import PithosDBusProxy
+from pithos.dbus_service import PithosDBusProxy, try_to_raise
 from pithos.pandora import *
 
 pluginMap = {
@@ -701,6 +701,7 @@ def NewPithosWindow(options):
     window.finish_initializing(builder, options)
     return window
 
+
 if __name__ == "__main__":
     #support for command line options
     import logging, optparse
@@ -714,8 +715,10 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s")
         logging.info('logging enabled')
         
-    #run the application
-    window = NewPithosWindow(options)
-    window.show()
-    gtk.main()
+    if not options.test and try_to_raise():
+        print "Raised existing Pithos instance"
+    else:
+        window = NewPithosWindow(options)
+        window.show()
+        gtk.main()
 
