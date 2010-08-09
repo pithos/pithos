@@ -55,7 +55,7 @@ from pithos.pandora import *
 
 pluginMap = {
     # name               #preference item
-    'song_notify':       'notify',
+    'notify':            'notify',
     'notification_icon': 'show_icon',
     'scrobble':          'lastfm_key',
 }
@@ -703,7 +703,6 @@ def NewPithosWindow(options):
 
 
 if __name__ == "__main__":
-    #support for command line options
     import logging, optparse
     parser = optparse.OptionParser(version="%prog %ver")
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Show debug messages")

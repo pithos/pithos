@@ -59,8 +59,8 @@ class ErrorPlugin(PithosPlugin):
         
 def load_plugin(name, window):
     try:
-        module = __import__('pithos.'+name)
-        module = getattr(module, name)
+        module = __import__('pithos.plugins.'+name)
+        module = getattr(module.plugins, name)
         
     except ImportError as e:
         return ErrorPlugin(name, e.message)

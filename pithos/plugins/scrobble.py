@@ -15,10 +15,10 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-import pylast
+from .. import pylast
 import webbrowser
 import logging
-from gobject_worker import GObjectWorker
+from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import PithosPlugin
 
 #getting an API account: http://www.last.fm/api/account

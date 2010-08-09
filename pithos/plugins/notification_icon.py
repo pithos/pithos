@@ -16,7 +16,7 @@
 ### END LICENSE
 
 import gtk
-import pithosconfig
+from pithos.pithosconfig import get_data_file
 from pithos.plugin import PithosPlugin
 
 # Check if appindicator is available on the system
@@ -32,7 +32,7 @@ class PithosNotificationIcon(PithosPlugin):
             self.ind = appindicator.Indicator("pithos", \
                                   "pithos-mono", \
                                    appindicator.CATEGORY_APPLICATION_STATUS, \
-                                   pithosconfig.get_data_file('media'))
+                                   get_data_file('media'))
     
     def on_enable(self):
         self.delete_callback_handle = self.window.connect("delete-event", self.window.hide_on_delete)
@@ -42,7 +42,7 @@ class PithosNotificationIcon(PithosPlugin):
         if indicator_capable:
             self.ind.set_status(appindicator.STATUS_ACTIVE)      
         else:
-            self.statusicon = gtk.status_icon_new_from_file(pithosconfig.get_data_file('media', 'icon.png'))
+            self.statusicon = gtk.status_icon_new_from_file(get_data_file('media', 'icon.png'))
             self.statusicon.connect('activate', self.toggle_visible)
         
         self.build_context_menu()

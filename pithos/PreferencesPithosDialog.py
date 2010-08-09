@@ -19,7 +19,7 @@ import os
 import gtk
 
 from pithos.pithosconfig import getdatapath
-from pithos.scrobble import LastFmAuth
+from pithos.plugins.scrobble import LastFmAuth
 
 try:
     from xdg.BaseDirectory import xdg_config_home

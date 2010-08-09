@@ -17,7 +17,7 @@
 
 import pynotify, gtk
 from pithos.plugin import PithosPlugin
-from pithosconfig import get_data_file
+from pithos.pithosconfig import get_data_file
 
 class NotifyPlugin(PithosPlugin):
     def on_prepare(self):
