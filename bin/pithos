@@ -588,6 +588,14 @@ class PithosWindow(gtk.Window):
         self.worker_run(song.set_tired, (), callback, "Putting song on shelf...")
         if song is self.current_song:
             self.next_song()
+            
+    def bookmark_song(self, song=None):
+        song = song or self.current_song
+        self.worker_run(song.bookmark, (), None, "Bookmarking...")
+        
+    def bookmark_song_artist(self, song=None):
+        song = song or self.current_song
+        self.worker_run(song.bookmark_artist, (), None, "Bookmarking...")
     
     def on_menuitem_love(self, widget):
         self.love_song(self.selected_song())
@@ -601,6 +609,12 @@ class PithosWindow(gtk.Window):
     def on_menuitem_info(self, widget):
         song = self.selected_song()
         webbrowser.open(song.songDetailURL)
+        
+    def on_menuitem_bookmark_song(self, widget):
+        self.bookmark_song(self.selected_song())
+        
+    def on_menuitem_bookmark_artist(self, widget):
+        self.bookmark_song_artist(self.selected_song())
         
     def on_treeview_button_press_event(self, treeview, event):
         if event.button == 3:

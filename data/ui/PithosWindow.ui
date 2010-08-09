@@ -193,6 +193,33 @@
         <signal name="activate" handler="on_menuitem_tired"/>
       </object>
     </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem4">
+        <property name="label" translatable="yes">Bookmark</property>
+        <property name="visible">True</property>
+        <property name="image">image11</property>
+        <property name="use_stock">False</property>
+        <child type="submenu">
+          <object class="GtkMenu" id="menu1">
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkMenuItem" id="menuitem2">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Song</property>
+                <signal name="activate" handler="on_menuitem_bookmark_song"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="menuitem3">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Artist</property>
+                <signal name="activate" handler="on_menuitem_bookmark_artist"/>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
   </object>
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
@@ -347,5 +374,9 @@
         <property name="position">1</property>
       </packing>
     </child>
+  </object>
+  <object class="GtkImage" id="image11">
+    <property name="visible">True</property>
+    <property name="stock">gtk-add</property>
   </object>
 </interface>

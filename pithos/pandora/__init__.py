@@ -224,6 +224,7 @@ class Song(object):
         
         self.album = d['albumTitle']
         self.artist = d['artistSummary']
+        self.artistMusicId = d['artistMusicId']
         self.audioUrl = d['audioURL'][:-48] + pandora_decrypt(d['audioURL'][-48:])
         self.fileGain = d['fileGain']
         self.identity = d['identity']
@@ -255,6 +256,12 @@ class Song(object):
         if not self.tired:
             self.pandora.xmlrpc_call('listener.addTiredSong', [self.identity])
             self.tired = True
+            
+    def bookmark(self):
+        self.pandora.xmlrpc_call('station.createBookmark', [self.stationId, self.musicId])
+        
+    def bookmark_artist(self):
+        self.pandora.xmlrpc_call('station.createArtistBookmark', [self.artistMusicId])
             
     @property
     def rating_str(self):

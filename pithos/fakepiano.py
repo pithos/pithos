@@ -161,6 +161,12 @@ class Song(object):
     def rating_str(self):
         return self.rating
         
+    def bookmark(self):
+        time.sleep(1)
+        
+    def bookmark_artist(self):
+        time.sleep(1)
+        
 class Artist(object):
     def __init__(self, name):
         self.name = name
