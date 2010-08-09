@@ -70,11 +70,13 @@ class Pandora(object):
         ]
         self.test_failing = False
         
-    def connect(self, user, password, proxy):
-        set_authenticated()
-        logging.info("fakepiano: logging in")
+    def set_proxy(self, proxy):
         if proxy:
             logging.info("fakepiano: using proxy %s"%proxy)
+        
+    def connect(self, user, password):
+        set_authenticated()
+        logging.info("fakepiano: logging in")
         time.sleep(1)    
         
     def save_quick_mix(self):

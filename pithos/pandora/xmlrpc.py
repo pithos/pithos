@@ -29,6 +29,10 @@ def xmlrpc_value(v):
         return "<value><array><data>%s</data></array></value>"%("".join([xmlrpc_value(i) for i in v]))
     else:
         raise ValueError("Can't encode %s of type %s to XMLRPC"%(v, type(v)))
+        
+def xmlrpc_make_call(method, args):
+    args = "".join(["<param>%s</param>"%xmlrpc_value(i) for i in args])
+    return "<?xml version=\"1.0\"?><methodCall><methodName>%s</methodName><params>%s</params></methodCall>"%(method, args)
 
 def xmlrpc_parse_value(tree):
     b = tree.findtext('boolean')

@@ -169,7 +169,8 @@ class PithosWindow(gtk.Window):
         
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
-                    
+        
+        self.set_proxy()            
         self.pandora_connect()
          
     def init_core(self, pandora_class):
@@ -288,10 +289,12 @@ class PithosWindow(gtk.Window):
                 
         self.worker.send(fn, args, cb, eb)
     
+    def set_proxy(self):
+        self.worker_run('set_proxy', (self.preferences['proxy'],))
+    
     def pandora_connect(self, message="Logging in...", callback=None):
         args = (self.preferences['username'],
-                self.preferences['password'],
-                self.preferences['proxy'])
+                self.preferences['password'])
                 
         def pandora_ready(*ignore):
             self.stations_model.clear()
@@ -639,9 +642,10 @@ class PithosWindow(gtk.Window):
         if response == gtk.RESPONSE_OK:
             self.preferences = self.prefs_dlg.get_preferences()
             if not is_startup:
-                if (self.preferences['username'] != old_prefs['username']
-                    or self.preferences['password'] != old_prefs['password']
-                    or self.preferences['proxy']    != old_prefs['proxy']):
+                if self.preferences['proxy'] != old_prefs['proxy']:
+                    self.set_proxy()
+                if (   self.preferences['username'] != old_prefs['username']
+                    or self.preferences['password'] != old_prefs['password']):
                         self.pandora_connect()
             load_plugins(self, pluginMap)
                     

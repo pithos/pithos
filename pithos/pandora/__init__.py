@@ -67,16 +67,18 @@ def format_url_arg(v):
 class Pandora(object):
     def __init__(self):
         self.rid = self.listenerId = self.authToken = None
-        self.proxy = None
+        self.set_proxy(None)
         
     def xmlrpc_call(self, method, args=[], url_args=True):
         if url_args is True:
             url_args = args
+            
+        args = args[:]
         args.insert(0, int(time.time()))
         if self.authToken:
             args.insert(1, self.authToken)
-        args = "".join(["<param>%s</param>"%xmlrpc_value(i) for i in args])
-        xml = "<?xml version=\"1.0\"?><methodCall><methodName>%s</methodName><params>%s</params></methodCall>"%(method, args)
+            
+        xml = xmlrpc_make_call(method, args)
         data = pandora_encrypt(xml)
         
         url_arg_strings = []
@@ -112,15 +114,16 @@ class Pandora(object):
                 raise PandoraError(code, msg)
         else:
             return xmlrpc_parse(tree)
-            
-        
-    def connect(self, user, password, proxy):
-        self.rid = "%07iP"%(int(time.time()) % 10000000)
+     
+    def set_proxy(self, proxy):
         if proxy:
             proxy_handler = urllib2.ProxyHandler({'http': proxy})
-            self.opener = urllib2.build_opener(proxy_handler)
+            self.opener = urllib2.build_opener(proxy_handler)  
         else:
-            self.opener = urllib2.build_opener()
+            self.opener = urllib2.build_opener()     
+        
+    def connect(self, user, password):
+        self.rid = "%07iP"%(int(time.time()) % 10000000)
             
         user = self.xmlrpc_call('listener.authenticateListener', [user, password], [])
         
@@ -143,8 +146,7 @@ class Pandora(object):
             if i.useQuickMix:
                 stationIds.append(i.id)
         self.xmlrpc_call('station.setQuickMix', ['RANDOM', stationIds])
-                
-        
+         
     def search(self, query):
          results = self.xmlrpc_call('music.search', [query])
          
