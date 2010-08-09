@@ -28,6 +28,9 @@ on 64-bit blocks, or 8 byte strings.
 
 Send questions, comments, bugs my way:
     Michael Gilfix <mgilfix@eecs.tufts.edu>
+    
+This version is modified by Kevin Mehall <km@kevinmehall.net> to accept the 
+S and P boxes directly, rather than computing them from a key
 """
 
 __author__ = "Michael Gilfix <mgilfix@eecs.tufts.edu>"
@@ -165,19 +168,4 @@ class Blowfish:
 	def key_bits (self):
 		return 56 * 8
 
-import pandora_keys
-
-blowfish_encode = Blowfish(pandora_keys.out_key_p, pandora_keys.out_key_s)
-
-def pad(s, l):
-	return s + "\0" * (l - len(s))
-
-def pandora_encrypt(s):
-	return "".join([blowfish_encode.encrypt(pad(s[i:i+8], 8)).encode('hex') for i in xrange(0, len(s), 8)])
-	
-blowfish_decode = Blowfish(pandora_keys.in_key_p, pandora_keys.in_key_s)
-
-def pandora_decrypt(s):
-	return "".join([blowfish_decode.decrypt(pad(s[i:i+16].decode('hex'), 8)) for i in xrange(0, len(s), 16)]).rstrip('\x08')
-		
 	

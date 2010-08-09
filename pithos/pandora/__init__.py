@@ -18,7 +18,8 @@ import time
 import urllib2
 import xml.etree.ElementTree as etree
 
-from blowfish import pandora_encrypt, pandora_decrypt
+from xmlrpc import *
+from blowfish import Blowfish
 
 PROTOCOL_VERSION = "27"
 RPC_URL = "http://www.pandora.com/radio/xmlrpc/v"+PROTOCOL_VERSION+"?"
@@ -29,50 +30,28 @@ AUDIO_FORMAT = 'aacplus'
 RATE_BAN = 'ban'
 RATE_LOVE = 'love'
 
-def xmlrpc_value(v):
-    if isinstance(v, str):
-        return "<value><string>%s</string></value>"%v
-    elif isinstance(v, int):
-        return "<value><int>%i</int></value>"%v
-    else:
-        raise ValueError("Can't encode %s of type %s to XMLRPC"%(v, type(v)))
-
-def xmlrpc_parse_value(tree):
-    b = tree.findtext('boolean')
-    if b:
-        return bool(int(b))
-    i = tree.findtext('int')
-    if i:
-        return int(i)
-    a = tree.find('array')
-    if a:
-        return xmlrpc_parse_array(a)
-    s = tree.find('struct')
-    if s:
-        return xmlrpc_parse_struct(s)
-    return tree.text
- 
-def xmlrpc_parse_struct(tree):
-    d = {}
-    for member in tree.findall('member'):
-        name = member.findtext('name')
-        d[name] = xmlrpc_parse_value(member.find('value'))
-    return d
-    
-def xmlrpc_parse_array(tree):
-    return [xmlrpc_parse_value(item) for item in tree.findall('data/value')]
-
-def xmlrpc_parse(tree):
-    return xmlrpc_parse_value(tree.find('params/param/value'))
-    
-        
-
 class PianoError(IOError):
     def __init__(self, status, message):
         self.status = status
         self.message = message
         
 class PianoAuthTokenInvalid(PianoError): pass
+
+import pandora_keys
+
+blowfish_encode = Blowfish(pandora_keys.out_key_p, pandora_keys.out_key_s)
+
+def pad(s, l):
+	return s + "\0" * (l - len(s))
+
+def pandora_encrypt(s):
+	return "".join([blowfish_encode.encrypt(pad(s[i:i+8], 8)).encode('hex') for i in xrange(0, len(s), 8)])
+	
+blowfish_decode = Blowfish(pandora_keys.in_key_p, pandora_keys.in_key_s)
+
+def pandora_decrypt(s):
+	return "".join([blowfish_decode.decrypt(pad(s[i:i+16].decode('hex'), 8)) for i in xrange(0, len(s), 16)]).rstrip('\x08')
+
 
 class PianoPandora(object):
     def __init__(self):
