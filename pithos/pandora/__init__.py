@@ -155,7 +155,7 @@ class PianoPandora(object):
         assert(reqType == 'mi' or requestType == 'sh') # music id or shared station id
         d = self.xmlrpc_call('station.createStation', [reqType+id])
         station = Station(self, d)
-        self.stations.append(d)
+        self.stations.append(station)
         return station
         
     def add_station_by_music_id(self, musicid):
