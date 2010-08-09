@@ -14,12 +14,10 @@
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox1">
         <property name="visible">True</property>
-        <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
           <object class="GtkVBox" id="vbox1">
             <property name="visible">True</property>
-            <property name="orientation">vertical</property>
             <property name="spacing">4</property>
             <child>
               <object class="GtkHBox" id="hbox1">
@@ -29,6 +27,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="invisible_char">&#x2022;</property>
+                    <signal name="activate" handler="search_clicked"/>
                   </object>
                   <packing>
                     <property name="position">0</property>
