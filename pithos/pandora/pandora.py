@@ -32,11 +32,13 @@ RATE_LOVE = 'love'
 RATE_NONE = None
 
 class PandoraError(IOError):
-    def __init__(self, status, message):
+    def __init__(self, message, status=None):
         self.status = status
         self.message = message
         
 class PandoraAuthTokenInvalid(PandoraError): pass
+class PandoraNetError(PandoraError): pass
+class PandoraTimeout(PandoraNetError): pass
 
 import pandora_keys
 
@@ -98,9 +100,17 @@ class Pandora(object):
         logging.debug(url)
         logging.debug(xml)
         
-        req = urllib2.Request(url, data, {'User-agent': USER_AGENT, 'Content-type': 'text/xml'})
-        response = self.opener.open(req, timeout=HTTP_TIMEOUT)
-        text = response.read()
+        try:
+            req = urllib2.Request(url, data, {'User-agent': USER_AGENT, 'Content-type': 'text/xml'})
+            response = self.opener.open(req, timeout=HTTP_TIMEOUT)
+            text = response.read()
+        except urllib2.URLError as e:
+            logging.error("Network error: %s", e)
+            if e.reason[0] == 'timed out':
+                raise PandoraTimeout("Network Timeout")
+            else:
+                raise PandoraNetError("Network error: %s"%e.reason[1])
+            
         logging.debug(text)
        
         tree = etree.fromstring(text)
@@ -111,7 +121,7 @@ class Pandora(object):
             if code == 'AUTH_INVALID_TOKEN':
                 raise PandoraAuthTokenInvalid(msg)
             else:
-                raise PandoraError(code, msg)
+                raise PandoraError(msg, code)
         else:
             return xmlrpc_parse(tree)
      
@@ -124,6 +134,7 @@ class Pandora(object):
         
     def connect(self, user, password):
         self.rid = "%07iP"%(int(time.time()) % 10000000)
+        self.listenerId = self.authToken = None
             
         user = self.xmlrpc_call('listener.authenticateListener', [user, password], [])
         

@@ -89,5 +89,4 @@ def try_to_raise():
         proxy.Present()
         return True
     except dbus.exceptions.DBusException as e:
-        print e
         return False

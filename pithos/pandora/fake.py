@@ -48,7 +48,7 @@ class FakePandora(Pandora):
             time.sleep(10)
         if not self.auth_check.get_active():
             logging.info("fake: We're deauthenticated...")
-            raise PandoraAuthTokenInvalid("AUTH_INVALID_TOKEN", "Auth token invalid")
+            raise PandoraAuthTokenInvalid("Auth token invalid", "AUTH_INVALID_TOKEN")
 
     def set_authenticated(self):
         self.auth_check.set_active(True)
