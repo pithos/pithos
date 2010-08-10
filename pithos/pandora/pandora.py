@@ -40,7 +40,7 @@ class PandoraAuthTokenInvalid(PandoraError): pass
 class PandoraNetError(PandoraError): pass
 class PandoraTimeout(PandoraNetError): pass
 
-import pithos.pandora.pandora_keys
+from pithos.pandora import pandora_keys
 
 blowfish_encode = Blowfish(pandora_keys.out_key_p, pandora_keys.out_key_s)
 
