@@ -15,7 +15,7 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from .. import pylast
+from pithos import pylast
 import webbrowser
 import logging
 from pithos.gobject_worker import GObjectWorker

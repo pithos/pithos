@@ -90,7 +90,6 @@ class InstallAndUpdateDataDirectory(DistUtilsExtra.auto.install_auto):
 ##################################################################################
 ###################### YOU SHOULD MODIFY ONLY WHAT IS BELOW ######################
 ##################################################################################
-from distutils.core import Extension
 
 DistUtilsExtra.auto.setup(
     name='pithos',
