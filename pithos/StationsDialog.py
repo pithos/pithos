@@ -173,6 +173,11 @@ class StationsDialog(gtk.Dialog):
         self.treeview.set_cursor(0)
         logging.debug("5 ")
         
+    def add_genre_station(self, widget):
+        """
+        This is just a stub for the non-completed buttn
+        """
+        
     def on_close(self, widget, data=None):
         self.hide()
         

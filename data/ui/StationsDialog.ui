@@ -10,7 +10,6 @@
     <property name="title" translatable="yes">Manage Stations</property>
     <property name="icon">../media/icon.png</property>
     <property name="type_hint">normal</property>
-    <property name="has_separator">False</property>
     <signal name="delete_event" handler="on_close"/>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox1">

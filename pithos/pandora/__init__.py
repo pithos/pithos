@@ -18,7 +18,7 @@ from pithos.pandora.pandora import *
 
 def make_pandora(testing=False):
     if testing:
-        from pithos.pandora.fake import *
+        from pithos.pandora.fake import FakePandora
         return FakePandora()
     else:
         return Pandora()
