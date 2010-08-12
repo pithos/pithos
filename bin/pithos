@@ -345,6 +345,7 @@ class PithosWindow(gtk.Window):
         
         self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
         self.songs_treeview.set_cursor(song_index, None, 0)
+        self.builder.get_object('pithos_window').set_title("Pithos: %s by %s on %s" % (self.current_song.title, self.current_song.artist, self.current_station.name))
                     
         self.emit('song-changed', self.current_song)
             
