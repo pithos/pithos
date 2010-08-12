@@ -56,9 +56,16 @@ class StationsDialog(gtk.Dialog):
         
         self.modelfilter = self.model.filter_new()
         self.modelfilter.set_visible_func(lambda m, i: m.get_value(i, 0) and not  m.get_value(i, 0).isQuickMix)
+
+        self.modelsortable = gtk.TreeModelSort(self.modelfilter)
+        """
+        @todo Leaving it as sorting by date added by default. 
+        Probably should make a radio select in the window or an option in program options for user preference
+        """
+#        self.modelsortable.set_sort_column_id(1, gtk.SORT_ASCENDING)
         
         self.treeview = self.builder.get_object("treeview")
-        self.treeview.set_model(self.modelfilter)
+        self.treeview.set_model(self.modelsortable)
         self.treeview.connect('button_press_event', self.on_treeview_button_press_event)
         
         name_col   = gtk.TreeViewColumn()
@@ -69,6 +76,7 @@ class StationsDialog(gtk.Dialog):
         name_col.pack_start(render_text, expand=True)
         name_col.add_attribute(render_text, "text", 1)
         name_col.set_expand(True)
+        name_col.set_sort_column_id(1)
         self.treeview.append_column(name_col)
         
         qm_col   = gtk.TreeViewColumn()
