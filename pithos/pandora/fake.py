@@ -69,6 +69,7 @@ class FakePandora(Pandora):
                 {'stationId':'321', 'stationIdToken':'453544', 'isCreator':True, 'isQuickMix':True, 'stationName':"Fake's QuickMix",
                     'quickMixStationIds':['987', '343']},
                 {'stationId':'432', 'stationIdToken':'345485', 'isCreator':True, 'isQuickMix':False, 'stationName':"Test Station 2"},
+                {'stationId':'254', 'stationIdToken':'345415', 'isCreator':True, 'isQuickMix':False, 'stationName':"Test Station 4 - Out of Order"},
                 {'stationId':'343', 'stationIdToken':'345435', 'isCreator':True, 'isQuickMix':False, 'stationName':"Test Station 3"},   
             ]
         elif method == 'playlist.getFragment':
