@@ -613,17 +613,32 @@ class PithosWindow(gtk.Window):
         self.bookmark_song_artist(self.selected_song())
         
     def on_treeview_button_press_event(self, treeview, event):
-        if event.button == 3:
-            x = int(event.x)
-            y = int(event.y)
-            time = event.time
-            pthinfo = treeview.get_path_at_pos(x, y)
-            if pthinfo is not None:
-                path, col, cellx, celly = pthinfo
-                treeview.grab_focus()
-                treeview.set_cursor( path, col, 0)
+        x = int(event.x)
+        y = int(event.y)
+        time = event.time
+        pthinfo = treeview.get_path_at_pos(x, y)
+        if pthinfo is not None:
+            path, col, cellx, celly = pthinfo
+            treeview.grab_focus()
+            treeview.set_cursor( path, col, 0)
+            
+            if event.button == 3:
                 self.song_menu.popup( None, None, None, event.button, time)
-            return True
+                return True
+            
+            if event.button == 1 and event.type == gtk.gdk._2BUTTON_PRESS:
+                logging.info("Double clicked on song %s", self.selected_song().index)
+                if self.selected_song().index <= self.current_song_index:
+                    return False
+                songs_remaining = len(self.songs_model) - self.selected_song().index 
+                if songs_remaining <= 0:
+                    self.get_playlist(start = True)
+                else:
+                    self.song_changed(self.selected_song().index)
+                    if songs_remaining == 1:
+                        self.get_playlist()
+                return True
+    
     
     def station_properties(self, *ignore):
         webbrowser.open(self.current_station.info_url)
