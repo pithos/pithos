@@ -31,6 +31,8 @@ RATE_BAN = 'ban'
 RATE_LOVE = 'love'
 RATE_NONE = None
 
+PLAYLIST_VALIDITY_TIME = 60*60*3
+
 class PandoraError(IOError):
     def __init__(self, message, status=None):
         self.status = status
@@ -253,6 +255,7 @@ class Song(object):
         self.tired=False
         self.message=''
         self.start_time = None
+        self.playlist_time = time.time()
         
     @property
     def station(self):
@@ -278,6 +281,9 @@ class Song(object):
     @property
     def rating_str(self):
         return self.rating
+        
+    def is_still_valid(self):
+        return (time.time() - self.playlist_time) < PLAYLIST_VALIDITY_TIME
         
 class SearchResult(object):
     def __init__(self, resultType, d):
