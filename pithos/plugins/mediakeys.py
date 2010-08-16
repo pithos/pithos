@@ -41,6 +41,8 @@ class MediaKeyPlugin(PithosPlugin):
                 self.window.next_song()
             elif i == 'Stop':
                 self.window.user_pause()
+            elif i == 'Previous':
+                self.window.present()
             
     def bind_keybinder(self):
         try:
@@ -51,6 +53,7 @@ class MediaKeyPlugin(PithosPlugin):
         keybinder.bind('XF86AudioPlay', self.window.user_play, None)
         keybinder.bind('XF86AudioStop', self.window.user_pause, None)
         keybinder.bind('XF86AudioNext', self.window.next_song, None)
+        keybinder.bind('XF86AudioPrev', self.window.present, None)
         
         logging.info("Bound media keys with keybinder")
         self.method = 'keybinder'
