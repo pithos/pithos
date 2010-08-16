@@ -708,7 +708,7 @@ if __name__ == "__main__":
 
     #set the logging level to show debug messages
     if options.verbose:
-        logging.basicConfig(level=logging.DEBUG, format="%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s")
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s")
         logging.info('logging enabled')
         
     if not options.test and try_to_raise():

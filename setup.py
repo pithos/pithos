@@ -93,7 +93,7 @@ class InstallAndUpdateDataDirectory(DistUtilsExtra.auto.install_auto):
 
 DistUtilsExtra.auto.setup(
     name='pithos',
-    version='0.2-beta',
+    version='0.3',
     ext_modules=[],
     license='GPL-3',
     author='Kevin Mehall',

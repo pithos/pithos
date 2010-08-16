@@ -54,7 +54,6 @@ class FakePandora(Pandora):
         self.auth_check.set_active(True)
         
     def xmlrpc_call(self, method, args=[], url_args=True):
-        print "fake xmlrpc"
         time.sleep(1)
         if method != 'listener.authenticateListener':
             self.maybe_fail()

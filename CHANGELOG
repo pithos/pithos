@@ -1,0 +1,42 @@
+$$title: Changelog
+
+### 0.3
+2010-08-xx
+   
+  * Last.fm Scrobbling support [(lp:609246)](https://bugs.launchpad.net/pithos/+bug/609246)
+  * Rewrite Libpiano in Python to avoid C dependency
+  * Raise existing window if pithos command is run when already open [(lp:610574)](https://bugs.launchpad.net/pithos/+bug/610574)
+  * Show song info in window title (by Stephen Ostrow) [(lp:614851)](https://bugs.launchpad.net/pithos/+bug/614851)
+  * Double click a future song to play it (by Stephen Ostrow) [(lp:614852)](https://bugs.launchpad.net/pithos/+bug/614852)
+  * Make stations dialog sortable (by Stephen Ostrow) [(lp:615415)](https://bugs.launchpad.net/pithos/+bug/615415)
+  * Notification shown when play/pause media keys are pressed [(lp:614821)](https://bugs.launchpad.net/pithos/+bug/614821)
+  * Other bugfixes [(lp:615160)](https://bugs.launchpad.net/pithos/+bug/615160) [(lp:614850)](https://bugs.launchpad.net/pithos/+bug/614850)
+  
+### 0.2.1
+2010-08-02
+
+  * Ellipsize long song titles / artist names [(lp:610859)](https://bugs.launchpad.net/pithos/+bug/610859)
+  * Request Email instead of Username [(lp:609265)](https://bugs.launchpad.net/pithos/+bug/609265)
+
+### 0.2
+2010-07-24
+
+  * Notification icon
+  * User interface improvements
+  * DBUS API
+
+### 0.1
+January 2010
+
+  * Play / Pause / Next Song
+  * Switching stations
+  * Remembering user name and password
+  * Cover Art
+  * Thumbs Up / Thumbs Down / Tired of this song
+  * Notification popup with song info
+  * Launching pandora.com song info page and station page
+  * Reconnecting when pandora session times out
+  * Editing QuickMix
+  * Creating stations
+  * Media Key support
+  * Proxy support

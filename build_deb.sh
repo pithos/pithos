@@ -1,7 +1,7 @@
 #!/bin/bash
 
 REVNO=$(bzr revno)
-VERSION="0.2~bzr$REVNO"
+VERSION="0.3~bzr$REVNO"
 
 # Delete and regenerate debian/changelog
 # Yes, I know there are Debian people who would kill me for this,
