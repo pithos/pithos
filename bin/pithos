@@ -321,8 +321,16 @@ class PithosWindow(gtk.Window):
         if self.current_song_index is not None:
             return self.songs_model[self.current_song_index][0]
     
-    def song_changed(self, song_index):
-        if song_index >= len(self.songs_model): return False
+    def start_song(self, song_index):
+        songs_remaining = len(self.songs_model) - song_index
+        
+        if songs_remaining <= 0:
+            # We don't have this song yet. Get a new playlist.
+            return self.get_playlist(start = True)
+        elif songs_remaining == 1:
+            # Preload next playlist so there's no delay
+            self.get_playlist()
+                
         prev = self.current_song
         
         self.stop()
@@ -350,17 +358,7 @@ class PithosWindow(gtk.Window):
         self.emit('song-changed', self.current_song)
             
     def next_song(self, *ignore):
-        next_index = self.current_song_index+1
-        songs_remaining = len(self.songs_model) - next_index 
-        
-        if songs_remaining <= 0:
-            self.get_playlist(start = True)
-        else:
-            self.song_changed(next_index)
-        
-            if songs_remaining == 1:
-                # preload next playlist so there's no delay
-                self.get_playlist()
+        self.start_song(self.current_song_index + 1)
         
     def play(self, is_user_action=False):
         if not self.playing:
@@ -434,7 +432,7 @@ class PithosWindow(gtk.Window):
 
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if self.start_new_playlist:
-                self.song_changed(start_index)
+                self.start_song(start_index)
                 
             self.gstreamer_errorcount_2 = self.gstreamer_errorcount_1
             self.gstreamer_errorcount_1 = 0
@@ -631,14 +629,7 @@ class PithosWindow(gtk.Window):
                 logging.info("Double clicked on song %s", self.selected_song().index)
                 if self.selected_song().index <= self.current_song_index:
                     return False
-                songs_remaining = len(self.songs_model) - self.selected_song().index 
-                if songs_remaining <= 0:
-                    self.get_playlist(start = True)
-                else:
-                    self.song_changed(self.selected_song().index)
-                    if songs_remaining == 1:
-                        self.get_playlist()
-                return True
+                self.start_song(self.selected_song().index)
     
     
     def station_properties(self, *ignore):
