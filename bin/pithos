@@ -180,14 +180,7 @@ class PithosWindow(gtk.Window):
         bus.add_signal_watch()
         bus.connect("message", self.on_message)
         self.time_format = gst.Format(gst.FORMAT_TIME)
-        
-        try:
-            bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
-            mk = bus.get_object("org.gnome.SettingsDaemon","/org/gnome/SettingsDaemon/MediaKeys")
-            mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
-        except dbus.DBusException:
-            logging.error("Could not bind media keys")
-                
+                        
         self.stations_dlg = None
         
         self.playing = False
@@ -647,16 +640,7 @@ class PithosWindow(gtk.Window):
     
     def station_properties(self, *ignore):
         webbrowser.open(self.current_station.info_url)
-    
-    def mediakey_pressed(self, *args):
-        for i in args:
-            if i == 'Play':
-                self.playpause()
-            if i == 'Next':
-                self.next_song()
-            if i == 'Stop':
-                self.user_pause()
-    
+        
     def about(self, widget, data=None):
         """about - display the about box for pithos """
         about = AboutPithosDialog.NewAboutPithosDialog()

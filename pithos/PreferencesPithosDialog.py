@@ -74,6 +74,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             "proxy":'',
             "show_icon": False,
             "lastfm_key": False,
+            "enable_mediakeys":True,
         }
         
         try:
