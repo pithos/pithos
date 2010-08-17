@@ -65,6 +65,21 @@
               </packing>
             </child>
             <child>
+              <object class="GtkToolItem" id="toolbutton_volume">
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkVolumeButton" id="volume">
+                    <property name="visible">True</property>
+                    <property name="value">1.0</property>
+                    <signal name="value_changed" handler="on_volume_change_event"/>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkSeparatorToolItem" id="toolbutton1">
                 <property name="visible">True</property>
                 <property name="draw">False</property>

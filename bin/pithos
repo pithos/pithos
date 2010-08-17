@@ -636,7 +636,10 @@ class PithosWindow(gtk.Window):
                 if self.selected_song().index <= self.current_song_index:
                     return False
                 self.start_song(self.selected_song().index)
-    
+                
+    def on_volume_change_event(self, volumebutton, value):
+        logging.info("Changing volume to %s" % value)
+        self.player.set_property("volume", value)
     
     def station_properties(self, *ignore):
         webbrowser.open(self.current_station.info_url)
