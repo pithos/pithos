@@ -75,6 +75,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             "show_icon": False,
             "lastfm_key": False,
             "enable_mediakeys":True,
+            "volume": 1.0,
         }
         
         try:
