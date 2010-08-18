@@ -6,6 +6,8 @@ $$title: Changelog
   * Last.fm Scrobbling support [(lp:609246)](https://bugs.launchpad.net/pithos/+bug/609246)
   * Rewrite Libpiano in Python to avoid C dependency
   * Raise existing window if pithos command is run when already open [(lp:610574)](https://bugs.launchpad.net/pithos/+bug/610574)
+  * Support bookmarking of songs and artists
+  * Volume control (by Stephen Ostrow) [(lp:617597)](https://bugs.launchpad.net/pithos/+bug/617597)
   * Show song info in window title (by Stephen Ostrow) [(lp:614851)](https://bugs.launchpad.net/pithos/+bug/614851)
   * Double click a future song to play it (by Stephen Ostrow) [(lp:614852)](https://bugs.launchpad.net/pithos/+bug/614852)
   * Make stations dialog sortable (by Stephen Ostrow) [(lp:615415)](https://bugs.launchpad.net/pithos/+bug/615415)
