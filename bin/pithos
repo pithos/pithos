@@ -642,7 +642,10 @@ class PithosWindow(gtk.Window):
                 self.start_song(self.selected_song().index)
                 
     def on_volume_change_event(self, volumebutton, value):
-        self.player.get_by_name('volume').set_property("volume", value)
+        try:
+            self.player.get_by_name('volume').set_property("volume", value)
+        except:
+            self.player.set_property("volume", value)
         self.preferences['volume'] = value
     
     def station_properties(self, *ignore):
