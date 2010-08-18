@@ -27,7 +27,7 @@
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="homogeneous">True</property>
+                <property name="homogeneous">False</property>
               </packing>
             </child>
             <child>
@@ -40,11 +40,37 @@
               </object>
               <packing>
                 <property name="expand">False</property>
-                <property name="homogeneous">True</property>
+                <property name="homogeneous">False</property>
               </packing>
             </child>
             <child>
               <object class="GtkSeparatorToolItem" id="toolbutton4">
+                <property name="visible">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolItem" id="toolbutton_volume">
+                <property name="visible">True</property>
+                <child>
+                  <object class="GtkVolumeButton" id="volume">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="receives_default">False</property>
+                    <property name="value">1</property>
+                    <signal name="value_changed" handler="on_volume_change_event"/>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSeparatorToolItem" id="toolbutton3">
                 <property name="visible">True</property>
               </object>
               <packing>
@@ -58,22 +84,6 @@
                 <property name="label" translatable="yes">Options</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">hbox_settingsmenu</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">False</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolItem" id="toolbutton_volume">
-                <property name="visible">True</property>
-                <child>
-                  <object class="GtkVolumeButton" id="volume">
-                    <property name="visible">True</property>
-                    <property name="value">1.0</property>
-                    <signal name="value_changed" handler="on_volume_change_event"/>
-                  </object>
-                </child>
               </object>
               <packing>
                 <property name="expand">False</property>
