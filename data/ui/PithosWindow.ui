@@ -359,6 +359,34 @@
       </object>
     </child>
     <child>
+      <object class="GtkSeparatorMenuItem" id="menuitem6">
+        <property name="visible">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem1">
+        <property name="label" translatable="yes">Web Site</property>
+        <property name="visible">True</property>
+        <property name="image">image9</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="open_web_site"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem5">
+        <property name="label" translatable="yes">Report bug</property>
+        <property name="visible">True</property>
+        <property name="image">image10</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="report_bug"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparatorMenuItem" id="menuitem7">
+        <property name="visible">True</property>
+      </object>
+    </child>
+    <child>
       <object class="GtkImageMenuItem" id="menuitem_about">
         <property name="label">gtk-about</property>
         <property name="visible">True</property>
@@ -403,5 +431,13 @@
   <object class="GtkImage" id="image11">
     <property name="visible">True</property>
     <property name="stock">gtk-add</property>
+  </object>
+  <object class="GtkImage" id="image9">
+    <property name="visible">True</property>
+    <property name="stock">gtk-help</property>
+  </object>
+  <object class="GtkImage" id="image10">
+    <property name="visible">True</property>
+    <property name="stock">gtk-dialog-warning</property>
   </object>
 </interface>
