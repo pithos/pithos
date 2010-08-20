@@ -60,7 +60,15 @@ class LastfmPlugin(PithosPlugin):
             session_key = session_key
         )
         self.scrobbler = self.network.get_scrobbler(CLIENT_ID, CLIENT_VERSION)
-
+        
+    def send_rating(self, song):
+        if song.rating:
+            track = self.network.get_track(song.artist, song.title)
+            if song.rating_str == 'love':
+                self.worker.send(track.love)
+            elif song.rating_str == 'ban':
+                self.worker.send(track.ban)
+            logging.info("Sending song rating to last.fm")
 
     def scrobble(self, song):
         if song.duration > 30 and (song.position > 240 or song.position > song.duration/2):
@@ -72,6 +80,7 @@ class LastfmPlugin(PithosPlugin):
             source = pylast.SCROBBLE_SOURCE_PERSONALIZED_BROADCAST
             
             self.worker.send(self.scrobbler.scrobble, (song.artist, song.title, int(song.start_time), source, mode, song.duration, song.album))
+        self.send_rating(song)
             
 
 
