@@ -1,7 +1,7 @@
 $$title: Changelog
 
 ### 0.3
-2010-08-xx
+2010-08-19
    
   * Last.fm Scrobbling support [(lp:609246)](https://bugs.launchpad.net/pithos/+bug/609246)
   * Rewrite Libpiano in Python to avoid C dependency
@@ -23,7 +23,7 @@ $$title: Changelog
 ### 0.2
 2010-07-24
 
-  * Notification icon
+  * Notification icon (by Vince Spicer and Vinod Khare)
   * User interface improvements
   * DBUS API
 
