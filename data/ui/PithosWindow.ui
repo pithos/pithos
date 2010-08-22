@@ -279,7 +279,7 @@
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="button1">
-                <property name="label">gtk-quit</property>
+                <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>

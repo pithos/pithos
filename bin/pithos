@@ -461,9 +461,7 @@ class PithosWindow(gtk.Window):
         response = dialog.run()
         dialog.hide()
         
-        if response == 1:
-            self.quit()
-        elif response == 2:
+        if response == 2:
             self.retrying = True
             self.gstreamer_errorcount_2 = 0
             logging.info("Manual retry")
