@@ -46,13 +46,21 @@ class LastfmPlugin(PithosPlugin):
     def on_enable(self):
         self.connect(self.window.preferences['lastfm_key'])
         self.song_ended_handle = self.window.connect('song-ended', self.song_ended)
+        self.song_rating_changed_handle = self.window.connect('song-rating-changed', self.song_rating_changed)
+        self.song_changed_handle = self.window.connect('song-changed', self.song_changed)
         
     def on_disable(self):
         self.window.disconnect(self.song_ended_handle)
+        self.window.disconnect(self.song_rating_changed_handle)
+        self.window.disconnect(self.song_changed_handle)
         
     def song_ended(self, window, song):
         self.scrobble(song)
-            
+        
+    def song_rating_changed(self, window, song):
+        if song.finished: # otherwise, rating will be sent when the song is finished
+            self.send_rating(song)
+                
         
     def connect(self, session_key):
         self.network = pylast.get_lastfm_network(
@@ -60,6 +68,9 @@ class LastfmPlugin(PithosPlugin):
             session_key = session_key
         )
         self.scrobbler = self.network.get_scrobbler(CLIENT_ID, CLIENT_VERSION)
+     
+    def song_changed(self, window, song):
+        self.worker.send(self.scrobbler.report_now_playing, (song.artist, song.title, song.album))
         
     def send_rating(self, song):
         if song.rating:

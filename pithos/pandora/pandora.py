@@ -255,6 +255,7 @@ class Song(object):
         self.tired=False
         self.message=''
         self.start_time = None
+        self.finished = False
         self.playlist_time = time.time()
         
     @property

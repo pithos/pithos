@@ -113,6 +113,7 @@ class PithosWindow(gtk.Window):
     __gsignals__ = {
         "song-changed": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "song-ended": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+        "song-rating-changed": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
         "play-state-changed": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,)),
         "user-changed-play-state": (gobject.SIGNAL_RUN_FIRST, gobject.TYPE_NONE, (gobject.TYPE_BOOLEAN,)),
     }
@@ -393,6 +394,7 @@ class PithosWindow(gtk.Window):
     def stop(self):
         prev = self.current_song
         if prev and prev.start_time:
+            prev.finished = True
             try:
                 prev.duration = self.player.query_duration(self.time_format, None)[0] / 1000000000
                 prev.position = self.player.query_position(self.time_format, None)[0] / 1000000000
@@ -576,12 +578,15 @@ class PithosWindow(gtk.Window):
         song = song or self.current_song
         def callback(l):
             self.update_song_row(song)
+            self.emit('song-rating-changed', song)
         self.worker_run(song.rate, (RATE_LOVE,), callback, "Loving song...")
+        
                 
     def ban_song(self, song=None):
         song = song or self.current_song
         def callback(l):
             self.update_song_row(song)
+            self.emit('song-rating-changed', song)
         self.worker_run(song.rate, (RATE_BAN,), callback, "Banning song...")
         if song is self.current_song:
             self.next_song()
@@ -590,6 +595,7 @@ class PithosWindow(gtk.Window):
         song = song or self.current_song
         def callback(l):
             self.update_song_row(song)
+            self.emit('song-rating-changed', song)
         self.worker_run(song.set_tired, (), callback, "Putting song on shelf...")
         if song is self.current_song:
             self.next_song()
