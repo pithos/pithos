@@ -725,11 +725,22 @@ if __name__ == "__main__":
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Show debug messages")
     parser.add_option("-t", "--test", action="store_true", dest="test", help="Use a mock web interface instead of connecting to the real Pandora server")
     (options, args) = parser.parse_args()
+    
+    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s",
+        filename='/tmp/pithos.debug.log', filemode='w')
+        
+    console = logging.StreamHandler()
+    
+    formatter = logging.Formatter('%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
+    console.setFormatter(formatter)
+    
+    logging.getLogger('').addHandler(console)
 
     #set the logging level to show debug messages
     if options.verbose:
-        logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s")
-        logging.info('logging enabled')
+        console.setLevel(logging.INFO)
+    else:
+        console.setLevel(logging.WARNING)
         
     if not options.test and try_to_raise():
         print "Raised existing Pithos instance"
