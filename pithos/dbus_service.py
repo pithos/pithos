@@ -63,7 +63,7 @@ class PithosDBusProxy(dbus.service.Object):
         
     @dbus.service.method(DBUS_BUS)
     def Present(self):
-        self.window.present()
+        self.window.bring_to_top()
         
     @dbus.service.method(DBUS_BUS, out_signature='a{sv}')
     def GetCurrentSong(self):

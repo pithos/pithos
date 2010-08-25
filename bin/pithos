@@ -689,6 +689,11 @@ class PithosWindow(gtk.Window):
         else:
             self.stations_dlg = StationsDialog.NewStationsDialog(self)
             self.stations_dlg.show_all()
+            
+    def bring_to_top(self, *ignore):
+        self.show()
+        self.present()
+        
         
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""

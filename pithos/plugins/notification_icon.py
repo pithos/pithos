@@ -111,8 +111,7 @@ class PithosNotificationIcon(PithosPlugin):
         if self.window.is_active():
             self.window.hide()
         else:
-            self.window.show_all()
-            self.window.present()
+            self.window.bring_to_top()
 
     def context_menu(self, widget, button, time, data=None): 
        if button == 3: 
