@@ -205,7 +205,7 @@ class Station(object):
         self.useQuickMix = False
         
         if self.isQuickMix:
-            self.pandora.quickMixStationIds = d['quickMixStationIds']
+            self.pandora.quickMixStationIds = d.get('quickMixStationIds', [])
          
     def transformIfShared(self):
         if not self.isCreator:
