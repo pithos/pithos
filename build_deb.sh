@@ -1,7 +1,8 @@
 #!/bin/bash
 
 REVNO=$(bzr revno)
-VERSION="0.3~bzr$REVNO"
+VERSIONBASE=$(python pithos/pithosconfig.py)
+VERSION="$VERSIONBASE~bzr$REVNO"
 
 # Delete and regenerate debian/changelog
 # Yes, I know there are Debian people who would kill me for this,

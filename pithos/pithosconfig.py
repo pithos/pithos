@@ -19,6 +19,8 @@
 __pithos_data_directory__ = '../data/'
 __license__ = 'GPL-3'
 
+VERSION = '0.3.1'
+
 
 import os
 
@@ -54,3 +56,5 @@ def getdatapath():
     else:
         raise project_path_not_found
 
+if __name__=='__main__':
+    print VERSION

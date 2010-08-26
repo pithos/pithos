@@ -1,5 +1,14 @@
 $$title: Changelog
 
+### 0.3.1
+2010-08-26
+
+  * Send song ratings to Last.fm [(lp:621360)](https://bugs.launchpad.net/pithos/+bug/621360)
+  * Fixes to keybinder media key support
+  * Better error messages
+  * Dump debug log and XML to /tmp/pithos.debug.log for better debugging and bug reports
+  * Don't crash if QuickMix is empty [(lp:622864)](https://bugs.launchpad.net/pithos/+bug/622864)
+
 ### 0.3
 2010-08-19
    

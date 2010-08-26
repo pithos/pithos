@@ -47,7 +47,7 @@ else:
 sys.path.insert(0, os.path.dirname(fullPath))
 
 from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
-from pithos.pithosconfig import getdatapath
+from pithos.pithosconfig import getdatapath, VERSION
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import load_plugins
 from pithos.dbus_service import PithosDBusProxy, try_to_raise
@@ -656,7 +656,7 @@ class PithosWindow(gtk.Window):
         webbrowser.open(self.current_station.info_url)
         
     def open_web_site(self, *ignore):
-        webbrowser.open("http://kevinmehall.net/p/pithos?utm_source=pithos&utm_medium=app&utm_campaign=0.3")
+        webbrowser.open("http://kevinmehall.net/p/pithos?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
         
     def report_bug(self, *ignore):
         webbrowser.open("https://bugs.launchpad.net/pithos")
@@ -664,6 +664,7 @@ class PithosWindow(gtk.Window):
     def about(self, widget, data=None):
         """about - display the about box for pithos """
         about = AboutPithosDialog.NewAboutPithosDialog()
+        about.set_version(VERSION)
         response = about.run()
         about.destroy()
 
@@ -730,26 +731,28 @@ if __name__ == "__main__":
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Show debug messages")
     parser.add_option("-t", "--test", action="store_true", dest="test", help="Use a mock web interface instead of connecting to the real Pandora server")
     (options, args) = parser.parse_args()
-    
-    logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s",
-        filename='/tmp/pithos.debug.log', filemode='w')
-        
-    console = logging.StreamHandler()
-    
-    formatter = logging.Formatter('%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
-    console.setFormatter(formatter)
-    
-    logging.getLogger('').addHandler(console)
-
-    #set the logging level to show debug messages
-    if options.verbose:
-        console.setLevel(logging.INFO)
-    else:
-        console.setLevel(logging.WARNING)
-        
+            
     if not options.test and try_to_raise():
         print "Raised existing Pithos instance"
     else:
+        logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s",
+            filename='/tmp/pithos.debug.log', filemode='w')
+        
+        console = logging.StreamHandler()
+        
+        formatter = logging.Formatter('%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
+        console.setFormatter(formatter)
+        
+        logging.getLogger('').addHandler(console)
+
+        #set the logging level to show debug messages
+        if options.verbose:
+            console.setLevel(logging.INFO)
+        else:
+            console.setLevel(logging.WARNING)
+            
+        logging.info("Pithos %s"%VERSION)
+            
         window = NewPithosWindow(options)
         window.show()
         gtk.main()
