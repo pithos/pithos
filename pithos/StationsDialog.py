@@ -123,12 +123,9 @@ class StationsDialog(gtk.Dialog):
             return True
             
     def on_menuitem_listen(self, widget):
-        sel = self.treeview.get_selection().get_selected()
-        if sel:
-            model, iter = sel
-            stationslist_iter = model.convert_iter_to_child_iter(iter)
-            self.pithos.stations_combo.set_active_iter(stationslist_iter)
-            self.hide()
+        station = self.selected_station()
+        self.pithos.station_changed(station)
+        self.hide()
         
     def on_menuitem_info(self, widget):
         webbrowser.open(self.selected_station().info_url)
@@ -139,9 +136,7 @@ class StationsDialog(gtk.Dialog):
         self.treeview.set_cursor(path, self.treeview.get_column(0) ,True)
         
     def on_menuitem_delete(self, widget):
-        sel = self.treeview.get_selection().get_selected()
-        iter = self.modelfilter.convert_iter_to_child_iter(sel[1])
-        station = self.model.get_value(iter, 0)
+        station = self.selected_station()
         
         dialog = self.builder.get_object("delete_confirm_dialog")
         dialog.set_property("text", "Are you sure you want to delete the station \"%s\"?"%(station.name))
@@ -150,7 +145,7 @@ class StationsDialog(gtk.Dialog):
         
         if response:
             self.worker_run(station.delete, context='net', message="Deleting Station...")
-            self.model.remove(iter)
+            del self.pithos.stations_model[self.pithos.station_index(station)]
             if self.pithos.current_station is station:
                 self.pithos.station_changed(self.model[0][0])
                 
