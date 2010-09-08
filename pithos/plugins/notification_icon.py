@@ -37,7 +37,8 @@ class PithosNotificationIcon(PithosPlugin):
                                    get_data_file('media'))
     
     def on_enable(self):
-        self.delete_callback_handle = self.window.connect("delete-event", self.window.hide_on_delete)
+        self.visible = True
+        self.delete_callback_handle = self.window.connect("delete-event", self.toggle_visible)
         self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
         self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
         
@@ -53,7 +54,10 @@ class PithosNotificationIcon(PithosPlugin):
         menu = gtk.Menu()
         
         def button(text, action, icon=None):
-            if icon:
+            if icon == 'check':
+                item = gtk.CheckMenuItem(text)
+                item.set_active(True)
+            elif icon:
                 item = gtk.ImageMenuItem(text)
                 item.set_image(gtk.image_new_from_stock(icon, gtk.ICON_SIZE_MENU))
             else:
@@ -65,7 +69,7 @@ class PithosNotificationIcon(PithosPlugin):
         
         if indicator_capable:
             # We have to add another entry for show / hide Pithos window
-            button("Show/Hide Pithos", self.toggle_visible)
+            self.visible_check = button("Show Pithos", self._toggle_visible, 'check')
         
         self.playpausebtn = button("Pause", self.window.playpause, gtk.STOCK_MEDIA_PAUSE)
         button("Skip",  self.window.next_song,                     gtk.STOCK_MEDIA_NEXT)
@@ -102,16 +106,21 @@ class PithosNotificationIcon(PithosPlugin):
         if not indicator_capable:
             self.statusicon.set_tooltip("%s by %s"%(song.title, song.artist))
         
-    def toggle_visible(self, status):
-        """ hide/unhide the window 
-        @param status: the statusicon
-
-        """
-
-        if self.window.is_active():
+    def _toggle_visible(self, *args):
+        if self.visible:
             self.window.hide()
         else:
             self.window.bring_to_top()
+        
+        self.visible = not self.visible
+        
+    def toggle_visible(self, *args):
+        if hasattr(self, 'visible_check'):
+            self.visible_check.set_active(not self.visible)
+        else:
+            self._toggle_visible()
+        
+        return True
 
     def context_menu(self, widget, button, time, data=None): 
        if button == 3: 
