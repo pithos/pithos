@@ -18,7 +18,7 @@
         <child>
           <object class="GtkTable" id="table1">
             <property name="visible">True</property>
-            <property name="n_rows">11</property>
+            <property name="n_rows">12</property>
             <property name="n_columns">3</property>
             <property name="column_spacing">5</property>
             <property name="row_spacing">5</property>
@@ -135,6 +135,22 @@
               </packing>
             </child>
             <child>
+              <object class="GtkCheckButton" id="checkbutton_screensaverpause">
+                <property name="label" translatable="yes">Pause when screensaver is active</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="right_attach">4</property>
+                <property name="top_attach">9</property>
+                <property name="bottom_attach">10</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkLabel" id="label5">
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">&lt;small&gt;&lt;a href='http://pandora.com'&gt;Create an account at pandora.com&lt;/a&gt;&lt;/small&gt;</property>
@@ -199,8 +215,8 @@
               </object>
               <packing>
                 <property name="right_attach">3</property>
-                <property name="top_attach">9</property>
-                <property name="bottom_attach">10</property>
+                <property name="top_attach">10</property>
+                <property name="bottom_attach">11</property>
               </packing>
             </child>
             <child>
@@ -213,8 +229,8 @@
               <packing>
                 <property name="left_attach">1</property>
                 <property name="right_attach">3</property>
-                <property name="top_attach">10</property>
-                <property name="bottom_attach">11</property>
+                <property name="top_attach">11</property>
+                <property name="bottom_attach">12</property>
               </packing>
             </child>
             <child>

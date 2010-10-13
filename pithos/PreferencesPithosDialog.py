@@ -75,6 +75,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             "show_icon": False,
             "lastfm_key": False,
             "enable_mediakeys":True,
+            "enable_screensaverpause":False,
             "volume": 1.0,
         }
         
@@ -104,6 +105,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.builder.get_object('prefs_password').set_text(self.__preferences["password"])
         self.builder.get_object('prefs_proxy').set_text(self.__preferences["proxy"])
         self.builder.get_object('checkbutton_notify').set_active(self.__preferences["notify"])
+        self.builder.get_object('checkbutton_screensaverpause').set_active(self.__preferences["enable_screensaverpause"])
         self.builder.get_object('checkbutton_icon').set_active(self.__preferences["show_icon"])
         
         self.lastfm_auth = LastFmAuth(self.__preferences, "lastfm_key", self.builder.get_object('lastfm_btn'))
@@ -117,6 +119,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.__preferences["password"] = self.builder.get_object('prefs_password').get_text()
         self.__preferences["proxy"] = self.builder.get_object('prefs_proxy').get_text()
         self.__preferences["notify"] = self.builder.get_object('checkbutton_notify').get_active()
+        self.__preferences["enable_screensaverpause"] = self.builder.get_object('checkbutton_screensaverpause').get_active()
         self.__preferences["show_icon"] = self.builder.get_object('checkbutton_icon').get_active()
         
         self.save()
