@@ -728,7 +728,7 @@ def NewPithosWindow(options):
 
 if __name__ == "__main__":
     import logging, optparse
-    parser = optparse.OptionParser(version="%prog %ver")
+    parser = optparse.OptionParser(version="Pithos %s"%(VERSION))
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Show debug messages")
     parser.add_option("-t", "--test", action="store_true", dest="test", help="Use a mock web interface instead of connecting to the real Pandora server")
     (options, args) = parser.parse_args()
