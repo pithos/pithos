@@ -129,7 +129,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         Called before the dialog returns gtk.RESPONSE_CANCEL for run()
         """
 
-        #restore any changes to self.__preferences here
+        self.setup_fields() # restore fields to previous values
         pass
             
 
