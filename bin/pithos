@@ -177,6 +177,7 @@ class PithosWindow(gtk.Window):
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
     
         self.player = gst.element_factory_make("playbin2", "player")
+        self.player.props.flags |= (1 << 7) # enable progressive download
         bus = self.player.get_bus()
         bus.add_signal_watch()
         bus.connect("message", self.on_message)
@@ -367,11 +368,7 @@ class PithosWindow(gtk.Window):
         self.start_song(self.current_song_index + 1)
         
     def user_play(self, *ignore):
-        if not self.current_song.is_still_valid():
-            self.current_song.message = "Playlist expired"
-            self.next_song()
-        else:
-            self.play()
+        self.play()
         self.emit('user-changed-play-state', True)
         
     def play(self):
