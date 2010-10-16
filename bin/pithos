@@ -47,7 +47,7 @@ else:
 sys.path.insert(0, os.path.dirname(fullPath))
 
 from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
-from pithos.pithosconfig import getdatapath, VERSION
+from pithos.pithosconfig import get_data_file, getdatapath, VERSION
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import load_plugins
 from pithos.dbus_service import PithosDBusProxy, try_to_raise
@@ -176,7 +176,7 @@ class PithosWindow(gtk.Window):
         #                                   Station object         station name
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
     
-        self.player = gst.element_factory_make("playbin", "player")
+        self.player = gst.element_factory_make("playbin2", "player")
         bus = self.player.get_bus()
         bus.add_signal_watch()
         bus.connect("message", self.on_message)
@@ -206,6 +206,10 @@ class PithosWindow(gtk.Window):
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, gtk.gdk.INTERP_BILINEAR)
         
     def init_ui(self):
+        gobject.set_application_name("Pithos")
+        gtk.window_set_default_icon_name('pithos')
+        os.environ['PULSE_PROP_media.role'] = 'music'
+        
         self.playpause_button = self.builder.get_object('playpause_button')
         
         self.volume = self.builder.get_object('volume')
@@ -646,10 +650,7 @@ class PithosWindow(gtk.Window):
                 self.start_song(self.selected_song().index)
                 
     def on_volume_change_event(self, volumebutton, value):
-        try:
-            self.player.get_by_name('volume').set_property("volume", value)
-        except:
-            self.player.set_property("volume", value)
+        self.player.set_property("volume", value)
         self.preferences['volume'] = value
     
     def station_properties(self, *ignore):
