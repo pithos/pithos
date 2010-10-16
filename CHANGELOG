@@ -1,6 +1,12 @@
 $$title: Changelog
 
+### 0.3.4
+2010-10-17
+  * Minor bugfixes [(lp:625095)](https://bugs.launchpad.net/pithos/+bug/625095) [(lp:628923)](https://bugs.launchpad.net/pithos/+bug/628923) [(lp:626980)](https://bugs.launchpad.net/pithos/+bug/626980) 
   * Screensaver pause plugin (by Matthew Gregg)
+  * Enable progressive buffering to increase stability of audio stream
+  * Integrate volume control with PulseAudio [(lp:650515)](https://bugs.launchpad.net/pithos/+bug/650515)
+  * New Pandora encryption keys [(lp:655507)](https://bugs.launchpad.net/pithos/+bug/625095)
 
 ### 0.3.1
 2010-08-26
