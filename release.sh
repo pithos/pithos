@@ -23,7 +23,18 @@ signed)
 	debuild
 	;;
 upload)
+	debuild -S
 	dput -c ../dput.cf pithos-lucid "../pithos_${VERSION}_source.changes"
+	;;
+tgz)
+	NAME=pithos_$VERSIONBASE
+	FNAME=../release/${NAME}.tar
+	FNAME2=../release/${NAME}.tgz
+	bzr export $FNAME
+	tar -f $FNAME --delete $NAME/debian
+	gzip $FNAME
+	mv $FNAME.gz $FNAME2
+	gpg --sign $FNAME2
 	;;
 unsigned|*)
 	debuild -us -uc
