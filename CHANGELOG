@@ -1,8 +1,10 @@
 $$title: Changelog
 
-### 0.3.4
-2010-10-17
+### 0.3.5
+2010-10-30
+
   * Minor bugfixes [(lp:625095)](https://bugs.launchpad.net/pithos/+bug/625095) [(lp:628923)](https://bugs.launchpad.net/pithos/+bug/628923) [(lp:626980)](https://bugs.launchpad.net/pithos/+bug/626980) 
+  * Run properly on multi-user systems [(lp:667896)](https://bugs.launchpad.net/pithos/+bug/667896)
   * Screensaver pause plugin (by Matthew Gregg)
   * Enable progressive buffering to increase stability of audio stream
   * Integrate volume control with PulseAudio [(lp:650515)](https://bugs.launchpad.net/pithos/+bug/650515)
