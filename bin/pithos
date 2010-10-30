@@ -733,21 +733,12 @@ if __name__ == "__main__":
     if not options.test and try_to_raise():
         print "Raised existing Pithos instance"
     else:
-        logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s",
-            filename='/tmp/pithos.debug.log', filemode='w')
         
-        console = logging.StreamHandler()
-        
-        formatter = logging.Formatter('%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
-        console.setFormatter(formatter)
-        
-        logging.getLogger('').addHandler(console)
-
         #set the logging level to show debug messages
         if options.verbose:
-            console.setLevel(logging.INFO)
+            logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
         else:
-            console.setLevel(logging.WARNING)
+            logging.basicConfig(level=logging.WARNING)
             
         logging.info("Pithos %s"%VERSION)
             
