@@ -1,5 +1,10 @@
 $$title: Changelog
 
+### 0.3.6
+2010-11-06
+
+ * New Pandora encryption keys [(lp:671265)](https://bugs.launchpad.net/pithos/+bug/671265)
+
 ### 0.3.5
 2010-10-30
 
