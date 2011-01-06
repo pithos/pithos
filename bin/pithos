@@ -219,6 +219,10 @@ class PithosWindow(gtk.Window):
         self.statusbar = self.builder.get_object('statusbar1')
         
         self.song_menu = self.builder.get_object('song_menu')
+        self.song_menu_love = self.builder.get_object('menuitem_love')
+        self.song_menu_unlove = self.builder.get_object('menuitem_unlove')
+        self.song_menu_ban = self.builder.get_object('menuitem_ban')
+        self.song_menu_unban = self.builder.get_object('menuitem_unban')
         
         self.songs_treeview = self.builder.get_object('songs_treeview')
         self.songs_treeview.set_model(self.songs_model)
@@ -589,6 +593,13 @@ class PithosWindow(gtk.Window):
         self.worker_run(song.rate, (RATE_BAN,), callback, "Banning song...")
         if song is self.current_song:
             self.next_song()
+            
+    def unrate_song(self, song=None):
+        song = song or self.current_song
+        def callback(l):
+            self.update_song_row(song)
+            self.emit('song-rating-changed', song)
+        self.worker_run(song.rate, (RATE_NONE,), callback, "Removing song rating...")
         
     def tired_song(self, song=None):
         song = song or self.current_song
@@ -613,6 +624,9 @@ class PithosWindow(gtk.Window):
     def on_menuitem_ban(self, widget):
         self.ban_song(self.selected_song())       
         
+    def on_menuitem_unrate(self, widget):
+        self.unrate_song(self.selected_song())
+    
     def on_menuitem_tired(self, widget):
         self.tired_song(self.selected_song())
     
@@ -637,6 +651,12 @@ class PithosWindow(gtk.Window):
             treeview.set_cursor( path, col, 0)
             
             if event.button == 3:
+                rating = self.selected_song().rating
+                self.song_menu_love.set_property("visible", rating != RATE_LOVE);
+                self.song_menu_unlove.set_property("visible", rating == RATE_LOVE);
+                self.song_menu_ban.set_property("visible", rating != RATE_BAN);
+                self.song_menu_unban.set_property("visible", rating == RATE_BAN);
+
                 self.song_menu.popup( None, None, None, event.button, time)
                 return True
             
