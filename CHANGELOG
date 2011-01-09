@@ -1,9 +1,11 @@
 $$title: Changelog
 
 ### 0.3.7
-2011-01-xx
+2011-01-09
 
- * Allow feedback to be removed from songs (by Christopher Eby)
+ * Allow feedback to be removed from songs (by Christopher Eby) [(lp:659581)](https://bugs.launchpad.net/pithos/+bug/659581)
+ * Don't save Pandora feedback to last.fm [(lp:636600)](https://bugs.launchpad.net/pithos/+bug/636600)
+ * Minor bugfixes [(lp:670131)](https://bugs.launchpad.net/pithos/+bug/670131) [(lp:658230)](https://bugs.launchpad.net/pithos/+bug/658230)
 
 ### 0.3.6
 2010-11-06
