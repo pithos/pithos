@@ -316,11 +316,11 @@ class PithosWindow(gtk.Window):
             logging.info("Pandora connected")
             
             for i in self.pandora.stations:
-                if i.isQuickMix:
+                if i.isQuickMix and i.isCreator:
                     self.stations_model.append((i, "QuickMix"))
             self.stations_model.append((None, 'sep'))
             for i in self.pandora.stations:
-                if not i.isQuickMix:
+                if not (i.isQuickMix and i.isCreator):
                     self.stations_model.append((i, i.name))
                 if i.id == self.current_station_id:
                     logging.info("Restoring saved station: id = %s"%(i.id))
