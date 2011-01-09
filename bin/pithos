@@ -30,6 +30,7 @@ except:
 import gst
 import cgi
 import webbrowser
+import os
 import urllib
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
@@ -52,6 +53,15 @@ from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import load_plugins
 from pithos.dbus_service import PithosDBusProxy, try_to_raise
 from pithos.pandora import *
+
+
+def openBrowser(url):
+    print "Opening %s"%url
+    webbrowser.open(url)
+    try:
+        os.wait() # workaround for http://bugs.python.org/issue5993
+    except:
+        pass
 
 def buttonMenu(button, menu):
     def cb(button):
@@ -632,7 +642,7 @@ class PithosWindow(gtk.Window):
     
     def on_menuitem_info(self, widget):
         song = self.selected_song()
-        webbrowser.open(song.songDetailURL)
+        openBrowser(song.songDetailURL)
         
     def on_menuitem_bookmark_song(self, widget):
         self.bookmark_song(self.selected_song())
@@ -671,13 +681,13 @@ class PithosWindow(gtk.Window):
         self.preferences['volume'] = value
     
     def station_properties(self, *ignore):
-        webbrowser.open(self.current_station.info_url)
+        openBrowser(self.current_station.info_url)
         
     def open_web_site(self, *ignore):
-        webbrowser.open("http://kevinmehall.net/p/pithos?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
+        openBrowser("http://kevinmehall.net/p/pithos?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
         
     def report_bug(self, *ignore):
-        webbrowser.open("https://bugs.launchpad.net/pithos")
+        openBrowser("https://bugs.launchpad.net/pithos")
         
     def about(self, widget, data=None):
         """about - display the about box for pithos """
