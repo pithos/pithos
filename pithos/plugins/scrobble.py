@@ -46,7 +46,6 @@ class LastfmPlugin(PithosPlugin):
     def on_enable(self):
         self.connect(self.window.preferences['lastfm_key'])
         self.song_ended_handle = self.window.connect('song-ended', self.song_ended)
-        self.song_rating_changed_handle = self.window.connect('song-rating-changed', self.song_rating_changed)
         self.song_changed_handle = self.window.connect('song-changed', self.song_changed)
         
     def on_disable(self):
@@ -56,11 +55,6 @@ class LastfmPlugin(PithosPlugin):
         
     def song_ended(self, window, song):
         self.scrobble(song)
-        
-    def song_rating_changed(self, window, song):
-        if song.finished: # otherwise, rating will be sent when the song is finished
-            self.send_rating(song)
-                
         
     def connect(self, session_key):
         self.network = pylast.get_lastfm_network(
@@ -72,27 +66,21 @@ class LastfmPlugin(PithosPlugin):
     def song_changed(self, window, song):
         self.worker.send(self.scrobbler.report_now_playing, (song.artist, song.title, song.album))
         
-    def send_rating(self, song):
+    def send_rating(self, song, rating):
         if song.rating:
             track = self.network.get_track(song.artist, song.title)
-            if song.rating_str == 'love':
+            if rating == 'love':
                 self.worker.send(track.love)
-            elif song.rating_str == 'ban':
+            elif rating == 'ban':
                 self.worker.send(track.ban)
             logging.info("Sending song rating to last.fm")
 
     def scrobble(self, song):
         if song.duration > 30 and (song.position > 240 or song.position > song.duration/2):
             logging.info("Scrobbling song")
-            if song.rating_str == 'love':
-                mode = pylast.SCROBBLE_MODE_LOVED
-            else:
-                mode = pylast.SCROBBLE_MODE_PLAYED
+            mode = pylast.SCROBBLE_MODE_PLAYED
             source = pylast.SCROBBLE_SOURCE_PERSONALIZED_BROADCAST
-            
-            self.worker.send(self.scrobbler.scrobble, (song.artist, song.title, int(song.start_time), source, mode, song.duration, song.album))
-        self.send_rating(song)
-            
+            self.worker.send(self.scrobbler.scrobble, (song.artist, song.title, int(song.start_time), source, mode, song.duration, song.album))            
 
 
 class LastFmAuth:
