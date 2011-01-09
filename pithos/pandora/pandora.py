@@ -192,6 +192,15 @@ class Pandora(object):
             if i.id == id:
                 return i
 
+    def get_feedback_id(self, stationId, musicId):
+        station = self.xmlrpc_call('station.getStation', [stationId])
+        feedback = station['feedback']
+        for i in feedback:
+            if musicId == i['musicId']:
+                return i['feedbackId']
+
+    def delete_feedback(self, feedbackId):
+        self.xmlrpc_call('station.deleteFeedback', [feedbackId])
         
 class Station(object):
     def __init__(self, pandora, d):
@@ -262,10 +271,17 @@ class Song(object):
     def station(self):
         return self.pandora.get_station_by_id(self.stationId)
     
+    @property
+    def feedbackId(self):
+        return self.pandora.get_feedback_id(self.stationId, self.musicId)
+
     def rate(self, rating):
         if self.rating != rating:
             self.station.transformIfShared()
-            self.pandora.add_feedback(self.stationId, self.musicId, rating, self.userSeed, songType=self.songType)
+            if rating == RATE_NONE:
+                self.pandora.delete_feedback(self.feedbackId)
+            else:
+                self.pandora.add_feedback(self.stationId, self.musicId, rating, self.userSeed, songType=self.songType)
             self.rating = rating
         
     def set_tired(self):

@@ -198,6 +198,16 @@
       </object>
     </child>
     <child>
+      <object class="GtkImageMenuItem" id="menuitem_unlove">
+        <property name="label" translatable="yes">_Unlove Song</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="image">image12</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="on_menuitem_unrate"/>
+      </object>
+    </child>
+    <child>
       <object class="GtkImageMenuItem" id="menuitem_ban">
         <property name="label" translatable="yes">_Ban Song</property>
         <property name="visible">True</property>
@@ -205,6 +215,16 @@
         <property name="image">image3</property>
         <property name="use_stock">False</property>
         <signal name="activate" handler="on_menuitem_ban"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_unban">
+        <property name="label" translatable="yes">_Unban Song</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="image">image13</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="on_menuitem_unrate"/>
       </object>
     </child>
     <child>
@@ -439,5 +459,13 @@
   <object class="GtkImage" id="image10">
     <property name="visible">True</property>
     <property name="stock">gtk-dialog-warning</property>
+  </object>
+  <object class="GtkImage" id="image12">
+    <property name="visible">True</property>
+    <property name="stock">gtk-about</property>
+  </object>
+  <object class="GtkImage" id="image13">
+    <property name="visible">True</property>
+    <property name="stock">gtk-cancel</property>
   </object>
 </interface>
