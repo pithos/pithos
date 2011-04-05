@@ -244,7 +244,7 @@ class PithosWindow(gtk.Window):
                 bgcolor = column.get_tree_view().get_style().mid[gtk.STATE_NORMAL]
             else:
                 bgcolor = column.get_tree_view().get_style().base[gtk.STATE_NORMAL]
-            cell.set_property("cell-background", bgcolor)
+            cell.set_property("cell-background-gdk", bgcolor)
                 
         render_icon = CellRendererAlbumArt()
         title_col.pack_start(render_icon, expand=False)
