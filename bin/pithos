@@ -578,7 +578,7 @@ class PithosWindow(gtk.Window):
         h = time_int
         
         if h:
-            return "%i:%02i:%021"%(h,m,s)
+            return "%i:%02i:%02i"%(h,m,s)
         else:
             return "%i:%02i"%(m,s)
     
