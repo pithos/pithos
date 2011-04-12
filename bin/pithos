@@ -166,6 +166,9 @@ class PithosWindow(gtk.Window):
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         self.preferences = self.prefs_dlg.get_preferences()
         
+        if self.prefs_dlg.fix_perms():
+            # Changes were made, save new config variable
+            self.prefs_dlg.save()
         self.init_core()
         self.init_ui()
         
