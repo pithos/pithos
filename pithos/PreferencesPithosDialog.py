@@ -130,14 +130,16 @@ class PreferencesPithosDialog(gtk.Dialog):
                     return complain_unsafe()
                 # File is o+r, 
                 logging.warning("Removing world-readable permissions, configuration should not be globally readable. To force, set unsafe_permissions to True in pithos.ini.")
-                os.chmod(configfilename, config_perms ^ stat.S_IROTH)
+                config_perms ^= stat.S_IROTH
+                os.chmod(configfilename, config_perms)
                 changed = True
 
             if config_perms & stat.S_IWOTH:
                 if self.__preferences["unsafe_permissions"]:
                     return complain_unsafe()
                 logging.warning("Removing world-writable permissions, configuration should not be globally writable. To force, set unsafe_permissions to True in pithos.ini.")
-                os.chmod(configfilename, config_perms ^ stat.S_IWOTH)
+                config_perms ^= stat.S_IWOTH
+                os.chmod(configfilename, config_perms)
                 changed = True
         
         return changed
