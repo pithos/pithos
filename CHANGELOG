@@ -1,5 +1,13 @@
 $$title: Changelog
 
+### 0.3.8
+2011-03-12
+
+ *  CVE-2011-1500: Fix password leak to local users through file permissions (by Luke Faraone) [(lp:733307)](https://bugs.launchpad.net/pithos/+bug/733307)
+ * Correctly handle hour-long songs (by Luke Faraone) [(lp:734962)](https://bugs.launchpad.net/pithos/+bug/734962)
+ * Fix "TypeError: could not convert argument to correct param type" (by Rick Spencer) [(lp:706681)](https://bugs.launchpad.net/pithos/+bug/706681)
+
+
 ### 0.3.7
 2011-01-09
 
