@@ -52,6 +52,7 @@ from pithos.pithosconfig import get_data_file, getdatapath, VERSION
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import load_plugins
 from pithos.dbus_service import PithosDBusProxy, try_to_raise
+from pithos.sound_menu import PithosSoundMenu
 from pithos.pandora import *
 
 
@@ -176,11 +177,12 @@ class PithosWindow(gtk.Window):
         load_plugins(self)
         
         self.dbus_service = PithosDBusProxy(self)
+        self.sound_menu = PithosSoundMenu(self)
         
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
         
-        self.set_proxy()            
+        self.set_proxy()
         self.pandora_connect()
          
     def init_core(self):
@@ -190,10 +192,12 @@ class PithosWindow(gtk.Window):
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
     
         self.player = gst.element_factory_make("playbin2", "player")
-        #self.player.props.flags |= (1 << 7) # enable progressive download
+        self.player.props.flags |= (1 << 7) # enable progressive download (GST_PLAY_FLAG_DOWNLOAD)
         bus = self.player.get_bus()
         bus.add_signal_watch()
-        bus.connect("message", self.on_message)
+        bus.connect("message::eos", self.on_gst_eos)
+        bus.connect("message::buffering", self.on_gst_buffering)
+        bus.connect("message::error", self.on_gst_error)
         self.time_format = gst.Format(gst.FORMAT_TIME)
                         
         self.stations_dlg = None
@@ -504,27 +508,28 @@ class PithosWindow(gtk.Window):
         if not reconnecting:
             self.get_playlist(start = True)
         self.stations_combo.set_active(self.station_index(station))
+    
+    def on_gst_eos(self, bus, message):
+        logging.info("EOS")
+        self.next_song()
         
+    def on_gst_error(self, bus, message):
+        err, debug = message.parse_error()
+        logging.error("Gstreamer error: %s, %s" % (err, debug))
+        self.current_song.message = "Error: "+str(err)
+        self.gstreamer_error = str(err)
+        self.gstreamer_errorcount_1 += 1
+        self.next_song()
         
-    def on_message(self, bus, message):
-        t = message.type
-        if t == gst.MESSAGE_EOS:
-            self.next_song()
-        elif message.type == gst.MESSAGE_BUFFERING:
-            percent = message.parse_buffering()
-            self.buffer_percent = percent
-            if percent < 100:
-                self.player.set_state(gst.STATE_PAUSED)
-            elif self.playing:
-                self.player.set_state(gst.STATE_PLAYING)
-            self.update_song_row()
-        elif t == gst.MESSAGE_ERROR:
-            err, debug = message.parse_error()
-            logging.error("Gstreamer error: %s, %s" % (err, debug))
-            self.current_song.message = "Error: "+str(err)
-            self.gstreamer_error = str(err)
-            self.gstreamer_errorcount_1 += 1
-            self.next_song()
+    def on_gst_buffering(self, bus, message):
+        percent = message.parse_buffering()
+        self.buffer_percent = percent
+        #if percent < 100:
+            #self.player.set_state(gst.STATE_PAUSED)
+        #elif self.playing:
+            #self.player.set_state(gst.STATE_PLAYING)
+        self.update_song_row()
+            
     
     def song_text(self, song):
         title = cgi.escape(song.title)

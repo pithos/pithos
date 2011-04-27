@@ -36,16 +36,16 @@ def xmlrpc_make_call(method, args):
 
 def xmlrpc_parse_value(tree):
     b = tree.findtext('boolean')
-    if b:
+    if b is not None:
         return bool(int(b))
     i = tree.findtext('int')
-    if i:
+    if i is not None:
         return int(i)
     a = tree.find('array')
-    if a:
+    if a is not None:
         return xmlrpc_parse_array(a)
     s = tree.find('struct')
-    if s:
+    if s is not None:
         return xmlrpc_parse_struct(s)
     return tree.text
  

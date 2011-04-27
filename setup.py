@@ -55,25 +55,6 @@ def update_data_path(prefix, oldvalue=None):
     return oldvalue
 
 
-def update_desktop_file(datadir):
-
-    try:
-        fin = file('pithos.desktop.in', 'r')
-        fout = file(fin.name + '.new', 'w')
-
-        for line in fin:            
-            if 'Icon=' in line:
-                line = "Icon=%s\n" % (datadir + 'media/icon.png')
-            fout.write(line)
-        fout.flush()
-        fout.close()
-        fin.close()
-        os.rename(fout.name, fin.name)
-    except (OSError, IOError), e:
-        print ("ERROR: Can't find pithos.desktop.in")
-        sys.exit(1)
-
-
 class InstallAndUpdateDataDirectory(DistUtilsExtra.auto.install_auto):
     def run(self):
         if self.root or self.home:
@@ -81,15 +62,11 @@ class InstallAndUpdateDataDirectory(DistUtilsExtra.auto.install_auto):
             "need to update quickly/quicklyconfig.py file to adjust __quickly_data_directory__. You can " \
             "ignore this warning if you are packaging and uses --prefix."
         previous_value = update_data_path(self.prefix + '/share/pithos/')
-        update_desktop_file(self.prefix + '/share/pithos/')
         DistUtilsExtra.auto.install_auto.run(self)
         update_data_path(self.prefix, previous_value)
 
-
-        
-##################################################################################
-###################### YOU SHOULD MODIFY ONLY WHAT IS BELOW ######################
-##################################################################################
+from DistUtilsExtra.command.build_extra import build_extra
+from DistUtilsExtra.command.build_icons import build_icons
 
 DistUtilsExtra.auto.setup(
     name='pithos',
@@ -101,6 +78,6 @@ DistUtilsExtra.auto.setup(
     description='Pandora.com client for the GNOME desktop',
     #long_description='Here a longer description',
     url='https://launchpad.net/pithos',
-    cmdclass={'install': InstallAndUpdateDataDirectory}
+    cmdclass={'install': InstallAndUpdateDataDirectory, 'build_icons':build_icons, 'build':build_extra}
     )
 

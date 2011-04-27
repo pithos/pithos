@@ -3,6 +3,6 @@ Name=Pithos
 Comment=Play music from Pandora Radio
 Categories=GNOME;AudioVideo;
 Exec=pithos
-Icon=/usr/share/pithos/media/icon.png
+Icon=pithos
 Terminal=false
 Type=Application
