@@ -190,7 +190,7 @@ class PithosWindow(gtk.Window):
         self.stations_model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
     
         self.player = gst.element_factory_make("playbin2", "player")
-        #self.player.props.flags |= (1 << 7) # enable progressive download (GST_PLAY_FLAG_DOWNLOAD)
+        self.player.props.flags |= (1 << 7) # enable progressive download (GST_PLAY_FLAG_DOWNLOAD)
         bus = self.player.get_bus()
         bus.add_signal_watch()
         bus.connect("message::eos", self.on_gst_eos)
