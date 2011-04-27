@@ -180,13 +180,13 @@ class Pandora(object):
     def add_station_by_music_id(self, musicid):
          return self.create_station('mi', musicid)
          
-    def add_feedback(self, stationId, musicId, rating, userSeed='', testStrategy='', songType=''):
+    def add_feedback(self, stationId, musicId, rating, userSeed='', songType=''):
         logging.info("pandora: addFeedback")
         if rating == RATE_NONE:
             logging.error("Can't set rating to none")
             return
         rating_bool = True if rating == RATE_LOVE else False
-        self.xmlrpc_call('station.addFeedback', [stationId, musicId, userSeed, testStrategy, rating_bool, False, songType])
+        self.xmlrpc_call('station.addFeedback', [stationId, musicId, userSeed, '0', rating_bool, False, songType])
         
     def get_station_by_id(self, id):
         for i in self.stations:
@@ -282,7 +282,7 @@ class Song(object):
             if rating == RATE_NONE:
                 self.pandora.delete_feedback(self.feedbackId)
             else:
-                self.pandora.add_feedback(self.stationId, self.musicId, rating, self.userSeed, songType=self.songType)
+                self.pandora.add_feedback(self.stationId, self.musicId, rating, self.userSeed, self.songType)
             self.rating = rating
         
     def set_tired(self):
