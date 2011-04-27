@@ -52,6 +52,7 @@ from pithos.pithosconfig import get_data_file, getdatapath, VERSION
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import load_plugins
 from pithos.dbus_service import PithosDBusProxy, try_to_raise
+from pithos.sound_menu import PithosSoundMenu
 from pithos.pandora import *
 
 
@@ -176,6 +177,7 @@ class PithosWindow(gtk.Window):
         load_plugins(self)
         
         self.dbus_service = PithosDBusProxy(self)
+        self.sound_menu = PithosSoundMenu(self)
         
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
