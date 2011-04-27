@@ -21,7 +21,7 @@ import xml.etree.ElementTree as etree
 from pithos.pandora.xmlrpc import *
 from pithos.pandora.blowfish import Blowfish
 
-PROTOCOL_VERSION = "29"
+PROTOCOL_VERSION = "30"
 RPC_URL = "http://www.pandora.com/radio/xmlrpc/v"+PROTOCOL_VERSION+"?"
 USER_AGENT = "Pithos/0.2"
 HTTP_TIMEOUT = 30
@@ -119,6 +119,7 @@ class Pandora(object):
         
         fault = tree.findtext('fault/value/struct/member/value')
         if fault:
+            logging.error('fault: ' +  fault)
             code, msg = fault.split('|')[2:]
             if code == 'AUTH_INVALID_TOKEN':
                 raise PandoraAuthTokenInvalid(msg)
