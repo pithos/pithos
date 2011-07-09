@@ -21,7 +21,7 @@ import xml.etree.ElementTree as etree
 from pithos.pandora.xmlrpc import *
 from pithos.pandora.blowfish import Blowfish
 
-PROTOCOL_VERSION = "30"
+PROTOCOL_VERSION = "31"
 RPC_URL = "http://www.pandora.com/radio/xmlrpc/v"+PROTOCOL_VERSION+"?"
 USER_AGENT = "Pithos/0.2"
 HTTP_TIMEOUT = 30
@@ -172,7 +172,7 @@ class Pandora(object):
          
     def create_station(self, reqType, id):
         assert(reqType == 'mi' or requestType == 'sh') # music id or shared station id
-        d = self.xmlrpc_call('station.createStation', [reqType+id])
+        d = self.xmlrpc_call('station.createStation', [reqType+id, ''])
         station = Station(self, d)
         self.stations.append(station)
         return station
