@@ -1,5 +1,10 @@
 $$title: Changelog
 
+### 0.3.10
+2011-07-09
+
+ * Pandora protocol v31; No key change, minor change to createStation
+
 ### 0.3.9
 2011-04-27
 
