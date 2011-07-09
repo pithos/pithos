@@ -1,5 +1,11 @@
 $$title: Changelog
 
+### 0.3.9
+2011-04-27
+
+ * New Pandora encryption keys [(lp:771804)](https://bugs.launchpad.net/pithos/+bug/771804)
+ * Enable gstreamer progressive download to improve stream quality and work around [gstreamer bug 648786](https://bugzilla.gnome.org/show_bug.cgi?id=648786) on Ubuntu 11.04. [(lp:705271)](https://bugs.launchpad.net/pithos/+bug/705271) [(lp:759699)](https://bugs.launchpad.net/pithos/+bug/759699)
+
 ### 0.3.8
 2011-04-12
 
