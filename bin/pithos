@@ -183,6 +183,7 @@ class PithosWindow(gtk.Window):
             self.show_preferences(is_startup=True)
         
         self.set_proxy()
+        self.set_audio_format()
         self.pandora_connect()
          
     def init_core(self):
@@ -311,6 +312,9 @@ class PithosWindow(gtk.Window):
     
     def set_proxy(self):
         self.worker_run('set_proxy', (self.preferences['proxy'],))
+
+    def set_audio_format(self):
+        self.worker_run('set_audio_format', (self.preferences['audio_format'],))
     
     def pandora_connect(self, message="Logging in...", callback=None):
         args = (self.preferences['username'],
@@ -715,6 +719,8 @@ class PithosWindow(gtk.Window):
             if not is_startup:
                 if self.preferences['proxy'] != old_prefs['proxy']:
                     self.set_proxy()
+                if self.preferences['audio_format'] != old_prefs['audio_format']:
+                    self.set_audio_format()
                 if (   self.preferences['username'] != old_prefs['username']
                     or self.preferences['password'] != old_prefs['password']):
                         self.pandora_connect()

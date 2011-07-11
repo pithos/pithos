@@ -27,6 +27,12 @@ import os
 class project_path_not_found(Exception):
     pass
 
+valid_audio_formats = [
+    'mp3',
+    'aacplus',
+    'mp3-hifi',
+]
+
 def get_data_file(*path_segments):
     """Get the full path to a data file.
 

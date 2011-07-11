@@ -72,6 +72,7 @@ class Pandora(object):
     def __init__(self):
         self.rid = self.listenerId = self.authToken = None
         self.set_proxy(None)
+        self.set_audio_format(AUDIO_FORMAT)
         
     def xmlrpc_call(self, method, args=[], url_args=True):
         if url_args is True:
@@ -127,6 +128,9 @@ class Pandora(object):
                 raise PandoraError(msg, code)
         else:
             return xmlrpc_parse(tree)
+
+    def set_audio_format(self, fmt):
+        self.audio_format = fmt
      
     def set_proxy(self, proxy):
         if proxy:
@@ -225,7 +229,7 @@ class Station(object):
             
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.xmlrpc_call('playlist.getFragment', [self.id, '0', '', '', AUDIO_FORMAT, '0', '0'])
+        playlist = self.pandora.xmlrpc_call('playlist.getFragment', [self.id, '0', '', '', self.pandora.audio_format, '0', '0'])
         return [Song(self.pandora, i) for i in playlist]
                   
     @property
