@@ -21,9 +21,9 @@ import xml.etree.ElementTree as etree
 from pithos.pandora.xmlrpc import *
 from pithos.pandora.blowfish import Blowfish
 
-PROTOCOL_VERSION = "31"
+PROTOCOL_VERSION = "32"
 RPC_URL = "http://www.pandora.com/radio/xmlrpc/v"+PROTOCOL_VERSION+"?"
-USER_AGENT = "Pithos/0.2"
+USER_AGENT = "Mozilla/5.0 (X11; U; Linux i586; de; rv:5.0) Gecko/20100101 Firefox/5.0 (compatible; Pithos/0.3)"
 HTTP_TIMEOUT = 30
 AUDIO_FORMAT = 'aacplus'
 
@@ -70,7 +70,7 @@ def format_url_arg(v):
 
 class Pandora(object):
     def __init__(self):
-        self.rid = self.listenerId = self.authToken = None
+        self.rid = self.authToken = None
         self.set_proxy(None)
         self.set_audio_format(AUDIO_FORMAT)
         
@@ -89,8 +89,6 @@ class Pandora(object):
         url_arg_strings = []
         if self.rid:
             url_arg_strings.append('rid=%s'%self.rid)
-        if self.listenerId:
-            url_arg_strings.append('lid=%s'%self.listenerId)
         method = method[method.find('.')+1:] # method in URL is only last component
         url_arg_strings.append('method=%s'%method)
         count = 1
@@ -141,12 +139,11 @@ class Pandora(object):
         
     def connect(self, user, password):
         self.rid = "%07iP"%(int(time.time()) % 10000000)
-        self.listenerId = self.authToken = None
+        self.authToken = None
             
         user = self.xmlrpc_call('listener.authenticateListener', [user, password], [])
         
         self.webAuthToken = user['webAuthToken']
-        self.listenerId = user['listenerId']
         self.authToken = user['authToken']
         
         stations = self.xmlrpc_call('station.getStations')
@@ -163,7 +160,7 @@ class Pandora(object):
         for i in self.stations:
             if i.useQuickMix:
                 stationIds.append(i.id)
-        self.xmlrpc_call('station.setQuickMix', ['RANDOM', stationIds])
+        self.xmlrpc_call('station.setQuickMix', ['', stationIds])
          
     def search(self, query):
          results = self.xmlrpc_call('music.search', [query])
