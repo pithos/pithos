@@ -1,5 +1,9 @@
 $$title: Changelog
 
+### 0.3.11
+2011-09-22
+
+  * Pandora protocol v32
   * Setting for audio format (by Stefan Nelson-Lindall)
 
 ### 0.3.10
