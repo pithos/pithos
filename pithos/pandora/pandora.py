@@ -160,7 +160,7 @@ class Pandora(object):
         for i in self.stations:
             if i.useQuickMix:
                 stationIds.append(i.id)
-        self.xmlrpc_call('station.setQuickMix', ['', stationIds])
+        self.xmlrpc_call('station.setQuickMix', ['RANDOM', stationIds])
          
     def search(self, query):
          results = self.xmlrpc_call('music.search', [query])
