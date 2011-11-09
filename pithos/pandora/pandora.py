@@ -22,7 +22,7 @@ from pithos.pandora.xmlrpc import *
 from pithos.pandora.blowfish import Blowfish
 
 PROTOCOL_VERSION = "33"
-RPC_URL = "http://www.pandora.com/radio/xmlrpc/v"+PROTOCOL_VERSION+"?"
+RPC_URL = "www.pandora.com/radio/xmlrpc/v"+PROTOCOL_VERSION+"?"
 USER_AGENT = "Mozilla/5.0 (X11; U; Linux i586; de; rv:5.0) Gecko/20100101 Firefox/5.0 (compatible; Pithos/0.3)"
 HTTP_TIMEOUT = 30
 AUDIO_FORMAT = 'aacplus'
@@ -75,7 +75,7 @@ class Pandora(object):
         self.set_proxy(None)
         self.set_audio_format(AUDIO_FORMAT)
         
-    def xmlrpc_call(self, method, args=[], url_args=True):
+    def xmlrpc_call(self, method, args=[], url_args=True, secure=False):
         if url_args is True:
             url_args = args
             
@@ -99,7 +99,12 @@ class Pandora(object):
             url_arg_strings.append("arg%i=%s"%(count, format_url_arg(i)))
             count+=1
         
-        url = RPC_URL + '&'.join(url_arg_strings)
+        if secure:
+            proto = 'https://'
+        else:
+            proto = 'http://'
+        
+        url = proto + RPC_URL + '&'.join(url_arg_strings)
         
         logging.debug(url)
         logging.debug(xml)
@@ -146,7 +151,7 @@ class Pandora(object):
         self.rid = "%07iP"%(int(time.time()) % 10000000)
         self.listenerId = self.authToken = None
             
-        user = self.xmlrpc_call('listener.authenticateListener', [user, password], [])
+        user = self.xmlrpc_call('listener.authenticateListener', [user, password], [], secure=True)
         
         self.webAuthToken = user['webAuthToken']
         self.listenerId = user['listenerId']
