@@ -15,6 +15,7 @@
 ### END LICENSE
 
 import pynotify, gtk
+from cgi import escape
 from pithos.plugin import PithosPlugin
 from pithos.pithosconfig import get_data_file
 
@@ -31,7 +32,7 @@ class NotifyPlugin(PithosPlugin):
         
     def set_for_song(self, song):
         self.notification.clear_hints()
-        msg = "by %s from %s"%(song.artist, song.album)
+        msg = escape("by %s from %s"%(song.artist, song.album))
         self.notification.update(song.title, msg, 'audio-x-generic')
         
     def song_changed(self, window,  song):
