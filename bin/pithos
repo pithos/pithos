@@ -303,6 +303,8 @@ class PithosWindow(gtk.Window):
                 self.retrying = True
                 logging.info("Automatic reconnect after invalid auth token")                
                 self.pandora_connect("Reconnecting...", retry_cb)
+            elif isinstance(e, PandoraAPIVersionError):
+                self.api_update_dialog()
             elif isinstance(e, PandoraError):
                 self.error_dialog(e.message, retry_cb)
             else:
@@ -495,6 +497,13 @@ class PithosWindow(gtk.Window):
         elif response == 3:
             self.retrying = False
             self.show_preferences()
+            
+    def api_update_dialog(self):
+        dialog = self.builder.get_object("api_update_dialog")
+        response = dialog.run()
+        if response:
+            openBrowser("http://kevinmehall.net/p/pithos/itbroke?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
+        gtk.main_quit()
     
     def station_index(self, station):
         return [i[0] for i in self.stations_model].index(station)

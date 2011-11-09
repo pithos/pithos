@@ -40,6 +40,7 @@ class PandoraError(IOError):
         
 class PandoraAuthTokenInvalid(PandoraError): pass
 class PandoraNetError(PandoraError): pass
+class PandoraAPIVersionError(PandoraError): pass
 class PandoraTimeout(PandoraNetError): pass
 
 from pithos.pandora import pandora_keys
@@ -124,6 +125,8 @@ class Pandora(object):
             code, msg = fault.split('|')[2:]
             if code == 'AUTH_INVALID_TOKEN':
                 raise PandoraAuthTokenInvalid(msg)
+            elif code == 'INCOMPATIBLE_VERSION':
+                raise PandoraAPIVersionError(msg)
             else:
                 raise PandoraError(msg, code)
         else:
