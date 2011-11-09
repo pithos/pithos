@@ -1,5 +1,11 @@
 $$title: Changelog
 
+### 0.3.13
+2011-11-09
+
+  * Use SSL for login - fixes AUTH_WEB_LOGIN_NOT_ALLOWED error from Pandora
+    change 2 minutes after 0.3.12 release
+
 ### 0.3.12
 2011-11-09
 
