@@ -21,7 +21,7 @@ import xml.etree.ElementTree as etree
 from pithos.pandora.xmlrpc import *
 from pithos.pandora.blowfish import Blowfish
 
-PROTOCOL_VERSION = "32"
+PROTOCOL_VERSION = "33"
 RPC_URL = "http://www.pandora.com/radio/xmlrpc/v"+PROTOCOL_VERSION+"?"
 USER_AGENT = "Mozilla/5.0 (X11; U; Linux i586; de; rv:5.0) Gecko/20100101 Firefox/5.0 (compatible; Pithos/0.3)"
 HTTP_TIMEOUT = 30
@@ -70,7 +70,7 @@ def format_url_arg(v):
 
 class Pandora(object):
     def __init__(self):
-        self.rid = self.authToken = None
+        self.rid = self.listenerId = self.authToken = None
         self.set_proxy(None)
         self.set_audio_format(AUDIO_FORMAT)
         
@@ -89,6 +89,8 @@ class Pandora(object):
         url_arg_strings = []
         if self.rid:
             url_arg_strings.append('rid=%s'%self.rid)
+        if self.listenerId:
+            url_arg_strings.append('lid=%s'%self.listenerId)
         method = method[method.find('.')+1:] # method in URL is only last component
         url_arg_strings.append('method=%s'%method)
         count = 1
@@ -139,11 +141,12 @@ class Pandora(object):
         
     def connect(self, user, password):
         self.rid = "%07iP"%(int(time.time()) % 10000000)
-        self.authToken = None
+        self.listenerId = self.authToken = None
             
         user = self.xmlrpc_call('listener.authenticateListener', [user, password], [])
         
         self.webAuthToken = user['webAuthToken']
+        self.listenerId = user['listenerId']
         self.authToken = user['authToken']
         
         stations = self.xmlrpc_call('station.getStations')
@@ -181,13 +184,13 @@ class Pandora(object):
     def add_station_by_music_id(self, musicid):
          return self.create_station('mi', musicid)
          
-    def add_feedback(self, stationId, musicId, rating, userSeed='', songType=''):
+    def add_feedback(self, stationId, trackToken, rating):
         logging.info("pandora: addFeedback")
         if rating == RATE_NONE:
             logging.error("Can't set rating to none")
             return
         rating_bool = True if rating == RATE_LOVE else False
-        self.xmlrpc_call('station.addFeedback', [stationId, musicId, userSeed, '0', rating_bool, False, songType])
+        self.xmlrpc_call('station.addFeedback', [stationId, trackToken, rating_bool])
         
     def get_station_by_id(self, id):
         for i in self.stations:
@@ -254,6 +257,7 @@ class Song(object):
         self.fileGain = d['fileGain']
         self.identity = d['identity']
         self.musicId = d['musicId']
+        self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['rating'] else RATE_NONE # banned songs won't play, so we don't care about them
         self.stationId = d['stationId']
         self.title = d['songTitle']
@@ -261,7 +265,6 @@ class Song(object):
         self.songDetailURL = d['songDetailURL']
         self.albumDetailURL = d['albumDetailURL']
         self.artRadio = d['artRadio']
-        self.songType = d['songType']
         
         self.tired=False
         self.message=''
@@ -283,7 +286,7 @@ class Song(object):
             if rating == RATE_NONE:
                 self.pandora.delete_feedback(self.feedbackId)
             else:
-                self.pandora.add_feedback(self.stationId, self.musicId, rating, self.userSeed, self.songType)
+                self.pandora.add_feedback(self.stationId, self.trackToken, rating)
             self.rating = rating
         
     def set_tired(self):
