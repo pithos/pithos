@@ -19,7 +19,7 @@
 __pithos_data_directory__ = '../data/'
 __license__ = 'GPL-3'
 
-VERSION = '0.3.11'
+VERSION = '0.3.12'
 
 
 import os

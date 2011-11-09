@@ -1,5 +1,13 @@
 $$title: Changelog
 
+### 0.3.12
+2011-11-09
+
+  * Pandora protocol v33
+  * Less confusing error dialog for the next Pandora update
+  * Notify plugin: escape song info so album names with special characters
+    display properly on non-Ubuntu Gnome.
+
 ### 0.3.11
 2011-09-22
 

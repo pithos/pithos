@@ -10,10 +10,10 @@
     <property name="has_separator">False</property>
     <property name="program_name">Pithos</property>
     <property name="version">0.3</property>
-    <property name="copyright" translatable="yes">Copyright &#xA9; 2010 Kevin Mehall</property>
+    <property name="copyright" translatable="yes">Copyright &#xA9; 2011 Kevin Mehall</property>
     <property name="comments" translatable="yes">A Pandora Radio client for the GNOME Desktop</property>
     <property name="website">http://kevinmehall.net/p/pithos</property>
-    <property name="logo">../media/icon.svg</property>
+    <property name="logo">../media/icon.png</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox1">
         <property name="visible">True</property>
