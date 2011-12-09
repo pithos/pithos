@@ -26,6 +26,7 @@ class MediaKeyPlugin(PithosPlugin):
         try:
             bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
             mk = bus.get_object("org.gnome.SettingsDaemon","/org/gnome/SettingsDaemon/MediaKeys")
+            mk.GrabMediaPlayerKeys('Pithos', 0, dbus_interface='org.gnome.SettingsDaemon.MediaKeys')
             mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
             logging.info("Bound media keys with DBUS")
             self.method = 'dbus'
