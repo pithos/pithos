@@ -16,6 +16,7 @@
 import logging
 import time
 import urllib2, urllib
+import re
 import xml.etree.ElementTree as etree
 
 from pithos.pandora.xmlrpc import *
@@ -75,12 +76,15 @@ class Pandora(object):
         self.set_proxy(None)
         self.set_audio_format(AUDIO_FORMAT)
         
-    def xmlrpc_call(self, method, args=[], url_args=True, secure=False):
+    def xmlrpc_call(self, method, args=[], url_args=True, secure=False, includeTime=True):
         if url_args is True:
             url_args = args
             
         args = args[:]
-        args.insert(0, int(time.time()))
+        
+        if includeTime:
+            args.insert(0, int(time.time()+self.time_offset))
+            
         if self.authToken:
             args.insert(1, self.authToken)
             
@@ -88,7 +92,8 @@ class Pandora(object):
         data = pandora_encrypt(xml)
         
         url_arg_strings = []
-        if self.rid:
+        
+        if self.rid and includeTime:
             url_arg_strings.append('rid=%s'%self.rid)
         if self.listenerId:
             url_arg_strings.append('lid=%s'%self.listenerId)
@@ -150,6 +155,10 @@ class Pandora(object):
     def connect(self, user, password):
         self.rid = "%07iP"%(int(time.time()) % 10000000)
         self.listenerId = self.authToken = None
+        
+        pandora_time = self.xmlrpc_call('misc.sync', [], [], secure=True, includeTime=False)
+        pandora_time = int(re.sub(r"\D", "", pandora_decrypt(pandora_time)))
+        self.time_offset =  pandora_time - time.time()
             
         user = self.xmlrpc_call('listener.authenticateListener', [user, password], [], secure=True)
         
