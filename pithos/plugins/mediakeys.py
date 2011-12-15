@@ -18,6 +18,7 @@ from pithos.plugin import PithosPlugin
 import dbus
 import logging
 
+APP_ID = 'Pithos'
 
 class MediaKeyPlugin(PithosPlugin):
     preference = 'enable_mediakeys'
@@ -26,7 +27,7 @@ class MediaKeyPlugin(PithosPlugin):
         try:
             bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
             mk = bus.get_object("org.gnome.SettingsDaemon","/org/gnome/SettingsDaemon/MediaKeys")
-            mk.GrabMediaPlayerKeys('Pithos', 0, dbus_interface='org.gnome.SettingsDaemon.MediaKeys')
+            mk.GrabMediaPlayerKeys(APP_ID, 0, dbus_interface='org.gnome.SettingsDaemon.MediaKeys')
             mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
             logging.info("Bound media keys with DBUS")
             self.method = 'dbus'
@@ -34,15 +35,15 @@ class MediaKeyPlugin(PithosPlugin):
         except dbus.DBusException:
             return False
             
-    def mediakey_pressed(self, *args):
-        for i in args:
-            if i == 'Play':
+    def mediakey_pressed(self, app, action):
+       if app == APP_ID:
+            if action == 'Play':
                 self.window.playpause()
-            elif i == 'Next':
+            elif action == 'Next':
                 self.window.next_song()
-            elif i == 'Stop':
+            elif action == 'Stop':
                 self.window.user_pause()
-            elif i == 'Previous':
+            elif action == 'Previous':
                 self.window.bring_to_top()
             
     def bind_keybinder(self):
