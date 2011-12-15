@@ -1,5 +1,14 @@
 $$title: Changelog
 
+### 0.3.14
+2011-12-14
+
+  * Use misc.sync method to get Pandora time offset. Fixes "You have no chance
+    to survive make your time" [(lp:743198)](https://bugs.launchpad.net/pithos/+bug/743198)
+    (thanks Matt Harrison, Adam Haile)
+  * Improve error message and make it clear which messages come from Pandora
+  * Fix media key support on Ubuntu 11.10 [(lp:902322)](https://bugs.launchpad.net/pithos/+bug/902322) (thanks RJP Computing)
+
 ### 0.3.13
 2011-11-09
 
