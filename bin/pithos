@@ -306,7 +306,7 @@ class PithosWindow(gtk.Window):
             elif isinstance(e, PandoraAPIVersionError):
                 self.api_update_dialog()
             elif isinstance(e, PandoraError):
-                self.error_dialog(e.message, retry_cb)
+                self.error_dialog(e.message, retry_cb, submsg=e.submsg)
             else:
                 logging.warn(e.traceback)
                 
@@ -483,9 +483,12 @@ class PithosWindow(gtk.Window):
         self.waiting_for_playlist = True
         self.worker_run(self.current_station.get_playlist, (), callback, "Getting songs...")
           
-    def error_dialog(self, message, retry_cb):
+    def error_dialog(self, message, retry_cb, submsg=None):
         dialog = self.builder.get_object("error_dialog")
-        dialog.format_secondary_text(message)
+        
+        dialog.props.text = message
+        dialog.props.secondary_text = submsg
+        
         response = dialog.run()
         dialog.hide()
         

@@ -35,9 +35,10 @@ RATE_NONE = None
 PLAYLIST_VALIDITY_TIME = 60*60*3
 
 class PandoraError(IOError):
-    def __init__(self, message, status=None):
+    def __init__(self, message, status=None, submsg=None):
         self.status = status
         self.message = message
+        self.submsg = submsg
         
 class PandoraAuthTokenInvalid(PandoraError): pass
 class PandoraNetError(PandoraError): pass
@@ -121,9 +122,9 @@ class Pandora(object):
         except urllib2.URLError as e:
             logging.error("Network error: %s", e)
             if e.reason[0] == 'timed out':
-                raise PandoraTimeout("Network Timeout")
+                raise PandoraTimeout("Network error", submsg="Timeout")
             else:
-                raise PandoraNetError("Network error: %s"%e.reason[1])
+                raise PandoraNetError("Network error", submsg=e.reason[1])
             
         logging.debug(text)
        
@@ -137,8 +138,13 @@ class Pandora(object):
                 raise PandoraAuthTokenInvalid(msg)
             elif code == 'INCOMPATIBLE_VERSION':
                 raise PandoraAPIVersionError(msg)
+            elif code == 'OUT_OF_SYNC':
+                raise PandoraError("Out of sync", code,
+                    submsg="Correct your system's clock. If the problem persists, a Pithos update may be required")
+            elif code == 'AUTH_INVALID_USERNAME_PASSWORD':
+                raise PandoraError("Login Error", code, submsg="Invalid username or password")
             else:
-                raise PandoraError(msg, code)
+                raise PandoraError("Pandora returned an error", code, "%s: %s"%(code, msg))
         else:
             return xmlrpc_parse(tree)
 

@@ -23,7 +23,7 @@ def xmlrpc_value(v):
         return "<value><boolean>1</boolean></value>"
     elif v is False:
         return "<value><boolean>0</boolean></value>"
-    elif isinstance(v, int):
+    elif isinstance(v, int) or isinstance(v, long):
         return "<value><int>%i</int></value>"%v
     elif isinstance(v, list):
         return "<value><array><data>%s</data></array></value>"%("".join([xmlrpc_value(i) for i in v]))
