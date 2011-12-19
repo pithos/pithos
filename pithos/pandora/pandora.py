@@ -172,6 +172,9 @@ class Pandora(object):
         self.listenerId = user['listenerId']
         self.authToken = user['authToken']
         
+        self.get_stations(self)
+        
+    def get_stations(self, *ignore):
         stations = self.xmlrpc_call('station.getStations')
         self.quickMixStationIds = None
         self.stations = [Station(self, i) for i in stations]
@@ -180,7 +183,7 @@ class Pandora(object):
             for i in self.stations:
                 if i.id in self.quickMixStationIds:
                     i.useQuickMix = True
-                   
+                    
     def save_quick_mix(self):
         stationIds = []
         for i in self.stations:

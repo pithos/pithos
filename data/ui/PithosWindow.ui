@@ -379,6 +379,15 @@
       </object>
     </child>
     <child>
+      <object class="GtkImageMenuItem" id="menuitem_refresh_stations">
+        <property name="label" translatable="yes">Refresh Stations</property>
+        <property name="visible">True</property>
+        <property name="image">image-refresh</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="refresh_stations"/>
+      </object>
+    </child>
+    <child>
       <object class="GtkSeparatorMenuItem" id="menuitem6">
         <property name="visible">True</property>
       </object>
@@ -467,6 +476,10 @@
   <object class="GtkImage" id="image13">
     <property name="visible">True</property>
     <property name="stock">gtk-cancel</property>
+  </object>
+  <object class="GtkImage" id="image-refresh">
+    <property name="visible">True</property>
+    <property name="stock">gtk-refresh</property>
   </object>
   <object class="GtkMessageDialog" id="messagedialog1">
     <property name="border_width">5</property>
