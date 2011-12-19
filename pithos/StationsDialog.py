@@ -156,6 +156,9 @@ class StationsDialog(gtk.Dialog):
             self.searchDialog = SearchDialog.NewSearchDialog(self.worker_run)
             self.searchDialog.show_all()
             self.searchDialog.connect("response", self.add_station_cb)
+            
+    def refresh_stations(self, widget):
+        self.pithos.refresh_stations(self.pithos)
         
     def add_station_cb(self, dialog, response):
         print "in add_station_cb", dialog.result, response
