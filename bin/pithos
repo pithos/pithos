@@ -751,8 +751,7 @@ class PithosWindow(gtk.Window):
     def refresh_stations(self, *ignore):
         self.retrying = True  # sort of an ugly hack to keep it from stopping the current song when refreshing
         
-        self.worker_run(self.pandora.get_stations, (), None, "Refreshing stations...")
-        self.process_stations(self)
+        self.worker_run(self.pandora.get_stations, (), self.process_stations, "Refreshing stations...")
             
     def bring_to_top(self, *ignore):
         self.show()
