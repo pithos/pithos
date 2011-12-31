@@ -53,7 +53,7 @@ class FakePandora(Pandora):
     def set_authenticated(self):
         self.auth_check.set_active(True)
         
-    def xmlrpc_call(self, method, args=[], url_args=True):
+    def xmlrpc_call(self, method, args=[], url_args=True, secure=False):
         time.sleep(1)
         if method != 'listener.authenticateListener':
             self.maybe_fail()
@@ -96,6 +96,17 @@ class FakePandora(Pandora):
         else:
             logging.error("Invalid method %s" % method)
             
+    def connect(self, user, password):
+        self.listenerId = self.authToken = None
+        
+        user = self.xmlrpc_call('listener.authenticateListener', [user, password], [], secure=True)
+        
+        self.webAuthToken = user['webAuthToken']
+        self.listenerId = user['listenerId']
+        self.authToken = user['authToken']
+        
+        self.get_stations(self)
+            
     def makeFakeSong(self, args):
         c = self.count()
         return {
@@ -114,5 +125,6 @@ class FakePandora(Pandora):
             'albumDetailURL':'http://kevinmehall.net/p/pithos/',
             'artRadio':'http://i.imgur.com/H3Z8x.jpg',
             'songType':0,
+            'trackToken':12345,
         }
             
