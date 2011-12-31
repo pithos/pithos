@@ -55,16 +55,31 @@
             <child>
               <object class="GtkButton" id="add_genre_station">
                 <property name="label" translatable="yes">Genre Stations</property>
-                <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="no_show_all">True</property>
                 <signal name="clicked" handler="add_genre_station"/>
               </object>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
                 <property name="position">1</property>
+                <property name="secondary">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="refresh_stations">
+                <property name="label" translatable="yes">Refresh Stations</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="refresh_stations"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
                 <property name="secondary">True</property>
               </packing>
             </child>
@@ -80,7 +95,7 @@
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">False</property>
-                <property name="position">2</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </object>
@@ -95,6 +110,7 @@
     <action-widgets>
       <action-widget response="0">add_station</action-widget>
       <action-widget response="0">add_genre_station</action-widget>
+      <action-widget response="0">refresh_stations</action-widget>
       <action-widget response="-5">close</action-widget>
     </action-widgets>
   </object>
@@ -102,7 +118,7 @@
     <property name="visible">True</property>
     <child>
       <object class="GtkImageMenuItem" id="menuitem_listen">
-        <property name="label" translatable="yes">Listen Now</property>
+        <property name="label">Listen Now</property>
         <property name="visible">True</property>
         <property name="use_underline">True</property>
         <property name="use_stock">True</property>

@@ -323,29 +323,32 @@ class PithosWindow(gtk.Window):
                 self.preferences['password'])
                 
         def pandora_ready(*ignore):
-            self.stations_model.clear()
-            self.current_station = None
-            selected = None
             logging.info("Pandora connected")
-            
-            for i in self.pandora.stations:
-                if i.isQuickMix and i.isCreator:
-                    self.stations_model.append((i, "QuickMix"))
-            self.stations_model.append((None, 'sep'))
-            for i in self.pandora.stations:
-                if not (i.isQuickMix and i.isCreator):
-                    self.stations_model.append((i, i.name))
-                if i.id == self.current_station_id:
-                    logging.info("Restoring saved station: id = %s"%(i.id))
-                    selected = i
-            if not selected:
-                selected=self.stations_model[0][0]
-            self.station_changed(selected, reconnecting = self.retrying)
+            self.process_stations(self)
             if callback:
                 callback()       
                 
         self.worker_run('connect', args, pandora_ready, message, 'login')
+    
+    def process_stations(self, *ignore):
+        self.stations_model.clear()
+        self.current_station = None
+        selected = None
         
+        for i in self.pandora.stations:
+            if i.isQuickMix and i.isCreator:
+                self.stations_model.append((i, "QuickMix"))
+        self.stations_model.append((None, 'sep'))
+        for i in self.pandora.stations:
+            if not (i.isQuickMix and i.isCreator):
+                self.stations_model.append((i, i.name))
+            if i.id == self.current_station_id:
+                logging.info("Restoring saved station: id = %s"%(i.id))
+                selected = i
+        if not selected:
+            selected=self.stations_model[0][0]
+        self.station_changed(selected, reconnecting = self.retrying)
+    
     @property
     def current_song(self):
         if self.current_song_index is not None:
@@ -744,6 +747,12 @@ class PithosWindow(gtk.Window):
         else:
             self.stations_dlg = StationsDialog.NewStationsDialog(self)
             self.stations_dlg.show_all()
+            
+    def refresh_stations(self, *ignore):
+        self.retrying = True  # sort of an ugly hack to keep it from stopping the current song when refreshing
+        
+        self.worker_run(self.pandora.get_stations, (), None, "Refreshing stations...")
+        self.process_stations(self)
             
     def bring_to_top(self, *ignore):
         self.show()
