@@ -535,7 +535,8 @@ class PithosWindow(gtk.Window):
     def on_gst_error(self, bus, message):
         err, debug = message.parse_error()
         logging.error("Gstreamer error: %s, %s" % (err, debug))
-        self.current_song.message = "Error: "+str(err)
+        if self.current_song:
+            self.current_song.message = "Error: "+str(err)
         self.gstreamer_error = str(err)
         self.gstreamer_errorcount_1 += 1
         self.next_song()
