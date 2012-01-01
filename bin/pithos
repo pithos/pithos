@@ -573,7 +573,7 @@ class PithosWindow(gtk.Window):
         msg = " - ".join(msg)
         if not msg:
             msg = " "
-        return "<b><big>%s</big></b>\nby <b>%s</b> on <b>%s</b>\n<small>%s</small>"%(title, artist, album, msg)
+        return "<b><big>%s</big></b>\nby <b>%s</b>\n<small>from <i>%s</i></small>\n<small>%s</small>"%(title, artist, album, msg)
             
     def song_icon(self, song):
         if song.tired:
