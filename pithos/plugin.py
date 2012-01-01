@@ -70,7 +70,7 @@ def load_plugin(name, window):
         
     # find the class object for the actual plugin
     for key, item in module.__dict__.iteritems():
-        if hasattr(item, '_PITHOS_PLUGIN'):
+        if hasattr(item, '_PITHOS_PLUGIN') and key != "PithosPlugin":
             plugin_class = item
             break
     else:
