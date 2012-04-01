@@ -323,7 +323,7 @@ class Song(object):
         
     def set_tired(self):
         if not self.tired:
-            self.pandora.xmlrpc_call('listener.addTiredSong', [self.identity])
+            self.pandora.xmlrpc_call('listener.addTiredSong', [self.musicId, self.userSeed, self.stationId])
             self.tired = True
             
     def bookmark(self):
