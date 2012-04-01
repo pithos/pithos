@@ -133,7 +133,12 @@ class Pandora(object):
         fault = tree.findtext('fault/value/struct/member/value')
         if fault:
             logging.error('fault: ' +  fault)
-            code, msg = fault.split('|')[2:]
+            
+            try:
+                code, msg = fault.split('|')[2:]
+            except:
+                raise PandoraError("Pandora returned a malformed error: %s" % (fault))
+                
             if code == 'AUTH_INVALID_TOKEN':
                 raise PandoraAuthTokenInvalid(msg)
             elif code == 'INCOMPATIBLE_VERSION':
