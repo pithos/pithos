@@ -16,7 +16,6 @@
 import logging
 import time
 import urllib2, urllib
-import re
 import xml.etree.ElementTree as etree
 
 from pithos.pandora.xmlrpc import *
@@ -168,8 +167,10 @@ class Pandora(object):
         self.listenerId = self.authToken = None
         
         pandora_time = self.xmlrpc_call('misc.sync', [], [], secure=True, includeTime=False)
-        pandora_time = int(pandora_decrypt(pandora_time)[4:13])
+        logging.info("Pandora sync reply is %s", pandora_decrypt(pandora_time))
+        pandora_time = int(pandora_decrypt(pandora_time)[4:14])
         self.time_offset =  pandora_time - time.time()
+        logging.info("Time offset is %s", self.time_offset)
             
         user = self.xmlrpc_call('listener.authenticateListener', [user, password], [], secure=True)
         
