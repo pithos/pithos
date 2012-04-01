@@ -168,7 +168,7 @@ class Pandora(object):
         self.listenerId = self.authToken = None
         
         pandora_time = self.xmlrpc_call('misc.sync', [], [], secure=True, includeTime=False)
-        pandora_time = int(re.sub(r"\D", "", pandora_decrypt(pandora_time)))
+        pandora_time = int(pandora_decrypt(pandora_time)[4:13])
         self.time_offset =  pandora_time - time.time()
             
         user = self.xmlrpc_call('listener.authenticateListener', [user, password], [], secure=True)
