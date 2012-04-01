@@ -38,7 +38,7 @@ class MediaKeyPlugin(PithosPlugin):
     def mediakey_pressed(self, app, action):
        if app == APP_ID:
             if action == 'Play':
-                self.window.playpause()
+                self.window.playpause_notify()
             elif action == 'Next':
                 self.window.next_song()
             elif action == 'Stop':

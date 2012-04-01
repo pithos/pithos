@@ -440,6 +440,12 @@ class PithosWindow(gtk.Window):
         
     def playpause(self, *ignore):
         if self.playing:
+            self.pause()
+        else:
+            self.play()
+        
+    def playpause_notify(self, *ignore):
+        if self.playing:
             self.user_pause()
         else:
             self.user_play()
