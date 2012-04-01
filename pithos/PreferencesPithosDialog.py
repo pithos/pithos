@@ -55,9 +55,19 @@ class PreferencesPithosDialog(gtk.Dialog):
         initializing the start of the new AboutPithosDialog instance.
         """
 
-        #get a reference to the builder and set up the signals
+        # get a reference to the builder and set up the signals
         self.builder = builder
         self.builder.connect_signals(self)
+        
+        # initialize the "Audio format" combobox backing list
+        audio_format_combo = self.builder.get_object('prefs_audio_format')
+        fmt_store = gtk.ListStore(gobject.TYPE_STRING)
+        for audio_format in valid_audio_formats:
+            fmt_store.append((audio_format,))
+        audio_format_combo.set_model(fmt_store)
+        render_text = gtk.CellRendererText()
+        audio_format_combo.pack_start(render_text, expand=True)
+        audio_format_combo.add_attribute(render_text, "text", 0)
         
         self.__load_preferences()
 
@@ -163,14 +173,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.builder.get_object('prefs_password').set_text(self.__preferences["password"])
         self.builder.get_object('prefs_proxy').set_text(self.__preferences["proxy"])
         
-        audio_format_combo = self.builder.get_object('prefs_audio_format')
-        fmt_store = gtk.ListStore(gobject.TYPE_STRING)
-        for audio_format in valid_audio_formats:
-            fmt_store.append((audio_format,))
-        audio_format_combo.set_model(fmt_store)
-        render_text = gtk.CellRendererText()
-        audio_format_combo.pack_start(render_text, expand=True)
-        audio_format_combo.add_attribute(render_text, "text", 0)
+        audio_format_combo = self.builder.get_object('prefs_audio_format')       
         audio_pref_idx = list(valid_audio_formats).index(self.__preferences["audio_format"])
         audio_format_combo.set_active(audio_pref_idx)
         
