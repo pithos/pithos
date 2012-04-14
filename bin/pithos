@@ -511,12 +511,22 @@ class PithosWindow(gtk.Window):
             self.retrying = False
             self.show_preferences()
             
+    def fatal_error_dialog(self, message, submsg):
+        dialog = self.builder.get_object("fatal_error_dialog")
+        dialog.props.text = message
+        dialog.props.secondary_text = submsg
+        
+        response = dialog.run()
+        dialog.hide()
+        
+        self.quit()
+            
     def api_update_dialog(self):
         dialog = self.builder.get_object("api_update_dialog")
         response = dialog.run()
         if response:
             openBrowser("http://kevinmehall.net/p/pithos/itbroke?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
-        gtk.main_quit()
+        self.quit()
     
     def station_index(self, station):
         return [i[0] for i in self.stations_model].index(station)
@@ -541,9 +551,14 @@ class PithosWindow(gtk.Window):
         
     def on_gst_error(self, bus, message):
         err, debug = message.parse_error()
-        logging.error("Gstreamer error: %s, %s" % (err, debug))
+        logging.error("Gstreamer error: %s, %s, %s" % (err, debug, err.code))
         if self.current_song:
             self.current_song.message = "Error: "+str(err)
+            
+        if err.code is int(gst.CORE_ERROR_MISSING_PLUGIN):
+            self.fatal_error_dialog("Missing codec", submsg="GStreamer is missing a plugin")
+            return
+        
         self.gstreamer_error = str(err)
         self.gstreamer_errorcount_1 += 1
         self.next_song()
