@@ -118,6 +118,9 @@ class Pandora(object):
             req = urllib2.Request(url, data, {'User-agent': USER_AGENT, 'Content-type': 'text/xml'})
             response = self.opener.open(req, timeout=HTTP_TIMEOUT)
             text = response.read()
+        except urllib2.HTTPError as e:
+            logging.error("HTTP error: %s", e)
+            raise PandoraNetError(str(e))
         except urllib2.URLError as e:
             logging.error("Network error: %s", e)
             if e.reason[0] == 'timed out':
