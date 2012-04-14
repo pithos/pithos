@@ -47,10 +47,10 @@ class PithosSoundMenu(dbus.service.Object):
         	self.signal_paused()
         
     def songchange_handler(self, window, song):
-        self.song_changed([song.artist], song.album, song.title)
+        self.song_changed([song.artist], song.album, song.title, song.artRadio)
         self.signal_playing()
 
-    def song_changed(self, artists = None, album = None, title = None):
+    def song_changed(self, artists = None, album = None, title = None, artUrl=''):
         """song_changed - sets the info for the current song.
 
         This method is not typically overriden. It should be called
@@ -74,6 +74,7 @@ class PithosSoundMenu(dbus.service.Object):
         self.__meta_data = dbus.Dictionary({"xesam:album":album,
                             "xesam:title":title,
                             "xesam:artist":artists,
+                            "mpris:artUrl":artUrl,
                             }, "sv", variant_level=1)
 
 
