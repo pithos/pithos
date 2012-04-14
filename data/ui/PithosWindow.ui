@@ -457,6 +457,20 @@
         <signal name="activate" handler="about"/>
       </object>
     </child>
+    <child>
+      <object class="GtkSeparatorMenuItem" id="menuitem8">
+        <property name="visible">True</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem9">
+        <property name="label">gtk-quit</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
+        <signal name="activate" handler="quit"/>
+      </object>
+    </child>
   </object>
   <object class="GtkImage" id="image6">
     <property name="visible">True</property>
