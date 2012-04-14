@@ -1,7 +1,7 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
 ### BEGIN LICENSE
 # Copyright (C) 2011 Rick Spencer <rick.spencer@canonical.com>
-# Copyright (C) 2011 Kevin Mehall <km@kevinmehall.net>
+# Copyright (C) 2011-2012 Kevin Mehall <km@kevinmehall.net>
 #This program is free software: you can redistribute it and/or modify it 
 #under the terms of the GNU General Public License version 3, as published 
 #by the Free Software Foundation.
