@@ -1,5 +1,26 @@
 $$title: Changelog
 
+### 0.3.15
+2012-04-15
+
+  * Numerous bugfixes
+  	 * [(lp:905204)](https://bugs.launchpad.net/pithos/+bug/905204)
+     * [(lp:876984)](https://bugs.launchpad.net/pithos/+bug/876984)
+     * [(lp:976327)](https://bugs.launchpad.net/pithos/+bug/976327)
+     * [(lp:883610)](https://bugs.launchpad.net/pithos/+bug/883610)
+     * [(lp:891225)](https://bugs.launchpad.net/pithos/+bug/891225)
+     * [(lp:880142)](https://bugs.launchpad.net/pithos/+bug/880142)
+     * [(lp:836393)](https://bugs.launchpad.net/pithos/+bug/836393)
+     * [(lp:907278)](https://bugs.launchpad.net/pithos/+bug/907278)
+     * [(lp:812626)](https://bugs.launchpad.net/pithos/+bug/812626)
+     
+     
+  * Minor User Interface improvements
+     * [(lp:904589)](https://bugs.launchpad.net/pithos/+bug/904589)
+     * [(lp:909198)](https://bugs.launchpad.net/pithos/+bug/909198)
+     
+Thanks to Adam Porter, Derek Ditch, Martin Langhoff, and Malcolm Lewis, who contributed to this release.
+
 ### 0.3.14
 2011-12-14
 
