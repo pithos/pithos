@@ -555,9 +555,9 @@ class PithosWindow(gtk.Window):
         if self.current_song:
             self.current_song.message = "Error: "+str(err)
             
-        if err.code is int(gst.CORE_ERROR_MISSING_PLUGIN):
-            self.fatal_error_dialog("Missing codec", submsg="GStreamer is missing a plugin")
-            return
+        #if err.code is int(gst.CORE_ERROR_MISSING_PLUGIN):
+        #    self.fatal_error_dialog("Missing codec", submsg="GStreamer is missing a plugin")
+        #    return
         
         self.gstreamer_error = str(err)
         self.gstreamer_errorcount_1 += 1
