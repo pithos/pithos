@@ -70,6 +70,8 @@ class PithosSoundMenu(dbus.service.Object):
             album = "Album Unknown"
         if title is None:
             title = "Title Unknown"
+        if artUrl is None:
+            artUrl = ''
    
         self.__meta_data = dbus.Dictionary({"xesam:album":album,
                             "xesam:title":title,
