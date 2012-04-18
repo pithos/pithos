@@ -1,4 +1,0 @@
-project = pithos
-template = ubuntu-application
-lp_id = pithos
-version = 0.4.3
