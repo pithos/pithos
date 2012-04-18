@@ -210,7 +210,8 @@ class PithosWindow(gtk.Window):
         self.current_station_id = self.preferences['last_station_id']
         
         self.buffer_percent = 100
-        self.retrying = False
+        self.auto_retrying_auth = False
+        self.have_stations = False
         self.playcount = 0
         self.gstreamer_errorcount_1 = 0
         self.gstreamer_errorcount_2 = 0
@@ -296,12 +297,12 @@ class PithosWindow(gtk.Window):
                 self.statusbar.pop(self.statusbar.get_context_id(context))
                 
             def retry_cb():
-                self.retrying = False
+                self.auto_retrying_auth = False
                 if fn is not self.pandora.connect:
                     self.worker_run(fn, args, callback, message, context)
                 
-            if isinstance(e, PandoraAuthTokenInvalid) and not self.retrying:
-                self.retrying = True
+            if isinstance(e, PandoraAuthTokenInvalid) and not self.auto_retrying_auth:
+                self.auto_retrying_auth = True
                 logging.info("Automatic reconnect after invalid auth token")                
                 self.pandora_connect("Reconnecting...", retry_cb)
             elif isinstance(e, PandoraAPIVersionError):
@@ -348,7 +349,8 @@ class PithosWindow(gtk.Window):
                 selected = i
         if not selected:
             selected=self.stations_model[0][0]
-        self.station_changed(selected, reconnecting = self.retrying)
+        self.station_changed(selected, reconnecting = self.have_stations)
+        self.have_stations = True
     
     @property
     def current_song(self):
@@ -503,12 +505,10 @@ class PithosWindow(gtk.Window):
         dialog.hide()
         
         if response == 2:
-            self.retrying = True
             self.gstreamer_errorcount_2 = 0
             logging.info("Manual retry")
             return retry_cb()
         elif response == 3:
-            self.retrying = False
             self.show_preferences()
             
     def fatal_error_dialog(self, message, submsg):
@@ -772,8 +772,6 @@ class PithosWindow(gtk.Window):
             self.stations_dlg.show_all()
             
     def refresh_stations(self, *ignore):
-        self.retrying = True  # sort of an ugly hack to keep it from stopping the current song when refreshing
-        
         self.worker_run(self.pandora.get_stations, (), self.process_stations, "Refreshing stations...")
             
     def bring_to_top(self, *ignore):
