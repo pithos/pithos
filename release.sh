@@ -1,8 +1,9 @@
 #!/bin/bash
+set -e
 
-REVNO=$(bzr revno)
+REVNO=$(git rev-parse HEAD | head -c 10)
 VERSIONBASE=$(python pithos/pithosconfig.py)
-VERSION="$VERSIONBASE~bzr$REVNO"
+VERSION="$VERSIONBASE~git$REVNO"
 
 # Delete and regenerate debian/changelog
 # Yes, I know there are Debian people who would kill me for this,
@@ -13,7 +14,7 @@ VERSION="$VERSIONBASE~bzr$REVNO"
 cat >debian/changelog <<EOF
 pithos ($VERSION) lucid; urgency=low
 
-  * Build from bzr r$REVNO
+  * Build from git r$REVNO
 
  -- Kevin Mehall <km@kevinmehall.net>  $(date -R)
 EOF
@@ -30,7 +31,7 @@ tgz)
 	NAME=pithos_$VERSIONBASE
 	FNAME=../release/${NAME}.tar
 	FNAME2=../release/${NAME}.tgz
-	bzr export $FNAME
+	git archive master --prefix $NAME/ > $FNAME
 	tar -f $FNAME --delete $NAME/debian
 	gzip $FNAME
 	mv $FNAME.gz $FNAME2
