@@ -33,9 +33,11 @@ tgz)
 	FNAME2=../release/${NAME}.tgz
 	git archive master --prefix $NAME/ > $FNAME
 	tar -f $FNAME --delete $NAME/debian
+	tar -f $FNAME --delete $NAME/release.sh
+	tar -f $FNAME --delete $NAME/.gitignore
 	gzip $FNAME
 	mv $FNAME.gz $FNAME2
-	gpg --sign $FNAME2
+	gpg --detach-sig $FNAME2
 	;;
 unsigned|*)
 	debuild -us -uc
