@@ -66,10 +66,11 @@ class InstallAndUpdateDataDirectory(DistUtilsExtra.auto.install_auto):
         update_data_path(self.prefix, previous_value)
 
 from distutils.cmd import Command    
-class NullCommand(Command):
-	def run(self): pass
+class OverrideI18NCommand(Command):
 	def initialize_options(self): pass
 	def finalize_options(self): pass
+	def run(self):
+		self.distribution.data_files.append(('share/applications', ['pithos.desktop']))
 
 from DistUtilsExtra.command.build_extra import build_extra
 from DistUtilsExtra.command.build_icons import build_icons
@@ -84,6 +85,6 @@ DistUtilsExtra.auto.setup(
     description='Pandora.com client for the GNOME desktop',
     #long_description='Here a longer description',
     url='https://launchpad.net/pithos',
-    cmdclass={'install': InstallAndUpdateDataDirectory, 'build_icons':build_icons, 'build':build_extra, 'build_i18n':NullCommand}
+    cmdclass={'install': InstallAndUpdateDataDirectory, 'build_icons':build_icons, 'build':build_extra, 'build_i18n':OverrideI18NCommand}
     )
 
