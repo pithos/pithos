@@ -14,7 +14,7 @@ VERSION="$VERSIONBASE~git$REVNO"
 cat >debian/changelog <<EOF
 pithos ($VERSION) lucid; urgency=low
 
-  * Build from git r$REVNO
+  * Build from git $REVNO
 
  -- Kevin Mehall <km@kevinmehall.net>  $(date -R)
 EOF
