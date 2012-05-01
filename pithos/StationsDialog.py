@@ -132,7 +132,7 @@ class StationsDialog(gtk.Dialog):
         
     def on_menuitem_rename(self, widget):
         sel = self.treeview.get_selection().get_selected()
-        path = self.modelfilter.get_path(sel[1])
+        path = self.treeview.get_model().get_path(sel[1])
         self.treeview.set_cursor(path, self.treeview.get_column(0) ,True)
         
     def on_menuitem_delete(self, widget):
