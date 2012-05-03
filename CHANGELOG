@@ -1,5 +1,12 @@
 $$title: Changelog
 
+### 0.3.17
+2012-05-03
+
+  * Switch to JSON API to work around XMLRPC API update. Thanks to
+    Christopher Eby for the patch.
+    [(lp:988395)](https://bugs.launchpad.net/pithos/+bug/988395)
+
 ### 0.3.16
 2012-04-19
 
