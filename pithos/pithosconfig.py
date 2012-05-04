@@ -27,11 +27,14 @@ import os
 class project_path_not_found(Exception):
     pass
 
+# See http://pan-do-ra-api.wikia.com/wiki/Json/5/station.getPlaylist#Additional_Audio_Formats for all known formats
 valid_audio_formats = [
-    'aacplus',
-    'mp3',
-    'mp3-hifi',
+    ('32kbps AAC+', 'HTTP_32_AACPLUS'),
+    ('64kbps AAC+', 'HTTP_64_AACPLUS'),
+    ('128kbps MP3', 'HTTP_128_MP3'),
+    ('192kbps MP3', 'HTTP_192_MP3')
 ]
+default_audio_format = 'HTTP_64_AACPLUS'
 
 def get_data_file(*path_segments):
     """Get the full path to a data file.
