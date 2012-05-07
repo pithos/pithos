@@ -16,7 +16,6 @@
 ### END LICENSE
 
 from pithos.pandora.blowfish import Blowfish
-from pithos.pandora import pandora_keys
 import json
 import logging
 import time
@@ -32,6 +31,8 @@ RPC_URL = "://tuner.pandora.com/services/json/?"
 DEVICE_MODEL = 'android-generic'
 PARTNER_USERNAME = 'android'
 PARTNER_PASSWORD = 'AC7IBG09A3DTSYM4R41UJWL07VLN8JI7'
+ENCRYPT_KEY = '6#26FRL$ZWD'
+DECRYPT_KEY = 'R=U!LH$O2B#'
 
 HTTP_TIMEOUT = 30
 USER_AGENT = 'pithos'
@@ -59,22 +60,24 @@ class PandoraNetError(PandoraError): pass
 class PandoraAPIVersionError(PandoraError): pass
 class PandoraTimeout(PandoraNetError): pass
 
-
-blowfish_encode = Blowfish(pandora_keys.out_key_p, pandora_keys.out_key_s)
-
 def pad(s, l):
     return s + "\0" * (l - len(s))
 
-def pandora_encrypt(s):
-    return "".join([blowfish_encode.encrypt(pad(s[i:i+8], 8)).encode('hex') for i in xrange(0, len(s), 8)])
-
-blowfish_decode = Blowfish(pandora_keys.in_key_p, pandora_keys.in_key_s)
-
-def pandora_decrypt(s):
-    return "".join([blowfish_decode.decrypt(pad(s[i:i+16].decode('hex'), 8)) for i in xrange(0, len(s), 16)]).rstrip('\x08')
-
-
 class Pandora(object):
+    def __init__(self, prefs):
+        self.partner_username = prefs.get('partner_username', PARTNER_USERNAME)
+        self.partner_password = prefs.get('partner_password', PARTNER_PASSWORD)
+        self.device_model = prefs.get('device_model', DEVICE_MODEL)
+        self.blowfish_encode = Blowfish(prefs.get('encrypt_key', ENCRYPT_KEY))
+        self.blowfish_decode = Blowfish(prefs.get('decrypt_key', DECRYPT_KEY))
+        self.rpc_url = prefs.get('rpc_url', RPC_URL)
+
+    def pandora_encrypt(self, s):
+        return "".join([self.blowfish_encode.encrypt(pad(s[i:i+8], 8)).encode('hex') for i in xrange(0, len(s), 8)])
+
+    def pandora_decrypt(self, s):
+        return "".join([self.blowfish_decode.decrypt(pad(s[i:i+16].decode('hex'), 8)) for i in xrange(0, len(s), 16)]).rstrip('\x08')
+
     def json_call(self, method, args={}, https=False, blowfish=True):
         url_arg_strings = []
         if self.partnerId:
@@ -88,7 +91,7 @@ class Pandora(object):
 
         url_arg_strings.append('method=%s'%method)
         protocol = 'https' if https else 'http'
-        url = protocol + RPC_URL + '&'.join(url_arg_strings)
+        url = protocol + self.rpc_url + '&'.join(url_arg_strings)
 
         if self.time_offset:
             args['syncTime'] = int(time.time()+self.time_offset)
@@ -102,7 +105,7 @@ class Pandora(object):
         logging.debug(data)
 
         if blowfish:
-            data = pandora_encrypt(data)
+            data = self.pandora_encrypt(data)
 
         try:
             req = urllib2.Request(url, data, {'User-agent': USER_AGENT, 'Content-type': 'text/plain'})
@@ -158,11 +161,11 @@ class Pandora(object):
     def connect(self, user, password):
         self.partnerId = self.userId = self.partnerAuthToken = self.userAuthToken = self.time_offset = None
 
-        partner = self.json_call('auth.partnerLogin', {'deviceModel': DEVICE_MODEL, 'username': PARTNER_USERNAME, 'password': PARTNER_PASSWORD, 'version': PROTOCOL_VERSION}, https=True, blowfish=False)
+        partner = self.json_call('auth.partnerLogin', {'deviceModel': self.device_model, 'username': self.partner_username, 'password': self.partner_password, 'version': PROTOCOL_VERSION}, https=True, blowfish=False)
         self.partnerId = partner['partnerId']
         self.partnerAuthToken = partner['partnerAuthToken']
 
-        pandora_time = int(pandora_decrypt(partner['syncTime'])[4:14])
+        pandora_time = int(self.pandora_decrypt(partner['syncTime'])[4:14])
         self.time_offset = pandora_time - time.time()
         logging.info("Time offset is %s", self.time_offset)
 
