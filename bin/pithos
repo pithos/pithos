@@ -111,13 +111,17 @@ class CellRendererAlbumArt(gtk.GenericCellRenderer):
             window.draw_pixbuf(None, pixbuf, 0, 0, x, y, width=-1, height=-1, dither=gtk.gdk.RGB_DITHER_NORMAL, x_dither=0, y_dither=0)
         
 def get_album_art(url, proxy, *extra):
-     proxies = {"http": proxy} if proxy else {}
-     content = urllib.urlopen(url, proxies=proxies).read()
-     l = gtk.gdk.PixbufLoader()
-     l.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
-     l.write(content)
-     l.close()
-     return (l.get_pixbuf(),) + extra
+    proxies = {"http": proxy if proxy.lower().startswith('http') else 'http://' + proxy} if proxy else {}
+    try:
+        content = urllib.urlopen(url, proxies=proxies).read()
+    except:
+        logging.warn("Cannot download album art from %s" % url)
+        return None
+    l = gtk.gdk.PixbufLoader()
+    l.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
+    l.write(content)
+    l.close()
+    return (l.get_pixbuf(),) + extra
 
 
 class PithosWindow(gtk.Window):
@@ -463,12 +467,13 @@ class PithosWindow(gtk.Window):
             return
         
         def art_callback(t):
-            pixbuf, song, index = t
-            if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
-                logging.info("Downloaded album art for %i"%song.index)
-                song.art_pixbuf = pixbuf
-                self.songs_model[index][3]=pixbuf
-                self.update_song_row(song)
+            if t:
+                pixbuf, song, index = t
+                if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
+                    logging.info("Downloaded album art for %i"%song.index)
+                    song.art_pixbuf = pixbuf
+                    self.songs_model[index][3]=pixbuf
+                    self.update_song_row(song)
             
         def callback(l):
             start_index = len(self.songs_model)
