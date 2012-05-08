@@ -31,7 +31,7 @@ import gst
 import cgi
 import webbrowser
 import os
-import urllib
+import urllib2
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
@@ -49,6 +49,7 @@ else:
 sys.path.insert(0, os.path.dirname(fullPath))
 
 from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
+from pithos.util import *
 from pithos.pithosconfig import get_data_file, getdatapath, VERSION
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import load_plugins
@@ -110,9 +111,8 @@ class CellRendererAlbumArt(gtk.GenericCellRenderer):
             y = cell_area.y+(cell_area.height-pixbuf.get_height())-5 # bottom
             window.draw_pixbuf(None, pixbuf, 0, 0, x, y, width=-1, height=-1, dither=gtk.gdk.RGB_DITHER_NORMAL, x_dither=0, y_dither=0)
         
-def get_album_art(url, proxy, *extra):
-     proxies = {"http": proxy} if proxy else {}
-     content = urllib.urlopen(url, proxies=proxies).read()
+def get_album_art(url, *extra):
+     content = urllib2.urlopen(url).read()
      l = gtk.gdk.PixbufLoader()
      l.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
      l.write(content)
@@ -200,6 +200,7 @@ class PithosWindow(gtk.Window):
         bus.connect("message::eos", self.on_gst_eos)
         bus.connect("message::buffering", self.on_gst_buffering)
         bus.connect("message::error", self.on_gst_error)
+        self.player.connect("notify::source", self.on_gst_source)
         self.time_format = gst.Format(gst.FORMAT_TIME)
                         
         self.stations_dlg = None
@@ -313,9 +314,39 @@ class PithosWindow(gtk.Window):
                 logging.warn(e.traceback)
                 
         self.worker.send(fn, args, cb, eb)
-    
+
+    def get_proxy(self):
+        """ Get HTTP proxy, first trying preferences then system proxy """
+
+        if self.preferences['proxy']:
+            return self.preferences['proxy']
+
+        system_proxies = urllib.getproxies()
+        if 'http' in system_proxies:
+            return system_proxies['http']
+
+        return None
+
     def set_proxy(self):
-        self.worker_run('set_proxy', (self.preferences['proxy'],))
+        # proxy preference is used for all Pithos HTTP traffic
+        # control proxy preference is used only for Pandora traffic and
+        # overrides proxy
+        #
+        # If neither option is set, urllib2.build_opener uses urllib.getproxies()
+        # by default
+
+        handlers = []
+        global_proxy = self.preferences['proxy']
+        if global_proxy:
+            handlers.append(urllib2.ProxyHandler({'http': global_proxy, 'https': global_proxy}))
+        global_opener = urllib2.build_opener(*handlers)
+        urllib2.install_opener(global_opener)
+
+        control_opener = global_opener
+        control_proxy = self.preferences['control_proxy']
+        if control_proxy:
+            control_opener = urllib2.build_opener(urllib2.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
+        self.worker_run('set_url_opener', (control_opener,))
 
     def set_audio_format(self):
         self.worker_run('set_audio_format', (self.preferences['audio_format'],))
@@ -479,8 +510,7 @@ class PithosWindow(gtk.Window):
                 
                 i.art_pixbuf = None
                 if i.artRadio: 
-                    proxy = self.preferences['proxy']
-                    self.art_worker.send(get_album_art, (i.artRadio, proxy, i, i.index), art_callback)
+                    self.art_worker.send(get_album_art, (i.artRadio, i, i.index), art_callback)
 
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if self.start_new_playlist:
@@ -571,8 +601,17 @@ class PithosWindow(gtk.Window):
         #elif self.playing:
             #self.player.set_state(gst.STATE_PLAYING)
         self.update_song_row()
-            
-    
+
+    def on_gst_source(self, player, params):
+        """ Setup httpsoupsrc to match Pithos proxy settings """
+        soup = player.props.source.props
+        proxy = self.get_proxy()
+        if proxy and hasattr(soup, 'proxy'):
+            scheme, user, password, hostport = parse_proxy(proxy)
+            soup.proxy = hostport
+            soup.proxy_id = user
+            soup.proxy_pw = password
+
     def song_text(self, song):
         title = cgi.escape(song.title)
         artist = cgi.escape(song.artist)
@@ -755,8 +794,9 @@ class PithosWindow(gtk.Window):
         if response == gtk.RESPONSE_OK:
             self.preferences = self.prefs_dlg.get_preferences()
             if not is_startup:
-                if self.preferences['proxy'] != old_prefs['proxy']:
-                    self.set_proxy()
+                if (   self.preferences['proxy'] != old_prefs['proxy']
+                    or self.preferences['control_proxy'] != old_prefs['control_proxy']):
+                        self.set_proxy()
                 if self.preferences['audio_format'] != old_prefs['audio_format']:
                     self.set_audio_format()
                 if (   self.preferences['username'] != old_prefs['username']

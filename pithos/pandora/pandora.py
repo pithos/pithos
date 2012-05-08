@@ -77,7 +77,6 @@ def pandora_decrypt(s):
 
 class Pandora(object):
     def __init__(self):
-        self.set_proxy(None)
         self.set_audio_format(AUDIO_FORMAT)
 
     def json_call(self, method, args={}, https=False, blowfish=True):
@@ -153,12 +152,8 @@ class Pandora(object):
     def set_audio_format(self, fmt):
         self.audio_format = ['aacplus', 'mp3', 'mp3-hifi'].index(fmt)
 
-    def set_proxy(self, proxy):
-        if proxy:
-            proxy_handler = urllib2.ProxyHandler({'http': proxy})
-            self.opener = urllib2.build_opener(proxy_handler)  
-        else:
-            self.opener = urllib2.build_opener()     
+    def set_url_opener(self, opener):
+        self.opener = opener
 
     def connect(self, user, password):
         self.partnerId = self.userId = self.partnerAuthToken = self.userAuthToken = self.time_offset = None
