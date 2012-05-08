@@ -42,10 +42,13 @@ RATE_LOVE = 'love'
 RATE_NONE = None
 
 API_ERROR_API_VERSION_NOT_SUPPORTED = 11
+API_ERROR_COUNTRY_NOT_SUPPORTED = 12
 API_ERROR_INSUFFICIENT_CONNECTIVITY = 13
 API_ERROR_READ_ONLY_MODE = 1000
 API_ERROR_INVALID_AUTH_TOKEN = 1001
 API_ERROR_INVALID_LOGIN = 1002
+API_ERROR_LISTENER_NOT_AUTHORIZED = 1003
+API_ERROR_PARTNER_NOT_AUTHORIZED = 1010
 
 PLAYLIST_VALIDITY_TIME = 60*60*3
 
@@ -132,6 +135,9 @@ class Pandora(object):
 
             if code == API_ERROR_INVALID_AUTH_TOKEN:
                 raise PandoraAuthTokenInvalid(msg)
+            elif code == API_ERROR_COUNTRY_NOT_SUPPORTED:
+                 raise PandoraError("Pandora not available", code,
+                    submsg="Pandora is not available outside the United States.")
             elif code == API_ERROR_API_VERSION_NOT_SUPPORTED:
                 raise PandoraAPIVersionError(msg)
             elif code == API_ERROR_INSUFFICIENT_CONNECTIVITY:
@@ -142,6 +148,12 @@ class Pandora(object):
                     submsg="Pandora is in read-only mode as it is performing maintenance. Try again later.")
             elif code == API_ERROR_INVALID_LOGIN:
                 raise PandoraError("Login Error", code, submsg="Invalid username or password")
+            elif code == API_ERROR_LISTENER_NOT_AUTHORIZED:
+                raise PandoraError("Pandora Error", code,
+                    submsg="A Pandora One account is required to access this feature.")
+            elif code == API_ERROR_PARTNER_NOT_AUTHORIZED:
+                raise PandoraError("Login Error", code,
+                    submsg="Invalid Pandora partner keys. A Pithos update may be required.")
             else:
                 raise PandoraError("Pandora returned an error", code, "%s (code %d)"%(msg, code))
 
