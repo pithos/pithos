@@ -200,6 +200,7 @@ class PithosWindow(gtk.Window):
         bus.connect("message::eos", self.on_gst_eos)
         bus.connect("message::buffering", self.on_gst_buffering)
         bus.connect("message::error", self.on_gst_error)
+        self.player.connect("notify::volume", self.on_gst_volume)
         self.time_format = gst.Format(gst.FORMAT_TIME)
                         
         self.stations_dlg = None
@@ -571,8 +572,17 @@ class PithosWindow(gtk.Window):
         #elif self.playing:
             #self.player.set_state(gst.STATE_PLAYING)
         self.update_song_row()
-            
-    
+
+    def set_volume_cb(self, volume):
+        self.volume.handler_block_by_func(self.on_volume_change_event)
+        self.volume.set_property("value", volume)
+        self.volume.handler_unblock_by_func(self.on_volume_change_event)
+        self.preferences['volume'] = volume
+
+    def on_gst_volume(self, player, volumespec):
+        vol = self.player.get_property('volume')
+        gobject.idle_add(self.set_volume_cb, vol)
+
     def song_text(self, song):
         title = cgi.escape(song.title)
         artist = cgi.escape(song.artist)
