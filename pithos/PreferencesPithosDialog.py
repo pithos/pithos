@@ -29,7 +29,10 @@ try:
     from xdg.BaseDirectory import xdg_config_home
     config_home = xdg_config_home
 except ImportError:
-    config_home = os.path.dirname(__file__)
+    if 'XDG_CONFIG_HOME' in os.environ:
+        config_home = os.environ['XDG_CONFIG_HOME']
+    else:
+        config_home = os.path.join(os.path.expanduser('~'), '.config')
     
 configfilename = os.path.join(config_home, 'pithos.ini')
 
