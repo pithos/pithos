@@ -284,13 +284,11 @@ class Song(object):
         self.album = d['albumName']
         self.artist = d['artistName']
         self.audioUrl = d['additionalAudioUrl']
-        self.fileGain = d['trackGain']
         self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
         self.stationId = d['stationId']
         self.title = d['songName']
         self.songDetailURL = d['songDetailUrl']
-        self.albumDetailURL = d['albumDetailUrl']
         self.artRadio = d['albumArtUrl']
 
         self.tired=False
