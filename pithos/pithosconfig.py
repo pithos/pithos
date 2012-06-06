@@ -28,10 +28,11 @@ class project_path_not_found(Exception):
     pass
 
 valid_audio_formats = [
-    ('highQuality', 'High'),
-    ('mediumQuality', 'Medium'),
-    ('lowQuality', 'Low'),
+    ('High', 'highQuality'),
+    ('Medium', 'mediumQuality'),
+    ('Low', 'lowQuality'),
 ]
+default_audio_quality = 'highQuality'
 
 def get_data_file(*path_segments):
     """Get the full path to a data file.

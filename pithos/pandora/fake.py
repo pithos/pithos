@@ -52,79 +52,70 @@ class FakePandora(Pandora):
 
     def set_authenticated(self):
         self.auth_check.set_active(True)
-        
-    def xmlrpc_call(self, method, args=[], url_args=True, secure=False):
+
+    def json_call(self, method, args={}, https=False, blowfish=True):
         time.sleep(1)
-        if method != 'listener.authenticateListener':
-            self.maybe_fail()
-            
-        if method == 'listener.authenticateListener':
-            self.set_authenticated()
-            return {'webAuthToken': '123', 'listenerId':'456', 'authToken':'789'}
-        
-        elif method == 'station.getStations':
-            return [
-                {'stationId':'987', 'stationIdToken':'345434', 'isCreator':True, 'isQuickMix':False, 'stationName':"Test Station 1"},   
-                {'stationId':'321', 'stationIdToken':'453544', 'isCreator':True, 'isQuickMix':True, 'stationName':"Fake's QuickMix",
+        self.maybe_fail()
+
+        if method == 'user.getStationList':
+            return {'stations': [
+                {'stationId':'987', 'stationToken':'345434', 'isShared':False, 'isQuickMix':False, 'stationName':"Test Station 1"},
+                {'stationId':'321', 'stationToken':'453544', 'isShared':False, 'isQuickMix':True, 'stationName':"Fake's QuickMix",
                     'quickMixStationIds':['987', '343']},
-                {'stationId':'432', 'stationIdToken':'345485', 'isCreator':True, 'isQuickMix':False, 'stationName':"Test Station 2"},
-                {'stationId':'254', 'stationIdToken':'345415', 'isCreator':True, 'isQuickMix':False, 'stationName':"Test Station 4 - Out of Order"},
-                {'stationId':'343', 'stationIdToken':'345435', 'isCreator':True, 'isQuickMix':False, 'stationName':"Test Station 3"},   
-            ]
-        elif method == 'playlist.getFragment':
-            return [self.makeFakeSong(args) for i in range(4)]
+                {'stationId':'432', 'stationToken':'345485', 'isShared':False, 'isQuickMix':False, 'stationName':"Test Station 2"},
+                {'stationId':'254', 'stationToken':'345415', 'isShared':False, 'isQuickMix':False, 'stationName':"Test Station 4 - Out of Order"},
+                {'stationId':'343', 'stationToken':'345435', 'isShared':False, 'isQuickMix':False, 'stationName':"Test Station 3"},
+            ]}
+        elif method == 'station.getPlaylist':
+            stationId = self.get_station_by_token(args['stationToken']).id
+            return {'items': [self.makeFakeSong(stationId) for i in range(4)]}
         elif method == 'music.search':
             return {'artists': [
-                        {'score':90, 'musicId':'988', 'artistName':"artistName"},
+                        {'score':90, 'musicToken':'988', 'artistName':"artistName"},
                     ],
                     'songs':[
-                        {'score':80, 'musicId':'238', 'songTitle':"SongName", 'artistSummary':"ArtistName"},
+                        {'score':80, 'musicToken':'238', 'songName':"SongName", 'artistName':"ArtistName"},
                     ],
                    }
         elif method == 'station.createStation':
-            return {'stationId':'999', 'stationIdToken':'345433', 'isCreator':True, 'isQuickMix':False, 'stationName':"Added Station"} 
-        elif method in ('station.setQuickMix',
-                        'station.addFeedback',
-                        'station.transformShared', 
-                        'station.setStationName',
-                        'station.removeStation',
-                        'listener.addTiredSong',
-                        'station.createBookmark',
-                        'station.createArtistBookmark',
+            return {'stationId':'999', 'stationToken':'345433', 'isShared':False, 'isQuickMix':False, 'stationName':"Added Station"}
+        elif method == 'station.addFeedback':
+            return {'feedbackId': '1234'}
+        elif method in ('user.setQuickMix',
+                        'station.deleteFeedback',
+                        'station.transformSharedStation',
+                        'station.renameStation',
+                        'station.deleteStation',
+                        'user.sleepSong',
+                        'bookmark.addSongBookmark',
+                        'bookmark.addArtistBookmark',
                      ):
             return 1
         else:
             logging.error("Invalid method %s" % method)
-            
+
     def connect(self, user, password):
-        self.listenerId = self.authToken = None
-        
-        user = self.xmlrpc_call('listener.authenticateListener', [user, password], [], secure=True)
-        
-        self.webAuthToken = user['webAuthToken']
-        self.listenerId = user['listenerId']
-        self.authToken = user['authToken']
-        
-        self.get_stations(self)
-            
-    def makeFakeSong(self, args):
+        self.set_authenticated()
+        self.get_stations()
+
+    def get_station_by_token(self, token):
+        for i in self.stations:
+            if i.idToken == token:
+                return i
+
+    def makeFakeSong(self, stationId):
         c = self.count()
         return {
-            'albumTitle':"AlbumName",
-            'artistSummary':"ArtistName",
-            'artistMusicId':'4324',
-            'audioURL':'http://kevinmehall.net/p/pithos/testfile.aac?val='+'0'*48,
-            'fileGain':0,
-            'identity':'5908540384',
-            'musicId':'4543',
-            'rating': 1 if c%3 == 0 else 0,
-            'stationId': args[0],
-            'songTitle': 'Test song %i'%c,
-            'userSeed': '54543',
-            'songDetailURL': 'http://kevinmehall.net/p/pithos/',
-            'albumDetailURL':'http://kevinmehall.net/p/pithos/',
-            'artRadio':'http://i.imgur.com/H3Z8x.jpg',
-            'songType':0,
-            'trackToken':12345,
+            'albumName':"AlbumName",
+            'artistName':"ArtistName",
+            'additionalAudioUrl':'http://kevinmehall.net/p/pithos/testfile.aac?val='+'0'*48,
+            'trackGain':0,
+            'trackToken':'5908540384',
+            'songRating': 1 if c%3 == 0 else 0,
+            'stationId': stationId,
+            'songName': 'Test song %i'%c,
+            'songDetailUrl': 'http://kevinmehall.net/p/pithos/',
+            'albumDetailUrl':'http://kevinmehall.net/p/pithos/',
+            'albumArtUrl':'http://i.imgur.com/H4Z8x.jpg',
         }
-            
+

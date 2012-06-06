@@ -183,6 +183,7 @@ class PithosWindow(gtk.Window):
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
         
+        self.pandora = make_pandora(self.cmdopts.test)
         self.set_proxy()
         self.set_audio_quality()
         self.pandora_connect()
@@ -219,7 +220,6 @@ class PithosWindow(gtk.Window):
         self.waiting_for_playlist = False
         self.start_new_playlist = False
                 
-        self.pandora = make_pandora(self.cmdopts.test)
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
 
@@ -321,18 +321,14 @@ class PithosWindow(gtk.Window):
         self.worker_run('set_audio_quality', (self.preferences['audio_quality'],))
 
     def pandora_connect(self, message="Logging in...", callback=None):
-        args = (self.preferences['username'],
-                self.preferences['password'],
-                self.preferences['pandora_one'])
-
         def pandora_ready(*ignore):
             logging.info("Pandora connected")
             self.process_stations(self)
             if callback:
-                callback()       
-                
-        self.worker_run('connect', args, pandora_ready, message, 'login')
-    
+                callback()
+
+        self.worker_run('connect', (self.preferences,), pandora_ready, message, 'login')
+
     def process_stations(self, *ignore):
         self.stations_model.clear()
         self.current_station = None
