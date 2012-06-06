@@ -22,19 +22,32 @@ import logging
 import time
 import urllib
 import urllib2
+from Crypto.Cipher import Blowfish
 
 # This is an implementation of the Pandora JSON API using Android partner
 # credentials.
 # See http://pan-do-ra-api.wikia.com/wiki/Json/5 for API documentation.
 
 PROTOCOL_VERSION = '5'
-RPC_URL = "://tuner.pandora.com/services/json/?"
-DEVICE_MODEL = 'android-generic'
-PARTNER_USERNAME = 'android'
-PARTNER_PASSWORD = 'AC7IBG09A3DTSYM4R41UJWL07VLN8JI7'
+
+CLIENTS = {'android-generic': {'deviceModel': 'android-generic',
+                               'username': 'android',
+                               'password': 'AC7IBG09A3DTSYM4R41UJWL07VLN8JI7',
+                               'rpcUrl': '://tuner.pandora.com/services/json/?',
+                               'encryptKey': '6#26FRL$ZWD',
+                               'decryptKey': 'R=U!LH$O2B#',
+                              },
+           'pandora one': {'deviceModel': 'D01',
+                           'username': 'pandora one',
+                           'password': 'TVCKIBGS9AO9TSYLNNFUML0743LH82D',
+                           'rpcUrl': '://internal-tuner.pandora.com/services/json/?',
+                           'encryptKey': '2%3WCL*JU$MP]4',
+                           'decryptKey': 'U#IO$RZPAB%VX2',
+                          }
+          }
 
 HTTP_TIMEOUT = 30
-AUDIO_FORMAT = 'aacplus'
+AUDIO_QUALITY = 'highQuality'
 USER_AGENT = 'pithos'
 
 RATE_BAN = 'ban'
@@ -46,6 +59,7 @@ API_ERROR_INSUFFICIENT_CONNECTIVITY = 13
 API_ERROR_READ_ONLY_MODE = 1000
 API_ERROR_INVALID_AUTH_TOKEN = 1001
 API_ERROR_INVALID_LOGIN = 1002
+API_ERROR_LISTENER_NOT_AUTHORIZED = 1003
 
 PLAYLIST_VALIDITY_TIME = 60*60*3
 
@@ -61,24 +75,22 @@ class PandoraAPIVersionError(PandoraError): pass
 class PandoraTimeout(PandoraNetError): pass
 
 
-blowfish_encode = Blowfish(pandora_keys.out_key_p, pandora_keys.out_key_s)
-
 def pad(s, l):
     return s + "\0" * (l - len(s))
-
-def pandora_encrypt(s):
-    return "".join([blowfish_encode.encrypt(pad(s[i:i+8], 8)).encode('hex') for i in xrange(0, len(s), 8)])
-
-blowfish_decode = Blowfish(pandora_keys.in_key_p, pandora_keys.in_key_s)
-
-def pandora_decrypt(s):
-    return "".join([blowfish_decode.decrypt(pad(s[i:i+16].decode('hex'), 8)) for i in xrange(0, len(s), 16)]).rstrip('\x08')
 
 
 class Pandora(object):
     def __init__(self):
         self.set_proxy(None)
-        self.set_audio_format(AUDIO_FORMAT)
+        self.set_audio_quality(AUDIO_QUALITY)
+
+    def pandora_encrypt(self, s):
+        return "".join([self.blowfish_encode.encrypt(pad(s[i:i+8], 8)).encode('hex')
+                        for i in xrange(0, len(s), 8)])
+
+    def pandora_decrypt(self, s):
+        return "".join([self.blowfish_decode.decrypt(pad(s[i:i+16].decode('hex'), 8))
+                        for i in xrange(0, len(s), 16)]).rstrip('\x08')
 
     def json_call(self, method, args={}, https=False, blowfish=True):
         url_arg_strings = []
@@ -93,7 +105,7 @@ class Pandora(object):
 
         url_arg_strings.append('method=%s'%method)
         protocol = 'https' if https else 'http'
-        url = protocol + RPC_URL + '&'.join(url_arg_strings)
+        url = protocol + self.client['rpcUrl'] + '&'.join(url_arg_strings)
 
         if self.time_offset:
             args['syncTime'] = int(time.time()+self.time_offset)
@@ -107,7 +119,7 @@ class Pandora(object):
         logging.debug(data)
 
         if blowfish:
-            data = pandora_encrypt(data)
+            data = self.pandora_encrypt(data)
 
         try:
             req = urllib2.Request(url, data, {'User-agent': USER_AGENT, 'Content-type': 'text/plain'})
@@ -144,14 +156,16 @@ class Pandora(object):
                     submsg="Pandora is in read-only mode as it is performing maintenance. Try again later.")
             elif code == API_ERROR_INVALID_LOGIN:
                 raise PandoraError("Login Error", code, submsg="Invalid username or password")
+            elif code == API_ERROR_LISTENER_NOT_AUTHORIZED:
+                raise PandoraError("Login Error", code, submsg='User is not a Pandora One subscriber.\nPlease uncheck "Pandora One Subscriber" in preferences.')
             else:
                 raise PandoraError("Pandora returned an error", code, "%s (code %d)"%(msg, code))
 
         if 'result' in tree:
             return tree['result']
 
-    def set_audio_format(self, fmt):
-        self.audio_format = ['aacplus', 'mp3', 'mp3-hifi'].index(fmt)
+    def set_audio_quality(self, fmt):
+        self.audio_quality = fmt
 
     def set_proxy(self, proxy):
         if proxy:
@@ -160,14 +174,22 @@ class Pandora(object):
         else:
             self.opener = urllib2.build_opener()     
 
-    def connect(self, user, password):
+    def connect(self, user, password, pandora_one):
         self.partnerId = self.userId = self.partnerAuthToken = self.userAuthToken = self.time_offset = None
 
-        partner = self.json_call('auth.partnerLogin', {'deviceModel': DEVICE_MODEL, 'username': PARTNER_USERNAME, 'password': PARTNER_PASSWORD, 'version': PROTOCOL_VERSION}, https=True, blowfish=False)
+        self.client = CLIENTS['pandora one' if pandora_one else 'android-generic']
+        self.blowfish_encode = Blowfish.new(self.client['encryptKey'], Blowfish.MODE_ECB)
+        self.blowfish_decode = Blowfish.new(self.client['decryptKey'], Blowfish.MODE_ECB)
+
+        partner = self.json_call('auth.partnerLogin',
+                                 {'deviceModel': self.client['deviceModel'],
+                                  'username': self.client['username'],
+                                  'password': self.client['password'],
+                                  'version': PROTOCOL_VERSION}, https=True, blowfish=False)
         self.partnerId = partner['partnerId']
         self.partnerAuthToken = partner['partnerAuthToken']
 
-        pandora_time = int(pandora_decrypt(partner['syncTime'])[4:14])
+        pandora_time = int(self.pandora_decrypt(partner['syncTime'])[4:14])
         self.time_offset = pandora_time - time.time()
         logging.info("Time offset is %s", self.time_offset)
 
@@ -245,7 +267,8 @@ class Station(object):
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken, 'additionalAudioUrl': 'HTTP_64_AACPLUS_ADTS,HTTP_128_MP3,HTTP_192_MP3'}, https=True)
+        playlist = self.pandora.json_call('station.getPlaylist',
+                                          {'stationToken': self.idToken}, https=True)
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
@@ -273,7 +296,11 @@ class Song(object):
 
         self.album = d['albumName']
         self.artist = d['artistName']
-        self.audioUrl = d['additionalAudioUrl'][self.pandora.audio_format]
+        if self.pandora.audio_quality in d['audioUrlMap']:
+          self.audioUrl = d['audioUrlMap'][self.pandora.audio_quality]['audioUrl']
+        else:
+          # Just pick the first one
+          self.audioUrl = d['audioUrlMap'].values()[0]['audioUrl']
         self.fileGain = d['trackGain']
         self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them

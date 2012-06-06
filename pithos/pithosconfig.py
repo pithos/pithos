@@ -28,9 +28,9 @@ class project_path_not_found(Exception):
     pass
 
 valid_audio_formats = [
-    'aacplus',
-    'mp3',
-    'mp3-hifi',
+    ('highQuality', 'High'),
+    ('mediumQuality', 'Medium'),
+    ('lowQuality', 'Low'),
 ]
 
 def get_data_file(*path_segments):
