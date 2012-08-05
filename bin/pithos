@@ -179,7 +179,8 @@ class PithosWindow(gtk.Window):
         
         self.dbus_service = PithosDBusProxy(self)
         self.sound_menu = PithosSoundMenu(self)
-        
+        self.continue_playing = True
+
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
         
@@ -232,7 +233,8 @@ class PithosWindow(gtk.Window):
         os.environ['PULSE_PROP_media.role'] = 'music'
         
         self.playpause_button = self.builder.get_object('playpause_button')
-        
+        self.stopaftercurrentsong_button = self.builder.get_object('stopaftercurrentsong')
+
         self.volume = self.builder.get_object('volume')
         self.volume.set_property("value", float(self.preferences['volume']))
         
@@ -366,6 +368,10 @@ class PithosWindow(gtk.Window):
         elif songs_remaining == 1:
             # Preload next playlist so there's no delay
             self.get_playlist()
+
+        if not self.continue_playing:
+            self.pause()
+            return self.toggle_continue_playing()
                 
         prev = self.current_song
         
@@ -382,7 +388,7 @@ class PithosWindow(gtk.Window):
         
         if self.current_song.tired or self.current_song.rating == RATE_BAN:
             return self.next_song()
-        
+
         logging.info("Starting song: index = %i"%(song_index))
         self.buffer_percent = 100
         self.player.set_property("uri", self.current_song.audioUrl)
@@ -396,14 +402,28 @@ class PithosWindow(gtk.Window):
         self.set_title("Pithos - %s by %s" % (self.current_song.title, self.current_song.artist))
                     
         self.emit('song-changed', self.current_song)
+
             
     def next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
-        
+
     def user_play(self, *ignore):
         self.play()
         self.emit('user-changed-play-state', True)
         
+    def toggle_continue_playing(self, *ignore):
+        if self.continue_playing:
+            self.continue_playing = False
+            self.stopaftercurrentsong_button.set_stock_id(gtk.STOCK_STOP)
+            self.update_song_row()
+        else:
+            self.user_continue_after_current_song(ignore)
+
+    def user_continue_after_current_song(self, *ignore):
+        self.continue_playing = True
+        self.stopaftercurrentsong_button.set_stock_id(gtk.STOCK_GOTO_LAST)
+        self.update_song_row()
+
     def play(self):
         if not self.playing:
             self.playing = True
@@ -587,6 +607,8 @@ class PithosWindow(gtk.Window):
                 msg.append("%s / %s" %(pos_str, dur_str))
                 if not self.playing:
                     msg.append("Paused")
+                if not self.continue_playing:
+                    msg.append("Stop after this song.")
             except gst.QueryError:
                 pass
             if self.buffer_percent < 100:
