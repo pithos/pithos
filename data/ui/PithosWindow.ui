@@ -45,6 +45,19 @@
               </packing>
             </child>
             <child>
+              <object class="GtkToolButton" id="stopaftercurrentsong">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Stop After This Song</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-goto-last</property>
+                <signal name="clicked" handler="toggle_continue_playing"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">False</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkSeparatorToolItem" id="toolbutton4">
                 <property name="visible">True</property>
               </object>
