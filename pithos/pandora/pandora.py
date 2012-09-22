@@ -268,7 +268,12 @@ class Song(object):
 
         self.album = d['albumName']
         self.artist = d['artistName']
-        self.audioUrl = d['additionalAudioUrl']
+        try:
+            self.audioUrl = d['additionalAudioUrl']
+        except KeyError:
+            logging.error("No audioUrl %s", repr(d.keys()))
+            raise PandoraError("Unable to use this audio format",
+                               submsg="Change audio format in settings.")
         self.fileGain = d['trackGain']
         self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
