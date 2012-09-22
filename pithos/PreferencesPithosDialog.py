@@ -93,7 +93,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             "volume": 1.0,
             # If set, allow insecure permissions. Implements CVE-2011-1500
             "unsafe_permissions": False,
-            "audio_format": default_audio_format,
+            "jsonapi_audio_format": default_audio_format,
         }
         
         try:
@@ -109,12 +109,14 @@ class PreferencesPithosDialog(gtk.Dialog):
             elif val == 'False': val=False
             elif val == 'True': val=True
             self.__preferences[key]=val
-
-        # translate old XMLRPC formats
-        format = self.__preferences['audio_format']
-        translate = {'aacplus': 'HTTP_64_AACPLUS', 'mp3': 'HTTP_128_MP3', 'mp3-hifi': 'HTTP_192_MP3'}
-        if format in translate:
-            self.__preferences['audio_format'] = translate[format]
+    
+        if 'audio_format' in self.__preferences:
+            # translate old XMLRPC formats
+            old_format = self.__preferences['audio_format']
+            translate = {'aacplus': 'HTTP_64_AACPLUS', 'mp3': 'HTTP_128_MP3', 'mp3-hifi': 'HTTP_192_MP3'}
+            if format in translate:
+                self.__preferences['jsonapi_audio_format'] = translate[format]
+            del self.__preferences['audio_format']
 
         self.setup_fields()
 
@@ -182,7 +184,7 @@ class PreferencesPithosDialog(gtk.Dialog):
 
         audio_format_combo = self.builder.get_object('prefs_audio_format')
         for row in audio_format_combo.get_model():
-            if row[1] == self.__preferences["audio_format"]:
+            if row[1] == self.__preferences["jsonapi_audio_format"]:
                 audio_format_combo.set_active_iter(row.iter)
                 break
 
@@ -207,7 +209,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         audio_format = self.builder.get_object('prefs_audio_format')
         active_idx = audio_format.get_active()
         if active_idx != -1: # ignore unknown format
-            self.__preferences["audio_format"] = audio_format.get_model()[active_idx][1]
+            self.__preferences["jsonapi_audio_format"] = audio_format.get_model()[active_idx][1]
 
         self.save()
 
