@@ -160,8 +160,8 @@ class Pandora(object):
         if 'result' in tree:
             return tree['result']
 
-    def set_audio_format(self, fmt):
-        self.audio_format = fmt
+    def set_audio_quality(self, fmt):
+        self.audio_quality = fmt
 
     def set_url_opener(self, opener):
         self.opener = opener
@@ -251,7 +251,7 @@ class Station(object):
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken, 'additionalAudioUrl': self.pandora.audio_format}, https=True)
+        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken}, https=True)
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
@@ -279,12 +279,7 @@ class Song(object):
 
         self.album = d['albumName']
         self.artist = d['artistName']
-        try:
-            self.audioUrl = d['additionalAudioUrl']
-        except KeyError:
-            logging.error("No audioUrl %s", repr(d.keys()))
-            raise PandoraError("Unable to use this audio format",
-                               submsg="Change audio format in settings.")
+        self.audioUrlMap = d['audioUrlMap']
         self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
         self.stationId = d['stationId']
@@ -298,6 +293,18 @@ class Song(object):
         self.finished = False
         self.playlist_time = time.time()
         self.feedbackId = None
+
+    @property
+    def audioUrl(self):
+        quality = self.pandora.audio_quality
+        try:
+            q = self.audioUrlMap[quality]
+            logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
+            return q['audioUrl']
+        except KeyError:
+            logging.warn("Unable to use audio format %s. Using %s",
+                           quality, self.audioUrlMap.keys()[0])
+            return self.audioUrlMap.values()[0]['audioUrl']
 
     @property
     def station(self):
@@ -336,6 +343,7 @@ class Song(object):
 
     def is_still_valid(self):
         return (time.time() - self.playlist_time) < PLAYLIST_VALIDITY_TIME
+
 
 class SearchResult(object):
     def __init__(self, resultType, d):

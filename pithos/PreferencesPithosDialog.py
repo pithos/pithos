@@ -62,15 +62,15 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.builder = builder
         self.builder.connect_signals(self)
         
-        # initialize the "Audio format" combobox backing list
-        audio_format_combo = self.builder.get_object('prefs_audio_format')
+        # initialize the "Audio quality" combobox backing list
+        audio_quality_combo = self.builder.get_object('prefs_audio_quality')
         fmt_store = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
-        for audio_format in valid_audio_formats:
-            fmt_store.append(audio_format)
-        audio_format_combo.set_model(fmt_store)
+        for audio_quality in valid_audio_formats:
+            fmt_store.append(audio_quality)
+        audio_quality_combo.set_model(fmt_store)
         render_text = gtk.CellRendererText()
-        audio_format_combo.pack_start(render_text, expand=True)
-        audio_format_combo.add_attribute(render_text, "text", 0)
+        audio_quality_combo.pack_start(render_text, expand=True)
+        audio_quality_combo.add_attribute(render_text, "text", 1)
 
         self.__load_preferences()
 
@@ -97,7 +97,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             "volume": 1.0,
             # If set, allow insecure permissions. Implements CVE-2011-1500
             "unsafe_permissions": False,
-            "jsonapi_audio_format": default_audio_format,
+            "audio_quality": default_audio_quality,
         }
         
         try:
@@ -115,11 +115,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             self.__preferences[key]=val
     
         if 'audio_format' in self.__preferences:
-            # translate old XMLRPC formats
-            old_format = self.__preferences['audio_format']
-            translate = {'aacplus': 'HTTP_64_AACPLUS', 'mp3': 'HTTP_128_MP3', 'mp3-hifi': 'HTTP_192_MP3'}
-            if format in translate:
-                self.__preferences['jsonapi_audio_format'] = translate[format]
+            # Pithos <= 0.3.17, replaced by audio_quality
             del self.__preferences['audio_format']
 
         self.setup_fields()
@@ -187,10 +183,10 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.builder.get_object('prefs_proxy').set_text(self.__preferences["proxy"])
         self.builder.get_object('prefs_control_proxy').set_text(self.__preferences["control_proxy"])
 
-        audio_format_combo = self.builder.get_object('prefs_audio_format')
-        for row in audio_format_combo.get_model():
-            if row[1] == self.__preferences["jsonapi_audio_format"]:
-                audio_format_combo.set_active_iter(row.iter)
+        audio_quality_combo = self.builder.get_object('prefs_audio_quality')
+        for row in audio_quality_combo.get_model():
+            if row[0] == self.__preferences["audio_quality"]:
+                audio_quality_combo.set_active_iter(row.iter)
                 break
 
         self.builder.get_object('checkbutton_notify').set_active(self.__preferences["notify"])
@@ -212,10 +208,10 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.__preferences["enable_screensaverpause"] = self.builder.get_object('checkbutton_screensaverpause').get_active()
         self.__preferences["show_icon"] = self.builder.get_object('checkbutton_icon').get_active()
 
-        audio_format = self.builder.get_object('prefs_audio_format')
-        active_idx = audio_format.get_active()
+        audio_quality = self.builder.get_object('prefs_audio_quality')
+        active_idx = audio_quality.get_active()
         if active_idx != -1: # ignore unknown format
-            self.__preferences["jsonapi_audio_format"] = audio_format.get_model()[active_idx][1]
+            self.__preferences["audio_quality"] = audio_quality.get_model()[active_idx][0]
 
         self.save()
 
