@@ -89,6 +89,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             "notify":True,
             "last_station_id":None,
             "proxy":'',
+            "control_proxy":'',
             "show_icon": False,
             "lastfm_key": False,
             "enable_mediakeys":True,
@@ -184,6 +185,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.builder.get_object('prefs_username').set_text(self.__preferences["username"])
         self.builder.get_object('prefs_password').set_text(self.__preferences["password"])
         self.builder.get_object('prefs_proxy').set_text(self.__preferences["proxy"])
+        self.builder.get_object('prefs_control_proxy').set_text(self.__preferences["control_proxy"])
 
         audio_format_combo = self.builder.get_object('prefs_audio_format')
         for row in audio_format_combo.get_model():
@@ -205,6 +207,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.__preferences["username"] = self.builder.get_object('prefs_username').get_text()
         self.__preferences["password"] = self.builder.get_object('prefs_password').get_text()
         self.__preferences["proxy"] = self.builder.get_object('prefs_proxy').get_text()
+        self.__preferences["control_proxy"] = self.builder.get_object('prefs_control_proxy').get_text()
         self.__preferences["notify"] = self.builder.get_object('checkbutton_notify').get_active()
         self.__preferences["enable_screensaverpause"] = self.builder.get_object('checkbutton_screensaverpause').get_active()
         self.__preferences["show_icon"] = self.builder.get_object('checkbutton_icon').get_active()

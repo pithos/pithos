@@ -163,12 +163,8 @@ class Pandora(object):
     def set_audio_format(self, fmt):
         self.audio_format = fmt
 
-    def set_proxy(self, proxy):
-        if proxy:
-            proxy_handler = urllib2.ProxyHandler({'http': proxy})
-            self.opener = urllib2.build_opener(proxy_handler)  
-        else:
-            self.opener = urllib2.build_opener()     
+    def set_url_opener(self, opener):
+        self.opener = opener
 
     def connect(self, user, password):
         self.partnerId = self.userId = self.partnerAuthToken = self.userAuthToken = self.time_offset = None
