@@ -34,7 +34,6 @@ PARTNER_USERNAME = 'android'
 PARTNER_PASSWORD = 'AC7IBG09A3DTSYM4R41UJWL07VLN8JI7'
 
 HTTP_TIMEOUT = 30
-AUDIO_FORMAT = 'aacplus'
 USER_AGENT = 'pithos'
 
 RATE_BAN = 'ban'
@@ -76,10 +75,6 @@ def pandora_decrypt(s):
 
 
 class Pandora(object):
-    def __init__(self):
-        self.set_proxy(None)
-        self.set_audio_format(AUDIO_FORMAT)
-
     def json_call(self, method, args={}, https=False, blowfish=True):
         url_arg_strings = []
         if self.partnerId:
@@ -151,7 +146,7 @@ class Pandora(object):
             return tree['result']
 
     def set_audio_format(self, fmt):
-        self.audio_format = ['aacplus', 'mp3', 'mp3-hifi'].index(fmt)
+        self.audio_format = fmt
 
     def set_proxy(self, proxy):
         if proxy:
@@ -245,7 +240,7 @@ class Station(object):
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken, 'additionalAudioUrl': 'HTTP_64_AACPLUS_ADTS,HTTP_128_MP3,HTTP_192_MP3'}, https=True)
+        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken, 'additionalAudioUrl': self.pandora.audio_format}, https=True)
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
@@ -273,7 +268,7 @@ class Song(object):
 
         self.album = d['albumName']
         self.artist = d['artistName']
-        self.audioUrl = d['additionalAudioUrl'][self.pandora.audio_format]
+        self.audioUrl = d['additionalAudioUrl']
         self.fileGain = d['trackGain']
         self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
