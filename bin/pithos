@@ -29,6 +29,7 @@ except:
 
 import gst
 import cgi
+import math
 import webbrowser
 import os
 import urllib
@@ -201,6 +202,7 @@ class PithosWindow(gtk.Window):
         bus.connect("message::eos", self.on_gst_eos)
         bus.connect("message::buffering", self.on_gst_buffering)
         bus.connect("message::error", self.on_gst_error)
+        self.player.connect("notify::volume", self.on_gst_volume)
         self.time_format = gst.Format(gst.FORMAT_TIME)
                         
         self.stations_dlg = None
@@ -234,7 +236,7 @@ class PithosWindow(gtk.Window):
         self.playpause_button = self.builder.get_object('playpause_button')
         
         self.volume = self.builder.get_object('volume')
-        self.volume.set_property("value", float(self.preferences['volume']))
+        self.volume.set_property("value", math.pow(float(self.preferences['volume']), 1.0/3.0))
         
         self.statusbar = self.builder.get_object('statusbar1')
         
@@ -571,8 +573,19 @@ class PithosWindow(gtk.Window):
         #elif self.playing:
             #self.player.set_state(gst.STATE_PLAYING)
         self.update_song_row()
-            
-    
+
+    def set_volume_cb(self, volume):
+        # Convert to the cubic scale that the volume slider uses
+        scaled_volume = math.pow(volume, 1.0/3.0)
+        self.volume.handler_block_by_func(self.on_volume_change_event)
+        self.volume.set_property("value", scaled_volume)
+        self.volume.handler_unblock_by_func(self.on_volume_change_event)
+        self.preferences['volume'] = volume
+
+    def on_gst_volume(self, player, volumespec):
+        vol = self.player.get_property('volume')
+        gobject.idle_add(self.set_volume_cb, vol)
+
     def song_text(self, song):
         title = cgi.escape(song.title)
         artist = cgi.escape(song.artist)
@@ -727,8 +740,10 @@ class PithosWindow(gtk.Window):
                 self.start_song(self.selected_song().index)
                 
     def on_volume_change_event(self, volumebutton, value):
-        self.player.set_property("volume", value)
-        self.preferences['volume'] = value
+        # Use a cubic scale for volume. This matches what PulseAudio uses.
+        volume = math.pow(value, 3)
+        self.player.set_property("volume", volume)
+        self.preferences['volume'] = volume
     
     def station_properties(self, *ignore):
         openBrowser(self.current_station.info_url)
