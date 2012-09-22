@@ -183,6 +183,7 @@ class PithosWindow(gtk.Window):
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
         
+        self.pandora = make_pandora(self.preferences, self.cmdopts.test)
         self.set_proxy()
         self.set_audio_format()
         self.pandora_connect()
@@ -219,7 +220,6 @@ class PithosWindow(gtk.Window):
         self.waiting_for_playlist = False
         self.start_new_playlist = False
                 
-        self.pandora = make_pandora(self.cmdopts.test)
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
 
