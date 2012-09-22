@@ -19,7 +19,7 @@ import gtk
 import logging
 
 class FakePandora(Pandora):
-    def __init__(self, prefs):
+    def __init__(self):
         super(FakePandora, self).__init__(prefs)
         self.counter = 0
         self.show_fail_window()

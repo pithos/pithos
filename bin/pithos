@@ -34,6 +34,7 @@ import webbrowser
 import os
 import urllib2
 import dbus
+import json
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
 
@@ -57,6 +58,7 @@ from pithos.plugin import load_plugins
 from pithos.dbus_service import PithosDBusProxy, try_to_raise
 from pithos.sound_menu import PithosSoundMenu
 from pithos.pandora import *
+from pithos.pandora.data import *
 
 
 def openBrowser(url):
@@ -184,7 +186,7 @@ class PithosWindow(gtk.Window):
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
         
-        self.pandora = make_pandora(self.preferences, self.cmdopts.test)
+        self.pandora = make_pandora(self.cmdopts.test)
         self.set_proxy()
         self.set_audio_format()
         self.pandora_connect()
@@ -354,8 +356,26 @@ class PithosWindow(gtk.Window):
         self.worker_run('set_audio_quality', (self.preferences['audio_quality'],))
     
     def pandora_connect(self, message="Logging in...", callback=None):
-        args = (self.preferences['username'],
-                self.preferences['password'])
+        if self.preferences['pandora_one']:
+            client = client_keys[default_one_client_id]
+        else:
+            client = client_keys[default_client_id]
+
+        # Allow user to override client settings
+        force_client = self.preferences['force_client']
+        if force_client in client_keys:
+            client = client_keys[force_client]
+        elif force_client and force_client[0] == '{':
+            try:
+                client = json.loads(force_client)
+            except:
+                logging.error("Could not parse force_client json")
+
+        args = (
+            client,
+            self.preferences['username'],
+            self.preferences['password'],
+        )
                 
         def pandora_ready(*ignore):
             logging.info("Pandora connected")

@@ -23,6 +23,7 @@ import gtk
 import gobject
 
 from pithos.pithosconfig import *
+from pithos.pandora.data import *
 from pithos.plugins.scrobble import LastFmAuth
 
 try:
@@ -98,6 +99,8 @@ class PreferencesPithosDialog(gtk.Dialog):
             # If set, allow insecure permissions. Implements CVE-2011-1500
             "unsafe_permissions": False,
             "audio_quality": default_audio_quality,
+            "pandora_one": False,
+            "force_client": None,
         }
         
         try:

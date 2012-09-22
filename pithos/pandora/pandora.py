@@ -26,14 +26,6 @@ import urllib2
 # credentials.
 # See http://pan-do-ra-api.wikia.com/wiki/Json/5 for API documentation.
 
-PROTOCOL_VERSION = '5'
-RPC_URL = "://tuner.pandora.com/services/json/?"
-DEVICE_MODEL = 'android-generic'
-PARTNER_USERNAME = 'android'
-PARTNER_PASSWORD = 'AC7IBG09A3DTSYM4R41UJWL07VLN8JI7'
-ENCRYPT_KEY = '6#26FRL$ZWD'
-DECRYPT_KEY = 'R=U!LH$O2B#'
-
 HTTP_TIMEOUT = 30
 USER_AGENT = 'pithos'
 
@@ -67,13 +59,8 @@ def pad(s, l):
     return s + "\0" * (l - len(s))
 
 class Pandora(object):
-    def __init__(self, prefs):
-        self.partner_username = prefs.get('partner_username', PARTNER_USERNAME)
-        self.partner_password = prefs.get('partner_password', PARTNER_PASSWORD)
-        self.device_model = prefs.get('device_model', DEVICE_MODEL)
-        self.blowfish_encode = Blowfish(prefs.get('encrypt_key', ENCRYPT_KEY))
-        self.blowfish_decode = Blowfish(prefs.get('decrypt_key', DECRYPT_KEY))
-        self.rpc_url = prefs.get('rpc_url', RPC_URL)
+    def __init__(self):
+        pass
 
     def pandora_encrypt(self, s):
         return "".join([self.blowfish_encode.encrypt(pad(s[i:i+8], 8)).encode('hex') for i in xrange(0, len(s), 8)])
@@ -94,7 +81,7 @@ class Pandora(object):
 
         url_arg_strings.append('method=%s'%method)
         protocol = 'https' if https else 'http'
-        url = protocol + self.rpc_url + '&'.join(url_arg_strings)
+        url = protocol + self.rpcUrl + '&'.join(url_arg_strings)
 
         if self.time_offset:
             args['syncTime'] = int(time.time()+self.time_offset)
@@ -150,7 +137,7 @@ class Pandora(object):
                 raise PandoraError("Login Error", code, submsg="Invalid username or password")
             elif code == API_ERROR_LISTENER_NOT_AUTHORIZED:
                 raise PandoraError("Pandora Error", code,
-                    submsg="A Pandora One account is required to access this feature.")
+                    submsg="A Pandora One account is required to access this feature. Uncheck 'Pandora One' in Settings.")
             elif code == API_ERROR_PARTNER_NOT_AUTHORIZED:
                 raise PandoraError("Login Error", code,
                     submsg="Invalid Pandora partner keys. A Pithos update may be required.")
@@ -166,10 +153,21 @@ class Pandora(object):
     def set_url_opener(self, opener):
         self.opener = opener
 
-    def connect(self, user, password):
-        self.partnerId = self.userId = self.partnerAuthToken = self.userAuthToken = self.time_offset = None
+    def connect(self, client, user, password):
+        self.partnerId = self.userId = self.partnerAuthToken = None
+        self.userAuthToken = self.time_offset = None
 
-        partner = self.json_call('auth.partnerLogin', {'deviceModel': self.device_model, 'username': self.partner_username, 'password': self.partner_password, 'version': PROTOCOL_VERSION}, https=True, blowfish=False)
+        self.rpcUrl = client['rpcUrl']
+        self.blowfish_encode = Blowfish(client['encryptKey'])
+        self.blowfish_decode = Blowfish(client['decryptKey'])
+
+        partner = self.json_call('auth.partnerLogin', {
+            'deviceModel': client['deviceModel'],
+            'username': client['username'], # partner username 
+            'password': client['password'], # partner password
+            'version': client['version']
+            },https=True, blowfish=False)
+
         self.partnerId = partner['partnerId']
         self.partnerAuthToken = partner['partnerAuthToken']
 

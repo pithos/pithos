@@ -21,19 +21,10 @@ __license__ = 'GPL-3'
 
 VERSION = '0.3.17'
 
-
 import os
 
 class project_path_not_found(Exception):
     pass
-
-# See http://pan-do-ra-api.wikia.com/wiki/Json/5/station.getPlaylist
-valid_audio_formats = [
-    ('highQuality', 'High'),
-    ('mediumQuality', 'Medium'),
-    ('lowQuality', 'Low'),
-]
-default_audio_quality = 'mediumQuality'
 
 def get_data_file(*path_segments):
     """Get the full path to a data file.
