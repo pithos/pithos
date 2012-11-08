@@ -15,7 +15,7 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from pithos.pandora.blowfish import Blowfish
+from blowfish import Blowfish
 import json
 import logging
 import time
@@ -60,6 +60,7 @@ def pad(s, l):
 
 class Pandora(object):
     def __init__(self):
+        self.opener = urllib2.build_opener()            
         pass
 
     def pandora_encrypt(self, s):
