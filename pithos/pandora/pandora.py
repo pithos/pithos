@@ -2,20 +2,20 @@
 ### BEGIN LICENSE
 # Copyright (C) 2010 Kevin Mehall <km@kevinmehall.net>
 # Copyright (C) 2012 Christopher Eby <kreed@kreed.org>
-#This program is free software: you can redistribute it and/or modify it 
-#under the terms of the GNU General Public License version 3, as published 
+#This program is free software: you can redistribute it and/or modify it
+#under the terms of the GNU General Public License version 3, as published
 #by the Free Software Foundation.
 #
-#This program is distributed in the hope that it will be useful, but 
-#WITHOUT ANY WARRANTY; without even the implied warranties of 
-#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR 
+#This program is distributed in the hope that it will be useful, but
+#WITHOUT ANY WARRANTY; without even the implied warranties of
+#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
 #PURPOSE.  See the GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License along 
+#You should have received a copy of the GNU General Public License along
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from pithos.pandora.blowfish import Blowfish
+from blowfish import Blowfish
 import json
 import logging
 import time
@@ -25,25 +25,6 @@ import urllib2
 # This is an implementation of the Pandora JSON API using Android partner
 # credentials.
 # See http://pan-do-ra-api.wikia.com/wiki/Json/5 for API documentation.
-
-PROTOCOL_VERSION = '5'
-
-CLIENTS = {'android-generic': {'deviceModel': 'android-generic',
-                               'partner_username': 'android',
-                               'partner_password': 'AC7IBG09A3DTSYM4R41UJWL07VLN8JI7',
-                               'rpcUrl': '://tuner.pandora.com/services/json/?',
-                               'encryptKey': '6#26FRL$ZWD',
-                               'decryptKey': 'R=U!LH$O2B#',
-                              },
-           'pandora one': {'deviceModel': 'D01',
-                           'partner_username': 'pandora one',
-                           'partner_password': 'TVCKIBGS9AO9TSYLNNFUML0743LH82D',
-                           'rpcUrl': '://internal-tuner.pandora.com/services/json/?',
-                           'encryptKey': '2%3WCL*JU$MP]4',
-                           'decryptKey': 'U#IO$RZPAB%VX2',
-                          }
-          }
-DEFAULT_CLIENT = CLIENTS['android-generic']
 
 HTTP_TIMEOUT = 30
 USER_AGENT = 'pithos'
@@ -74,12 +55,14 @@ class PandoraNetError(PandoraError): pass
 class PandoraAPIVersionError(PandoraError): pass
 class PandoraTimeout(PandoraNetError): pass
 
-
 def pad(s, l):
     return s + "\0" * (l - len(s))
 
-
 class Pandora(object):
+    def __init__(self):
+        self.opener = urllib2.build_opener()
+        pass
+
     def pandora_encrypt(self, s):
         return "".join([self.blowfish_encode.encrypt(pad(s[i:i+8], 8)).encode('hex') for i in xrange(0, len(s), 8)])
 
@@ -99,7 +82,7 @@ class Pandora(object):
 
         url_arg_strings.append('method=%s'%method)
         protocol = 'https' if https else 'http'
-        url = protocol + self.rpc_url + '&'.join(url_arg_strings)
+        url = protocol + self.rpcUrl + '&'.join(url_arg_strings)
 
         if self.time_offset:
             args['syncTime'] = int(time.time()+self.time_offset)
@@ -154,7 +137,8 @@ class Pandora(object):
             elif code == API_ERROR_INVALID_LOGIN:
                 raise PandoraError("Login Error", code, submsg="Invalid username or password")
             elif code == API_ERROR_LISTENER_NOT_AUTHORIZED:
-                raise PandoraError("Login Error", code, submsg='User is not a Pandora One subscriber.\nPlease uncheck "Pandora One Subscriber" in preferences.')
+                raise PandoraError("Pandora Error", code,
+                    submsg="A Pandora One account is required to access this feature. Uncheck 'Pandora One' in Settings.")
             elif code == API_ERROR_PARTNER_NOT_AUTHORIZED:
                 raise PandoraError("Login Error", code,
                     submsg="Invalid Pandora partner keys. A Pithos update may be required.")
@@ -167,31 +151,24 @@ class Pandora(object):
     def set_audio_quality(self, fmt):
         self.audio_quality = fmt
 
-    def set_proxy(self, proxy):
-        if proxy:
-            proxy_handler = urllib2.ProxyHandler({'http': proxy})
-            self.opener = urllib2.build_opener(proxy_handler)
-        else:
-            self.opener = urllib2.build_opener()
+    def set_url_opener(self, opener):
+        self.opener = opener
 
-    def connect(self, prefs):
-        client = DEFAULT_CLIENT
-        if prefs['pandora_one']:
-          client = CLIENTS['pandora one']
-        self.partner_username = prefs.get('partner_username', client['partner_username'])
-        self.partner_password = prefs.get('partner_password', client['partner_password'])
-        self.device_model = prefs.get('device_model', client['deviceModel'])
-        self.blowfish_encode = Blowfish(prefs.get('encrypt_key', client['encryptKey']))
-        self.blowfish_decode = Blowfish(prefs.get('decrypt_key', client['decryptKey']))
-        self.rpc_url = prefs.get('rpc_url', client['rpcUrl'])
+    def connect(self, client, user, password):
+        self.partnerId = self.userId = self.partnerAuthToken = None
+        self.userAuthToken = self.time_offset = None
 
-        self.partnerId = self.userId = self.partnerAuthToken = self.userAuthToken = self.time_offset = None
+        self.rpcUrl = client['rpcUrl']
+        self.blowfish_encode = Blowfish(client['encryptKey'])
+        self.blowfish_decode = Blowfish(client['decryptKey'])
 
-        partner = self.json_call('auth.partnerLogin', {'deviceModel': self.device_model,
-                                                       'username': self.partner_username,
-                                                       'password': self.partner_password,
-                                                       'version': PROTOCOL_VERSION},
-                                 https=True, blowfish=False)
+        partner = self.json_call('auth.partnerLogin', {
+            'deviceModel': client['deviceModel'],
+            'username': client['username'], # partner username
+            'password': client['password'], # partner password
+            'version': client['version']
+            },https=True, blowfish=False)
+
         self.partnerId = partner['partnerId']
         self.partnerAuthToken = partner['partnerAuthToken']
 
@@ -199,9 +176,7 @@ class Pandora(object):
         self.time_offset = pandora_time - time.time()
         logging.info("Time offset is %s", self.time_offset)
 
-        user = self.json_call('auth.userLogin', {'username': prefs['username'],
-                                                 'password': prefs['password'], 'loginType': 'user'},
-                              https=True)
+        user = self.json_call('auth.userLogin', {'username': user, 'password': password, 'loginType': 'user'}, https=True)
         self.userId = user['userId']
         self.userAuthToken = user['userAuthToken']
 
@@ -275,8 +250,7 @@ class Station(object):
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.json_call('station.getPlaylist',
-                                          {'stationToken': self.idToken}, https=True)
+        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken}, https=True)
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
@@ -304,11 +278,7 @@ class Song(object):
 
         self.album = d['albumName']
         self.artist = d['artistName']
-        if self.pandora.audio_quality in d['audioUrlMap']:
-          self.audioUrl = d['audioUrlMap'][self.pandora.audio_quality]['audioUrl']
-        else:
-          # Just pick the first one
-          self.audioUrl = d['audioUrlMap'].values()[0]['audioUrl']
+        self.audioUrlMap = d['audioUrlMap']
         self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
         self.stationId = d['stationId']
@@ -322,6 +292,18 @@ class Song(object):
         self.finished = False
         self.playlist_time = time.time()
         self.feedbackId = None
+
+    @property
+    def audioUrl(self):
+        quality = self.pandora.audio_quality
+        try:
+            q = self.audioUrlMap[quality]
+            logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
+            return q['audioUrl']
+        except KeyError:
+            logging.warn("Unable to use audio format %s. Using %s",
+                           quality, self.audioUrlMap.keys()[0])
+            return self.audioUrlMap.values()[0]['audioUrl']
 
     @property
     def station(self):
@@ -360,6 +342,7 @@ class Song(object):
 
     def is_still_valid(self):
         return (time.time() - self.playlist_time) < PLAYLIST_VALIDITY_TIME
+
 
 class SearchResult(object):
     def __init__(self, resultType, d):

@@ -1,16 +1,16 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
 ### BEGIN LICENSE
 # Copyright (C) 2010-2012 Kevin Mehall <km@kevinmehall.net>
-#This program is free software: you can redistribute it and/or modify it 
-#under the terms of the GNU General Public License version 3, as published 
+#This program is free software: you can redistribute it and/or modify it
+#under the terms of the GNU General Public License version 3, as published
 #by the Free Software Foundation.
 #
-#This program is distributed in the hope that it will be useful, but 
-#WITHOUT ANY WARRANTY; without even the implied warranties of 
-#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR 
+#This program is distributed in the hope that it will be useful, but
+#WITHOUT ANY WARRANTY; without even the implied warranties of
+#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
 #PURPOSE.  See the GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License along 
+#You should have received a copy of the GNU General Public License along
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
@@ -21,18 +21,10 @@ __license__ = 'GPL-3'
 
 VERSION = '0.3.17'
 
-
 import os
 
 class project_path_not_found(Exception):
     pass
-
-valid_audio_formats = [
-    ('High', 'highQuality'),
-    ('Medium', 'mediumQuality'),
-    ('Low', 'lowQuality'),
-]
-default_audio_quality = 'highQuality'
 
 def get_data_file(*path_segments):
     """Get the full path to a data file.

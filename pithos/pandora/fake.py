@@ -20,7 +20,7 @@ import logging
 
 class FakePandora(Pandora):
     def __init__(self):
-        super(FakePandora, self).__init__()
+        super(FakePandora, self).__init__(prefs)
         self.counter = 0
         self.show_fail_window()
         logging.info("Using test mode")

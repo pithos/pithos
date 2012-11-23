@@ -27,8 +27,8 @@ __license__ = "gpl"
 __email__ = 'amr.hassan@gmail.com'
 
 import hashlib
-import httplib
 import urllib
+import urllib2
 import threading
 from xml.dom import minidom
 import xml.dom
@@ -286,8 +286,6 @@ class Network(object):
         self.urls = urls
         
         self.cache_backend = None
-        self.proxy_enabled = False
-        self.proxy = None
         self.last_call_time = 0
         
         #generate a session_key if necessary
@@ -441,27 +439,6 @@ class Network(object):
         
         return seq
 
-    def enable_proxy(self, host, port):
-        """Enable a default web proxy"""
-        
-        self.proxy = [host, _number(port)]
-        self.proxy_enabled = True
-
-    def disable_proxy(self):
-        """Disable using the web proxy"""
-        
-        self.proxy_enabled = False
-
-    def is_proxy_enabled(self):
-        """Returns True if a web proxy is enabled."""
-        
-        return self.proxy_enabled
-
-    def _get_proxy(self):
-        """Returns proxy details."""
-        
-        return self.proxy
-        
     def enable_caching(self, file_path = None):
         """Enables caching request-wide for all cachable calls.
         In choosing the backend used for caching, it will try _SqliteCacheBackend first if
@@ -790,15 +767,9 @@ class _Request(object):
         
         (HOST_NAME, HOST_SUBDIR) = self.network.ws_server
         
-        if self.network.is_proxy_enabled():
-            conn = httplib.HTTPConnection(host = self._get_proxy()[0], port = self._get_proxy()[1])
-            conn.request(method='POST', url="http://" + HOST_NAME + HOST_SUBDIR, 
-                body=data, headers=headers)
-        else:
-            conn = httplib.HTTPConnection(host=HOST_NAME)
-            conn.request(method='POST', url=HOST_SUBDIR, body=data, headers=headers)
-        
-        response = conn.getresponse()
+        req = urllib2.Request("http://" + HOST_NAME + HOST_SUBDIR, data, headers)
+        response = urllib2.urlopen(req)
+
         response_text = _unicode(response.read())
         self._check_response_for_errors(response_text)
         return response_text
@@ -3524,14 +3495,12 @@ class _ScrobblerRequest(object):
     def __init__(self, url, params, network, type="POST"):
         self.params = params
         self.type = type
-        (self.hostname, self.subdir) = urllib.splithost(url[len("http:"):])
+        self.url = url
         self.network = network
     
     def execute(self):
         """Returns a string response of this request."""
         
-        connection = httplib.HTTPConnection(self.hostname)
-
         data = []
         for name in self.params.keys():
             value = urllib.quote_plus(self.params[name])
@@ -3542,14 +3511,13 @@ class _ScrobblerRequest(object):
             "Content-type": "application/x-www-form-urlencoded",
             "Accept-Charset": "utf-8",
             "User-Agent": "pylast" + "/" + __version__,
-            "HOST": self.hostname
             }
         
         if self.type == "GET":
-            connection.request("GET", self.subdir + "?" + data, headers = headers)
+            req = urllib2.Request(self.url + "?" + data, headers=headers)
         else:
-            connection.request("POST", self.subdir, data, headers)
-        response = connection.getresponse().read()
+            req = urllib2.Request(self.url, data, headers)
+        response = urllib2.urlopen(req).read()
         
         self._check_response_for_errors(response)
         

@@ -468,4 +468,3 @@ class Blowfish:
 	def key_bits (self):
 		return 56 * 8
 
-	
