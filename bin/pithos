@@ -856,8 +856,9 @@ class PithosWindow(gtk.Window):
         self.present()
 
     def on_kb_playpause(self, widget=None, data=None):
-        if data.keyval == 32:
+        if not isinstance(widget.get_focus(), gtk.Button) and data.keyval == 32:
             self.playpause()
+            return True
 
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
