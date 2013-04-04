@@ -25,13 +25,13 @@ except ImportError:
     sys.exit(1)
 
 assert DistUtilsExtra.auto.__version__ >= '2.10', 'needs DistUtilsExtra.auto >= 2.10'
-import os
+import os, os.path
 
 
-def update_data_path(prefix, oldvalue=None):
+def update_data_path(build_dir, prefix, oldvalue=None):
 
     try:
-        fin = file('pithos/pithosconfig.py', 'r')
+        fin = file(os.path.join(build_dir, 'pithos/pithosconfig.py'), 'r')
         fout = file(fin.name + '.new', 'w')
 
         for line in fin:            
@@ -56,14 +56,24 @@ def update_data_path(prefix, oldvalue=None):
 
 
 class InstallAndUpdateDataDirectory(DistUtilsExtra.auto.install_auto):
+    def initialize_options(self):
+        self.build_base = None
+        self.build_lib = None
+        DistUtilsExtra.auto.install_auto.initialize_options(self)
+
+    def finalize_options(self):
+        self.set_undefined_options('build',
+            ('build_lib', 'build_lib'))
+        DistUtilsExtra.auto.install_auto.finalize_options(self)
+
     def run(self):
         if self.root or self.home:
             print "WARNING: You don't use a standard --prefix installation, take care that you eventually " \
             "need to update quickly/quicklyconfig.py file to adjust __quickly_data_directory__. You can " \
             "ignore this warning if you are packaging and uses --prefix."
-        previous_value = update_data_path(self.prefix + '/share/pithos/')
+        previous_value = update_data_path(self.build_lib, self.prefix + '/share/pithos/')
         DistUtilsExtra.auto.install_auto.run(self)
-        update_data_path(self.prefix, previous_value)
+        update_data_path(self.build_lib, self.prefix, previous_value)
 
 from distutils.cmd import Command    
 class OverrideI18NCommand(Command):
