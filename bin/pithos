@@ -884,6 +884,10 @@ def NewPithosWindow(options):
     builder.add_from_file(ui_filename)
     window = builder.get_object("pithos_window")
     window.finish_initializing(builder, options)
+    accel_group = gtk.AccelGroup()
+    accel_group.connect_group(ord('q'), gtk.gdk.CONTROL_MASK, gtk.ACCEL_LOCKED,
+        gtk.main_quit)
+    window.add_accel_group(accel_group)
     return window
 
 
