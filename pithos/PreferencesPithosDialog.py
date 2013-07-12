@@ -1,16 +1,16 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
 ### BEGIN LICENSE
 # Copyright (C) 2010 Kevin Mehall <km@kevinmehall.net>
-#This program is free software: you can redistribute it and/or modify it 
-#under the terms of the GNU General Public License version 3, as published 
+#This program is free software: you can redistribute it and/or modify it
+#under the terms of the GNU General Public License version 3, as published
 #by the Free Software Foundation.
 #
-#This program is distributed in the hope that it will be useful, but 
-#WITHOUT ANY WARRANTY; without even the implied warranties of 
-#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR 
+#This program is distributed in the hope that it will be useful, but
+#WITHOUT ANY WARRANTY; without even the implied warranties of
+#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
 #PURPOSE.  See the GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License along 
+#You should have received a copy of the GNU General Public License along
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
@@ -34,7 +34,7 @@ except ImportError:
         config_home = os.environ['XDG_CONFIG_HOME']
     else:
         config_home = os.path.join(os.path.expanduser('~'), '.config')
-    
+
 configfilename = os.path.join(config_home, 'pithos.ini')
 
 class PreferencesPithosDialog(gtk.Dialog):
@@ -43,7 +43,7 @@ class PreferencesPithosDialog(gtk.Dialog):
 
     def __init__(self):
         """__init__ - This function is typically not called directly.
-        Creation of a PreferencesPithosDialog requires redeading the associated ui
+        Creation of a PreferencesPithosDialog requires reading the associated ui
         file and parsing the ui definition extrenally,
         and then calling PreferencesPithosDialog.finish_initializing().
 
@@ -62,8 +62,8 @@ class PreferencesPithosDialog(gtk.Dialog):
         # get a reference to the builder and set up the signals
         self.builder = builder
         self.builder.connect_signals(self)
-        
-        # initialize the "Audio quality" combobox backing list
+
+        # initialize the "Audio Quality" combobox backing list
         audio_quality_combo = self.builder.get_object('prefs_audio_quality')
         fmt_store = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
         for audio_quality in valid_audio_formats:
@@ -102,12 +102,12 @@ class PreferencesPithosDialog(gtk.Dialog):
             "pandora_one": False,
             "force_client": None,
         }
-        
+
         try:
             f = open(configfilename)
         except IOError:
             f = []
-        
+
         for line in f:
             sep = line.find('=')
             key = line[:sep]
@@ -116,7 +116,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             elif val == 'False': val=False
             elif val == 'True': val=True
             self.__preferences[key]=val
-    
+
         if 'audio_format' in self.__preferences:
             # Pithos <= 0.3.17, replaced by audio_quality
             del self.__preferences['audio_format']
@@ -125,19 +125,19 @@ class PreferencesPithosDialog(gtk.Dialog):
 
     def fix_perms(self):
         """Apply new file permission rules, fixing CVE-2011-1500.
-        If the file is 0644 and if "unsafe_permissions" is not True, 
+        If the file is 0644 and if "unsafe_permissions" is not True,
            chmod 0600
-        If the file is world-readable (but not exactly 0644) and if 
+        If the file is world-readable (but not exactly 0644) and if
         "unsafe_permissions" is not True:
            chmod o-rw
         """
         def complain_unsafe():
             # Display this message iff permissions are unsafe, which is why
-            #   we don't just check once and be done with it. 
+            #   we don't just check once and be done with it.
             logging.warning("Ignoring potentially unsafe permissions due to user override.")
-        
+
         changed = False
-        
+
         if os.path.exists(configfilename):
             # We've already written the file, get current permissions
             config_perms = stat.S_IMODE(os.stat(configfilename).st_mode)
@@ -148,11 +148,11 @@ class PreferencesPithosDialog(gtk.Dialog):
                 logging.warning("Removing world- and group-readable permissions, to fix CVE-2011-1500 in older software versions. To force, set unsafe_permissions to True in pithos.ini.")
                 os.chmod(configfilename, stat.S_IRUSR | stat.S_IWUSR)
                 changed = True
-                
+
             elif config_perms & stat.S_IROTH:
                 if self.__preferences["unsafe_permissions"]:
                     return complain_unsafe()
-                # File is o+r, 
+                # File is o+r,
                 logging.warning("Removing world-readable permissions, configuration should not be globally readable. To force, set unsafe_permissions to True in pithos.ini.")
                 config_perms ^= stat.S_IROTH
                 os.chmod(configfilename, config_perms)
@@ -165,10 +165,10 @@ class PreferencesPithosDialog(gtk.Dialog):
                 config_perms ^= stat.S_IWOTH
                 os.chmod(configfilename, config_perms)
                 changed = True
-        
+
         return changed
 
-    def save(self):         
+    def save(self):
         existed = os.path.exists(configfilename)
         f = open(configfilename, 'w')
 
@@ -179,10 +179,11 @@ class PreferencesPithosDialog(gtk.Dialog):
         for key in self.__preferences:
             f.write('%s=%s\n'%(key, self.__preferences[key]))
         f.close()
-        
+
     def setup_fields(self):
         self.builder.get_object('prefs_username').set_text(self.__preferences["username"])
         self.builder.get_object('prefs_password').set_text(self.__preferences["password"])
+        self.builder.get_object('checkbutton_pandora_one').set_active(self.__preferences["pandora_one"])
         self.builder.get_object('prefs_proxy').set_text(self.__preferences["proxy"])
         self.builder.get_object('prefs_control_proxy').set_text(self.__preferences["control_proxy"])
 
@@ -195,16 +196,17 @@ class PreferencesPithosDialog(gtk.Dialog):
         self.builder.get_object('checkbutton_notify').set_active(self.__preferences["notify"])
         self.builder.get_object('checkbutton_screensaverpause').set_active(self.__preferences["enable_screensaverpause"])
         self.builder.get_object('checkbutton_icon').set_active(self.__preferences["show_icon"])
-        
+
         self.lastfm_auth = LastFmAuth(self.__preferences, "lastfm_key", self.builder.get_object('lastfm_btn'))
-        
+
     def ok(self, widget, data=None):
         """ok - The user has elected to save the changes.
         Called before the dialog returns gtk.RESONSE_OK from run().
         """
-        
+
         self.__preferences["username"] = self.builder.get_object('prefs_username').get_text()
         self.__preferences["password"] = self.builder.get_object('prefs_password').get_text()
+        self.__preferences["pandora_one"] = self.builder.get_object('checkbutton_pandora_one').get_active()
         self.__preferences["proxy"] = self.builder.get_object('prefs_proxy').get_text()
         self.__preferences["control_proxy"] = self.builder.get_object('prefs_control_proxy').get_text()
         self.__preferences["notify"] = self.builder.get_object('checkbutton_notify').get_active()
@@ -225,7 +227,7 @@ class PreferencesPithosDialog(gtk.Dialog):
 
         self.setup_fields() # restore fields to previous values
         pass
-            
+
 
 def NewPreferencesPithosDialog():
     """NewPreferencesPithosDialog - returns a fully instantiated
