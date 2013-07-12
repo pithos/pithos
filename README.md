@@ -1,6 +1,10 @@
 Pithos
 ------
 
+*I'm no longer able to dedicate enough time to Pithos to properly maintain the
+project. If you're interested in working on it, let me know -- km@kevinmehall.net*
+
+
 Pithos is a native Pandora Radio client for Linux. It's much more lightweight
 than the Pandora.com web client, and integrates with desktop features such as media
 keys, notifications, and the sound menu.
