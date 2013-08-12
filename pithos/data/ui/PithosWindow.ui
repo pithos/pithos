@@ -10,7 +10,6 @@
     <property name="page_size">10</property>
   </object>
   <object class="GtkMessageDialog" id="api_update_dialog">
-    <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="type_hint">normal</property>
     <property name="skip_taskbar_hint">True</property>
@@ -21,19 +20,16 @@
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox4">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="dialog-action_area4">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="button4">
                 <property name="label" translatable="yes">Get Help Online</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
               </object>
               <packing>
@@ -46,7 +42,6 @@
               <object class="GtkButton" id="button5">
                 <property name="label">gtk-quit</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
               </object>
@@ -72,7 +67,6 @@
     </action-widgets>
   </object>
   <object class="GtkMessageDialog" id="error_dialog">
-    <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="type_hint">normal</property>
     <property name="skip_taskbar_hint">True</property>
@@ -82,18 +76,15 @@
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="dialog-action_area1">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="button1">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
               </object>
@@ -107,7 +98,6 @@
               <object class="GtkButton" id="button2">
                 <property name="label" translatable="yes">Retry</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="image">image5</property>
               </object>
@@ -121,7 +111,6 @@
               <object class="GtkButton" id="button3">
                 <property name="label">gtk-preferences</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
               </object>
@@ -148,7 +137,6 @@
     </action-widgets>
   </object>
   <object class="GtkMessageDialog" id="fatal_error_dialog">
-    <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="type_hint">normal</property>
     <property name="skip_taskbar_hint">True</property>
@@ -158,18 +146,15 @@
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-quit-vbox1">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="dialog-quit-action_area1">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="button-error-quit">
                 <property name="label">gtk-quit</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
               </object>
@@ -195,11 +180,9 @@
   </object>
   <object class="GtkHBox" id="hbox_settingsmenu">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <child>
       <object class="GtkImage" id="image8">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="stock">gtk-properties</property>
         <property name="icon-size">3</property>
       </object>
@@ -212,7 +195,6 @@
     <child>
       <object class="GtkArrow" id="arrow1">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="xpad">3</property>
         <property name="arrow_type">down</property>
         <property name="shadow_type">in</property>
@@ -226,72 +208,58 @@
   </object>
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-dialog-info</property>
   </object>
   <object class="GtkImage" id="image10">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-dialog-warning</property>
   </object>
   <object class="GtkImage" id="image11">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-add</property>
   </object>
   <object class="GtkImage" id="image12">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-about</property>
   </object>
   <object class="GtkImage" id="image13">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-cancel</property>
   </object>
   <object class="GtkImage" id="image2">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-about</property>
   </object>
   <object class="GtkImage" id="image3">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-cancel</property>
   </object>
   <object class="GtkImage" id="image4">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-jump-to</property>
   </object>
   <object class="GtkImage" id="image5">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-refresh</property>
   </object>
   <object class="GtkImage" id="image6">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-preferences</property>
   </object>
   <object class="GtkImage" id="image7">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-index</property>
   </object>
   <object class="GtkImage" id="image9">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <property name="stock">gtk-help</property>
   </object>
   <object class="GtkMenu" id="menu_options">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <child>
       <object class="GtkImageMenuItem" id="menuitem_prefs">
         <property name="label" translatable="yes">Settings</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="image">image6</property>
         <property name="use_stock">False</property>
         <signal name="activate" handler="show_preferences" swapped="no"/>
@@ -301,7 +269,6 @@
       <object class="GtkImageMenuItem" id="menuitem_stations">
         <property name="label" translatable="yes">Manage Stations</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="image">image7</property>
         <property name="use_stock">False</property>
         <signal name="activate" handler="stations_dialog" swapped="no"/>
@@ -310,14 +277,12 @@
     <child>
       <object class="GtkSeparatorMenuItem" id="menuitem6">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
       </object>
     </child>
     <child>
       <object class="GtkImageMenuItem" id="menuitem1">
         <property name="label" translatable="yes">Web Site</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="image">image9</property>
         <property name="use_stock">False</property>
         <signal name="activate" handler="open_web_site" swapped="no"/>
@@ -327,7 +292,6 @@
       <object class="GtkImageMenuItem" id="menuitem5">
         <property name="label" translatable="yes">Report bug</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="image">image10</property>
         <property name="use_stock">False</property>
         <signal name="activate" handler="report_bug" swapped="no"/>
@@ -336,14 +300,12 @@
     <child>
       <object class="GtkSeparatorMenuItem" id="menuitem7">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
       </object>
     </child>
     <child>
       <object class="GtkImageMenuItem" id="menuitem_about">
         <property name="label">gtk-about</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="use_underline">True</property>
         <property name="use_stock">True</property>
         <signal name="activate" handler="about" swapped="no"/>
@@ -352,14 +314,12 @@
     <child>
       <object class="GtkSeparatorMenuItem" id="menuitem8">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
       </object>
     </child>
     <child>
       <object class="GtkImageMenuItem" id="menuitem9">
         <property name="label">gtk-quit</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="use_underline">True</property>
         <property name="use_stock">True</property>
         <signal name="activate" handler="quit" swapped="no"/>
@@ -367,20 +327,17 @@
     </child>
   </object>
   <object class="GtkMessageDialog" id="messagedialog1">
-    <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="type_hint">normal</property>
     <property name="skip_taskbar_hint">True</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox3">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="dialog-action_area3">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
               <placeholder/>
@@ -400,7 +357,6 @@
     </child>
   </object>
   <object class="PithosWindow" id="pithos_window">
-    <property name="can_focus">False</property>
     <property name="title" translatable="yes">Pithos</property>
     <property name="default_width">500</property>
     <property name="default_height">360</property>
@@ -410,17 +366,14 @@
     <child>
       <object class="GtkVBox" id="vbox1">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <child>
           <object class="GtkToolbar" id="toolbar1">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <property name="toolbar_style">icons</property>
             <property name="show_arrow">False</property>
             <child>
               <object class="GtkToolButton" id="playpause_button">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Play</property>
                 <property name="stock_id">gtk-media-play</property>
                 <signal name="clicked" handler="playpause" swapped="no"/>
@@ -432,7 +385,6 @@
             <child>
               <object class="GtkToolButton" id="nextsong">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Next Song</property>
                 <property name="use_underline">True</property>
                 <property name="stock_id">gtk-media-next</property>
@@ -445,7 +397,6 @@
             <child>
               <object class="GtkSeparatorToolItem" id="toolbutton4">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -455,11 +406,9 @@
             <child>
               <object class="GtkToolItem" id="toolbutton_volume">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <child>
                   <object class="GtkVolumeButton" id="volume">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
                     <property name="receives_default">False</property>
                     <property name="value">1</property>
                     <signal name="value-changed" handler="on_volume_change_event" swapped="no"/>
@@ -473,7 +422,6 @@
             <child>
               <object class="GtkSeparatorToolItem" id="toolbutton3">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -483,7 +431,6 @@
             <child>
               <object class="GtkToolButton" id="toolbutton_options">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Options</property>
                 <property name="use_underline">True</property>
                 <property name="icon_widget">hbox_settingsmenu</property>
@@ -496,7 +443,6 @@
             <child>
               <object class="GtkSeparatorToolItem" id="toolbutton1">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <property name="draw">False</property>
               </object>
               <packing>
@@ -506,7 +452,6 @@
             <child>
               <object class="GtkToolButton" id="toolbutton5">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <property name="has_tooltip">True</property>
                 <property name="tooltip_text" translatable="yes">Open current station's properties page on pandora.com</property>
                 <property name="label" translatable="yes">Station Properties</property>
@@ -522,11 +467,9 @@
             <child>
               <object class="GtkToolItem" id="toolbutton2">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <child>
                   <object class="GtkComboBox" id="stations">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
                     <signal name="changed" handler="stations_combo_changed" swapped="no"/>
                   </object>
                 </child>
@@ -545,13 +488,11 @@
         <child>
           <object class="GtkScrolledWindow" id="scrolledwindow1">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
             <property name="vadjustment">adjustment1</property>
             <property name="hscrollbar_policy">never</property>
             <child>
               <object class="GtkTreeView" id="songs_treeview">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
                 <property name="vadjustment">adjustment1</property>
                 <property name="headers_visible">False</property>
                 <child internal-child="selection">
@@ -569,7 +510,6 @@
         <child>
           <object class="GtkStatusbar" id="statusbar1">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <property name="spacing">2</property>
             <child>
               <placeholder/>
@@ -586,12 +526,10 @@
   </object>
   <object class="GtkMenu" id="song_menu">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
     <child>
       <object class="GtkImageMenuItem" id="menuitem_info">
         <property name="label" translatable="yes">Song _Info...</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="use_underline">True</property>
         <property name="image">image1</property>
         <property name="use_stock">False</property>
@@ -602,7 +540,6 @@
       <object class="GtkImageMenuItem" id="menuitem_love">
         <property name="label" translatable="yes">_Love Song</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="use_underline">True</property>
         <property name="image">image2</property>
         <property name="use_stock">False</property>
@@ -613,7 +550,6 @@
       <object class="GtkImageMenuItem" id="menuitem_unlove">
         <property name="label" translatable="yes">_Unlove Song</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="use_underline">True</property>
         <property name="image">image12</property>
         <property name="use_stock">False</property>
@@ -624,7 +560,6 @@
       <object class="GtkImageMenuItem" id="menuitem_ban">
         <property name="label" translatable="yes">_Ban Song</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="use_underline">True</property>
         <property name="image">image3</property>
         <property name="use_stock">False</property>
@@ -635,7 +570,6 @@
       <object class="GtkImageMenuItem" id="menuitem_unban">
         <property name="label" translatable="yes">_Unban Song</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="use_underline">True</property>
         <property name="image">image13</property>
         <property name="use_stock">False</property>
@@ -646,7 +580,6 @@
       <object class="GtkImageMenuItem" id="menuitem_tired">
         <property name="label" translatable="yes">_Tired of this song</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Don't play song for a month</property>
         <property name="use_underline">True</property>
         <property name="image">image4</property>
@@ -658,17 +591,14 @@
       <object class="GtkImageMenuItem" id="menuitem4">
         <property name="label" translatable="yes">Bookmark</property>
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
         <property name="image">image11</property>
         <property name="use_stock">False</property>
         <child type="submenu">
           <object class="GtkMenu" id="menu1">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
             <child>
               <object class="GtkMenuItem" id="menuitem2">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Song</property>
                 <signal name="activate" handler="on_menuitem_bookmark_song" swapped="no"/>
               </object>
@@ -676,7 +606,6 @@
             <child>
               <object class="GtkMenuItem" id="menuitem3">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Artist</property>
                 <signal name="activate" handler="on_menuitem_bookmark_artist" swapped="no"/>
               </object>
