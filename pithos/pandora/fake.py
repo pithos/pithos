@@ -30,16 +30,16 @@ class FakePandora(Pandora):
         return self.counter
         
     def show_fail_window(self):
-        self.window = gtk.Window()
+        self.window = Gtk.Window()
         self.window.set_size_request(200, 100)
         self.window.set_title("Pithos failure tester")
         self.window.set_opacity(0.7)
-        self.auth_check = gtk.CheckButton("Authenticated")
-        self.time_check = gtk.CheckButton("Be really slow")
-        vbox = gtk.VBox()
+        self.auth_check = Gtk.CheckButton("Authenticated")
+        self.time_check = Gtk.CheckButton("Be really slow")
+        vbox = Gtk.VBox()
         self.window.add(vbox)
-        vbox.pack_start(self.auth_check)
-        vbox.pack_start(self.time_check)
+        vbox.pack_start(self.auth_check, True, True, 0)
+        vbox.pack_start(self.time_check, True, True, 0)
         self.window.show_all()
 
     def maybe_fail(self):
@@ -126,6 +126,6 @@ class FakePandora(Pandora):
             'songName': 'Test song %i'%c,
             'songDetailUrl': 'http://kevinmehall.net/p/pithos/',
             'albumDetailUrl':'http://kevinmehall.net/p/pithos/',
-            'albumArtUrl':'http://i.imgur.com/H4Z8x.jpg',
+            'albumArtUrl':'http://stebalien.com/assets/media/res/logo-small.png',
         }
 

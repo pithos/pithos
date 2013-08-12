@@ -16,11 +16,11 @@
 
 import sys
 import os
-import gtk
+from gi.repository import Gtk
 
 from .pithosconfig import getdatapath
 
-class AboutPithosDialog(gtk.AboutDialog):
+class AboutPithosDialog(Gtk.AboutDialog):
     __gtype_name__ = "AboutPithosDialog"
 
     def __init__(self):
@@ -59,7 +59,7 @@ def NewAboutPithosDialog():
     if not os.path.exists(ui_filename):
         ui_filename = None
 
-    builder = gtk.Builder()
+    builder = Gtk.Builder()
     builder.add_from_file(ui_filename)    
     dialog = builder.get_object("about_pithos_dialog")
     dialog.finish_initializing(builder)
@@ -68,5 +68,5 @@ def NewAboutPithosDialog():
 if __name__ == "__main__":
     dialog = NewAboutPithosDialog()
     dialog.show()
-    gtk.main()
+    Gtk.main()
 
