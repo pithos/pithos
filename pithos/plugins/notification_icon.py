@@ -20,7 +20,7 @@ from pithos.plugin import PithosPlugin
 
 # Check if appindicator is available on the system
 try:
-    import appindicator
+    from gi.repository import AppIndicator3 as AppIndicator
     indicator_capable = True
 except:
     indicator_capable = False
@@ -30,9 +30,9 @@ class PithosNotificationIcon(PithosPlugin):
             
     def on_prepare(self):
         if indicator_capable:
-            self.ind = appindicator.Indicator("pithos", \
+            self.ind = AppIndicator.Indicator("pithos", \
                                   "pithos-mono", \
-                                   appindicator.CATEGORY_APPLICATION_STATUS, \
+                                   AppIndicator.CATEGORY_APPLICATION_STATUS, \
                                    get_data_file('media'))
     
     def on_enable(self):
@@ -42,9 +42,9 @@ class PithosNotificationIcon(PithosPlugin):
         self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
         
         if indicator_capable:
-            self.ind.set_status(appindicator.STATUS_ACTIVE)      
+            self.ind.set_status(AppIndicator.STATUS_ACTIVE)
         else:
-            self.statusicon = Gtk.status_icon_new_from_file(get_data_file('media', 'icon.png'))
+            self.statusicon = Gtk.StatusIcon.new_from_file(get_data_file('media', 'icon.png'))
             self.statusicon.connect('activate', self.toggle_visible)
         
         self.build_context_menu()
@@ -103,7 +103,7 @@ class PithosNotificationIcon(PithosPlugin):
 
     def song_changed(self, window, song):
         if not indicator_capable:
-            self.statusicon.set_tooltip("%s by %s"%(song.title, song.artist))
+            self.statusicon.set_tooltip_text("%s by %s"%(song.title, song.artist))
         
     def _toggle_visible(self, *args):
         if self.visible:
@@ -125,11 +125,11 @@ class PithosNotificationIcon(PithosPlugin):
        if button == 3: 
            if data: 
                data.show_all() 
-               data.popup(None, None, None, 3, time)
+               data.popup(None, None, None, None, 3, time)
     
     def on_disable(self):
         if indicator_capable:
-            self.ind.set_status(appindicator.STATUS_PASSIVE)
+            self.ind.set_status(AppIndicator.STATUS_PASSIVE)
         else:
             self.statusicon.set_visible(False)
             
