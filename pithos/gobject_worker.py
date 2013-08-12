@@ -16,9 +16,9 @@
 
 import threading
 import Queue
-import gobject
+from gi.repository import GObject
 import traceback
-gobject.threads_init()
+GObject.threads_init()
 
 class GObjectWorker():
     def __init__(self):
@@ -33,11 +33,11 @@ class GObjectWorker():
             try:
                 result = command(*args)
                 if callback:
-                    gobject.idle_add(callback, result)
+                    GObject.idle_add(callback, result)
             except Exception, e:
                 e.traceback = traceback.format_exc()
                 if errorback:
-                    gobject.idle_add(errorback, e)
+                    GObject.idle_add(errorback, e)
                 
     def send(self, command, args=(), callback=None, errorback=None):
         if errorback is None: errorback = self._default_errorback
@@ -48,7 +48,8 @@ class GObjectWorker():
         
 if __name__ == '__main__':
     worker = GObjectWorker()
-    import time, gtk
+    import time
+    from gi.repository import Gtk
     
     def test_cmd(a, b):
         print "running..."
@@ -63,6 +64,6 @@ if __name__ == '__main__':
     worker.send(test_cmd, (3,4), test_cb)
     worker.send(test_cmd, ((), ()), test_cb) #trigger exception in worker to test error handling
     
-    gtk.main()
+    Gtk.main()
         
                 

@@ -16,12 +16,13 @@
 
 import sys
 import os
-import gtk, gobject
+from gi.repository import Gtk
+from gi.repository import GObject
 import cgi
 
 from .pithosconfig import getdatapath
 
-class SearchDialog(gtk.Dialog):
+class SearchDialog(Gtk.Dialog):
     __gtype_name__ = "SearchDialog"
 
     def __init__(self):
@@ -50,7 +51,7 @@ class SearchDialog(gtk.Dialog):
         self.treeview = self.builder.get_object('treeview')
         self.okbtn = self.builder.get_object('okbtn')
         self.searchbtn = self.builder.get_object('searchbtn')
-        self.model = gtk.ListStore(gobject.TYPE_PYOBJECT, str)
+        self.model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
         self.treeview.set_model(self.model)
         
         self.worker_run = worker_run
@@ -60,14 +61,14 @@ class SearchDialog(gtk.Dialog):
 
     def ok(self, widget, data=None):
         """ok - The user has elected to save the changes.
-        Called before the dialog returns gtk.RESONSE_OK from run().
+        Called before the dialog returns Gtk.RESONSE_OK from run().
 
         """
         
 
     def cancel(self, widget, data=None):
         """cancel - The user has elected cancel changes.
-        Called before the dialog returns gtk.RESPONSE_CANCEL for run()
+        Called before the dialog returns Gtk.ResponseType.CANCEL for run()
 
         """         
         pass
@@ -94,7 +95,7 @@ class SearchDialog(gtk.Dialog):
         
     def get_selected(self):
         sel = self.treeview.get_selection().get_selected()
-        if sel:
+        if sel[1]:
             return self.treeview.get_model().get_value(sel[1], 0)
             
     def cursor_changed(self, *ignore):
@@ -114,7 +115,7 @@ def NewSearchDialog(worker_run):
     if not os.path.exists(ui_filename):
         ui_filename = None
 
-    builder = gtk.Builder()
+    builder = Gtk.Builder()
     builder.add_from_file(ui_filename)    
     dialog = builder.get_object("search_dialog")
     dialog.finish_initializing(builder, worker_run)
@@ -123,5 +124,5 @@ def NewSearchDialog(worker_run):
 if __name__ == "__main__":
     dialog = NewSearchDialog()
     dialog.show()
-    gtk.main()
+    Gtk.main()
 
