@@ -138,6 +138,7 @@
               <object class="GtkEntry" id="prefs_username">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="input_purpose">email</property>
               </object>
               <packing>
                 <property name="left_attach">2</property>
@@ -165,6 +166,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="visibility">False</property>
+                <property name="input_purpose">password</property>
               </object>
               <packing>
                 <property name="left_attach">2</property>
@@ -265,6 +267,7 @@
               <object class="GtkEntry" id="prefs_proxy">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="input_purpose">url</property>
               </object>
               <packing>
                 <property name="left_attach">2</property>
@@ -292,6 +295,7 @@
               <object class="GtkEntry" id="prefs_control_proxy">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="input_purpose">url</property>
               </object>
               <packing>
                 <property name="left_attach">2</property>
