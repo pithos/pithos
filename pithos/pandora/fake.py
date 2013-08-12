@@ -15,7 +15,7 @@
 ### END LICENSE
 
 from pithos.pandora.pandora import *
-import gtk
+from gi.repository import Gtk
 import logging
 
 class FakePandora(Pandora):
@@ -94,7 +94,7 @@ class FakePandora(Pandora):
         else:
             logging.error("Invalid method %s" % method)
 
-    def connect(self, user, password):
+    def connect(self, client, user, password):
         self.set_authenticated()
         self.get_stations()
 
@@ -107,8 +107,18 @@ class FakePandora(Pandora):
         c = self.count()
         return {
             'albumName':"AlbumName",
+            'audioUrlMap': {
+                'highQuality': {
+                    'audioUrl': 'http://kevinmehall.net/p/pithos/testfile.aac?val='+'0'*48
+                },
+                'mediumQuality': {
+                    'audioUrl': 'http://kevinmehall.net/p/pithos/testfile.aac?val='+'0'*48
+                },
+                'lowQuality': {
+                    'audioUrl': 'http://kevinmehall.net/p/pithos/testfile.aac?val='+'0'*48
+                },
+            },
             'artistName':"ArtistName",
-            'additionalAudioUrl':'http://kevinmehall.net/p/pithos/testfile.aac?val='+'0'*48,
             'trackGain':0,
             'trackToken':'5908540384',
             'songRating': 1 if c%3 == 0 else 0,
