@@ -14,7 +14,11 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
+import pkg_resources
 from pithos.pandora.pandora import *
+
+
+pkg_resources.declare_namespace(__name__)
 
 def make_pandora(testing=False):
     if testing:

@@ -22,9 +22,9 @@ import logging
 import gtk
 import gobject
 
-from pithos.pithosconfig import *
-from pithos.pandora.data import *
-from pithos.plugins.scrobble import LastFmAuth
+from .pithosconfig import *
+from .pandora.data import *
+from .plugins.scrobble import LastFmAuth
 
 try:
     from xdg.BaseDirectory import xdg_config_home

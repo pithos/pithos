@@ -20,8 +20,8 @@ import gtk
 import logging
 import webbrowser
 
-from pithos.pithosconfig import getdatapath
-from pithos import SearchDialog
+from .pithosconfig import getdatapath
+from . import SearchDialog
 
 class StationsDialog(gtk.Dialog):
     __gtype_name__ = "StationsDialog"

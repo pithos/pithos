@@ -50,6 +50,7 @@ def getdatapath():
         pathname = os.path.dirname(__file__) + '/' + __pithos_data_directory__
 
     abs_data_path = os.path.abspath(pathname)
+    print 'path=%s' % abs_data_path
     if os.path.exists(abs_data_path):
         return abs_data_path
     else:
