@@ -34,19 +34,6 @@ import os
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-data_files = [
-    ('share/icons/hicolor/scalable/apps', [
-         'data/icons/scalable/apps/pithos-mono.svg',
-         'data/icons/scalable/apps/pithos.svg'
-     ]),
-    ('share/applications', ['pithos.desktop'])
-]
-for data_dir in ['data/ui', 'data/media']:
-    data_files.append((
-        data_dir,
-        ['%s/%s' % (data_dir, f) for f in os.listdir(data_dir)]
-    ))
-
 setup(
     name='pithos',
     version='0.3',
@@ -64,18 +51,23 @@ setup(
         'License :: OSI Approved :: GPL License',
         'Programming Language :: Python'
     ],
-    data_files=data_files,
+    data_files=[
+        ('share/icons/hicolor/scalable/apps', [
+             'data/icons/scalable/apps/pithos-mono.svg',
+             'data/icons/scalable/apps/pithos.svg'
+         ]),
+        ('share/applications', ['pithos.desktop'])
+    ],
     package_data={
         'pithos': [
             'data/ui/*.ui',
             'data/ui/*.xml',
             'data/media/*.png',
-            'data/media/*.svg',
-            'data/icons/scalable/apps/*.svg'
+            'data/media/*.svg'
         ]
     },
     packages=find_packages(),
-    namespace_packages=['pithos', 'pithos.plugins', 'pithos.pandora'],
+    include_package_data=True,
     entry_points={
         'gui_scripts': ['pithos = pithos.pithos:main']
     }

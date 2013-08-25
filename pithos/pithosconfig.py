@@ -15,8 +15,8 @@
 ### END LICENSE
 
 # where your project will head for your data (for instance, images and ui files)
-# by default, this is ../data, relative your trunk layout
-__pithos_data_directory__ = '../data/'
+# by default, this is data, relative your trunk layout
+__pithos_data_directory__ = 'data/'
 __license__ = 'GPL-3'
 
 VERSION = '0.3.17'
@@ -50,7 +50,6 @@ def getdatapath():
         pathname = os.path.dirname(__file__) + '/' + __pithos_data_directory__
 
     abs_data_path = os.path.abspath(pathname)
-    print 'path=%s' % abs_data_path
     if os.path.exists(abs_data_path):
         return abs_data_path
     else:
