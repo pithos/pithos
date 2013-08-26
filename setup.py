@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ### BEGIN LICENSE
@@ -18,64 +19,22 @@
 ###################### DO NOT TOUCH THIS (HEAD TO THE SECOND PART) ######################
 
 try:
-    import DistUtilsExtra.auto
+    from setuptools import setup, find_packages
 except ImportError:
-    import sys
-    print >> sys.stderr, 'To build pithos you need https://launchpad.net/python-distutils-extra'
-    sys.exit(1)
+    import ez_setup
+    ez_setup.use_setuptools()
+    from setuptools import setup, find_packages
 
-assert DistUtilsExtra.auto.__version__ >= '2.10', 'needs DistUtilsExtra.auto >= 2.10'
 import os
 
+# Utility function to read the README file.
+# Used for the long_description.  It's nice, because now 1) we have a top level
+# README file and 2) it's easier to type in the README file than to put a raw
+# string in below ...
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-def update_data_path(prefix, oldvalue=None):
-
-    try:
-        fin = file('pithos/pithosconfig.py', 'r')
-        fout = file(fin.name + '.new', 'w')
-
-        for line in fin:            
-            fields = line.split(' = ') # Separate variable from value
-            if fields[0] == '__pithos_data_directory__':
-                # update to prefix, store oldvalue
-                if not oldvalue:
-                    oldvalue = fields[1]
-                    line = "%s = '%s'\n" % (fields[0], prefix)
-                else: # restore oldvalue
-                    line = "%s = %s" % (fields[0], oldvalue)
-            fout.write(line)
-
-        fout.flush()
-        fout.close()
-        fin.close()
-        os.rename(fout.name, fin.name)
-    except (OSError, IOError), e:
-        print ("ERROR: Can't find pithos/pithosconfig.py")
-        sys.exit(1)
-    return oldvalue
-
-
-class InstallAndUpdateDataDirectory(DistUtilsExtra.auto.install_auto):
-    def run(self):
-        if self.root or self.home:
-            print "WARNING: You don't use a standard --prefix installation, take care that you eventually " \
-            "need to update quickly/quicklyconfig.py file to adjust __quickly_data_directory__. You can " \
-            "ignore this warning if you are packaging and uses --prefix."
-        previous_value = update_data_path(self.prefix + '/share/pithos/')
-        DistUtilsExtra.auto.install_auto.run(self)
-        update_data_path(self.prefix, previous_value)
-
-from distutils.cmd import Command    
-class OverrideI18NCommand(Command):
-	def initialize_options(self): pass
-	def finalize_options(self): pass
-	def run(self):
-		self.distribution.data_files.append(('share/applications', ['pithos.desktop']))
-
-from DistUtilsExtra.command.build_extra import build_extra
-from DistUtilsExtra.command.build_icons import build_icons
-
-DistUtilsExtra.auto.setup(
+setup(
     name='pithos',
     version='0.3',
     ext_modules=[],
@@ -83,8 +42,33 @@ DistUtilsExtra.auto.setup(
     author='Kevin Mehall',
     author_email='km@kevinmehall.net',
     description='Pandora.com client for the GNOME desktop',
-    #long_description='Here a longer description',
+    long_description=read('README.md'),
     url='https://launchpad.net/pithos',
-    cmdclass={'install': InstallAndUpdateDataDirectory, 'build_icons':build_icons, 'build':build_extra, 'build_i18n':OverrideI18NCommand}
-    )
-
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: End Users/Desktop',
+        'Topic :: Media',
+        'License :: OSI Approved :: GPL License',
+        'Programming Language :: Python'
+    ],
+    data_files=[
+        ('share/icons/hicolor/scalable/apps', [
+             'data/icons/scalable/apps/pithos-mono.svg',
+             'data/icons/scalable/apps/pithos.svg'
+         ]),
+        ('share/applications', ['pithos.desktop'])
+    ],
+    package_data={
+        'pithos': [
+            'data/ui/*.ui',
+            'data/ui/*.xml',
+            'data/media/*.png',
+            'data/media/*.svg'
+        ]
+    },
+    packages=find_packages(),
+    include_package_data=True,
+    entry_points={
+        'gui_scripts': ['pithos = pithos.pithos:main']
+    }
+)

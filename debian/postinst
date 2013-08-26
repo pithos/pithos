@@ -1,5 +1,0 @@
-#!/bin/sh
-
-#DEBHELPER#
-
-xdg-icon-resource install --theme hicolor --novendor --size 128 /usr/share/pithos/media/pithos-mono.png pithos-mono
