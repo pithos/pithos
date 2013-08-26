@@ -50,15 +50,15 @@ else:
     fullPath = os.getcwd()
 sys.path.insert(0, os.path.dirname(fullPath))
 
-from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
-from pithos.util import *
-from pithos.pithosconfig import get_data_file, getdatapath, VERSION
-from pithos.gobject_worker import GObjectWorker
-from pithos.plugin import load_plugins
-from pithos.dbus_service import PithosDBusProxy, try_to_raise
-from pithos.sound_menu import PithosSoundMenu
-from pithos.pandora import *
-from pithos.pandora.data import *
+from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
+from .util import *
+from .pithosconfig import get_data_file, getdatapath, VERSION
+from .gobject_worker import GObjectWorker
+from .plugin import load_plugins
+from .dbus_service import PithosDBusProxy, try_to_raise
+from .sound_menu import PithosSoundMenu
+from .pandora import *
+from .pandora.data import *
 
 
 def openBrowser(url):
