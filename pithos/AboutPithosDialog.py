@@ -18,7 +18,7 @@ import sys
 import os
 import gtk
 
-from pithos.pithosconfig import getdatapath
+from .pithosconfig import getdatapath
 
 class AboutPithosDialog(gtk.AboutDialog):
     __gtype_name__ = "AboutPithosDialog"

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
 ### BEGIN LICENSE
 # Copyright (C) 2010-2012 Kevin Mehall <km@kevinmehall.net>
@@ -50,15 +50,15 @@ else:
     fullPath = os.getcwd()
 sys.path.insert(0, os.path.dirname(fullPath))
 
-from pithos import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
-from pithos.util import *
-from pithos.pithosconfig import get_data_file, getdatapath, VERSION
-from pithos.gobject_worker import GObjectWorker
-from pithos.plugin import load_plugins
-from pithos.dbus_service import PithosDBusProxy, try_to_raise
-from pithos.sound_menu import PithosSoundMenu
-from pithos.pandora import *
-from pithos.pandora.data import *
+from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
+from .util import *
+from .pithosconfig import get_data_file, getdatapath, VERSION
+from .gobject_worker import GObjectWorker
+from .plugin import load_plugins
+from .dbus_service import PithosDBusProxy, try_to_raise
+from .sound_menu import PithosSoundMenu
+from .pandora import *
+from .pandora.data import *
 
 
 def openBrowser(url):
@@ -889,7 +889,7 @@ def NewPithosWindow(options):
     return window
 
 
-if __name__ == "__main__":
+def main():
     import logging, optparse
     parser = optparse.OptionParser(version="Pithos %s"%(VERSION))
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Show debug messages")
@@ -911,4 +911,8 @@ if __name__ == "__main__":
         window = NewPithosWindow(options)
         window.show()
         gtk.main()
+
+
+if __name__ == '__main__':
+    main()
 

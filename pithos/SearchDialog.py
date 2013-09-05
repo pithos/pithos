@@ -19,7 +19,7 @@ import os
 import gtk, gobject
 import cgi
 
-from pithos.pithosconfig import getdatapath
+from .pithosconfig import getdatapath
 
 class SearchDialog(gtk.Dialog):
     __gtype_name__ = "SearchDialog"
