@@ -126,6 +126,6 @@ class FakePandora(Pandora):
             'songName': 'Test song %i'%c,
             'songDetailUrl': 'http://kevinmehall.net/p/pithos/',
             'albumDetailUrl':'http://kevinmehall.net/p/pithos/',
-            'albumArtUrl':'http://stebalien.com/assets/media/res/logo-small.png',
+            'albumArtUrl':'http://kevinmehall.net/p/pithos/logo.png',
         }
 
