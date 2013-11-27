@@ -103,7 +103,7 @@ class PithosNotificationIcon(PithosPlugin):
 
     def song_changed(self, window, song):
         if not indicator_capable:
-            self.statusicon.set_tooltip("%s by %s"%(song.title, song.artist))
+            self.statusicon.set_tooltip_text("%s by %s"%(song.title, song.artist))
         
     def _toggle_visible(self, *args):
         if self.visible:
@@ -125,7 +125,7 @@ class PithosNotificationIcon(PithosPlugin):
        if button == 3: 
            if data: 
                data.show_all() 
-               data.popup(None, None, None, 3, time)
+               data.popup(None, None, None, None, 3, time)
     
     def on_disable(self):
         if indicator_capable:
