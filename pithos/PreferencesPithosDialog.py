@@ -21,20 +21,13 @@ import logging
 
 from gi.repository import Gtk
 from gi.repository import GObject
+from gi.repository import GLib
 
 from .pithosconfig import *
 from .pandora.data import *
 from .plugins.scrobble import LastFmAuth
 
-try:
-    from xdg.BaseDirectory import xdg_config_home
-    config_home = xdg_config_home
-except ImportError:
-    if 'XDG_CONFIG_HOME' in os.environ:
-        config_home = os.environ['XDG_CONFIG_HOME']
-    else:
-        config_home = os.path.join(os.path.expanduser('~'), '.config')
-
+config_home = GLib.get_user_config_dir()
 configfilename = os.path.join(config_home, 'pithos.ini')
 
 class PreferencesPithosDialog(Gtk.Dialog):
