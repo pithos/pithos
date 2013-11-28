@@ -30,9 +30,9 @@ class PithosNotificationIcon(PithosPlugin):
             
     def on_prepare(self):
         if indicator_capable:
-            self.ind = AppIndicator.Indicator("pithos", \
+            self.ind = AppIndicator.Indicator.new_with_path("pithos", \
                                   "pithos-mono", \
-                                   AppIndicator.CATEGORY_APPLICATION_STATUS, \
+                                   AppIndicator.IndicatorCategory.APPLICATION_STATUS, \
                                    get_data_file('media'))
     
     def on_enable(self):
@@ -42,7 +42,7 @@ class PithosNotificationIcon(PithosPlugin):
         self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
         
         if indicator_capable:
-            self.ind.set_status(AppIndicator.STATUS_ACTIVE)
+            self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         else:
             self.statusicon = Gtk.StatusIcon.new_from_file(get_data_file('media', 'icon.png'))
             self.statusicon.connect('activate', self.toggle_visible)
@@ -129,7 +129,7 @@ class PithosNotificationIcon(PithosPlugin):
     
     def on_disable(self):
         if indicator_capable:
-            self.ind.set_status(AppIndicator.STATUS_PASSIVE)
+            self.ind.set_status(AppIndicator.IndicatorStatus.PASSIVE)
         else:
             self.statusicon.set_visible(False)
             
