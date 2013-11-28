@@ -15,13 +15,12 @@ Architecture: all
 XB-Python-Version: ${python:Versions}
 Depends: ${misc:Depends},
  ${python:Depends},
- python-xdg,
- python-gobject,
- python-gst0.10,
- python-notify,
- python-gtk2,
+ python-gi,
  python-dbus,
  python-pylast,
- gstreamer0.10-plugins-good,
- gstreamer0.10-plugins-bad
+ gstreamer1.0-plugins-good,
+ gstreamer1.0-plugins-bad,
+ libappindicator3,
+ libnotify4,
+ libkeybinder-3.0
 Description: Pandora.com client for the GNOME desktop
