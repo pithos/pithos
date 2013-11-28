@@ -1,181 +1,25 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <requires lib="gtk+" version="2.16"/>
+  <!-- interface-requires gtk+ 3.0 -->
   <!-- interface-requires stations_dialog 1.0 -->
-  <!-- interface-naming-policy project-wide -->
-  <object class="StationsDialog" id="stations_dialog">
-    <property name="width_request">480</property>
-    <property name="height_request">420</property>
-    <property name="border_width">1</property>
-    <property name="title" translatable="yes">Manage Stations</property>
-    <property name="icon_name">pithos</property>
-    <property name="type_hint">normal</property>
-    <signal name="delete_event" handler="on_close"/>
-    <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox1">
-        <property name="visible">True</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow1">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="hscrollbar_policy">automatic</property>
-            <property name="vscrollbar_policy">automatic</property>
-            <child>
-              <object class="GtkTreeView" id="treeview">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area1">
-            <property name="visible">True</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="add_station">
-                <property name="label" translatable="yes">Add Station</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="add_station"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-                <property name="secondary">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="add_genre_station">
-                <property name="label" translatable="yes">Genre Stations</property>
-                <property name="sensitive">False</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="no_show_all">True</property>
-                <signal name="clicked" handler="add_genre_station"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-                <property name="secondary">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="refresh_stations">
-                <property name="label" translatable="yes">Refresh Stations</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="refresh_stations"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">2</property>
-                <property name="secondary">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="close">
-                <property name="label">gtk-close</property>
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-                <signal name="clicked" handler="on_close"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">3</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <action-widgets>
-      <action-widget response="0">add_station</action-widget>
-      <action-widget response="0">add_genre_station</action-widget>
-      <action-widget response="0">refresh_stations</action-widget>
-      <action-widget response="-5">close</action-widget>
-    </action-widgets>
-  </object>
-  <object class="GtkMenu" id="station_menu">
-    <property name="visible">True</property>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem_listen">
-        <property name="label">Listen Now</property>
-        <property name="visible">True</property>
-        <property name="use_underline">True</property>
-        <property name="use_stock">True</property>
-        <signal name="activate" handler="on_menuitem_listen"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem_info">
-        <property name="label">gtk-info</property>
-        <property name="visible">True</property>
-        <property name="use_underline">True</property>
-        <property name="use_stock">True</property>
-        <signal name="activate" handler="on_menuitem_info"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem_rename">
-        <property name="label" translatable="yes">Rename</property>
-        <property name="visible">True</property>
-        <property name="image">image1</property>
-        <property name="use_stock">False</property>
-        <signal name="activate" handler="on_menuitem_rename"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem_delete">
-        <property name="label">gtk-delete</property>
-        <property name="visible">True</property>
-        <property name="use_underline">True</property>
-        <property name="use_stock">True</property>
-        <signal name="activate" handler="on_menuitem_delete"/>
-      </object>
-    </child>
-  </object>
-  <object class="GtkImage" id="image1">
-    <property name="visible">True</property>
-    <property name="stock">gtk-edit</property>
-  </object>
   <object class="GtkMessageDialog" id="delete_confirm_dialog">
     <property name="border_width">5</property>
     <property name="type_hint">normal</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="message_type">warning</property>
     <child internal-child="vbox">
-      <object class="GtkVBox" id="dialog-vbox3">
+      <object class="GtkBox" id="dialog-vbox3">
         <property name="visible">True</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
-          <object class="GtkHButtonBox" id="dialog-action_area3">
+          <object class="GtkButtonBox" id="dialog-action_area3">
             <property name="visible">True</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="button2">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
               </object>
@@ -189,7 +33,6 @@
               <object class="GtkButton" id="button1">
                 <property name="label">gtk-delete</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
               </object>
@@ -202,6 +45,7 @@
           </object>
           <packing>
             <property name="expand">False</property>
+            <property name="fill">True</property>
             <property name="pack_type">end</property>
             <property name="position">0</property>
           </packing>
@@ -211,6 +55,158 @@
     <action-widgets>
       <action-widget response="0">button2</action-widget>
       <action-widget response="1">button1</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="stock">gtk-edit</property>
+  </object>
+  <object class="GtkMenu" id="station_menu">
+    <property name="visible">True</property>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_listen">
+        <property name="label">Listen Now</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
+        <signal name="activate" handler="on_menuitem_listen" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_info">
+        <property name="label">gtk-info</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
+        <signal name="activate" handler="on_menuitem_info" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_rename">
+        <property name="label" translatable="yes">Rename</property>
+        <property name="visible">True</property>
+        <property name="image">image1</property>
+        <property name="use_stock">False</property>
+        <signal name="activate" handler="on_menuitem_rename" swapped="no"/>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImageMenuItem" id="menuitem_delete">
+        <property name="label">gtk-delete</property>
+        <property name="visible">True</property>
+        <property name="use_underline">True</property>
+        <property name="use_stock">True</property>
+        <signal name="activate" handler="on_menuitem_delete" swapped="no"/>
+      </object>
+    </child>
+  </object>
+  <object class="StationsDialog" id="stations_dialog">
+    <property name="width_request">480</property>
+    <property name="height_request">420</property>
+    <property name="border_width">1</property>
+    <property name="title" translatable="yes">Manage Stations</property>
+    <property name="icon_name">pithos</property>
+    <property name="type_hint">normal</property>
+    <signal name="delete-event" handler="on_close" swapped="no"/>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dialog-vbox1">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog-action_area1">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="add_station">
+                <property name="label" translatable="yes">Add Station</property>
+                <property name="visible">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="add_station" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+                <property name="secondary">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="add_genre_station">
+                <property name="label" translatable="yes">Genre Stations</property>
+                <property name="sensitive">False</property>
+                <property name="receives_default">True</property>
+                <property name="no_show_all">True</property>
+                <signal name="clicked" handler="add_genre_station" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+                <property name="secondary">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="refresh_stations">
+                <property name="label" translatable="yes">Refresh Stations</property>
+                <property name="visible">True</property>
+                <property name="receives_default">True</property>
+                <signal name="clicked" handler="refresh_stations" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+                <property name="secondary">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="close">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="on_close" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledwindow1">
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkTreeView" id="treeview">
+                <property name="visible">True</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="treeview-selection1"/>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">add_station</action-widget>
+      <action-widget response="0">add_genre_station</action-widget>
+      <action-widget response="0">refresh_stations</action-widget>
+      <action-widget response="-5">close</action-widget>
     </action-widgets>
   </object>
 </interface>

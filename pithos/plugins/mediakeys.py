@@ -48,14 +48,18 @@ class MediaKeyPlugin(PithosPlugin):
             
     def bind_keybinder(self):
         try:
-            import keybinder
+            import gi
+            gi.require_version('Keybinder', '3.0')
+            # Gdk needed for Keybinder
+            from gi.repository import Keybinder, Gdk
+            Keybinder.init()
         except:
             return False
         
-        keybinder.bind('XF86AudioPlay', self.window.playpause, None)
-        keybinder.bind('XF86AudioStop', self.window.user_pause, None)
-        keybinder.bind('XF86AudioNext', self.window.next_song, None)
-        keybinder.bind('XF86AudioPrev', self.window.bring_to_top, None)
+        Keybinder.bind('XF86AudioPlay', self.window.playpause, None)
+        Keybinder.bind('XF86AudioStop', self.window.user_pause, None)
+        Keybinder.bind('XF86AudioNext', self.window.next_song, None)
+        Keybinder.bind('XF86AudioPrev', self.window.bring_to_top, None)
         
         logging.info("Bound media keys with keybinder")
         self.method = 'keybinder'

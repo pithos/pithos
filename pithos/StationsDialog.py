@@ -16,14 +16,14 @@
 
 import sys
 import os
-import gtk
+from gi.repository import Gtk
 import logging
 import webbrowser
 
 from .pithosconfig import getdatapath
 from . import SearchDialog
 
-class StationsDialog(gtk.Dialog):
+class StationsDialog(Gtk.Dialog):
     __gtype_name__ = "StationsDialog"
 
     def __init__(self):
@@ -55,35 +55,35 @@ class StationsDialog(gtk.Dialog):
         self.searchDialog = None
         
         self.modelfilter = self.model.filter_new()
-        self.modelfilter.set_visible_func(lambda m, i: m.get_value(i, 0) and not  m.get_value(i, 0).isQuickMix)
+        self.modelfilter.set_visible_func(lambda m, i, d: m.get_value(i, 0) and not  m.get_value(i, 0).isQuickMix)
 
-        self.modelsortable = gtk.TreeModelSort(self.modelfilter)
+        self.modelsortable = Gtk.TreeModelSort(self.modelfilter)
         """
         @todo Leaving it as sorting by date added by default. 
         Probably should make a radio select in the window or an option in program options for user preference
         """
-#        self.modelsortable.set_sort_column_id(1, gtk.SORT_ASCENDING)
+#        self.modelsortable.set_sort_column_id(1, Gtk.SortType.ASCENDING)
         
         self.treeview = self.builder.get_object("treeview")
         self.treeview.set_model(self.modelsortable)
         self.treeview.connect('button_press_event', self.on_treeview_button_press_event)
         
-        name_col   = gtk.TreeViewColumn()
+        name_col   = Gtk.TreeViewColumn()
         name_col.set_title("Name")
-        render_text = gtk.CellRendererText()
+        render_text = Gtk.CellRendererText()
         render_text.set_property('editable', True)
         render_text.connect("edited", self.station_renamed)
-        name_col.pack_start(render_text, expand=True)
+        name_col.pack_start(render_text, True)
         name_col.add_attribute(render_text, "text", 1)
         name_col.set_expand(True)
         name_col.set_sort_column_id(1)
         self.treeview.append_column(name_col)
         
-        qm_col   = gtk.TreeViewColumn()
+        qm_col   = Gtk.TreeViewColumn()
         qm_col.set_title("In QuickMix")
-        render_toggle = gtk.CellRendererToggle()
-        qm_col.pack_start(render_toggle, expand=True)
-        def qm_datafunc(column, cell, model, iter):
+        render_toggle = Gtk.CellRendererToggle()
+        qm_col.pack_start(render_toggle, True)
+        def qm_datafunc(column, cell, model, iter, data=None):
             if model.get_value(iter,0).useQuickMix:
                 cell.set_active(True)
             else:
@@ -102,7 +102,7 @@ class StationsDialog(gtk.Dialog):
     def station_renamed(self, cellrenderertext, path, new_text):
         station = self.modelfilter[path][0]
         self.worker_run(station.rename, (new_text,), context='net', message="Renaming Station...")
-        self.model[self.modelfilter.convert_path_to_child_path(path)][1] = new_text
+        self.model[self.modelfilter.convert_path_to_child_path(Gtk.TreePath(path))][1] = new_text
         
     def selected_station(self):
         sel = self.treeview.get_selection().get_selected()
@@ -206,7 +206,7 @@ def NewStationsDialog(pithos):
     if not os.path.exists(ui_filename):
         ui_filename = None
 
-    builder = gtk.Builder()
+    builder = Gtk.Builder()
     builder.add_from_file(ui_filename)    
     dialog = builder.get_object("stations_dialog")
     dialog.finish_initializing(builder, pithos)
@@ -215,5 +215,5 @@ def NewStationsDialog(pithos):
 if __name__ == "__main__":
     dialog = NewStationsDialog()
     dialog.show()
-    gtk.main()
+    Gtk.main()
 

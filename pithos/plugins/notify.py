@@ -14,17 +14,17 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-import pynotify, gtk
 from cgi import escape
 from pithos.plugin import PithosPlugin
 from pithos.pithosconfig import get_data_file
+from gi.repository import Notify
 
 class NotifyPlugin(PithosPlugin):
     preference = 'notify'
     
     def on_prepare(self):
-        pynotify.init('pithos')
-        self.notification = pynotify.Notification("Pithos","Pithos")
+        Notify.init('pithos')
+        self.notification = Notify.Notification()
         
     def on_enable(self):
         self.song_callback_handle = self.window.connect("song-changed", self.song_changed)

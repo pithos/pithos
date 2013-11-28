@@ -19,8 +19,8 @@ import os
 import stat
 import logging
 
-import gtk
-import gobject
+from gi.repository import Gtk
+from gi.repository import GObject
 
 from .pithosconfig import *
 from .pandora.data import *
@@ -37,7 +37,7 @@ except ImportError:
 
 configfilename = os.path.join(config_home, 'pithos.ini')
 
-class PreferencesPithosDialog(gtk.Dialog):
+class PreferencesPithosDialog(Gtk.Dialog):
     __gtype_name__ = "PreferencesPithosDialog"
     prefernces = {}
 
@@ -65,12 +65,12 @@ class PreferencesPithosDialog(gtk.Dialog):
 
         # initialize the "Audio Quality" combobox backing list
         audio_quality_combo = self.builder.get_object('prefs_audio_quality')
-        fmt_store = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
+        fmt_store = Gtk.ListStore(GObject.TYPE_STRING, GObject.TYPE_STRING)
         for audio_quality in valid_audio_formats:
             fmt_store.append(audio_quality)
         audio_quality_combo.set_model(fmt_store)
-        render_text = gtk.CellRendererText()
-        audio_quality_combo.pack_start(render_text, expand=True)
+        render_text = Gtk.CellRendererText()
+        audio_quality_combo.pack_start(render_text, True)
         audio_quality_combo.add_attribute(render_text, "text", 1)
 
         self.__load_preferences()
@@ -201,7 +201,7 @@ class PreferencesPithosDialog(gtk.Dialog):
 
     def ok(self, widget, data=None):
         """ok - The user has elected to save the changes.
-        Called before the dialog returns gtk.RESONSE_OK from run().
+        Called before the dialog returns Gtk.RESONSE_OK from run().
         """
 
         self.__preferences["username"] = self.builder.get_object('prefs_username').get_text()
@@ -222,7 +222,7 @@ class PreferencesPithosDialog(gtk.Dialog):
 
     def cancel(self, widget, data=None):
         """cancel - The user has elected cancel changes.
-        Called before the dialog returns gtk.RESPONSE_CANCEL for run()
+        Called before the dialog returns Gtk.ResponseType.CANCEL for run()
         """
 
         self.setup_fields() # restore fields to previous values
@@ -240,7 +240,7 @@ def NewPreferencesPithosDialog():
     if not os.path.exists(ui_filename):
         ui_filename = None
 
-    builder = gtk.Builder()
+    builder = Gtk.Builder()
     builder.add_from_file(ui_filename)
     dialog = builder.get_object("preferences_pithos_dialog")
     dialog.finish_initializing(builder)
@@ -249,5 +249,5 @@ def NewPreferencesPithosDialog():
 if __name__ == "__main__":
     dialog = NewPreferencesPithosDialog()
     dialog.show()
-    gtk.main()
+    Gtk.main()
 
