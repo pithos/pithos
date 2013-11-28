@@ -1,1 +1,5 @@
 *.pyc
+build/
+dist/
+pithos.egg-info/
+
