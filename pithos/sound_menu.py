@@ -80,6 +80,30 @@ class PithosSoundMenu(dbus.service.Object):
                             }, "sv", variant_level=1)
 
 
+    @property
+    def CanSetFullscreen(self):
+        """Does the player support setting fullscreen."""
+
+        return False
+
+    @property
+    def CanQuit(self):
+        """Does the player support Quit."""
+
+        return True
+
+    @dbus.service.method('org.mpris.MediaPlayer2')
+    def Quit(self):
+        """Exit the player"""
+
+        self.window.quit()
+
+    @property
+    def CanRaise(self):
+        """Does the player support Raise."""
+
+        return True
+
     @dbus.service.method('org.mpris.MediaPlayer2')
     def Raise(self):
         """Bring the media player to the front when selected by the sound menu"""
@@ -125,6 +149,16 @@ class PithosSoundMenu(dbus.service.Object):
         """
 
         return [DesktopEntry, PlaybackStatus, MetaData]
+
+    @property
+    def Identity(self):
+        """Identity
+
+        The name of the program.
+
+        """
+
+        return DESKTOP_NAME
 
     @property
     def DesktopEntry(self):
