@@ -2352,6 +2352,11 @@ class Track(_BaseObject, _Taggable):
         """Adds the track to the user's loved tracks. """
         
         self._request('track.love')
+
+    def unlove(self):
+        """Adds the track to the user's loved tracks. """
+
+        self._request('track.unlove')
     
     def ban(self):
         """Ban this track from ever playing on the radio. """
