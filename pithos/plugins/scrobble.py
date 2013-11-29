@@ -19,6 +19,7 @@ import webbrowser
 import logging
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import PithosPlugin
+from pithos.pandora import pandora
 
 #getting an API account: http://www.last.fm/api/account
 API_KEY = '997f635176130d5d6fe3a7387de601a8'
@@ -46,11 +47,14 @@ class LastfmPlugin(PithosPlugin):
         self.connect(self.window.preferences['lastfm_key'])
         self.song_ended_handle = self.window.connect('song-ended', self.song_ended)
         self.song_changed_handle = self.window.connect('song-changed', self.song_changed)
+        self.song_rating_changed_handle = self.window.connect('song-rating-changed',
+                                                              self.song_rating_changed)
         
     def on_disable(self):
         self.window.disconnect(self.song_ended_handle)
         self.window.disconnect(self.song_rating_changed_handle)
         self.window.disconnect(self.song_changed_handle)
+        self.window.disconnect(self.song_rating_changed_handle)
         
     def song_ended(self, window, song):
         self.scrobble(song)
@@ -64,15 +68,19 @@ class LastfmPlugin(PithosPlugin):
      
     def song_changed(self, window, song):
         self.worker.send(self.scrobbler.report_now_playing, (song.artist, song.title, song.album))
+
+    def song_rating_changed(self, window, song):
+        self.send_rating(song)
         
-    def send_rating(self, song, rating):
-        if song.rating:
-            track = self.network.get_track(song.artist, song.title)
-            if rating == 'love':
-                self.worker.send(track.love)
-            elif rating == 'ban':
-                self.worker.send(track.ban)
-            logging.info("Sending song rating to last.fm")
+    def send_rating(self, song):
+        track = self.network.get_track(song.artist, song.title)
+        if song.rating == pandora.RATE_LOVE:
+            self.worker.send(track.love)
+        elif song.rating == pandora.RATE_BAN:
+            self.worker.send(track.ban)
+        elif song.rating == pandora.RATE_NONE:
+            self.worker.send(track.unlove)
+        logging.info("Sending song rating to last.fm")
 
     def scrobble(self, song):
         if song.duration > 30 and (song.position > 240 or song.position > song.duration/2):
