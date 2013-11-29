@@ -17,10 +17,11 @@
 
 import sys
 import os, time
+import logging, argparse
 
 import gi
 gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GObject, Gtk, Gdk, Pango, GdkPixbuf
+from gi.repository import Gst, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 import contextlib
 import cgi
 import math
@@ -47,7 +48,7 @@ from .util import *
 from .pithosconfig import getdatapath, VERSION
 from .gobject_worker import GObjectWorker
 from .plugin import load_plugins
-from .dbus_service import PithosDBusProxy, try_to_raise
+from .dbus_service import PithosDBusProxy
 from .mpris import PithosMprisService
 from .pandora import *
 from .pandora.data import *
@@ -854,7 +855,7 @@ class PithosWindow(Gtk.Window):
         self.prefs_dlg.save()
         Gtk.main_quit()
 
-def NewPithosWindow(options):
+def NewPithosWindow(app, options):
     """NewPithosWindow - returns a fully instantiated
     PithosWindow object. Use this function rather than
     creating a PithosWindow directly.
@@ -868,33 +869,54 @@ def NewPithosWindow(options):
     builder = Gtk.Builder()
     builder.add_from_file(ui_filename)
     window = builder.get_object("pithos_window")
+    window.set_application(app)
     window.finish_initializing(builder, options)
     return window
 
+class PithosApplication(Gtk.Application):
+    def __init__(self):
+        Gtk.Application.__init__(self, application_id='net.kevinmehall.Pithos',
+                                flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+        self.window = None
+        self.options = None
 
-def main():
-    import logging, optparse
-    parser = optparse.OptionParser(version="Pithos %s"%(VERSION))
-    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Show debug messages")
-    parser.add_option("-t", "--test", action="store_true", dest="test", help="Use a mock web interface instead of connecting to the real Pandora server")
-    (options, args) = parser.parse_args()
+    def do_startup(self):
+        Gtk.Application.do_startup(self)
 
-    if not options.test and try_to_raise():
-        print "Raised existing Pithos instance"
-    else:
+    # FIXME: do_local_command_line() segfaults?
+    def do_command_line(self, args):
+        Gtk.Application.do_command_line(self, args)
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", help="Show debug messages")
+        parser.add_argument("-t", "--test", action="store_true", dest="test", help="Use a mock web interface instead of connecting to the real Pandora server")
+        self.options = parser.parse_args(args.get_arguments()[1:])
 
         #set the logging level to show debug messages
-        if options.verbose:
+        if self.options.verbose:
             logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
         else:
             logging.basicConfig(level=logging.WARNING)
 
-        logging.info("Pithos %s"%VERSION)
+        self.do_activate()
 
-        window = NewPithosWindow(options)
-        window.show()
-        Gtk.main()
+        return 0
 
+    def do_activate(self):
+        if not self.window:
+            logging.info("Pithos %s" %VERSION)
+            self.window = NewPithosWindow(self, self.options)
+
+        self.window.present()
+
+    def do_shutdown(self):
+        Gtk.Application.do_shutdown(self)
+        self.quit()
+
+def main():
+    app = PithosApplication()
+    exit_status = app.run(sys.argv)
+    sys.exit(exit_status)
 
 if __name__ == '__main__':
     main()
