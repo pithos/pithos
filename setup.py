@@ -66,6 +66,9 @@ setup(
             'data/media/*.svg'
         ]
     },
+    install_requires=[
+        'pylast'
+    ],
     packages=find_packages(),
     include_package_data=True,
     entry_points={

@@ -21,6 +21,7 @@ Depends: ${misc:Depends},
  python-notify,
  python-gtk2,
  python-dbus,
+ python-pylast,
  gstreamer0.10-plugins-good,
  gstreamer0.10-plugins-bad
 Description: Pandora.com client for the GNOME desktop
