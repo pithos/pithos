@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ### BEGIN LICENSE
@@ -52,11 +51,11 @@ setup(
         'Programming Language :: Python'
     ],
     data_files=[
-        ('share/icons/hicolor/scalable/apps', [
+        ('/usr/share/icons/hicolor/scalable/apps', [
              'data/icons/scalable/apps/pithos-mono.svg',
              'data/icons/scalable/apps/pithos.svg'
          ]),
-        ('share/applications', ['pithos.desktop'])
+        ('/usr/share/applications', ['pithos.desktop'])
     ],
     package_data={
         'pithos': [
