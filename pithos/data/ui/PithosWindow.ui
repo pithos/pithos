@@ -254,78 +254,6 @@
     <property name="visible">True</property>
     <property name="stock">gtk-help</property>
   </object>
-  <object class="GtkMenu" id="menu_options">
-    <property name="visible">True</property>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem_prefs">
-        <property name="label" translatable="yes">Settings</property>
-        <property name="visible">True</property>
-        <property name="image">image6</property>
-        <property name="use_stock">False</property>
-        <signal name="activate" handler="show_preferences" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem_stations">
-        <property name="label" translatable="yes">Manage Stations</property>
-        <property name="visible">True</property>
-        <property name="image">image7</property>
-        <property name="use_stock">False</property>
-        <signal name="activate" handler="stations_dialog" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkSeparatorMenuItem" id="menuitem6">
-        <property name="visible">True</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem1">
-        <property name="label" translatable="yes">Web Site</property>
-        <property name="visible">True</property>
-        <property name="image">image9</property>
-        <property name="use_stock">False</property>
-        <signal name="activate" handler="open_web_site" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem5">
-        <property name="label" translatable="yes">Report bug</property>
-        <property name="visible">True</property>
-        <property name="image">image10</property>
-        <property name="use_stock">False</property>
-        <signal name="activate" handler="report_bug" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkSeparatorMenuItem" id="menuitem7">
-        <property name="visible">True</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem_about">
-        <property name="label">gtk-about</property>
-        <property name="visible">True</property>
-        <property name="use_underline">True</property>
-        <property name="use_stock">True</property>
-        <signal name="activate" handler="about" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkSeparatorMenuItem" id="menuitem8">
-        <property name="visible">True</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem9">
-        <property name="label">gtk-quit</property>
-        <property name="visible">True</property>
-        <property name="use_underline">True</property>
-        <property name="use_stock">True</property>
-        <signal name="activate" handler="quit" swapped="no"/>
-      </object>
-    </child>
-  </object>
   <object class="GtkMessageDialog" id="messagedialog1">
     <property name="border_width">5</property>
     <property name="type_hint">normal</property>
@@ -417,27 +345,6 @@
               </object>
               <packing>
                 <property name="expand">False</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSeparatorToolItem" id="toolbutton3">
-                <property name="visible">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolButton" id="toolbutton_options">
-                <property name="visible">True</property>
-                <property name="label" translatable="yes">Options</property>
-                <property name="use_underline">True</property>
-                <property name="icon_widget">hbox_settingsmenu</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
               </packing>
             </child>
             <child>

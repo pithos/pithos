@@ -119,7 +119,7 @@ def get_album_art(url, *extra):
     return (l.get_pixbuf(),) + extra
 
 
-class PithosWindow(Gtk.Window):
+class PithosWindow(Gtk.ApplicationWindow):
     __gtype_name__ = "PithosWindow"
     __gsignals__ = {
         "song-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
@@ -270,8 +270,6 @@ class PithosWindow(Gtk.Window):
         self.stations_combo.pack_start(render_text, True)
         self.stations_combo.add_attribute(render_text, "text", 1)
         self.stations_combo.set_row_separator_func(lambda model, iter, data=None: model.get_value(iter, 0) is None, None)
-
-        buttonMenu(self.builder.get_object("toolbutton_options"), self.builder.get_object("menu_options"))
 
     def worker_run(self, fn, args=(), callback=None, message=None, context='net'):
         if context and message:
@@ -798,7 +796,7 @@ class PithosWindow(Gtk.Window):
     def report_bug(self, *ignore):
         openBrowser("https://github.com/pithos/pithos/issues")
 
-    def about(self, widget, data=None):
+    def show_about(self, widget=None, data=None):
         """about - display the about box for pithos """
         about = AboutPithosDialog.NewAboutPithosDialog()
         about.set_version(VERSION)
@@ -853,7 +851,7 @@ class PithosWindow(Gtk.Window):
         self.stop()
         self.preferences['last_station_id'] = self.current_station_id
         self.prefs_dlg.save()
-        Gtk.main_quit()
+        self.quit()
 
 def NewPithosWindow(app, options):
     """NewPithosWindow - returns a fully instantiated
@@ -883,6 +881,29 @@ class PithosApplication(Gtk.Application):
     def do_startup(self):
         Gtk.Application.do_startup(self)
 
+        # Setup appmenu
+        ui_filename = os.path.join(getdatapath(), 'ui', 'app_menu.ui')
+        builder = Gtk.Builder()
+        builder.add_from_file(ui_filename)
+        menu = builder.get_object("app-menu")
+        self.set_app_menu(menu)
+
+        action = Gio.SimpleAction.new("stations", None)
+        action.connect("activate", self.stations_cb)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("preferences", None)
+        action.connect("activate", self.prefs_cb)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("about", None)
+        action.connect("activate", self.about_cb)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("quit", None)
+        action.connect("activate", self.quit_cb)
+        self.add_action(action)
+
     # FIXME: do_local_command_line() segfaults?
     def do_command_line(self, args):
         Gtk.Application.do_command_line(self, args)
@@ -911,6 +932,18 @@ class PithosApplication(Gtk.Application):
 
     def do_shutdown(self):
         Gtk.Application.do_shutdown(self)
+        self.quit()
+
+    def stations_cb(self, action, param):
+        self.window.stations_dialog()
+
+    def prefs_cb(self, action, param):
+        self.window.show_preferences()
+
+    def about_cb(self, action, param):
+        self.window.show_about()
+
+    def quit_cb(self, action, param):
         self.quit()
 
 def main():
