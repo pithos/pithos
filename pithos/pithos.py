@@ -19,14 +19,6 @@ import sys
 import os, time
 import gtk, gobject, pango
 
-# optional Launchpad integration
-# this shouldn't crash if not found as it is simply used for bug reporting
-try:
-    import LaunchpadIntegration
-    launchpad_available = True
-except:
-    launchpad_available = False
-
 import gst
 import cgi
 import math
@@ -156,17 +148,6 @@ class PithosWindow(gtk.Window):
         #get a reference to the builder and set up the signals
         self.builder = builder
         self.builder.connect_signals(self)
-
-        global launchpad_available
-        if False and launchpad_available: # Disable this
-            # see https://wiki.ubuntu.com/UbuntuDevelopment/Internationalisation/Coding for more information
-            # about LaunchpadIntegration
-            helpmenu = self.builder.get_object('menu_options')
-            if helpmenu:
-                LaunchpadIntegration.set_sourcepackagename('pithos')
-                LaunchpadIntegration.add_items(helpmenu, 0, False, True)
-            else:
-                launchpad_available = False
 
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         self.preferences = self.prefs_dlg.get_preferences()
