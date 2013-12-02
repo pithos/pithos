@@ -799,11 +799,22 @@ class PithosWindow(gtk.Window):
                     return False
                 self.start_song(self.selected_song().index)
 
-    def on_volume_change_event(self, volumebutton, value):
+    def set_player_volume(self, value):
+        logging.info('%.3f' % value)
         # Use a cubic scale for volume. This matches what PulseAudio uses.
         volume = math.pow(value, 3)
         self.player.set_property("volume", volume)
-        self.preferences['volume'] = volume
+        self.preferences['volume'] = value
+
+    def raise_volume(self, down=False):
+        old_volume = self.volume.get_property("value")
+        new_volume = max(0.0, min(1.0, old_volume + 0.02 * (-1.0 if down else 1.0)))
+
+        if new_volume != old_volume:
+            self.volume.set_property("value", new_volume)
+
+    def on_volume_change_event(self, volumebutton, value):
+        self.set_player_volume(value)
 
     def station_properties(self, *ignore):
         openBrowser(self.current_station.info_url)

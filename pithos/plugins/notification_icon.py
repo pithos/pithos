@@ -48,7 +48,15 @@ class PithosNotificationIcon(PithosPlugin):
             self.statusicon.connect('activate', self.toggle_visible)
         
         self.build_context_menu()
-       
+
+    def scroll(self, steps):
+        if indicator_capable:
+            down = steps
+        else:
+            down = steps.direction.value_nick == 'down'
+
+        self.window.raise_volume(down=down)
+
     def build_context_menu(self):
         menu = gtk.Menu()
         
@@ -79,10 +87,12 @@ class PithosNotificationIcon(PithosPlugin):
 
         # connect our new menu to the statusicon or the appindicator
         if indicator_capable:
+            self.ind.connect('scroll-event', lambda _x, _y, steps: self.scroll(steps))
             self.ind.set_menu(menu)
         else:
             self.statusicon.connect('popup-menu', self.context_menu, menu)
-            
+            self.statusicon.connect('scroll-event', lambda _, steps: self.scroll(steps))
+
         self.menu = menu
 
 
