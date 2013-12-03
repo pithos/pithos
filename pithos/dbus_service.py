@@ -25,6 +25,24 @@ def song_to_dict(song):
         for i in ['artist', 'title', 'album', 'songDetailURL']:
             d[i] = getattr(song, i)
     return d
+    
+def stations_to_array(stations_model):
+    strs = []
+    if stations_model:
+        for i in range(len(stations_model)):
+    		if str(stations_model[i][1]) != "sep":
+				strs.append(str(stations_model[i][1]))
+    return strs
+    
+def change_station(stations_model, stations_combo, new_station):
+    strs = []
+    if stations_model:
+        for i in range(len(stations_model)):
+			if str(stations_model[i][1]) != "sep":
+				if str(stations_model[i][1]) == new_station:
+					stations_combo.set_active(i)
+					return new_station
+    return "Not Found"
   
 class PithosDBusProxy(dbus.service.Object):
     def __init__(self, window):
@@ -79,7 +97,19 @@ class PithosDBusProxy(dbus.service.Object):
         
     @dbus.service.signal(DBUS_BUS, signature='a{sv}')
     def SongChanged(self, songinfo):
-        pass    
+        pass 
+    
+    @dbus.service.method(DBUS_BUS, in_signature='s', out_signature='s')
+    def SetCurrentStation(self, new_station):
+        return change_station(self.window.stations_model, self.window.stations_combo, new_station)
+        
+    @dbus.service.method(DBUS_BUS, out_signature='s')
+    def GetCurrentStation(self):
+		return str(self.window.stations_model[self.window.stations_combo.get_active()][1])
+
+    @dbus.service.method(DBUS_BUS, out_signature='as')
+    def GetStationList(self):
+		return stations_to_array(self.window.stations_model)
 
 
 def try_to_raise():
