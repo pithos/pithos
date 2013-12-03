@@ -18,9 +18,9 @@
 import dbus
 import dbus.service
 
-DESKTOP_NAME = 'pithos'
-
 class PithosSoundMenu(dbus.service.Object):
+    MEDIA_PLAYER2_IFACE = 'org.mpris.MediaPlayer2'
+    MEDIA_PLAYER2_PLAYER_IFACE = 'org.mpris.MediaPlayer2.Player'
 
     def __init__(self, window):
         """
@@ -30,7 +30,7 @@ class PithosSoundMenu(dbus.service.Object):
         typically by calling DBusGMainLoop(set_as_default=True).
         """
 
-        bus_str = """org.mpris.MediaPlayer2.%s""" % DESKTOP_NAME
+        bus_str = """org.mpris.MediaPlayer2.pithos"""
         bus_name = dbus.service.BusName(bus_str, bus=dbus.SessionBus())
         dbus.service.Object.__init__(self, bus_name, "/org/mpris/MediaPlayer2")
         self.window = window
@@ -42,9 +42,9 @@ class PithosSoundMenu(dbus.service.Object):
         
     def playstate_handler(self, window, state):
         if state:
-        	self.signal_playing()
+            self.signal_playing()
         else:
-        	self.signal_paused()
+            self.signal_paused()
         
     def songchange_handler(self, window, song):
         self.song_changed([song.artist], song.album, song.title, song.artRadio)
@@ -79,110 +79,9 @@ class PithosSoundMenu(dbus.service.Object):
                             "mpris:artUrl":artUrl,
                             }, "sv", variant_level=1)
 
-
-    @property
-    def CanSetFullscreen(self):
-        """Does the player support setting fullscreen."""
-
-        return False
-
-    @property
-    def CanQuit(self):
-        """Does the player support Quit."""
-
-        return True
-
-    @dbus.service.method('org.mpris.MediaPlayer2')
-    def Quit(self):
-        """Exit the player"""
-
-        self.window.quit()
-
-    @property
-    def CanRaise(self):
-        """Does the player support Raise."""
-
-        return True
-
-    @dbus.service.method('org.mpris.MediaPlayer2')
-    def Raise(self):
-        """Bring the media player to the front when selected by the sound menu"""
-
-        self.window.bring_to_top()
-
-    @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='ss', out_signature='v')
-    def Get(self, interface, prop):
-        """Get
-
-        A function necessary to implement dbus properties.
-
-        This function is only called by the Sound Menu, and should not
-        be overriden or called directly.
-
-        """
-
-        my_prop = self.__getattribute__(prop)
-        return my_prop
-
-    @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='ssv')
-    def Set(self, interface, prop, value):
-        """Set
-
-        A function necessary to implement dbus properties.
-
-        This function is only called by the Sound Menu, and should not
-        be overriden or called directly.
-
-        """
-        my_prop = self.__getattribute__(prop)
-        my_prop = value
-
-    @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='s', out_signature='a{sv}')
-    def GetAll(self, interface):
-        """GetAll
-
-        A function necessary to implement dbus properties.
-
-        This function is only called by the Sound Menu, and should not
-        be overriden or called directly.
-
-        """
-
-        return [DesktopEntry, PlaybackStatus, MetaData]
-
-    @property
-    def Identity(self):
-        """Identity
-
-        The name of the program.
-
-        """
-
-        return DESKTOP_NAME
-
-    @property
-    def DesktopEntry(self):
-        """DesktopEntry
-
-        The name of the desktop file.
-
-        This propert is only used by the Sound Menu, and should not
-        be overriden or called directly.
-
-        """
-
-        return DESKTOP_NAME
-
-    @property
-    def PlaybackStatus(self):
-        """PlaybackStatus
-
-        Current status "Playing", "Paused", or "Stopped"
-
-        This property is only used by the Sound Menu, and should not
-        be overriden or called directly.
-
-        """
+    # Properties
+    def _get_playback_status(self):
+        """Current status "Playing", "Paused", or "Stopped"."""
         if not self.window.current_song:
             return "Stopped"
         if self.window.playing:
@@ -190,47 +89,111 @@ class PithosSoundMenu(dbus.service.Object):
         else:
             return "Paused"
 
-    @property
-    def MetaData(self):
-        """MetaData
-
-        The info for the current song.
-
-        This property is only used by the Sound Menu, and should not
-        be overriden or called directly.
-
-        """
-
+    def _get_metadata(self):
+        """The info for the current song."""
         return self.__meta_data
 
-    @dbus.service.method('org.mpris.MediaPlayer2.Player')
-    def Next(self):
-        """Next
+    def _get_volume(self):
+        return self.window.player.get_property("volume")
 
-        This function is called when the user has clicked
-        the next button in the Sound Indicator.
+    def _get_position(self):
+        return self.window.player.query_position(self.window.time_format, None)[0] / 1000
 
-        """
+    @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='ss', out_signature='v')
+    def Get(self, interface_name, property_name):
+        try:
+            return self.GetAll(interface_name)[property_name]
+        except KeyError:
+            raise dbus.exceptions.DBusException(
+                interface_name, 'Property %s was not found.' %property_name)
 
-        self.window.next_song()
+    @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='ssv')
+    def Set(self, interface_name, property_name, new_value):
+        if interface_name == self.MEDIA_PLAYER2_IFACE:
+            pass
+        elif interface_name == self.MEDIA_PLAYER2_PLAYER_IFACE:
+            pass # TODO: volume
+        else:
+            raise dbus.exceptions.DBusException(
+                'org.mpris.MediaPlayer2.pithos',
+                'This object does not implement the %s interface'
+                % interface_name)
 
+    @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='s', out_signature='a{sv}')
+    def GetAll(self, interface_name):
+        if interface_name == self.MEDIA_PLAYER2_IFACE:
+            return {
+                'CanQuit': True,
+                'CanRaise': True,
+                'HasTrackList': False,
+                'Identity': 'Pithos',
+                'DesktopEntry': 'pithos',
+                'SupportedUriSchemes': [''],
+                'SupportedMimeTypes': [''],
+            }
+        elif interface_name == self.MEDIA_PLAYER2_PLAYER_IFACE:
+            return {
+                'PlaybackStatus': self._get_playback_status(),
+                'LoopStatus': "None",
+                'Rate': dbus.Double(1.0),
+                'Shuffle': False,
+                'Metadata': dbus.Dictionary(self._get_metadata(), signature='sv'),
+                'Volume': dbus.Double(self._get_volume()),
+                'Position': dbus.Int64(self._get_position()),
+                'MinimumRate': dbus.Double(1.0),
+                'MaximumRate': dbus.Double(1.0),
+                'CanGoNext': self.window.waiting_for_playlist is not True,
+                'CanGoPrevious': False,
+                'CanPlay': self.window.current_song is not None,
+                'CanPause': self.window.current_song is not None,
+                'CanSeek': False,
+                'CanControl': True,
+            }
+        else:
+            raise dbus.exceptions.DBusException(
+                'org.mpris.MediaPlayer2.pithos',
+                'This object does not implement the %s interface'
+                % interface_name)
 
-    @dbus.service.method('org.mpris.MediaPlayer2.Player')
+    @dbus.service.method(MEDIA_PLAYER2_IFACE)
+    def Raise(self):
+        """Bring the media player to the front when selected by the sound menu"""
+
+        self.window.bring_to_top()
+
+    @dbus.service.method(MEDIA_PLAYER2_IFACE)
+    def Quit(self):
+        """Exit the player"""
+
+        self.window.quit()
+
+    @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def Previous(self):
-        """Previous
-
-        This function is called when the user has clicked
-        the previous button in the Sound Indicator.
-
-        """
+        """Play prvious song, not implemented"""
 
         pass
 
-    @dbus.service.method('org.mpris.MediaPlayer2.Player')
+    @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
+    def Next(self):
+        """Play next song"""
+
+        self.window.next_song()
+
+    @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def PlayPause(self):
-        
         self.window.playpause()
 
+    @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
+    def Play(self):
+        self.window.play()
+
+    @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
+    def Pause(self):
+        self.window.pause()
+
+    @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
+    def Stop(self):
+        self.window.stop()
 
     def signal_playing(self):
         """signal_playing - Tell the Sound Menu that the player has
@@ -264,5 +227,3 @@ class PithosSoundMenu(dbus.service.Object):
         """
 
         pass
-
-
