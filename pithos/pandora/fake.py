@@ -108,14 +108,14 @@ class FakePandora(Pandora):
         return {
             'albumName':"AlbumName",
             'artistName':"ArtistName",
-            'additionalAudioUrl':'http://kevinmehall.net/p/pithos/testfile.aac?val='+'0'*48,
+            'additionalAudioUrl':'http://pithos.github.io/testfile.aac?val='+'0'*48,
             'trackGain':0,
             'trackToken':'5908540384',
             'songRating': 1 if c%3 == 0 else 0,
             'stationId': stationId,
             'songName': 'Test song %i'%c,
-            'songDetailUrl': 'http://kevinmehall.net/p/pithos/',
-            'albumDetailUrl':'http://kevinmehall.net/p/pithos/',
+            'songDetailUrl': 'http://pithos.github.io/',
+            'albumDetailUrl':'http://pithos.github.io/',
             'albumArtUrl':'http://i.imgur.com/H4Z8x.jpg',
         }
 

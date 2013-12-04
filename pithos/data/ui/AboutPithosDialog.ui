@@ -12,7 +12,7 @@
     <property name="version">0.3</property>
     <property name="copyright" translatable="yes">Copyright &#xA9; 2012 Kevin Mehall</property>
     <property name="comments" translatable="yes">A Pandora Radio client for the GNOME Desktop</property>
-    <property name="website">http://kevinmehall.net/p/pithos</property>
+    <property name="website">http://pithos.github.io</property>
     <property name="logo">../media/icon.png</property>
     <child internal-child="vbox">
       <object class="GtkVBox" id="dialog-vbox1">

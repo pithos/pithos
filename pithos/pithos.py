@@ -558,7 +558,7 @@ class PithosWindow(gtk.Window):
         dialog = self.builder.get_object("api_update_dialog")
         response = dialog.run()
         if response:
-            openBrowser("http://kevinmehall.net/p/pithos/itbroke?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
+            openBrowser("http://pithos.github.io/itbroke?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
         self.quit()
 
     def station_index(self, station):
@@ -790,10 +790,10 @@ class PithosWindow(gtk.Window):
         openBrowser(self.current_station.info_url)
 
     def open_web_site(self, *ignore):
-        openBrowser("http://kevinmehall.net/p/pithos?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
+        openBrowser("http://pithos.github.io?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
 
     def report_bug(self, *ignore):
-        openBrowser("https://bugs.launchpad.net/pithos")
+        openBrowser("https://github.com/pithos/pithos/issues")
 
     def about(self, widget, data=None):
         """about - display the about box for pithos """

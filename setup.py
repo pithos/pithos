@@ -42,7 +42,7 @@ setup(
     author_email='km@kevinmehall.net',
     description='Pandora.com client for the GNOME desktop',
     long_description=read('README.md'),
-    url='https://launchpad.net/pithos',
+    url='http://pithos.github.io',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: End Users/Desktop',
