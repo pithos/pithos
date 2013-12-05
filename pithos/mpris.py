@@ -2,21 +2,22 @@
 ### BEGIN LICENSE
 # Copyright (C) 2011 Rick Spencer <rick.spencer@canonical.com>
 # Copyright (C) 2011-2012 Kevin Mehall <km@kevinmehall.net>
-#This program is free software: you can redistribute it and/or modify it 
-#under the terms of the GNU General Public License version 3, as published 
+#This program is free software: you can redistribute it and/or modify it
+#under the terms of the GNU General Public License version 3, as published
 #by the Free Software Foundation.
 #
-#This program is distributed in the hope that it will be useful, but 
-#WITHOUT ANY WARRANTY; without even the implied warranties of 
-#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR 
+#This program is distributed in the hope that it will be useful, but
+#WITHOUT ANY WARRANTY; without even the implied warranties of
+#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
 #PURPOSE.  See the GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License along 
+#You should have received a copy of the GNU General Public License along
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
 import dbus
 import dbus.service
+
 
 class PithosMprisService(dbus.service.Object):
     MEDIA_PLAYER2_IFACE = 'org.mpris.MediaPlayer2'
@@ -36,34 +37,34 @@ class PithosMprisService(dbus.service.Object):
         self.window = window
 
         self.song_changed()
-        
+
         self.window.connect("song-changed", self.songchange_handler)
         self.window.connect("play-state-changed", self.playstate_handler)
-        
+
     def playstate_handler(self, window, state):
         if state:
             self.signal_playing()
         else:
             self.signal_paused()
-        
+
     def songchange_handler(self, window, song):
         self.song_changed([song.artist], song.album, song.title, song.artRadio)
         self.signal_playing()
 
-    def song_changed(self, artists = None, album = None, title = None, artUrl=''):
+    def song_changed(self, artists=None, album=None, title=None, artUrl=''):
         """song_changed - sets the info for the current song.
 
         This method is not typically overriden. It should be called
         by implementations of this class when the player has changed
         songs.
-            
+
         named arguments:
             artists - a list of strings representing the artists"
             album - a string for the name of the album
             title - a string for the title of the song
 
         """
-        
+
         if artists is None:
             artists = ["Artist Unknown"]
         if album is None:
@@ -72,12 +73,12 @@ class PithosMprisService(dbus.service.Object):
             title = "Title Unknown"
         if artUrl is None:
             artUrl = ''
-   
-        self.__meta_data = dbus.Dictionary({"xesam:album":album,
-                            "xesam:title":title,
-                            "xesam:artist":artists,
-                            "mpris:artUrl":artUrl,
-                            }, "sv", variant_level=1)
+
+        self.__meta_data = dbus.Dictionary({"xesam:album": album,
+                                            "xesam:title": title,
+                                            "xesam:artist": artists,
+                                            "mpris:artUrl": artUrl,
+                                            }, "sv", variant_level=1)
 
     # Properties
     def _get_playback_status(self):
@@ -105,14 +106,14 @@ class PithosMprisService(dbus.service.Object):
             return self.GetAll(interface_name)[property_name]
         except KeyError:
             raise dbus.exceptions.DBusException(
-                interface_name, 'Property %s was not found.' %property_name)
+                interface_name, 'Property %s was not found.' % property_name)
 
     @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='ssv')
     def Set(self, interface_name, property_name, new_value):
         if interface_name == self.MEDIA_PLAYER2_IFACE:
             pass
         elif interface_name == self.MEDIA_PLAYER2_PLAYER_IFACE:
-            pass # TODO: volume
+            pass  # TODO: volume
         else:
             raise dbus.exceptions.DBusException(
                 'org.mpris.MediaPlayer2.pithos',
@@ -199,11 +200,11 @@ class PithosMprisService(dbus.service.Object):
         """signal_playing - Tell the Sound Menu that the player has
         started playing.
         """
-       
+
         self.__playback_status = "Playing"
-        d = dbus.Dictionary({"PlaybackStatus":self.__playback_status, "Metadata":self.__meta_data},
-                                    "sv",variant_level=1)
-        self.PropertiesChanged("org.mpris.MediaPlayer2.Player",d,[])
+        d = dbus.Dictionary({"PlaybackStatus": self.__playback_status, "Metadata": self.__meta_data},
+                            "sv", variant_level=1)
+        self.PropertiesChanged("org.mpris.MediaPlayer2.Player", d, [])
 
     def signal_paused(self):
         """signal_paused - Tell the Sound Menu that the player has
@@ -211,9 +212,9 @@ class PithosMprisService(dbus.service.Object):
         """
 
         self.__playback_status = "Paused"
-        d = dbus.Dictionary({"PlaybackStatus":self.__playback_status},
-                                    "sv",variant_level=1)
-        self.PropertiesChanged("org.mpris.MediaPlayer2.Player",d,[])
+        d = dbus.Dictionary({"PlaybackStatus": self.__playback_status},
+                            "sv", variant_level=1)
+        self.PropertiesChanged("org.mpris.MediaPlayer2.Player", d, [])
 
     @dbus.service.signal(dbus.PROPERTIES_IFACE, signature='sa{sv}as')
     def PropertiesChanged(self, interface_name, changed_properties,

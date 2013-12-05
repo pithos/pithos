@@ -23,8 +23,10 @@ VERSION = '0.3.18'
 
 import os
 
+
 class project_path_not_found(Exception):
     pass
+
 
 def get_data_file(*path_segments):
     """Get the full path to a data file.
@@ -34,6 +36,7 @@ def get_data_file(*path_segments):
     *path_segments).
     """
     return os.path.join(getdatapath(), *path_segments)
+
 
 def getdatapath():
     """Retrieve pithos data path
@@ -55,5 +58,5 @@ def getdatapath():
     else:
         raise project_path_not_found
 
-if __name__=='__main__':
+if __name__ == '__main__':
     print VERSION
