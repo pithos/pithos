@@ -14,7 +14,6 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-import sys
 import os
 import stat
 import logging
@@ -22,8 +21,8 @@ import logging
 import gtk
 import gobject
 
-from .pithosconfig import *
-from .pandora.data import *
+from .pithosconfig import getdatapath
+from .pandora.data import valid_audio_formats, default_audio_quality
 from .plugins.scrobble import LastFmAuth
 
 try:
@@ -36,6 +35,7 @@ except ImportError:
         config_home = os.path.join(os.path.expanduser('~'), '.config')
 
 configfilename = os.path.join(config_home, 'pithos.ini')
+
 
 class PreferencesPithosDialog(gtk.Dialog):
     __gtype_name__ = "PreferencesPithosDialog"
@@ -75,7 +75,6 @@ class PreferencesPithosDialog(gtk.Dialog):
 
         self.__load_preferences()
 
-
     def get_preferences(self):
         """get_preferences  - returns a dictionary object that contains
         preferences for pithos.
@@ -85,16 +84,16 @@ class PreferencesPithosDialog(gtk.Dialog):
     def __load_preferences(self):
         #default preferences that will be overwritten if some are saved
         self.__preferences = {
-            "username":'',
-            "password":'',
-            "notify":True,
-            "last_station_id":None,
-            "proxy":'',
-            "control_proxy":'',
+            "username": '',
+            "password": '',
+            "notify": True,
+            "last_station_id": None,
+            "proxy": '',
+            "control_proxy": '',
             "show_icon": False,
             "lastfm_key": False,
-            "enable_mediakeys":True,
-            "enable_screensaverpause":False,
+            "enable_mediakeys": True,
+            "enable_screensaverpause": False,
             "volume": 1.0,
             # If set, allow insecure permissions. Implements CVE-2011-1500
             "unsafe_permissions": False,
@@ -111,11 +110,14 @@ class PreferencesPithosDialog(gtk.Dialog):
         for line in f:
             sep = line.find('=')
             key = line[:sep]
-            val = line[sep+1:].strip()
-            if val == 'None': val=None
-            elif val == 'False': val=False
-            elif val == 'True': val=True
-            self.__preferences[key]=val
+            val = line[sep + 1:].strip()
+            if val == 'None':
+                val = None
+            elif val == 'False':
+                val = False
+            elif val == 'True':
+                val = True
+            self.__preferences[key] = val
 
         if 'audio_format' in self.__preferences:
             # Pithos <= 0.3.17, replaced by audio_quality
@@ -177,7 +179,7 @@ class PreferencesPithosDialog(gtk.Dialog):
             os.fchmod(f.fileno(), (stat.S_IRUSR | stat.S_IWUSR))
 
         for key in self.__preferences:
-            f.write('%s=%s\n'%(key, self.__preferences[key]))
+            f.write('%s=%s\n' % (key, self.__preferences[key]))
         f.close()
 
     def setup_fields(self):
@@ -215,7 +217,7 @@ class PreferencesPithosDialog(gtk.Dialog):
 
         audio_quality = self.builder.get_object('prefs_audio_quality')
         active_idx = audio_quality.get_active()
-        if active_idx != -1: # ignore unknown format
+        if active_idx != -1:  # ignore unknown format
             self.__preferences["audio_quality"] = audio_quality.get_model()[active_idx][0]
 
         self.save()
@@ -225,7 +227,7 @@ class PreferencesPithosDialog(gtk.Dialog):
         Called before the dialog returns gtk.RESPONSE_CANCEL for run()
         """
 
-        self.setup_fields() # restore fields to previous values
+        self.setup_fields()  # restore fields to previous values
         pass
 
 
@@ -250,4 +252,3 @@ if __name__ == "__main__":
     dialog = NewPreferencesPithosDialog()
     dialog.show()
     gtk.main()
-

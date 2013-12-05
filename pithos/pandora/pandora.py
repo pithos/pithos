@@ -42,7 +42,8 @@ API_ERROR_INVALID_LOGIN = 1002
 API_ERROR_LISTENER_NOT_AUTHORIZED = 1003
 API_ERROR_PARTNER_NOT_AUTHORIZED = 1010
 
-PLAYLIST_VALIDITY_TIME = 60*60*3
+PLAYLIST_VALIDITY_TIME = 60 * 60 * 3
+
 
 class PandoraError(IOError):
     def __init__(self, message, status=None, submsg=None):
@@ -50,13 +51,26 @@ class PandoraError(IOError):
         self.message = message
         self.submsg = submsg
 
-class PandoraAuthTokenInvalid(PandoraError): pass
-class PandoraNetError(PandoraError): pass
-class PandoraAPIVersionError(PandoraError): pass
-class PandoraTimeout(PandoraNetError): pass
+
+class PandoraAuthTokenInvalid(PandoraError):
+    pass
+
+
+class PandoraNetError(PandoraError):
+    pass
+
+
+class PandoraAPIVersionError(PandoraError):
+    pass
+
+
+class PandoraTimeout(PandoraNetError):
+    pass
+
 
 def pad(s, l):
     return s + "\0" * (l - len(s))
+
 
 class Pandora(object):
     def __init__(self):
@@ -64,28 +78,28 @@ class Pandora(object):
         pass
 
     def pandora_encrypt(self, s):
-        return "".join([self.blowfish_encode.encrypt(pad(s[i:i+8], 8)).encode('hex') for i in xrange(0, len(s), 8)])
+        return "".join([self.blowfish_encode.encrypt(pad(s[i:i + 8], 8)).encode('hex') for i in xrange(0, len(s), 8)])
 
     def pandora_decrypt(self, s):
-        return "".join([self.blowfish_decode.decrypt(pad(s[i:i+16].decode('hex'), 8)) for i in xrange(0, len(s), 16)]).rstrip('\x08')
+        return "".join([self.blowfish_decode.decrypt(pad(s[i:i + 16].decode('hex'), 8)) for i in xrange(0, len(s), 16)]).rstrip('\x08')
 
     def json_call(self, method, args={}, https=False, blowfish=True):
         url_arg_strings = []
         if self.partnerId:
-            url_arg_strings.append('partner_id=%s'%self.partnerId)
+            url_arg_strings.append('partner_id=%s' % self.partnerId)
         if self.userId:
-            url_arg_strings.append('user_id=%s'%self.userId)
+            url_arg_strings.append('user_id=%s' % self.userId)
         if self.userAuthToken:
-            url_arg_strings.append('auth_token=%s'%urllib.quote_plus(self.userAuthToken))
+            url_arg_strings.append('auth_token=%s' % urllib.quote_plus(self.userAuthToken))
         elif self.partnerAuthToken:
-            url_arg_strings.append('auth_token=%s'%urllib.quote_plus(self.partnerAuthToken))
+            url_arg_strings.append('auth_token=%s' % urllib.quote_plus(self.partnerAuthToken))
 
-        url_arg_strings.append('method=%s'%method)
+        url_arg_strings.append('method=%s' % method)
         protocol = 'https' if https else 'http'
         url = protocol + self.rpcUrl + '&'.join(url_arg_strings)
 
         if self.time_offset:
-            args['syncTime'] = int(time.time()+self.time_offset)
+            args['syncTime'] = int(time.time() + self.time_offset)
         if self.userAuthToken:
             args['userAuthToken'] = self.userAuthToken
         elif self.partnerAuthToken:
@@ -124,26 +138,26 @@ class Pandora(object):
             if code == API_ERROR_INVALID_AUTH_TOKEN:
                 raise PandoraAuthTokenInvalid(msg)
             elif code == API_ERROR_COUNTRY_NOT_SUPPORTED:
-                 raise PandoraError("Pandora not available", code,
-                    submsg="Pandora is not available outside the United States.")
+                raise PandoraError("Pandora not available", code,
+                                   submsg="Pandora is not available outside the United States.")
             elif code == API_ERROR_API_VERSION_NOT_SUPPORTED:
                 raise PandoraAPIVersionError(msg)
             elif code == API_ERROR_INSUFFICIENT_CONNECTIVITY:
                 raise PandoraError("Out of sync", code,
-                    submsg="Correct your system's clock. If the problem persists, a Pithos update may be required")
+                                   submsg="Correct your system's clock. If the problem persists, a Pithos update may be required")
             elif code == API_ERROR_READ_ONLY_MODE:
                 raise PandoraError("Pandora maintenance", code,
-                    submsg="Pandora is in read-only mode as it is performing maintenance. Try again later.")
+                                   submsg="Pandora is in read-only mode as it is performing maintenance. Try again later.")
             elif code == API_ERROR_INVALID_LOGIN:
                 raise PandoraError("Login Error", code, submsg="Invalid username or password")
             elif code == API_ERROR_LISTENER_NOT_AUTHORIZED:
                 raise PandoraError("Pandora Error", code,
-                    submsg="A Pandora One account is required to access this feature. Uncheck 'Pandora One' in Settings.")
+                                   submsg="A Pandora One account is required to access this feature. Uncheck 'Pandora One' in Settings.")
             elif code == API_ERROR_PARTNER_NOT_AUTHORIZED:
                 raise PandoraError("Login Error", code,
-                    submsg="Invalid Pandora partner keys. A Pithos update may be required.")
+                                   submsg="Invalid Pandora partner keys. A Pithos update may be required.")
             else:
-                raise PandoraError("Pandora returned an error", code, "%s (code %d)"%(msg, code))
+                raise PandoraError("Pandora returned an error", code, "%s (code %d)" % (msg, code))
 
         if 'result' in tree:
             return tree['result']
@@ -164,10 +178,10 @@ class Pandora(object):
 
         partner = self.json_call('auth.partnerLogin', {
             'deviceModel': client['deviceModel'],
-            'username': client['username'], # partner username
-            'password': client['password'], # partner password
+            'username': client['username'],  # partner username
+            'password': client['password'],  # partner password
             'version': client['version']
-            },https=True, blowfish=False)
+        }, https=True, blowfish=False)
 
         self.partnerId = partner['partnerId']
         self.partnerAuthToken = partner['partnerAuthToken']
@@ -202,8 +216,8 @@ class Pandora(object):
     def search(self, query):
         results = self.json_call('music.search', {'searchText': query})
 
-        l =  [SearchResult('artist', i) for i in results['artists']]
-        l += [SearchResult('song',   i) for i in results['songs']]
+        l = [SearchResult('artist', i) for i in results['artists']]
+        l += [SearchResult('song', i) for i in results['songs']]
         l.sort(key=lambda i: i.score, reverse=True)
 
         return l
@@ -227,6 +241,7 @@ class Pandora(object):
 
     def delete_feedback(self, stationToken, feedbackId):
         self.json_call('station.deleteFeedback', {'feedbackId': feedbackId, 'stationToken': stationToken})
+
 
 class Station(object):
     def __init__(self, pandora, d):
@@ -253,13 +268,13 @@ class Station(object):
         playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken}, https=True)
         songs = []
         for i in playlist['items']:
-            if 'songName' in i: # check for ads
+            if 'songName' in i:  # check for ads
                 songs.append(Song(self.pandora, i))
         return songs
 
     @property
     def info_url(self):
-        return 'http://www.pandora.com/stations/'+self.idToken
+        return 'http://www.pandora.com/stations/' + self.idToken
 
     def rename(self, new_name):
         if new_name != self.name:
@@ -272,6 +287,7 @@ class Station(object):
         logging.info("pandora: Deleting Station")
         self.pandora.json_call('station.deleteStation', {'stationToken': self.idToken})
 
+
 class Song(object):
     def __init__(self, pandora, d):
         self.pandora = pandora
@@ -280,14 +296,14 @@ class Song(object):
         self.artist = d['artistName']
         self.audioUrlMap = d['audioUrlMap']
         self.trackToken = d['trackToken']
-        self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
+        self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE  # banned songs won't play, so we don't care about them
         self.stationId = d['stationId']
         self.title = d['songName']
         self.songDetailURL = d['songDetailUrl']
         self.artRadio = d['albumArtUrl']
 
-        self.tired=False
-        self.message=''
+        self.tired = False
+        self.message = ''
         self.start_time = None
         self.finished = False
         self.playlist_time = time.time()
@@ -302,7 +318,7 @@ class Song(object):
             return q['audioUrl']
         except KeyError:
             logging.warn("Unable to use audio format %s. Using %s",
-                           quality, self.audioUrlMap.keys()[0])
+                         quality, self.audioUrlMap.keys()[0])
             return self.audioUrlMap.values()[0]['audioUrl']
 
     @property
@@ -355,4 +371,3 @@ class SearchResult(object):
             self.artist = d['artistName']
         elif resultType == 'artist':
             self.name = d['artistName']
-
