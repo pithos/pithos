@@ -55,7 +55,7 @@ setup(
              'data/icons/scalable/apps/pithos-mono.svg',
              'data/icons/scalable/apps/pithos.svg'
          ]),
-        ('/usr/share/applications', ['pithos.desktop'])
+        ('/usr/share/applications', ['data/pithos.desktop'])
     ],
     package_data={
         'pithos': [
