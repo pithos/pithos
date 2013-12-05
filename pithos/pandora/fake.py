@@ -94,7 +94,7 @@ class FakePandora(Pandora):
         else:
             logging.error("Invalid method %s" % method)
 
-    def connect(self, user, password):
+    def connect(self, client, user, password):
         self.set_authenticated()
         self.get_stations()
 
@@ -108,7 +108,17 @@ class FakePandora(Pandora):
         return {
             'albumName':"AlbumName",
             'artistName':"ArtistName",
-            'additionalAudioUrl':'http://pithos.github.io/testfile.aac?val='+'0'*48,
+            'audioUrlMap': {
+                'highQuality': {
+                    'audioUrl': 'http://pithos.github.io/testfile.aac?val='+'0'*48
+                },
+                'mediumQuality': {
+                    'audioUrl': 'http://pithos.github.io/testfile.aac?val='+'0'*48
+                },
+                'lowQuality': {
+                    'audioUrl': 'http://pithos.github.io/testfile.aac?val='+'0'*48
+                },
+            },
             'trackGain':0,
             'trackToken':'5908540384',
             'songRating': 1 if c%3 == 0 else 0,
@@ -116,6 +126,6 @@ class FakePandora(Pandora):
             'songName': 'Test song %i'%c,
             'songDetailUrl': 'http://pithos.github.io/',
             'albumDetailUrl':'http://pithos.github.io/',
-            'albumArtUrl':'http://i.imgur.com/H4Z8x.jpg',
+            'albumArtUrl':'http://pithos.github.io/img/logo.png',
         }
 
