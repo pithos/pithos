@@ -18,7 +18,7 @@
 import dbus
 import dbus.service
 
-class PithosSoundMenu(dbus.service.Object):
+class PithosMprisService(dbus.service.Object):
     MEDIA_PLAYER2_IFACE = 'org.mpris.MediaPlayer2'
     MEDIA_PLAYER2_PLAYER_IFACE = 'org.mpris.MediaPlayer2.Player'
 
