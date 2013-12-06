@@ -873,7 +873,8 @@ def NewPithosWindow(app, options):
 
 class PithosApplication(Gtk.Application):
     def __init__(self):
-        Gtk.Application.__init__(self, application_id='net.kevinmehall.Pithos',
+        # Use org.gnome to avoid conflict with existing dbus interface net.kevinmehall
+        Gtk.Application.__init__(self, application_id='org.gnome.pithos',
                                 flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.window = None
         self.options = None
