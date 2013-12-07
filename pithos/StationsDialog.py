@@ -162,7 +162,7 @@ class StationsDialog(Gtk.Dialog):
         self.pithos.refresh_stations(self.pithos)
         
     def add_station_cb(self, dialog, response):
-        print "in add_station_cb", dialog.result, response
+        logging.info("in add_station_cb {} {}".format(dialog.result, response))
         if response == 1:
             self.worker_run("add_station_by_music_id", (dialog.result.musicId,), self.station_added, "Creating station...")
         dialog.hide()

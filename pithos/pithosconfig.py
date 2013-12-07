@@ -56,4 +56,4 @@ def getdatapath():
         raise project_path_not_found
 
 if __name__=='__main__':
-    print VERSION
+    print(VERSION)

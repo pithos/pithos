@@ -14,6 +14,7 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
+import logging
 import threading
 import Queue
 from gi.repository import GObject
@@ -44,7 +45,7 @@ class GObjectWorker():
         self.queue.put((command, args, callback, errorback))
         
     def _default_errorback(self, error):
-        print "Unhandled exception in worker thread:\n", error.traceback
+        logging.error("Unhandled exception in worker thread:\n{}".format(error.traceback))
         
 if __name__ == '__main__':
     worker = GObjectWorker()
@@ -52,15 +53,15 @@ if __name__ == '__main__':
     from gi.repository import Gtk
     
     def test_cmd(a, b):
-        print "running..."
+        logging.info("running...")
         time.sleep(5)
-        print "done"
+        logging.info("done")
         return a*b
         
     def test_cb(result):
-        print "got result", result
+        logging.info("got result {}".format(result))
         
-    print "sending"
+    logging.info("sending")
     worker.send(test_cmd, (3,4), test_cb)
     worker.send(test_cmd, ((), ()), test_cb) #trigger exception in worker to test error handling
     

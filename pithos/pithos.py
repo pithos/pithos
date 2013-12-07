@@ -55,7 +55,7 @@ from .pandora.data import *
 
 
 def openBrowser(url):
-    print "Opening %s"%url
+    logging.info("Opening URL {}".format(url))
     webbrowser.open(url)
     try:
         os.wait() # workaround for http://bugs.python.org/issue5993
