@@ -4,8 +4,9 @@
   <!-- interface-requires stations_dialog 1.0 -->
   <object class="GtkMessageDialog" id="delete_confirm_dialog">
     <property name="border_width">5</property>
-    <property name="type_hint">normal</property>
-    <property name="skip_taskbar_hint">True</property>
+    <property name="type_hint">dialog</property>
+    <property name="modal">True</property>
+    <property name="transient_for">stations_dialog</property>
     <property name="message_type">warning</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox3">
@@ -106,7 +107,8 @@
     <property name="border_width">1</property>
     <property name="title" translatable="yes">Manage Stations</property>
     <property name="icon_name">pithos</property>
-    <property name="type_hint">normal</property>
+    <property name="type_hint">dialog</property>
+    <property name="modal">True</property>
     <signal name="delete-event" handler="on_close" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">

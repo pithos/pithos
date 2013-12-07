@@ -154,6 +154,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.builder.connect_signals(self)
 
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
+        self.prefs_dlg.set_transient_for(self)
         self.preferences = self.prefs_dlg.get_preferences()
 
         if self.prefs_dlg.fix_perms():
@@ -790,20 +791,15 @@ class PithosWindow(Gtk.ApplicationWindow):
     def station_properties(self, *ignore):
         openBrowser(self.current_station.info_url)
 
-    def open_web_site(self, *ignore):
-        openBrowser("http://pithos.github.io?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
-
-    def report_bug(self, *ignore):
-        openBrowser("https://github.com/pithos/pithos/issues")
-
-    def show_about(self, widget=None, data=None):
+    def show_about(self):
         """about - display the about box for pithos """
         about = AboutPithosDialog.NewAboutPithosDialog()
+        about.set_transient_for(self)
         about.set_version(VERSION)
         response = about.run()
         about.destroy()
 
-    def show_preferences(self, widget=None, data=None, is_startup=False):
+    def show_preferences(self, is_startup=False):
         """preferences - display the preferences window for pithos """
         old_prefs = dict(self.preferences)
         response = self.prefs_dlg.run()
@@ -823,11 +819,12 @@ class PithosWindow(Gtk.ApplicationWindow):
                         self.pandora_connect()
             load_plugins(self)
 
-    def stations_dialog(self, *ignore):
+    def show_stations(self):
         if self.stations_dlg:
             self.stations_dlg.present()
         else:
             self.stations_dlg = StationsDialog.NewStationsDialog(self)
+            self.stations_dlg.set_transient_for(self)
             self.stations_dlg.show_all()
 
     def refresh_stations(self, *ignore):
@@ -936,7 +933,7 @@ class PithosApplication(Gtk.Application):
         self.quit()
 
     def stations_cb(self, action, param):
-        self.window.stations_dialog()
+        self.window.show_stations()
 
     def prefs_cb(self, action, param):
         self.window.show_preferences()

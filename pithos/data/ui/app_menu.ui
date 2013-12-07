@@ -1,13 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <menu id="app-menu">
     <section>
       <item>
         <attribute name="action">app.stations</attribute>
         <attribute name="label" translatable="yes">_Stations</attribute>
+        <attribute name="accel">&lt;Primary&gt;s</attribute>
       </item>
       <item>
         <attribute name="action">app.preferences</attribute>
         <attribute name="label" translatable="yes">_Preferences</attribute>
+        <attribute name="accel">&lt;Primary&gt;p</attribute>
       </item>
     </section>
     <section>

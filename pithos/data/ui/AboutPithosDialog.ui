@@ -12,6 +12,8 @@
     <property name="comments" translatable="yes">A Pandora Radio client for the GNOME Desktop</property>
     <property name="website">http://pithos.github.io</property>
     <property name="logo">../media/icon.png</property>
+    <property name="type_hint">dialog</property>
+    <property name="modal">True</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">
         <property name="visible">True</property>

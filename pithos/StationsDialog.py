@@ -154,6 +154,7 @@ class StationsDialog(Gtk.Dialog):
             self.searchDialog.present()
         else:
             self.searchDialog = SearchDialog.NewSearchDialog(self.worker_run)
+            self.searchDialog.set_transient_for(self)
             self.searchDialog.show_all()
             self.searchDialog.connect("response", self.add_station_cb)
             

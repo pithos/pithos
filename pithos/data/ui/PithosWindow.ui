@@ -11,8 +11,9 @@
   </object>
   <object class="GtkMessageDialog" id="api_update_dialog">
     <property name="border_width">5</property>
-    <property name="type_hint">normal</property>
-    <property name="skip_taskbar_hint">True</property>
+    <property name="type_hint">dialog</property>
+    <property name="modal">True</property>
+    <property name="transient_for">pithos_window</property>
     <property name="message_type">error</property>
     <property name="text" translatable="yes">Pithos Upgrade Required</property>
     <property name="secondary_text" translatable="yes">Pithos needs to be updated for compatibility with Pandora's latest changes.</property>
@@ -68,8 +69,8 @@
   </object>
   <object class="GtkMessageDialog" id="error_dialog">
     <property name="border_width">5</property>
-    <property name="type_hint">normal</property>
-    <property name="skip_taskbar_hint">True</property>
+    <property name="type_hint">dialog</property>
+    <property name="modal">True</property>
     <property name="transient_for">pithos_window</property>
     <property name="message_type">error</property>
     <property name="text" translatable="yes">Error</property>
@@ -256,8 +257,9 @@
   </object>
   <object class="GtkMessageDialog" id="messagedialog1">
     <property name="border_width">5</property>
-    <property name="type_hint">normal</property>
-    <property name="skip_taskbar_hint">True</property>
+    <property name="type_hint">dialog</property>
+    <property name="modal">True</property>
+    <property name="transient_for">pithos_window</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox3">
         <property name="visible">True</property>
