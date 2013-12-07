@@ -16,7 +16,7 @@
 
 import logging
 import threading
-import Queue
+import queue
 from gi.repository import GObject, GLib
 import traceback
 GObject.threads_init()
@@ -25,7 +25,7 @@ class GObjectWorker():
     def __init__(self):
         self.thread = threading.Thread(target=self._run)
         self.thread.daemon = True
-        self.queue = Queue.Queue()
+        self.queue = queue.Queue()
         self.thread.start()
         
     def _run(self):
@@ -35,7 +35,7 @@ class GObjectWorker():
                 result = command(*args)
                 if callback:
                     GLib.idle_add(callback, result)
-            except Exception, e:
+            except Exception as e:
                 e.traceback = traceback.format_exc()
                 if errorback:
                     GLib.idle_add(errorback, e)

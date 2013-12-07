@@ -25,10 +25,10 @@ import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 import contextlib
-import cgi
+import html
 import math
 import webbrowser
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import json
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
@@ -122,7 +122,7 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
 def get_album_art(url, *extra):
     l = GdkPixbuf.PixbufLoader()
     l.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
-    with contextlib.closing(urllib2.urlopen(url)) as f:
+    with contextlib.closing(urllib.request.urlopen(url)) as f:
         l.write(f.read())
     l.close()
     return (l.get_pixbuf(),) + extra
@@ -324,7 +324,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if self.preferences['proxy']:
             return self.preferences['proxy']
 
-        system_proxies = urllib.getproxies()
+        system_proxies = urllib.request.getproxies()
         if 'http' in system_proxies:
             return system_proxies['http']
 
@@ -341,29 +341,26 @@ class PithosWindow(Gtk.ApplicationWindow):
         handlers = []
         global_proxy = self.preferences['proxy']
         if global_proxy:
-            handlers.append(urllib2.ProxyHandler({'http': global_proxy, 'https': global_proxy}))
-        global_opener = urllib2.build_opener(*handlers)
-        urllib2.install_opener(global_opener)
+            handlers.append(urllib.request.ProxyHandler({'http': global_proxy, 'https': global_proxy}))
+        global_opener = urllib.request.build_opener(*handlers)
+        urllib.request.install_opener(global_opener)
 
         control_opener = global_opener
         control_proxy = self.preferences['control_proxy']
         control_proxy_pac = self.preferences['control_proxy_pac']
 
         if control_proxy:
-            control_opener = urllib2.build_opener(urllib2.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
+            control_opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
 
         elif control_proxy_pac and pacparser_imported:
             pacparser.init()
-            pacparser.parse_pac_string(urllib2.urlopen(control_proxy_pac).read())
+            pacparser.parse_pac_string(urllib.request.urlopen(control_proxy_pac).read())
             proxies = pacparser.find_proxy("http://pandora.com", "pandora.com").split(";")
             for proxy in proxies:
                 match = re.search("PROXY (.*)", proxy)
                 if match:
                     control_proxy = match.group(1)
                     break
-
-            if control_proxy:
-                control_opener = urllib2.build_opener(urllib2.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
 
         self.worker_run('set_url_opener', (control_opener,))
 
@@ -498,9 +495,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         if prev and prev.start_time:
             prev.finished = True
             dur_stat, dur = self.player.query_duration(self.time_format)
-            prev.duration = dur/1000000000 if dur_stat else None
+            prev.duration = dur//1000000000 if dur_stat else None
             pos_stat, pos = self.player.query_position(self.time_format)
-            prev.position = pos/1000000000 if pos_stat else None
+            prev.position = pos//1000000000 if pos_stat else None
             self.emit("song-ended", prev)
 
         self.playing = False
@@ -710,9 +707,9 @@ class PithosWindow(Gtk.ApplicationWindow):
             soup.proxy_pw = password
 
     def song_text(self, song):
-        title = cgi.escape(song.title)
-        artist = cgi.escape(song.artist)
-        album = cgi.escape(song.album)
+        title = html.escape(song.title)
+        artist = html.escape(song.artist)
+        album = html.escape(song.album)
         msg = []
         if song is self.current_song:
             dur_stat, dur_int = self.player.query_duration(self.time_format)
@@ -762,11 +759,11 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.station_changed(self.stations_model[index][0])
 
     def format_time(self, time_int):
-        time_int = time_int / 1000000000
+        time_int = time_int // 1000000000
         s = time_int % 60
-        time_int /= 60
+        time_int //= 60
         m = time_int % 60
-        time_int /= 60
+        time_int //= 60
         h = time_int
 
         if h:

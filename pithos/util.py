@@ -14,7 +14,7 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from urllib import splittype, splituser, splitpasswd
+from urllib.parse import splittype, splituser, splitpasswd
 
 def parse_proxy(proxy):
     """ _parse_proxy from urllib """
