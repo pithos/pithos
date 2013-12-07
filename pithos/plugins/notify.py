@@ -15,7 +15,7 @@
 ### END LICENSE
 
 import logging
-from cgi import escape
+import html
 from pithos.plugin import PithosPlugin
 from pithos.pithosconfig import get_data_file
 from gi.repository import (GLib, Gtk, Notify)
@@ -76,8 +76,8 @@ class NotifyPlugin(PithosPlugin):
             self.notification.set_image_from_pixbuf(song.art_pixbuf)
         else:
             self.notification.set_hint('image-data', None)
-        
-        msg = escape('by {} from {}'.format(song.artist, song.album))
+
+        msg = html.escape('by {} from {}'.format(song.artist, song.album))
         self.notification.update(song.title, msg, 'audio-x-generic')
         self.notification.show()
 

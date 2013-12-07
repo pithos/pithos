@@ -68,7 +68,7 @@ def load_plugin(name, window):
         return ErrorPlugin(name, e.message)
         
     # find the class object for the actual plugin
-    for key, item in module.__dict__.iteritems():
+    for key, item in module.__dict__.items():
         if hasattr(item, '_PITHOS_PLUGIN') and key != "PithosPlugin":
             plugin_class = item
             break

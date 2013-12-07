@@ -16,9 +16,9 @@
 
 import sys
 import os
+import html
 from gi.repository import Gtk
 from gi.repository import GObject
-import cgi
 
 from .pithosconfig import getdatapath
 
@@ -82,9 +82,9 @@ class SearchDialog(Gtk.Dialog):
             self.model.clear()
             for i in results:
                 if i.resultType is 'song':
-                    mk = "<b>%s</b> by %s"%(cgi.escape(i.title), cgi.escape(i.artist))
+                    mk = "<b>%s</b> by %s"%(html.escape(i.title), html.escape(i.artist))
                 elif i.resultType is 'artist':
-                    mk = "<b>%s</b> (artist)"%(cgi.escape(i.name))
+                    mk = "<b>%s</b> (artist)"%(html.escape(i.name))
                 self.model.append((i, mk))
             self.treeview.show()
             self.searchbtn.set_sensitive(True)

@@ -15,14 +15,15 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from blowfish import Blowfish
+from .blowfish import Blowfish
+# from Crypto.Cipher import Blowfish
 from xml.dom import minidom
 import re
 import json
 import logging
 import time
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import codecs
 
 # This is an implementation of the Pandora JSON API using Android partner
 # credentials.
@@ -60,18 +61,18 @@ class PandoraAPIVersionError(PandoraError): pass
 class PandoraTimeout(PandoraNetError): pass
 
 def pad(s, l):
-    return s + "\0" * (l - len(s))
+    return s + b'\0' * (l - len(s))
 
 class Pandora(object):
     def __init__(self):
-        self.opener = urllib2.build_opener()
+        self.opener = urllib.request.build_opener()
         pass
 
     def pandora_encrypt(self, s):
-        return "".join([self.blowfish_encode.encrypt(pad(s[i:i+8], 8)).encode('hex') for i in xrange(0, len(s), 8)])
+        return b''.join([codecs.encode(self.blowfish_encode.encrypt(pad(s[i:i+8], 8)), 'hex_codec') for i in range(0, len(s), 8)])
 
     def pandora_decrypt(self, s):
-        return "".join([self.blowfish_decode.decrypt(pad(s[i:i+16].decode('hex'), 8)) for i in xrange(0, len(s), 16)]).rstrip('\x08')
+        return b''.join([self.blowfish_decode.decrypt(pad(codecs.decode(s[i:i+16], 'hex_codec'), 8)) for i in range(0, len(s), 16)]).rstrip(b'\x08')
 
     def json_call(self, method, args={}, https=False, blowfish=True):
         url_arg_strings = []
@@ -80,9 +81,9 @@ class Pandora(object):
         if self.userId:
             url_arg_strings.append('user_id=%s'%self.userId)
         if self.userAuthToken:
-            url_arg_strings.append('auth_token=%s'%urllib.quote_plus(self.userAuthToken))
+            url_arg_strings.append('auth_token=%s'%urllib.parse.quote_plus(self.userAuthToken))
         elif self.partnerAuthToken:
-            url_arg_strings.append('auth_token=%s'%urllib.quote_plus(self.partnerAuthToken))
+            url_arg_strings.append('auth_token=%s'%urllib.parse.quote_plus(self.partnerAuthToken))
 
         url_arg_strings.append('method=%s'%method)
         protocol = 'https' if https else 'http'
@@ -94,7 +95,7 @@ class Pandora(object):
             args['userAuthToken'] = self.userAuthToken
         elif self.partnerAuthToken:
             args['partnerAuthToken'] = self.partnerAuthToken
-        data = json.dumps(args)
+        data = json.dumps(args).encode('utf-8')
 
         logging.debug(url)
         logging.debug(data)
@@ -103,13 +104,13 @@ class Pandora(object):
             data = self.pandora_encrypt(data)
 
         try:
-            req = urllib2.Request(url, data, {'User-agent': USER_AGENT, 'Content-type': 'text/plain'})
+            req = urllib.request.Request(url, data, {'User-agent': USER_AGENT, 'Content-type': 'text/plain'})
             response = self.opener.open(req, timeout=HTTP_TIMEOUT)
-            text = response.read()
-        except urllib2.HTTPError as e:
+            text = response.read().decode('utf-8')
+        except urllib.error.HTTPError as e:
             logging.error("HTTP error: %s", e)
             raise PandoraNetError(str(e))
-        except urllib2.URLError as e:
+        except urllib.error.URLError as e:
             logging.error("Network error: %s", e)
             if e.reason[0] == 'timed out':
                 raise PandoraTimeout("Network error", submsg="Timeout")
@@ -163,8 +164,8 @@ class Pandora(object):
         self.userAuthToken = self.time_offset = None
 
         self.rpcUrl = client['rpcUrl']
-        self.blowfish_encode = Blowfish(client['encryptKey'])
-        self.blowfish_decode = Blowfish(client['decryptKey'])
+        self.blowfish_encode = Blowfish(client['encryptKey'].encode('utf-8'))
+        self.blowfish_decode = Blowfish(client['decryptKey'].encode('utf-8'))
 
         partner = self.json_call('auth.partnerLogin', {
             'deviceModel': client['deviceModel'],
@@ -176,7 +177,7 @@ class Pandora(object):
         self.partnerId = partner['partnerId']
         self.partnerAuthToken = partner['partnerAuthToken']
 
-        pandora_time = int(self.pandora_decrypt(partner['syncTime'])[4:14])
+        pandora_time = int(self.pandora_decrypt(partner['syncTime'].encode('utf-8'))[4:14])
         self.time_offset = pandora_time - time.time()
         logging.info("Time offset is %s", self.time_offset)
 
@@ -330,8 +331,8 @@ class Song(object):
             return q['audioUrl']
         except KeyError:
             logging.warn("Unable to use audio format %s. Using %s",
-                           quality, self.audioUrlMap.keys()[0])
-            return self.audioUrlMap.values()[0]['audioUrl']
+                           quality, list(self.audioUrlMap.keys())[0])
+            return list(self.audioUrlMap.values())[0]['audioUrl']
 
     @property
     def station(self):

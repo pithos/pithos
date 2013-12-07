@@ -9,4 +9,4 @@ fi
 mkdir -p debug_config
 export XDG_CONFIG_HOME="./debug_config"
 
-/usr/bin/env python -m pithos.pithos $args
+/usr/bin/env python3 -m pithos.pithos $args
