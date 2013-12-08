@@ -27,6 +27,13 @@ from .pithosconfig import *
 from .pandora.data import *
 from .plugins.scrobble import LastFmAuth
 
+pacparser_imported = False
+try:
+    import pacparser
+    pacparser_imported = True
+except ImportError:
+    logging.warning("Could not import python-pacparser.")
+
 config_home = GLib.get_user_config_dir()
 configfilename = os.path.join(config_home, 'pithos.ini')
 
@@ -84,6 +91,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
             "last_station_id":None,
             "proxy":'',
             "control_proxy":'',
+            "control_proxy_pac":'',
             "show_icon": False,
             "lastfm_key": False,
             "enable_mediakeys":True,
@@ -113,6 +121,9 @@ class PreferencesPithosDialog(Gtk.Dialog):
         if 'audio_format' in self.__preferences:
             # Pithos <= 0.3.17, replaced by audio_quality
             del self.__preferences['audio_format']
+
+        if not pacparser_imported and self.__preferences['control_proxy_pac'] != '':
+            self.__preferences['control_proxy_pac'] = ''
 
         self.setup_fields()
 
@@ -179,6 +190,10 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.builder.get_object('checkbutton_pandora_one').set_active(self.__preferences["pandora_one"])
         self.builder.get_object('prefs_proxy').set_text(self.__preferences["proxy"])
         self.builder.get_object('prefs_control_proxy').set_text(self.__preferences["control_proxy"])
+        self.builder.get_object('prefs_control_proxy_pac').set_text(self.__preferences["control_proxy_pac"])
+        if not pacparser_imported:
+            self.builder.get_object('prefs_control_proxy_pac').set_sensitive(False)
+            self.builder.get_object('prefs_control_proxy_pac').set_tooltip_text("Please install python-pacparser")
 
         audio_quality_combo = self.builder.get_object('prefs_audio_quality')
         for row in audio_quality_combo.get_model():
@@ -202,6 +217,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.__preferences["pandora_one"] = self.builder.get_object('checkbutton_pandora_one').get_active()
         self.__preferences["proxy"] = self.builder.get_object('prefs_proxy').get_text()
         self.__preferences["control_proxy"] = self.builder.get_object('prefs_control_proxy').get_text()
+        self.__preferences["control_proxy_pac"] = self.builder.get_object('prefs_control_proxy_pac').get_text()
         self.__preferences["notify"] = self.builder.get_object('checkbutton_notify').get_active()
         self.__preferences["enable_screensaverpause"] = self.builder.get_object('checkbutton_screensaverpause').get_active()
         self.__preferences["show_icon"] = self.builder.get_object('checkbutton_icon').get_active()
@@ -243,4 +259,3 @@ if __name__ == "__main__":
     dialog = NewPreferencesPithosDialog()
     dialog.show()
     Gtk.main()
-

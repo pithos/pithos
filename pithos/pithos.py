@@ -16,6 +16,7 @@
 ### END LICENSE
 
 import sys
+import re
 import os, time
 import logging, argparse
 
@@ -53,6 +54,12 @@ from .mpris import PithosMprisService
 from .pandora import *
 from .pandora.data import *
 
+pacparser_imported = False
+try:
+    import pacparser
+    pacparser_imported = True
+except ImportError:
+    logging.warning("Disabled proxy auto-config support because python-pacparser module was not found.")
 
 def openBrowser(url):
     logging.info("Opening URL {}".format(url))
@@ -160,6 +167,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if self.prefs_dlg.fix_perms():
             # Changes were made, save new config variable
             self.prefs_dlg.save()
+
         self.init_core()
         self.init_ui()
 
@@ -334,8 +342,24 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         control_opener = global_opener
         control_proxy = self.preferences['control_proxy']
+        control_proxy_pac = self.preferences['control_proxy_pac']
+
         if control_proxy:
             control_opener = urllib2.build_opener(urllib2.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
+
+        elif control_proxy_pac and pacparser_imported:
+            pacparser.init()
+            pacparser.parse_pac_string(urllib2.urlopen(control_proxy_pac).read())
+            proxies = pacparser.find_proxy("http://pandora.com", "pandora.com").split(";")
+            for proxy in proxies:
+                match = re.search("PROXY (.*)", proxy)
+                if match:
+                    control_proxy = match.group(1)
+                    break
+
+            if control_proxy:
+                control_opener = urllib2.build_opener(urllib2.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
+
         self.worker_run('set_url_opener', (control_opener,))
 
     def set_audio_quality(self):
@@ -951,4 +975,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
