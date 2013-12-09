@@ -18,6 +18,7 @@
 import sys
 import os, time
 import logging, argparse
+import signal
 
 import gi
 gi.require_version('Gst', '1.0')
@@ -147,6 +148,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         initializing the start of the new PithosWindow instance.
 
         """
+        print "Added signal."
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+
         self.cmdopts = cmdopts
 
         #get a reference to the builder and set up the signals
@@ -951,4 +955,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
