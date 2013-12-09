@@ -670,7 +670,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             song = self.current_song
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
-            self.songs_model[song.index][2] = self.song_icon(song)
+            self.songs_model[song.index][2] = self.song_icon(song) or ""
         return self.playing
 
     def stations_combo_changed(self, widget):
