@@ -148,7 +148,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         initializing the start of the new PithosWindow instance.
 
         """
-        print "Added signal."
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
         self.cmdopts = cmdopts
