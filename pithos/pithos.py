@@ -792,7 +792,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.player.set_property("volume", volume)
         self.preferences['volume'] = volume
 
-    def raise_volume(self, down=False):
+    def adjust_volume(self, down=False):
         old_volume = self.volume.get_property("value")
         new_volume = max(0.0, min(1.0, old_volume + 0.02 * (-1.0 if down else 1.0)))
 

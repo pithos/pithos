@@ -22,7 +22,12 @@ from pithos.plugin import PithosPlugin
 try:
     from gi.repository import AppIndicator3 as AppIndicator
     indicator_capable = True
-    indicator_capable = False  # Disable AppIndicator until this bug is fixed: https://bugs.launchpad.net/variety/+bug/1071598
+
+    # If scrolling DOWN on the Pithos indicator causes your volume to RISE, you're
+    # a victim of this bug: https://bugs.launchpad.net/variety/+bug/1071598
+    # You can attempt to uncomment the following statement to see if it makes things
+    # better for you. (Reported to work on XFCE, but not to work on Unity/GNOME)
+  # indicator_capable = False
 except:
     indicator_capable = False
 
@@ -57,7 +62,7 @@ class PithosNotificationIcon(PithosPlugin):
             direction = steps.direction.value_nick
 
         if direction in ('up', 'down'):
-            self.window.raise_volume(down=(direction == 'down'))
+            self.window.adjust_volume(down=(direction == 'down'))
 
     def build_context_menu(self):
         menu = Gtk.Menu()
