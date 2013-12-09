@@ -22,6 +22,7 @@ from pithos.plugin import PithosPlugin
 try:
     from gi.repository import AppIndicator3 as AppIndicator
     indicator_capable = True
+    indicator_capable = False  # Disable AppIndicator until this bug is fixed: https://bugs.launchpad.net/variety/+bug/1071598
 except:
     indicator_capable = False
 
@@ -48,7 +49,16 @@ class PithosNotificationIcon(PithosPlugin):
             self.statusicon.connect('activate', self.toggle_visible)
         
         self.build_context_menu()
-       
+
+    def scroll(self, steps):
+        if indicator_capable:
+            direction = steps.value_nick
+        else:
+            direction = steps.direction.value_nick
+
+        if direction in ('up', 'down'):
+            self.window.raise_volume(down=(direction == 'down'))
+
     def build_context_menu(self):
         menu = Gtk.Menu()
         
@@ -80,9 +90,11 @@ class PithosNotificationIcon(PithosPlugin):
         # connect our new menu to the statusicon or the appindicator
         if indicator_capable:
             self.ind.set_menu(menu)
+            self.ind.connect('scroll-event', lambda _x, _y, steps: self.scroll(steps))
         else:
             self.statusicon.connect('popup-menu', self.context_menu, menu)
-            
+            self.statusicon.connect('scroll-event', lambda _, steps: self.scroll(steps))
+
         self.menu = menu
 
 
