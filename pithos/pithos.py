@@ -939,6 +939,14 @@ class PithosApplication(Gtk.Application):
         self.options = parser.parse_args(args.get_arguments()[1:])
 
         #set the logging level to show debug messages
+
+        # First, get rid of existing logging handlers due to call in header as per
+        # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig 
+        root = logging.getLogger()
+        if root.handlers:
+            for handler in root.handlers:
+                root.removeHandler(handler)
+
         if self.options.verbose:
             logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
         else:
