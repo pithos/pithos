@@ -938,6 +938,10 @@ class PithosApplication(Gtk.Application):
         parser.add_argument("-t", "--test", action="store_true", dest="test", help="Use a mock web interface instead of connecting to the real Pandora server")
         self.options = parser.parse_args(args.get_arguments()[1:])
 
+        # First, get rid of existing logging handlers due to call in header as per
+        # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig
+        logging.root.handlers = []
+
         #set the logging level to show debug messages
         if self.options.verbose:
             logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
