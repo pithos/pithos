@@ -839,6 +839,9 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def show_preferences(self, is_startup=False):
         """preferences - display the preferences window for pithos """
+        if is_startup:
+            self.prefs_dlg.set_type_hint(Gdk.WindowTypeHint.NORMAL)
+
         old_prefs = dict(self.preferences)
         response = self.prefs_dlg.run()
         self.prefs_dlg.hide()
@@ -855,6 +858,8 @@ class PithosWindow(Gtk.ApplicationWindow):
                     or self.preferences['password'] != old_prefs['password']
                     or self.preferences['pandora_one'] != old_prefs['pandora_one']):
                         self.pandora_connect()
+            else:
+                self.prefs_dlg.set_type_hint(Gdk.WindowTypeHint.DIALOG)
             load_plugins(self)
 
     def show_stations(self):
