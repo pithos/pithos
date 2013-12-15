@@ -18,9 +18,10 @@ Depends: ${misc:Depends},
  python-gi,
  python-dbus,
  python-pylast,
+ gir1.2-gstreamer-1.0,
+ gir1.2-appindicator3-0.1,
+ gir1.2-notify-0.7,
+ gir1.2-keybinder-3.0,
  gstreamer1.0-plugins-good,
- gstreamer1.0-plugins-bad,
- libappindicator3,
- libnotify4,
- libkeybinder-3.0
+ gstreamer1.0-plugins-bad
 Description: Pandora.com client for the GNOME desktop
