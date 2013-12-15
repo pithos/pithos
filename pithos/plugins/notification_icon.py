@@ -14,14 +14,18 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
+import os
 from gi.repository import Gtk
 from pithos.pithosconfig import get_data_file
 from pithos.plugin import PithosPlugin
 
-# Check if appindicator is available on the system
+# Use appindicator if on Unity and installed
 try:
-    from gi.repository import AppIndicator3 as AppIndicator
-    indicator_capable = True
+    if os.environ['XDG_CURRENT_DESKTOP'] == 'Unity':
+        from gi.repository import AppIndicator3 as AppIndicator
+        indicator_capable = True
+    else:
+        indicator_capable = False
 except:
     indicator_capable = False
 
