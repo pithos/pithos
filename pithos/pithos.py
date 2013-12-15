@@ -65,10 +65,11 @@ except ImportError:
 def openBrowser(url):
     logging.info("Opening URL {}".format(url))
     webbrowser.open(url)
-    try:
-        os.wait() # workaround for http://bugs.python.org/issue5993
-    except:
-        pass
+    if isinstance(webbrowser.get(), webbrowser.BackgroundBrowser):
+        try:
+            os.wait() # workaround for http://bugs.python.org/issue5993
+        except:
+            pass
 
 def buttonMenu(button, menu):
     def cb(button):
