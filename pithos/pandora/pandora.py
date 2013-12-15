@@ -16,6 +16,8 @@
 ### END LICENSE
 
 from blowfish import Blowfish
+from xml.dom import minidom
+import re
 import json
 import logging
 import time
@@ -43,6 +45,8 @@ API_ERROR_LISTENER_NOT_AUTHORIZED = 1003
 API_ERROR_PARTNER_NOT_AUTHORIZED = 1010
 
 PLAYLIST_VALIDITY_TIME = 60*60*3
+
+NAME_COMPARE_REGEX = re.compile(r'[^A-Za-z0-9]')
 
 class PandoraError(IOError):
     def __init__(self, message, status=None, submsg=None):
@@ -282,8 +286,9 @@ class Song(object):
         self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
         self.stationId = d['stationId']
-        self.title = d['songName']
+        self.songName = d['songName']
         self.songDetailURL = d['songDetailUrl']
+        self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
 
         self.tired=False
@@ -292,6 +297,29 @@ class Song(object):
         self.finished = False
         self.playlist_time = time.time()
         self.feedbackId = None
+
+    @property
+    def title(self):
+        if not hasattr(self, '_title'):
+            # the actual name of the track, minus any special characters (except dashes) is stored
+            # as the last part of the songExplorerUrl, before the args.
+            explorer_name = self.songExplorerUrl.split('?')[0].split('/')[-1]
+            clean_expl_name = NAME_COMPARE_REGEX.sub('', explorer_name).lower()
+            clean_name = NAME_COMPARE_REGEX.sub('', self.songName).lower()
+
+            if clean_name == clean_expl_name:
+                self._title = self.songName
+            else:
+                try:
+                    xml_data = urllib.urlopen(self.songExplorerUrl)
+                    dom = minidom.parseString(xml_data.read())
+                    attr_value = dom.getElementsByTagName('songExplorer')[0].attributes['songTitle'].value
+
+                    # Pandora stores their titles for film scores and the like as 'Score name: song name'
+                    self._title = attr_value.replace('{0}: '.format(self.songName), '', 1)
+                except:
+                    self._title = self.songName
+        return self._title
 
     @property
     def audioUrl(self):
