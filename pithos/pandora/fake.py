@@ -127,5 +127,6 @@ class FakePandora(Pandora):
             'songDetailUrl': 'http://pithos.github.io/',
             'albumDetailUrl':'http://pithos.github.io/',
             'albumArtUrl':'http://pithos.github.io/img/logo.png',
+            'songExplorerUrl':'http://pithos.github.io/test-song.xml',
         }
 
