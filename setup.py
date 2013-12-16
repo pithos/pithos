@@ -24,6 +24,9 @@ except ImportError:
     ez_setup.use_setuptools()
     from setuptools import setup, find_packages
 
+# import this for the version number
+import pithos.pithosconfig
+
 import os
 
 # Utility function to read the README file.
@@ -35,7 +38,7 @@ def read(fname):
 
 setup(
     name='pithos',
-    version='0.3',
+    version=pithos.pithosconfig.VERSION,
     ext_modules=[],
     license='GPL-3',
     author='Kevin Mehall',
