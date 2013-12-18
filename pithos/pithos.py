@@ -232,7 +232,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
 
     def init_ui(self):
-        GObject.set_application_name("Pithos")
+        GLib.set_application_name("Pithos")
         Gtk.Window.set_default_icon_name('pithos')
         os.environ['PULSE_PROP_media.role'] = 'music'
 
@@ -475,7 +475,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if not self.playing:
             self.playing = True
             self.player.set_state(Gst.State.PLAYING)
-            GObject.timeout_add_seconds(1, self.update_song_row)
+            GLib.timeout_add_seconds(1, self.update_song_row)
         self.playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PAUSE)
         self.update_song_row()
         self.emit('play-state-changed', True)
@@ -647,7 +647,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def on_gst_volume(self, player, volumespec):
         vol = self.player.get_property('volume')
-        GObject.idle_add(self.set_volume_cb, vol)
+        GLib.idle_add(self.set_volume_cb, vol)
 
     def on_gst_source(self, player, params):
         """ Setup httpsoupsrc to match Pithos proxy settings """

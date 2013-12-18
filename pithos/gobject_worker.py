@@ -17,7 +17,7 @@
 import logging
 import threading
 import Queue
-from gi.repository import GObject
+from gi.repository import GObject, GLib
 import traceback
 GObject.threads_init()
 
@@ -34,11 +34,11 @@ class GObjectWorker():
             try:
                 result = command(*args)
                 if callback:
-                    GObject.idle_add(callback, result)
+                    GLib.idle_add(callback, result)
             except Exception, e:
                 e.traceback = traceback.format_exc()
                 if errorback:
-                    GObject.idle_add(errorback, e)
+                    GLib.idle_add(errorback, e)
                 
     def send(self, command, args=(), callback=None, errorback=None):
         if errorback is None: errorback = self._default_errorback
