@@ -948,7 +948,7 @@ class PithosApplication(Gtk.Application):
         Gtk.Application.do_command_line(self, args)
 
         parser = argparse.ArgumentParser()
-        parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", help="Show debug messages")
+        parser.add_argument("-v", "--verbose", action="count", default=0, dest="verbose", help="Show debug messages")
         parser.add_argument("-t", "--test", action="store_true", dest="test", help="Use a mock web interface instead of connecting to the real Pandora server")
         self.options = parser.parse_args(args.get_arguments()[1:])
 
@@ -957,10 +957,14 @@ class PithosApplication(Gtk.Application):
         logging.root.handlers = []
 
         #set the logging level to show debug messages
-        if self.options.verbose:
-            logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
+        if self.options.verbose > 1:
+            log_level = logging.DEBUG
+        elif self.options.verbose == 1:
+            log_level = logging.INFO
         else:
-            logging.basicConfig(level=logging.WARNING)
+            log_level = logging.WARN
+
+        logging.basicConfig(level=log_level, format='%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
 
         self.do_activate()
 
