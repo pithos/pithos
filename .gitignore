@@ -2,4 +2,4 @@
 build/
 dist/
 pithos.egg-info/
-debug_config/
+config/
