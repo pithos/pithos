@@ -701,11 +701,11 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.station_changed(self.stations_model[index][0])
 
     def format_time(self, time_int):
-        time_int = time_int / 1000000000
+        time_int = time_int // 1000000000
         s = time_int % 60
-        time_int /= 60
+        time_int //= 60
         m = time_int % 60
-        time_int /= 60
+        time_int //= 60
         h = time_int
 
         if h:
