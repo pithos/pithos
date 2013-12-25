@@ -60,13 +60,13 @@ class NotifyPlugin(PithosPlugin):
 
         if playing:
             self.notification.add_action(pause_action, 'Pause',
-                                         self.notification_playpause_cb, None)
+                                         self.notification_playpause_cb, None, None)
         else:
             self.notification.add_action(play_action, 'Play',
-                                         self.notification_playpause_cb, None)
+                                         self.notification_playpause_cb, None, None)
 
         self.notification.add_action(skip_action, 'Skip',
-                                     self.notification_skip_cb, None)
+                                     self.notification_skip_cb, None, None)
 
     def set_notification(self, song, playing=True):
         if self.supports_actions:
