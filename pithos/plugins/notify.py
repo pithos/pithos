@@ -81,10 +81,10 @@ class NotifyPlugin(PithosPlugin):
         self.notification.update(song.title, msg, 'audio-x-generic')
         self.notification.show()
 
-    def notification_playpause_cb(self, notification, action, data):
+    def notification_playpause_cb(self, notification, action, data, ignore=None):
         self.window.playpause_notify()
 
-    def notification_skip_cb(self, notification, action, data):
+    def notification_skip_cb(self, notification, action, data, ignore=None):
         self.window.next_song()
         
     def song_changed(self, window,  song):
