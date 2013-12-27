@@ -22,7 +22,15 @@ import logging, argparse
 import signal
 
 import gi
-gi.require_version('Gst', '1.0')
+try:
+    gi.require_version('Gst', '1.0')
+except ValueError:
+    #Tell the user the problem and how to fix it
+    logging.error("Gstreamer 1.0 is required to run pithos. On Debian/Ubuntu this can be fixed by running: sudo apt-get install -y gir1.2-gstreamer-1.0 gstreamer1.0-pulseaudio")
+    #Because most users don't run pithos via the command line we can show them a graphical dialog
+    if any([os.path.exists(os.path.join(p,"zenity")) for p in os.environ["PATH"].split(":")]):
+        os.system("zenity --error --title='Pithos' --text='Gstreamer 1.0 is required to run pithos. On Debian/Ubuntu this can be fixed by running:\nsudo apt-get install -y gir1.2-gstreamer-1.0 gstreamer1.0-pulseaudio'")
+    sys.exit()
 from gi.repository import Gst, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 import contextlib
 import html
