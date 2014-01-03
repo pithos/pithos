@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-### BEGIN LICENSE
+# BEGIN LICENSE
 # Copyright (C) 2010 Kevin Mehall <km@kevinmehall.net>
-#This program is free software: you can redistribute it and/or modify it 
-#under the terms of the GNU General Public License version 3, as published 
-#by the Free Software Foundation.
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
 #
-#This program is distributed in the hope that it will be useful, but 
-#WITHOUT ANY WARRANTY; without even the implied warranties of 
-#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR 
-#PURPOSE.  See the GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranties of
+# MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
+# PURPOSE.  See the GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License along 
-#with this program.  If not, see <http://www.gnu.org/licenses/>.
-### END LICENSE
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+# END LICENSE
 
-###################### DO NOT TOUCH THIS (HEAD TO THE SECOND PART) ######################
+# DO NOT TOUCH THIS (HEAD TO THE SECOND PART) ######################
 
 try:
     from setuptools import setup, find_packages
@@ -32,19 +32,20 @@ from pithos.pithosconfig import VERSION
 # Used for the long_description.  It's nice, because now 1) we have a top level
 # README file and 2) it's easier to type in the README file than to put a raw
 # string in below ...
+
+
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 if sys.platform != 'win32':
-    data_files = [
-        ('/usr/share/icons/hicolor/scalable/apps', [
-             'data/icons/scalable/apps/pithos-mono.svg',
-             'data/icons/scalable/apps/pithos.svg'
-         ]),
+    DATA_FILES = [
+        ('/usr/share/icons/hicolor/scalable/apps',
+         ['data/icons/scalable/apps/pithos-mono.svg',
+          'data/icons/scalable/apps/pithos.svg']),
         ('/usr/share/applications', ['data/pithos.desktop'])
     ]
 else:
-    data_files = []
+    DATA_FILES = []
 
 setup(
     name='pithos',
@@ -64,7 +65,7 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3'
     ],
-    data_files=data_files,
+    data_files=DATA_FILES,
     package_data={
         'pithos': [
             'data/ui/*.ui',

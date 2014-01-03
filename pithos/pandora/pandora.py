@@ -1,19 +1,19 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
-### BEGIN LICENSE
+# BEGIN LICENSE
 # Copyright (C) 2010 Kevin Mehall <km@kevinmehall.net>
 # Copyright (C) 2012 Christopher Eby <kreed@kreed.org>
-#This program is free software: you can redistribute it and/or modify it
-#under the terms of the GNU General Public License version 3, as published
-#by the Free Software Foundation.
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3, as published
+# by the Free Software Foundation.
 #
-#This program is distributed in the hope that it will be useful, but
-#WITHOUT ANY WARRANTY; without even the implied warranties of
-#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
-#PURPOSE.  See the GNU General Public License for more details.
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranties of
+# MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
+# PURPOSE.  See the GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License along
-#with this program.  If not, see <http://www.gnu.org/licenses/>.
-### END LICENSE
+# You should have received a copy of the GNU General Public License along
+# with this program.  If not, see <http://www.gnu.org/licenses/>.
+# END LICENSE
 
 from .blowfish import Blowfish
 # from Crypto.Cipher import Blowfish
@@ -22,7 +22,9 @@ import re
 import json
 import logging
 import time
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import codecs
 
 # This is an implementation of the Pandora JSON API using Android partner
@@ -45,52 +47,70 @@ API_ERROR_INVALID_LOGIN = 1002
 API_ERROR_LISTENER_NOT_AUTHORIZED = 1003
 API_ERROR_PARTNER_NOT_AUTHORIZED = 1010
 
-PLAYLIST_VALIDITY_TIME = 60*60*3
+PLAYLIST_VALIDITY_TIME = 60 * 60 * 3
 
 NAME_COMPARE_REGEX = re.compile(r'[^A-Za-z0-9]')
 
+
 class PandoraError(IOError):
+
     def __init__(self, message, status=None, submsg=None):
         self.status = status
         self.message = message
         self.submsg = submsg
 
-class PandoraAuthTokenInvalid(PandoraError): pass
-class PandoraNetError(PandoraError): pass
-class PandoraAPIVersionError(PandoraError): pass
-class PandoraTimeout(PandoraNetError): pass
+
+class PandoraAuthTokenInvalid(PandoraError):
+    pass
+
+
+class PandoraNetError(PandoraError):
+    pass
+
+
+class PandoraAPIVersionError(PandoraError):
+    pass
+
+
+class PandoraTimeout(PandoraNetError):
+    pass
+
 
 def pad(s, l):
     return s + b'\0' * (l - len(s))
 
+
 class Pandora(object):
+
     def __init__(self):
         self.opener = urllib.request.build_opener()
         pass
 
     def pandora_encrypt(self, s):
-        return b''.join([codecs.encode(self.blowfish_encode.encrypt(pad(s[i:i+8], 8)), 'hex_codec') for i in range(0, len(s), 8)])
+        return b''.join([codecs.encode(self.blowfish_encode.encrypt(pad(s[i:i + 8], 8)), 'hex_codec') for i in range(0, len(s), 8)])
 
     def pandora_decrypt(self, s):
-        return b''.join([self.blowfish_decode.decrypt(pad(codecs.decode(s[i:i+16], 'hex_codec'), 8)) for i in range(0, len(s), 16)]).rstrip(b'\x08')
+        return b''.join([self.blowfish_decode.decrypt(pad(codecs.decode(s[i:i + 16], 'hex_codec'), 8)) for i in range(0, len(s), 16)]).rstrip(b'\x08')
 
     def json_call(self, method, args={}, https=False, blowfish=True):
         url_arg_strings = []
         if self.partnerId:
-            url_arg_strings.append('partner_id=%s'%self.partnerId)
+            url_arg_strings.append('partner_id=%s' % self.partnerId)
         if self.userId:
-            url_arg_strings.append('user_id=%s'%self.userId)
+            url_arg_strings.append('user_id=%s' % self.userId)
         if self.userAuthToken:
-            url_arg_strings.append('auth_token=%s'%urllib.parse.quote_plus(self.userAuthToken))
+            url_arg_strings.append('auth_token=%s' %
+                                   urllib.parse.quote_plus(self.userAuthToken))
         elif self.partnerAuthToken:
-            url_arg_strings.append('auth_token=%s'%urllib.parse.quote_plus(self.partnerAuthToken))
+            url_arg_strings.append('auth_token=%s' %
+                                   urllib.parse.quote_plus(self.partnerAuthToken))
 
-        url_arg_strings.append('method=%s'%method)
+        url_arg_strings.append('method=%s' % method)
         protocol = 'https' if https else 'http'
         url = protocol + self.rpcUrl + '&'.join(url_arg_strings)
 
         if self.time_offset:
-            args['syncTime'] = int(time.time()+self.time_offset)
+            args['syncTime'] = int(time.time() + self.time_offset)
         if self.userAuthToken:
             args['userAuthToken'] = self.userAuthToken
         elif self.partnerAuthToken:
@@ -104,7 +124,8 @@ class Pandora(object):
             data = self.pandora_encrypt(data)
 
         try:
-            req = urllib.request.Request(url, data, {'User-agent': USER_AGENT, 'Content-type': 'text/plain'})
+            req = urllib.request.Request(
+                url, data, {'User-agent': USER_AGENT, 'Content-type': 'text/plain'})
             response = self.opener.open(req, timeout=HTTP_TIMEOUT)
             text = response.read().decode('utf-8')
         except urllib.error.HTTPError as e:
@@ -129,26 +150,28 @@ class Pandora(object):
             if code == API_ERROR_INVALID_AUTH_TOKEN:
                 raise PandoraAuthTokenInvalid(msg)
             elif code == API_ERROR_COUNTRY_NOT_SUPPORTED:
-                 raise PandoraError("Pandora not available", code,
-                    submsg="Pandora is not available outside the United States.")
+                raise PandoraError("Pandora not available", code,
+                                   submsg="Pandora is not available outside the United States.")
             elif code == API_ERROR_API_VERSION_NOT_SUPPORTED:
                 raise PandoraAPIVersionError(msg)
             elif code == API_ERROR_INSUFFICIENT_CONNECTIVITY:
                 raise PandoraError("Out of sync", code,
-                    submsg="Correct your system's clock. If the problem persists, a Pithos update may be required")
+                                   submsg="Correct your system's clock. If the problem persists, a Pithos update may be required")
             elif code == API_ERROR_READ_ONLY_MODE:
                 raise PandoraError("Pandora maintenance", code,
-                    submsg="Pandora is in read-only mode as it is performing maintenance. Try again later.")
+                                   submsg="Pandora is in read-only mode as it is performing maintenance. Try again later.")
             elif code == API_ERROR_INVALID_LOGIN:
-                raise PandoraError("Login Error", code, submsg="Invalid username or password")
+                raise PandoraError("Login Error", code,
+                                   submsg="Invalid username or password")
             elif code == API_ERROR_LISTENER_NOT_AUTHORIZED:
                 raise PandoraError("Pandora Error", code,
-                    submsg="A Pandora One account is required to access this feature. Uncheck 'Pandora One' in Settings.")
+                                   submsg="A Pandora One account is required to access this feature. Uncheck 'Pandora One' in Settings.")
             elif code == API_ERROR_PARTNER_NOT_AUTHORIZED:
                 raise PandoraError("Login Error", code,
-                    submsg="Invalid Pandora partner keys. A Pithos update may be required.")
+                                   submsg="Invalid Pandora partner keys. A Pithos update may be required.")
             else:
-                raise PandoraError("Pandora returned an error", code, "%s (code %d)"%(msg, code))
+                raise PandoraError("Pandora returned an error",
+                                   code, "%s (code %d)" % (msg, code))
 
         if 'result' in tree:
             return tree['result']
@@ -169,10 +192,10 @@ class Pandora(object):
 
         partner = self.json_call('auth.partnerLogin', {
             'deviceModel': client['deviceModel'],
-            'username': client['username'], # partner username
-            'password': client['password'], # partner password
+            'username': client['username'],  # partner username
+            'password': client['password'],  # partner password
             'version': client['version']
-            },https=True, blowfish=False)
+        }, https=True, blowfish=False)
 
         self.partnerId = partner['partnerId']
         self.partnerAuthToken = partner['partnerAuthToken']
@@ -181,7 +204,8 @@ class Pandora(object):
         self.time_offset = pandora_time - time.time()
         logging.info("Time offset is %s", self.time_offset)
 
-        user = self.json_call('auth.userLogin', {'username': user, 'password': password, 'loginType': 'user'}, https=True)
+        user = self.json_call(
+            'auth.userLogin', {'username': user, 'password': password, 'loginType': 'user'}, https=True)
         self.userId = user['userId']
         self.userAuthToken = user['userAuthToken']
 
@@ -207,7 +231,7 @@ class Pandora(object):
     def search(self, query):
         results = self.json_call('music.search', {'searchText': query})
 
-        l =  [SearchResult('artist', i) for i in results['artists']]
+        l = [SearchResult('artist', i) for i in results['artists']]
         l += [SearchResult('song',   i) for i in results['songs']]
         l.sort(key=lambda i: i.score, reverse=True)
 
@@ -227,13 +251,17 @@ class Pandora(object):
     def add_feedback(self, trackToken, rating):
         logging.info("pandora: addFeedback")
         rating_bool = True if rating == RATE_LOVE else False
-        feedback = self.json_call('station.addFeedback', {'trackToken': trackToken, 'isPositive': rating_bool})
+        feedback = self.json_call(
+            'station.addFeedback', {'trackToken': trackToken, 'isPositive': rating_bool})
         return feedback['feedbackId']
 
     def delete_feedback(self, stationToken, feedbackId):
-        self.json_call('station.deleteFeedback', {'feedbackId': feedbackId, 'stationToken': stationToken})
+        self.json_call('station.deleteFeedback',
+                       {'feedbackId': feedbackId, 'stationToken': stationToken})
+
 
 class Station(object):
+
     def __init__(self, pandora, d):
         self.pandora = pandora
 
@@ -250,34 +278,40 @@ class Station(object):
     def transformIfShared(self):
         if not self.isCreator:
             logging.info("pandora: transforming station")
-            self.pandora.json_call('station.transformSharedStation', {'stationToken': self.idToken})
+            self.pandora.json_call(
+                'station.transformSharedStation', {'stationToken': self.idToken})
             self.isCreator = True
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken}, https=True)
+        playlist = self.pandora.json_call(
+            'station.getPlaylist', {'stationToken': self.idToken}, https=True)
         songs = []
         for i in playlist['items']:
-            if 'songName' in i: # check for ads
+            if 'songName' in i:  # check for ads
                 songs.append(Song(self.pandora, i))
         return songs
 
     @property
     def info_url(self):
-        return 'http://www.pandora.com/stations/'+self.idToken
+        return 'http://www.pandora.com/stations/' + self.idToken
 
     def rename(self, new_name):
         if new_name != self.name:
             self.transformIfShared()
             logging.info("pandora: Renaming station")
-            self.pandora.json_call('station.renameStation', {'stationToken': self.idToken, 'stationName': new_name})
+            self.pandora.json_call(
+                'station.renameStation', {'stationToken': self.idToken, 'stationName': new_name})
             self.name = new_name
 
     def delete(self):
         logging.info("pandora: Deleting Station")
-        self.pandora.json_call('station.deleteStation', {'stationToken': self.idToken})
+        self.pandora.json_call('station.deleteStation',
+                               {'stationToken': self.idToken})
+
 
 class Song(object):
+
     def __init__(self, pandora, d):
         self.pandora = pandora
 
@@ -285,15 +319,16 @@ class Song(object):
         self.artist = d['artistName']
         self.audioUrlMap = d['audioUrlMap']
         self.trackToken = d['trackToken']
-        self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
+        # banned songs won't play, so we don't care about them
+        self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE
         self.stationId = d['stationId']
         self.songName = d['songName']
         self.songDetailURL = d['songDetailUrl']
         self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
 
-        self.tired=False
-        self.message=''
+        self.tired = False
+        self.message = ''
         self.start_time = None
         self.finished = False
         self.playlist_time = time.time()
@@ -314,10 +349,13 @@ class Song(object):
                 try:
                     xml_data = urllib.urlopen(self.songExplorerUrl)
                     dom = minidom.parseString(xml_data.read())
-                    attr_value = dom.getElementsByTagName('songExplorer')[0].attributes['songTitle'].value
+                    attr_value = dom.getElementsByTagName(
+                        'songExplorer')[0].attributes['songTitle'].value
 
-                    # Pandora stores their titles for film scores and the like as 'Score name: song name'
-                    self._title = attr_value.replace('{0}: '.format(self.songName), '', 1)
+                    # Pandora stores their titles for film scores and the like
+                    # as 'Score name: song name'
+                    self._title = attr_value.replace(
+                        '{0}: '.format(self.songName), '', 1)
                 except:
                     self._title = self.songName
         return self._title
@@ -327,11 +365,12 @@ class Song(object):
         quality = self.pandora.audio_quality
         try:
             q = self.audioUrlMap[quality]
-            logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
+            logging.info("Using audio quality %s: %s %s",
+                         quality, q['bitrate'], q['encoding'])
             return q['audioUrl']
         except KeyError:
             logging.warn("Unable to use audio format %s. Using %s",
-                           quality, list(self.audioUrlMap.keys())[0])
+                         quality, list(self.audioUrlMap.keys())[0])
             return list(self.audioUrlMap.values())[0]['audioUrl']
 
     @property
@@ -348,22 +387,28 @@ class Song(object):
                     # that requires transferring a lot of data (all feedback,
                     # seeds, etc for the station).
                     opposite = RATE_BAN if self.rating == RATE_LOVE else RATE_LOVE
-                    self.feedbackId = self.pandora.add_feedback(self.trackToken, opposite)
-                self.pandora.delete_feedback(self.station.idToken, self.feedbackId)
+                    self.feedbackId = self.pandora.add_feedback(
+                        self.trackToken, opposite)
+                self.pandora.delete_feedback(
+                    self.station.idToken, self.feedbackId)
             else:
-                self.feedbackId = self.pandora.add_feedback(self.trackToken, rating)
+                self.feedbackId = self.pandora.add_feedback(
+                    self.trackToken, rating)
             self.rating = rating
 
     def set_tired(self):
         if not self.tired:
-            self.pandora.json_call('user.sleepSong', {'trackToken': self.trackToken})
+            self.pandora.json_call(
+                'user.sleepSong', {'trackToken': self.trackToken})
             self.tired = True
 
     def bookmark(self):
-        self.pandora.json_call('bookmark.addSongBookmark', {'trackToken': self.trackToken})
+        self.pandora.json_call(
+            'bookmark.addSongBookmark', {'trackToken': self.trackToken})
 
     def bookmark_artist(self):
-        self.pandora.json_call('bookmark.addArtistBookmark', {'trackToken': self.trackToken})
+        self.pandora.json_call(
+            'bookmark.addArtistBookmark', {'trackToken': self.trackToken})
 
     @property
     def rating_str(self):
@@ -374,6 +419,7 @@ class Song(object):
 
 
 class SearchResult(object):
+
     def __init__(self, resultType, d):
         self.resultType = resultType
         self.score = d['score']
@@ -384,4 +430,3 @@ class SearchResult(object):
             self.artist = d['artistName']
         elif resultType == 'artist':
             self.name = d['artistName']
-
