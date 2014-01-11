@@ -203,6 +203,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         bus.connect("message::eos", self.on_gst_eos)
         bus.connect("message::buffering", self.on_gst_buffering)
         bus.connect("message::error", self.on_gst_error)
+        bus.connect("message::tag", self.on_gst_tag)
         self.player.connect("notify::volume", self.on_gst_volume)
         self.player.connect("notify::source", self.on_gst_source)
         self.time_format = Gst.Format.TIME
@@ -627,6 +628,30 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.gstreamer_error = str(err)
         self.gstreamer_errorcount_1 += 1
         self.next_song()
+
+    def gst_tag_handler(self, tag_info):
+        def handler(_x, tag, _y):
+            # An exhaustive list of tags is available at 
+            # https://developer.gnome.org/gstreamer/stable/gstreamer-GstTagList.html
+            # but Pandora seems to only use those
+            if tag == 'datetime':
+                _, datetime = tag_info.get_date_time(tag)
+                value = datetime.to_iso8601_string()
+            elif tag in ('container-format', 'audio-codec'):
+                _, value = tag_info.get_string(tag)
+            elif tag in ('bitrate', 'maximum-bitrate', 'minimum-bitrate'):
+                _, value = tag_info.get_uint(tag)
+            else:
+                value = 'Don\'t know the type of this'
+
+            logging.info('Found tag "%s" in stream: "%s"' % (tag, value))
+
+        return handler
+
+    def on_gst_tag(self, bus, message):
+        tag_info = message.parse_tag()
+        tag_handler = self.gst_tag_handler(tag_info)
+        tag_info.foreach(tag_handler, None)
 
     def on_gst_buffering(self, bus, message):
         percent = message.parse_buffering()
