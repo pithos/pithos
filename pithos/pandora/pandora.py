@@ -291,6 +291,7 @@ class Song(object):
         self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
 
+        self.bitrate = None
         self.tired=False
         self.message=''
         self.start_time = None

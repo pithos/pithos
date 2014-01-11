@@ -644,7 +644,11 @@ class PithosWindow(Gtk.ApplicationWindow):
             else:
                 value = 'Don\'t know the type of this'
 
-            logging.info('Found tag "%s" in stream: "%s"' % (tag, value))
+            logging.info('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
+
+            if tag == 'bitrate':
+                self.current_song.bitrate = value
+                self.update_song_row()
 
         return handler
 
@@ -692,6 +696,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song is self.current_song:
             dur_stat, dur_int = self.player.query_duration(self.time_format)
             pos_stat, pos_int = self.player.query_position(self.time_format)
+            if not song.bitrate is None:
+                msg.append("%0dkbit/s" % (song.bitrate / 1000))
             if dur_stat and pos_stat:
                 dur_str = self.format_time(dur_int)
                 pos_str = self.format_time(pos_int)
