@@ -646,11 +646,32 @@ class PithosWindow(Gtk.ApplicationWindow):
 
             logging.info('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
 
+            if tag == 'audio-codec':
+                # At that point we should have duration information, check for ads
+                self.check_if_song_is_ad()
+
             if tag == 'bitrate':
                 self.current_song.bitrate = value
                 self.update_song_row()
 
         return handler
+
+    def check_if_song_is_ad(self):
+        if self.current_song.is_ad is None:
+            dur_stat, dur_int = self.player.query_duration(self.time_format)
+
+            if not dur_stat:
+                logging.warning('dur_stat is False. The assumption that duration is available once the audio-codec messages feeds is bad.')
+            else:
+                dur_int /= 1e9
+
+                if dur_int < 45.0:  # Less than 45 seconds we assume it's an ad
+                    logging.info('Ad detected!')
+                    self.current_song.is_ad = True
+                    self.update_song_row()
+                else:
+                    logging.info('Not an Ad..')
+                    self.current_song.is_ad = False
 
     def on_gst_tag(self, bus, message):
         tag_info = message.parse_tag()
@@ -711,7 +732,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         msg = " - ".join(msg)
         if not msg:
             msg = " "
-        return "<b><big>%s</big></b>\nby <b>%s</b>\n<small>from <i>%s</i></small>\n<small>%s</small>"%(title, artist, album, msg)
+
+        if song.is_ad:
+            description = "<b><big>Commercial Advertisement</big></b>\n<b>Pandora</b>"
+        else:
+            description = "<b><big>%s</big></b>\nby <b>%s</b>\n<small>from <i>%s</i></small>" % (title, artist, album)
+
+        return "%s\n<small>%s</small>" % (description, msg)
 
     def song_icon(self, song):
         if song.tired:

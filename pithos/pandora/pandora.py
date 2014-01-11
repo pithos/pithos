@@ -292,6 +292,7 @@ class Song(object):
         self.artRadio = d['albumArtUrl']
 
         self.bitrate = None
+        self.is_ad = None  # None = we haven't checked, otherwise True/False
         self.tired=False
         self.message=''
         self.start_time = None
