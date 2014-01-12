@@ -644,7 +644,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             else:
                 value = 'Don\'t know the type of this'
 
-            logging.info('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
+            logging.debug('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
 
             if tag == 'audio-codec':
                 # At that point we should have duration information, check for ads
