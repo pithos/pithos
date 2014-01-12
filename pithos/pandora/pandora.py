@@ -43,6 +43,7 @@ API_ERROR_INVALID_AUTH_TOKEN = 1001
 API_ERROR_INVALID_LOGIN = 1002
 API_ERROR_LISTENER_NOT_AUTHORIZED = 1003
 API_ERROR_PARTNER_NOT_AUTHORIZED = 1010
+API_ERROR_PLAYLIST_EXCEEDED = 1039
 
 PLAYLIST_VALIDITY_TIME = 60*60*3
 
@@ -146,6 +147,9 @@ class Pandora(object):
             elif code == API_ERROR_PARTNER_NOT_AUTHORIZED:
                 raise PandoraError("Login Error", code,
                     submsg="Invalid Pandora partner keys. A Pithos update may be required.")
+            elif code == API_ERROR_PLAYLIST_EXCEEDED:
+                raise PandoraError("Playlist Error", code,
+                    submsg="You have requested too many playlists. Try again later.")
             else:
                 raise PandoraError("Pandora returned an error", code, "%s (code %d)"%(msg, code))
 
