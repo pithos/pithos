@@ -203,6 +203,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         bus.connect("message::eos", self.on_gst_eos)
         bus.connect("message::buffering", self.on_gst_buffering)
         bus.connect("message::error", self.on_gst_error)
+        bus.connect("message::tag", self.on_gst_tag)
         self.player.connect("notify::volume", self.on_gst_volume)
         self.player.connect("notify::source", self.on_gst_source)
         self.time_format = Gst.Format.TIME
@@ -628,6 +629,55 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.gstreamer_errorcount_1 += 1
         self.next_song()
 
+    def gst_tag_handler(self, tag_info):
+        def handler(_x, tag, _y):
+            # An exhaustive list of tags is available at 
+            # https://developer.gnome.org/gstreamer/stable/gstreamer-GstTagList.html
+            # but Pandora seems to only use those
+            if tag == 'datetime':
+                _, datetime = tag_info.get_date_time(tag)
+                value = datetime.to_iso8601_string()
+            elif tag in ('container-format', 'audio-codec'):
+                _, value = tag_info.get_string(tag)
+            elif tag in ('bitrate', 'maximum-bitrate', 'minimum-bitrate'):
+                _, value = tag_info.get_uint(tag)
+            else:
+                value = 'Don\'t know the type of this'
+
+            logging.debug('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
+
+            if tag == 'audio-codec':
+                # At that point we should have duration information, check for ads
+                self.check_if_song_is_ad()
+
+            if tag == 'bitrate':
+                self.current_song.bitrate = value
+                self.update_song_row()
+
+        return handler
+
+    def check_if_song_is_ad(self):
+        if self.current_song.is_ad is None:
+            dur_stat, dur_int = self.player.query_duration(self.time_format)
+
+            if not dur_stat:
+                logging.warning('dur_stat is False. The assumption that duration is available once the audio-codec messages feeds is bad.')
+            else:
+                dur_int /= 1e9
+
+                if dur_int < 45.0:  # Less than 45 seconds we assume it's an ad
+                    logging.info('Ad detected!')
+                    self.current_song.is_ad = True
+                    self.update_song_row()
+                else:
+                    logging.info('Not an Ad..')
+                    self.current_song.is_ad = False
+
+    def on_gst_tag(self, bus, message):
+        tag_info = message.parse_tag()
+        tag_handler = self.gst_tag_handler(tag_info)
+        tag_info.foreach(tag_handler, None)
+
     def on_gst_buffering(self, bus, message):
         percent = message.parse_buffering()
         self.buffer_percent = percent
@@ -667,6 +717,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song is self.current_song:
             dur_stat, dur_int = self.player.query_duration(self.time_format)
             pos_stat, pos_int = self.player.query_position(self.time_format)
+            if not song.bitrate is None:
+                msg.append("%0dkbit/s" % (song.bitrate / 1000))
             if dur_stat and pos_stat:
                 dur_str = self.format_time(dur_int)
                 pos_str = self.format_time(pos_int)
@@ -680,7 +732,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         msg = " - ".join(msg)
         if not msg:
             msg = " "
-        return "<b><big>%s</big></b>\nby <b>%s</b>\n<small>from <i>%s</i></small>\n<small>%s</small>"%(title, artist, album, msg)
+
+        if song.is_ad:
+            description = "<b><big>Commercial Advertisement</big></b>\n<b>Pandora</b>"
+        else:
+            description = "<b><big>%s</big></b>\nby <b>%s</b>\n<small>from <i>%s</i></small>" % (title, artist, album)
+
+        return "%s\n<small>%s</small>" % (description, msg)
 
     def song_icon(self, song):
         if song.tired:
