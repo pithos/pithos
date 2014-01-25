@@ -431,7 +431,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if songs_remaining <= 0:
             # We don't have this song yet. Get a new playlist.
             return self.get_playlist(start = True)
-        elif songs_remaining == 1:
+        elif songs_remaining <= 2:
             # Preload next playlist so there's no delay
             self.get_playlist()
 
@@ -467,6 +467,11 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
+
+    def download_song(self, *ignore):
+        print "Davide is a genius"
+        print self.current_song, dir(self.current_song)
+        print self.current_song.audioUrlMap
 
     def user_play(self, *ignore):
         self.play()
@@ -965,6 +970,8 @@ def NewPithosWindow(app, options):
 
     builder = Gtk.Builder()
     builder.add_from_file(ui_filename)
+    toolbar = builder.get_object("toolbar1")
+    toolbar.get_style_context().add_class("primary-toolbar")
     window = builder.get_object("pithos_window")
     window.set_application(app)
     window.finish_initializing(builder, options)

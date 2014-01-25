@@ -333,6 +333,34 @@
                 <property name="homogeneous">True</property>
               </packing>
             </child>
+
+            <!-- Added by Davide Depau -->
+
+            <child>
+              <object class="GtkToolButton" id="download">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Download Song</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-save-as</property>
+                <signal name="clicked" handler="download_song" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+              </packing>
+            </child>
+
+            <child>
+              <object class="GtkSeparatorToolItem" id="davseparator">
+                <property name="visible">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+
+            <!-- /Added by Davide Depau -->
+
             <child>
               <object class="GtkToolItem" id="toolbutton_volume">
                 <property name="visible">True</property>
