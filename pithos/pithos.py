@@ -688,6 +688,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if not reconnecting:
             self.get_playlist(start = True)
         self.stations_combo.set_active(self.station_index(station))
+        self.mpris.station_changed(station)
 
     def on_gst_eos(self, bus, message):
         logging.info("EOS")

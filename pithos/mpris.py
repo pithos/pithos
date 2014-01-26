@@ -17,6 +17,7 @@
 
 import dbus
 import dbus.service
+import time
 
 try:
     from gi.repository import Gdk    
@@ -30,6 +31,13 @@ try:
     UNITY = True
 except ImportError:
     UNITY = False
+
+if UNITY:
+    try:
+        from gi.repository import Dbusmenu
+        UNITY_QUICKLIST = True
+    except ImportError:
+        UNITY_QUICKLIST = False 
 
 
 if not UNITY:
@@ -255,12 +263,15 @@ if not UNITY:
 
             pass
 
+        def station_changed(*args):
+            pass
 
 else:
     # Use Unity Sound Menu API, with playlists/stations support
     class PithosMprisService(object):
         def __init__(self, window):
             self.window = window
+            self.stations = []
 
             self.window.connect("song-changed", self.songchange_handler)
             self.window.connect("play-state-changed", self.playstate_handler)
@@ -279,19 +290,69 @@ else:
 
             self.player.export()
 
+            if UNITY_QUICKLIST:
+                self.launcher = Unity.LauncherEntry.get_for_desktop_id("pithos.desktop")
+
             self.song_changed()
 
+        def build_quicklist(self):
+            self.quicklist = Dbusmenu.Menuitem.new()
+
+            self.ql_playpause = Dbusmenu.Menuitem.new()
+            self.ql_playpause.property_set(Dbusmenu.MENUITEM_PROP_LABEL, "Play")
+            self.ql_playpause.property_set(Dbusmenu.MENUITEM_PROP_TOGGLE_TYPE, Dbusmenu.MENUITEM_TOGGLE_CHECK)
+            self.ql_playpause.property_set_int(Dbusmenu.MENUITEM_PROP_TOGGLE_STATE, Dbusmenu.MENUITEM_TOGGLE_STATE_UNCHECKED)
+            self.ql_playpause.property_set_bool(Dbusmenu.MENUITEM_PROP_VISIBLE, True)
+            self.ql_playpause.connect('item_activated', self.play_pause, None)
+            self.quicklist.child_append(self.ql_playpause)
+
+            self.ql_next = Dbusmenu.Menuitem.new()
+            self.ql_next.property_set(Dbusmenu.MENUITEM_PROP_LABEL, "Next")
+            self.ql_next.property_set_bool(Dbusmenu.MENUITEM_PROP_VISIBLE, True)
+            self.ql_next.connect('item_activated', self.next, None)
+            self.quicklist.child_append(self.ql_next)
+
+            self.ql_previous = Dbusmenu.Menuitem.new()
+            self.ql_previous.property_set(Dbusmenu.MENUITEM_PROP_LABEL, "Previous")
+            self.ql_previous.property_set_bool(Dbusmenu.MENUITEM_PROP_VISIBLE, True)
+            self.ql_previous.connect('item_activated', self.previous_ql, None)
+            self.quicklist.child_append(self.ql_previous)
+
+            self.ql_stations = {}
+
+            if len(self.stations) > 0:
+                separator = Dbusmenu.Menuitem.new()
+                separator.property_set(Dbusmenu.MENUITEM_PROP_TYPE, Dbusmenu.CLIENT_TYPES_SEPARATOR)
+                separator.property_set_bool(Dbusmenu.MENUITEM_PROP_VISIBLE, True)
+                self.quicklist.child_append(separator)
+
+                for station in self.stations:
+                    radio = Dbusmenu.Menuitem.new()
+                    radio.property_set(Dbusmenu.MENUITEM_PROP_LABEL, station.name)
+                    radio.property_set(Dbusmenu.MENUITEM_PROP_TOGGLE_TYPE, Dbusmenu.MENUITEM_TOGGLE_RADIO)
+                    radio.property_set_int(Dbusmenu.MENUITEM_PROP_TOGGLE_STATE, Dbusmenu.MENUITEM_TOGGLE_STATE_UNCHECKED)
+                    radio.property_set_bool(Dbusmenu.MENUITEM_PROP_VISIBLE, True)
+                    radio.connect(Dbusmenu.MENUITEM_SIGNAL_ITEM_ACTIVATED, self.change_station_ql, station)
+                    self.quicklist.child_append(radio)
+
+                    self.ql_stations[station.id] = radio
+
+
+            self.launcher.set_property("quicklist", self.quicklist)
 
         def load_stations(self):
-            stations = self.window.pandora.stations
-            s = stations[0]
-            #print s.id, s.idToken, s.isCreator, s.isQuickMix, s.name
+            self.stations = self.window.pandora.stations
 
-            for station in stations:
+            for station in self.stations:
                 playlist = Unity.Playlist.new(station.id)
                 playlist.props.name = station.name
                 playlist.props.icon = Gio.ThemedIcon.new("media-playlist-shuffle" if station.isQuickMix else "stock_smart_playlist")
                 self.player.add_playlist(playlist)
+
+            if UNITY_QUICKLIST:
+                print "building"
+                self.build_quicklist()
+                self.station_changed(self.window.current_station)
             
         def playstate_handler(self, window, state):
             if state:
@@ -336,6 +397,28 @@ else:
 
             self.player.props.current_track = data
 
+        def station_changed(self, station):
+            try:
+                if UNITY_QUICKLIST:
+                    for i in self.ql_stations:
+                        if i != station.id:
+                            self.ql_stations[i].property_set_int(Dbusmenu.MENUITEM_PROP_TOGGLE_STATE, Dbusmenu.MENUITEM_TOGGLE_STATE_UNCHECKED)
+                        else:
+                            self.ql_stations[i].property_set_int(Dbusmenu.MENUITEM_PROP_TOGGLE_STATE, Dbusmenu.MENUITEM_TOGGLE_STATE_CHECKED)
+            except AttributeError:
+                pass
+
+        def change_station_ql(self, menu_item, obj, station):
+            self.window.station_changed(station)
+
+        def change_station_sm(self, *args):
+            pass
+
+        def previous_ql(self, *ignore):
+            # Reset start time so that it immediately changes song instead of restarting it
+            self.window.current_song.start_time = time.time()
+            self.window.prev_song()
+
         def previous(self, *ignore):
             self.window.prev_song()
 
@@ -348,14 +431,24 @@ else:
         def signal_playing(self):
             """signal_playing - Tell the Sound Menu that the player has
             started playing.
-            """           
+            """
             self.player.props.playback_state = Unity.PlaybackState.PLAYING
+            try:
+                if UNITY_QUICKLIST:
+                    self.ql_playpause.property_set_int(Dbusmenu.MENUITEM_PROP_TOGGLE_STATE, Dbusmenu.MENUITEM_TOGGLE_STATE_CHECKED)
+            except AttributeError:
+                pass
 
         def signal_paused(self):
             """signal_paused - Tell the Sound Menu that the player has
             been paused
             """
             self.player.props.playback_state = Unity.PlaybackState.PAUSED
+            try:
+                if UNITY_QUICKLIST:
+                    self.ql_playpause.property_set_int(Dbusmenu.MENUITEM_PROP_TOGGLE_STATE, Dbusmenu.MENUITEM_TOGGLE_STATE_UNCHECKED)
+            except AttributeError:
+                pass
 
         def PropertiesChanged(self, interface_name, changed_properties,
                               invalidated_properties):
