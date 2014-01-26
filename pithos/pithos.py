@@ -28,7 +28,8 @@ import contextlib
 import cgi
 import math
 import webbrowser
-import urllib2
+import urllib, urllib2
+from mutagen import mp4
 import json
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
@@ -468,10 +469,64 @@ class PithosWindow(Gtk.ApplicationWindow):
     def next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
 
-    def download_song(self, *ignore):
-        print "Davide is a genius"
-        print self.current_song, dir(self.current_song)
-        print self.current_song.audioUrlMap
+    def download_playing_song(self, *ignore):
+        self.download_song(self.current_song)
+
+    def on_menuitem_download(self, widget):
+        song = self.selected_song()
+        self.download_song(song)
+
+    def download_song(self, song):
+        dialog = Gtk.FileChooserDialog("Download to...", None, Gtk.FileChooserAction.SAVE)
+        dialog.add_button(Gtk.STOCK_CANCEL, 0)
+        dialog.add_button(Gtk.STOCK_SAVE, 1)
+        dialog.set_default_response(1)
+
+        fname = song.artist + " - " + song.songName + ".mp4"
+        for i in ("<", ">", ":", "\"", "%", "/", "\\", "|", "?", "*"):
+            fname.replace(i, "")
+
+        dialog.set_current_name(fname)
+        dialog.set_do_overwrite_confirmation(True)
+
+        try:
+            if dialog.run() == 1:
+                filename = str(dialog.get_filename())
+            else:
+                return
+        finally:
+            dialog.destroy()
+
+        def download(song, output):
+            try:
+                f = open(output, "w")
+                u = urllib2.urlopen(song.audioUrlMap["highQuality"]["audioUrl"])
+                f.write(u.read())
+            finally:
+                f.close()
+                u.close()
+
+            a = mp4.MP4(output)
+            a['\xa9nam'] = song.songName
+            a['\xa9alb'] = song.album
+            a['\xa9ART'] = song.artist
+            a['purl'] = song.songDetailURL
+
+            try:
+                u = urllib2.urlopen(song.artRadio)
+                art = u.read()
+
+                a['covr'] = [mp4.MP4Cover(art)]
+            finally:
+                a.save()
+                u.close()
+
+
+        def callback(*args):
+            self.worker_run(time.sleep, (1.5,), lambda *args: None, "Download finished.")
+
+        self.worker_run(download, (song, filename), callback, "Downloading {name} by {artist}...".format(name=song.songName, artist=song.artist))
+
 
     def user_play(self, *ignore):
         self.play()
