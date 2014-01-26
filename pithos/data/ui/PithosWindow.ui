@@ -306,6 +306,18 @@
             <property name="toolbar_style">icons</property>
             <property name="show_arrow">False</property>
             <child>
+              <object class="GtkToolButton" id="prevsong">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Previous Song</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-media-previous</property>
+                <signal name="clicked" handler="prev_song" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkToolButton" id="playpause_button">
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Play</property>

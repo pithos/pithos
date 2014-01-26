@@ -169,9 +169,9 @@ class PithosMprisService(dbus.service.Object):
 
     @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def Previous(self):
-        """Play prvious song, not implemented"""
+        """Play previous song"""
 
-        pass
+        self.window.prev_song()
 
     @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def Next(self):

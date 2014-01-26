@@ -466,6 +466,15 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.emit('song-changed', self.current_song)
 
+    def prev_song(self, *ignore):
+        i = self.current_song_index
+        if time.time() - self.current_song.start_time < 3 and i > 0:
+            print True
+            self.start_song(i - 1)
+        else:
+            print False
+            self.start_song(i)
+
     def next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
 
@@ -924,8 +933,9 @@ class PithosWindow(Gtk.ApplicationWindow):
 
             if event.button == 1 and event.type == Gdk.EventType._2BUTTON_PRESS:
                 logging.info("Double clicked on song %s", self.selected_song().index)
-                if self.selected_song().index <= self.current_song_index:
-                    return False
+                # Why put limits? Play all the songs in the playlist!
+                #if self.selected_song().index <= self.current_song_index:
+                #    return False
                 self.start_song(self.selected_song().index)
 
     def set_player_volume(self, value):
