@@ -85,6 +85,7 @@ class PithosNotificationIcon(PithosPlugin):
             # We have to add another entry for show / hide Pithos window
             self.visible_check = button("Show Pithos", self._toggle_visible, 'check')
         
+        button("Previous",  self.window.prev_song,                 Gtk.STOCK_MEDIA_PREVIOUS)
         self.playpausebtn = button("Pause", self.window.playpause, Gtk.STOCK_MEDIA_PAUSE)
         button("Skip",  self.window.next_song,                     Gtk.STOCK_MEDIA_NEXT)
         button("Love",  (lambda *i: self.window.love_song()),      Gtk.STOCK_ABOUT)
