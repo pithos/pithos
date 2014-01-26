@@ -254,6 +254,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.songs_treeview = self.builder.get_object('songs_treeview')
         self.songs_treeview.set_model(self.songs_model)
 
+        self.pos_label = self.builder.get_object("pos_label")
+        self.dur_label = self.builder.get_object("dur_label")
+        self.progressbar = self.builder.get_object("progressbar")
+
         title_col   = Gtk.TreeViewColumn()
 
         def bgcolor_data_func(column, cell, model, iter, data=None):
@@ -817,12 +821,25 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song.rating == RATE_BAN:
             return Gtk.STOCK_CANCEL
 
-    def update_song_row(self, song = None):
+    def update_song_row(self, song=None):
         if song is None:
             song = self.current_song
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
             self.songs_model[song.index][2] = self.song_icon(song) or ""
+
+            dur_stat, dur_int = self.player.query_duration(self.time_format)
+            pos_stat, pos_int = self.player.query_position(self.time_format)
+
+            if dur_stat and pos_stat:
+                pos_str = self.format_time(pos_int)
+                dur_str = self.format_time(dur_int)
+
+                self.pos_label.set_text(pos_str)
+                self.dur_label.set_text(dur_str)
+
+                self.progressbar.set_fraction(float(pos_int)/dur_int)
+
         return self.playing
 
     def stations_combo_changed(self, widget):
