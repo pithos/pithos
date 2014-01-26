@@ -346,7 +346,7 @@ else:
             for station in self.stations:
                 playlist = Unity.Playlist.new(station.id)
                 playlist.props.name = station.name
-                playlist.props.icon = Gio.ThemedIcon.new("media-playlist-shuffle" if station.isQuickMix else "stock_smart_playlist")
+                #playlist.props.icon = Gio.ThemedIcon.new("media-playlist-shuffle" if station.isQuickMix else "stock_smart_playlist")
                 self.player.add_playlist(playlist)
 
             if UNITY_QUICKLIST:
@@ -378,6 +378,11 @@ else:
 
             """
             
+            try:
+                del self.data
+            except:
+                pass
+
             if artists is None:
                 artists = ["Unknown artist"]
             if album is None:
@@ -386,16 +391,16 @@ else:
                 title = "Unknown"
 
        
-            data = Unity.TrackMetadata.new()
+            self.data = Unity.TrackMetadata.new()
 
-            data.props.title = title
-            data.props.artist = repr_seq(artists)
-            data.props.album = album
+            self.data.props.title = title
+            self.data.props.artist = repr_seq(artists)
+            self.data.props.album = album
 
             if artUrl is not None:
-                data.props.art_location = Gio.File.new_for_uri(artUrl)
+                self.data.props.art_location = Gio.File.new_for_uri(artUrl)
 
-            self.player.props.current_track = data
+            self.player.props.current_track = self.data
 
         def station_changed(self, station):
             try:

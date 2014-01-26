@@ -52,7 +52,7 @@ from .pithosconfig import getdatapath, VERSION
 from .gobject_worker import GObjectWorker
 from .plugin import load_plugins
 from .dbus_service import PithosDBusProxy
-from .mpris import PithosMprisService
+from .mpris import PithosMprisService, UNITY
 from .pandora import *
 from .pandora.data import *
 
@@ -149,7 +149,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         PithosWindow object.
 
         """
-        pass
+        self.visible = True
 
     def finish_initializing(self, builder, cmdopts):
         """finish_initalizing should be called after parsing the ui definition
@@ -566,7 +566,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PLAY)
         self.update_song_row()
         self.emit('play-state-changed', False)
-
 
     def stop(self):
         prev = self.current_song
@@ -1033,6 +1032,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         if not isinstance(widget.get_focus(), Gtk.Button) and data.keyval == 32:
             self.playpause()
             return True
+
+    def toggle_visible(self, *args):
+        if self.visible:
+            self.hide()
+        else:
+            self.show()
+            self.bring_to_top()
+        
+        self.visible = not self.visible
 
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
