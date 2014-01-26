@@ -425,6 +425,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.station_changed(selected, reconnecting = self.have_stations)
         self.have_stations = True
 
+        self.mpris.load_stations()
+
     @property
     def current_song(self):
         if self.current_song_index is not None:
@@ -591,6 +593,9 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.user_pause()
         else:
             self.user_play()
+
+    def reload_songs(self, *ignore):
+        self.get_playlist()
 
     def get_playlist(self, start = False):
         self.start_new_playlist = self.start_new_playlist or start
