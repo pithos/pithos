@@ -1,5 +1,21 @@
 # -*- coding: utf-8 -*-
-# This code is in the public domain.
+### BEGIN LICENSE
+# Copyright (C) 2014 Davide Depau <me@davideddu.org>
+#This program is free software: you can redistribute it and/or modify it 
+#under the terms of the GNU General Public License version 3, as published 
+#by the Free Software Foundation.
+#
+#This program is distributed in the hope that it will be useful, but 
+#WITHOUT ANY WARRANTY; without even the implied warranties of 
+#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR 
+#PURPOSE.  See the GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License along 
+#with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# NOTE: By using this software you agree to use it in a legal way.
+# I cannot be held responsible for the use the users make of this plug-in.
+### END LICENSE
 
 import logging
 from pithos.plugin import PithosPlugin
