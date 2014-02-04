@@ -239,7 +239,7 @@
     <property name="visible">True</property>
     <property name="stock">gtk-jump-to</property>
   </object>
-  <object class="GtkImage" id="imagedownload">
+  <object class="GtkImage" id="imagesave">
     <property name="visible">True</property>
     <property name="stock">gtk-save</property>
   </object>
@@ -302,7 +302,7 @@
       <object class="GtkVBox" id="vbox1">
         <property name="visible">True</property>
         <child>
-          <object class="GtkToolbar" id="toolbar1">
+          <object class="GtkToolbar" id="toolbar">
             <property name="visible">True</property>
             <property name="toolbar_style">icons</property>
             <property name="show_arrow">False</property>
@@ -342,7 +342,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkSeparatorToolItem" id="toolbutton4">
+              <object class="GtkSeparatorToolItem" id="separatoritem">
                 <property name="visible">True</property>
               </object>
               <packing>
@@ -351,7 +351,7 @@
               </packing>
             </child>
 
-            <!-- Added by Davide Depau -->
+            <!--
 
             <child>
               <object class="GtkToolButton" id="download">
@@ -367,6 +367,9 @@
                 <property name="expand">False</property>
               </packing>
             </child>
+
+            -->
+
             <child>
               <object class="GtkToolButton" id="reload_songs">
                 <property name="visible">True</property>
@@ -390,8 +393,6 @@
                 <property name="homogeneous">True</property>
               </packing>
             </child>
-
-            <!-- /Added by Davide Depau -->
 
             <child>
               <object class="GtkToolItem" id="toolbutton_volume">
@@ -608,17 +609,23 @@
         <signal name="activate" handler="on_menuitem_tired" swapped="no"/>
       </object>
     </child>
+
+    <!--
+
     <child>
       <object class="GtkImageMenuItem" id="menuitem_download">
         <property name="label" translatable="yes">_Download this song...</property>
         <property name="visible">True</property>
         <property name="tooltip_text" translatable="yes">Save this song to the computer</property>
         <property name="use_underline">True</property>
-        <property name="image">imagedownload</property>
+        <property name="image">imagesave</property>
         <property name="use_stock">False</property>
         <signal name="activate" handler="on_menuitem_download" swapped="no"/>
       </object>
     </child>
+
+    -->
+
     <child>
       <object class="GtkImageMenuItem" id="menuitem4">
         <property name="label" translatable="yes">Bookmark</property>

@@ -88,6 +88,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
             "username":'',
             "password":'',
             "notify":True,
+            "download":False,
             "last_station_id":None,
             "proxy":'',
             "control_proxy":'',
@@ -96,6 +97,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
             "lastfm_key": False,
             "enable_mediakeys":True,
             "enable_screensaverpause":False,
+            "firsttime_hidewin":True,
             "volume": 1.0,
             # If set, allow insecure permissions. Implements CVE-2011-1500
             "unsafe_permissions": False,
@@ -202,6 +204,8 @@ class PreferencesPithosDialog(Gtk.Dialog):
                 break
 
         self.builder.get_object('checkbutton_notify').set_active(self.__preferences["notify"])
+        self.builder.get_object('checkbutton_download').set_active(self.__preferences["download"])
+        self.builder.get_object('checkbutton_download').connect("toggled", self.show_download_warning)
         self.builder.get_object('checkbutton_screensaverpause').set_active(self.__preferences["enable_screensaverpause"])
         self.builder.get_object('checkbutton_icon').set_active(self.__preferences["show_icon"])
 
@@ -219,6 +223,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.__preferences["control_proxy"] = self.builder.get_object('prefs_control_proxy').get_text()
         self.__preferences["control_proxy_pac"] = self.builder.get_object('prefs_control_proxy_pac').get_text()
         self.__preferences["notify"] = self.builder.get_object('checkbutton_notify').get_active()
+        self.__preferences["download"] = self.builder.get_object('checkbutton_download').get_active()
         self.__preferences["enable_screensaverpause"] = self.builder.get_object('checkbutton_screensaverpause').get_active()
         self.__preferences["show_icon"] = self.builder.get_object('checkbutton_icon').get_active()
 
@@ -230,6 +235,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.save()
 
     def cancel(self, widget, data=None):
+        
         """cancel - The user has elected cancel changes.
         Called before the dialog returns Gtk.ResponseType.CANCEL for run()
         """
@@ -237,6 +243,20 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.setup_fields() # restore fields to previous values
         pass
 
+    def show_download_warning(self, *ignore):
+        ckbtn = self.builder.get_object('checkbutton_download')
+        if ckbtn.get_active():
+            dialog = Gtk.MessageDialog(None, 0, Gtk.MessageType.WARNING, Gtk.ButtonsType.YES_NO, "Downloading songs is illegal!")
+            dialog.format_secondary_text("Downloading songs is against the copyright laws! You might be prosecuted! Do it at your own risk!\nMake sure you already own the songs you are downloading. The authors cannot be held responsible for the use you'll make of this feature.\nBy clicking \"Yes\" you agree to make a legal use of this feature.\n\nAre you still sure you want to enable this plug-in?")
+            response = dialog.run()
+
+            if response == Gtk.ResponseType.YES:
+                #self.builder.get_object('checkbutton_download').set_active(True)
+                pass # Setting it to True would cause the dialog to be shown again.
+            elif response == Gtk.ResponseType.NO:
+                self.builder.get_object('checkbutton_download').set_active(False)
+
+            dialog.destroy()
 
 def NewPreferencesPithosDialog():
     """NewPreferencesPithosDialog - returns a fully instantiated

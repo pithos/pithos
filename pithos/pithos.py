@@ -23,7 +23,7 @@ import signal
 
 import gi
 gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
+from gi.repository import Gst, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib, Notify
 import contextlib
 import cgi
 import math
@@ -483,64 +483,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
-
-    def download_playing_song(self, *ignore):
-        self.download_song(self.current_song)
-
-    def on_menuitem_download(self, widget):
-        song = self.selected_song()
-        self.download_song(song)
-
-    def download_song(self, song):
-        dialog = Gtk.FileChooserDialog("Download to...", None, Gtk.FileChooserAction.SAVE)
-        dialog.add_button(Gtk.STOCK_CANCEL, 0)
-        dialog.add_button(Gtk.STOCK_SAVE, 1)
-        dialog.set_default_response(1)
-
-        fname = song.artist + " - " + song.songName + ".mp4"
-        for i in ("<", ">", ":", "\"", "%", "/", "\\", "|", "?", "*"):
-            fname.replace(i, "")
-
-        dialog.set_current_name(fname)
-        dialog.set_do_overwrite_confirmation(True)
-
-        try:
-            if dialog.run() == 1:
-                filename = str(dialog.get_filename())
-            else:
-                return
-        finally:
-            dialog.destroy()
-
-        def download(song, output):
-            try:
-                f = open(output, "w")
-                u = urllib2.urlopen(song.audioUrlMap["highQuality"]["audioUrl"])
-                f.write(u.read())
-            finally:
-                f.close()
-                u.close()
-
-            a = mp4.MP4(output)
-            a['\xa9nam'] = song.songName
-            a['\xa9alb'] = song.album
-            a['\xa9ART'] = song.artist
-            a['purl'] = song.songDetailURL
-
-            try:
-                u = urllib2.urlopen(song.artRadio)
-                art = u.read()
-
-                a['covr'] = [mp4.MP4Cover(art)]
-            finally:
-                a.save()
-                u.close()
-
-
-        def callback(*args):
-            self.worker_run(time.sleep, (1.5,), lambda *args: None, "Download finished.")
-
-        self.worker_run(download, (song, filename), callback, "Downloading {name} by {artist}...".format(name=song.songName, artist=song.artist))
 
 
     def user_play(self, *ignore):
@@ -1033,11 +975,18 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.playpause()
             return True
 
-    def toggle_visible(self, *args):
+    def toggle_visible(self, *args, **kwargs):
+        if self.preferences["firsttime_hidewin"]:
+            Notify.init('Pithos')
+            notification = Notify.Notification()
+            notification.set_category('x-gnome.music')
+            notification.set_hint_string('desktop-icon', 'pithos')
+            notification.update("Pithos window hidden", "Right click the launcher and select \"Show window\" to show it again.", "pithos")
+            #self.preferences["firsttime_hidewin"] = False
+            #self.prefs_dlg.save()
         if self.visible:
             self.hide()
         else:
-            self.show()
             self.bring_to_top()
         
         self.visible = not self.visible
@@ -1066,7 +1015,7 @@ def NewPithosWindow(app, options):
 
     builder = Gtk.Builder()
     builder.add_from_file(ui_filename)
-    toolbar = builder.get_object("toolbar1")
+    toolbar = builder.get_object("toolbar")
     toolbar.get_style_context().add_class("primary-toolbar")
     window = builder.get_object("pithos_window")
     window.set_application(app)

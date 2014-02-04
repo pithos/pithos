@@ -65,15 +65,10 @@ if not UNITY:
 
 
         def load_stations(self):
-            stations = self.window.pandora.stations
-            s = stations[0]
-            #print s.id, s.idToken, s.isCreator, s.isQuickMix, s.name
+            pass
 
-            for station in stations:
-                playlist = Unity.Playlist.new(station.id)
-                playlist.props.name = station.name
-                playlist.props.icon = Gio.ThemedIcon.new("media-playlist-shuffle" if station.isQuickMix else "stock_smart_playlist")
-                self.player.add_playlist(playlist)
+        def station_changed(self, station):
+            pass
             
         def playstate_handler(self, window, state):
             if state:
@@ -266,6 +261,9 @@ if not UNITY:
         def station_changed(*args):
             pass
 
+        def signal_show_window(*ignore):
+            pass
+
 else:
     # Use Unity Sound Menu API, with playlists/stations support
     class PithosMprisService(object):
@@ -292,6 +290,8 @@ else:
 
             if UNITY_QUICKLIST:
                 self.launcher = Unity.LauncherEntry.get_for_desktop_id("pithos.desktop")
+                self.window.disconnect_by_func(self.window.on_destroy)
+                self.delete_callback_handle = self.window.connect("delete-event", self.toggle_visible)
 
             self.song_changed()
 
@@ -317,6 +317,19 @@ else:
             self.ql_previous.property_set_bool(Dbusmenu.MENUITEM_PROP_VISIBLE, True)
             self.ql_previous.connect('item_activated', self.previous_ql, None)
             self.quicklist.child_append(self.ql_previous)
+
+            separator = Dbusmenu.Menuitem.new()
+            separator.property_set(Dbusmenu.MENUITEM_PROP_TYPE, Dbusmenu.CLIENT_TYPES_SEPARATOR)
+            separator.property_set_bool(Dbusmenu.MENUITEM_PROP_VISIBLE, True)
+            self.quicklist.child_append(separator)
+
+            self.ql_show_window = Dbusmenu.Menuitem.new()
+            self.ql_show_window.property_set(Dbusmenu.MENUITEM_PROP_LABEL, "Show window")
+            self.ql_show_window.property_set(Dbusmenu.MENUITEM_PROP_TOGGLE_TYPE, Dbusmenu.MENUITEM_TOGGLE_CHECK)
+            self.ql_show_window.property_set_int(Dbusmenu.MENUITEM_PROP_TOGGLE_STATE, Dbusmenu.MENUITEM_TOGGLE_STATE_CHECKED)
+            self.ql_show_window.property_set_bool(Dbusmenu.MENUITEM_PROP_VISIBLE, True)
+            self.ql_show_window.connect('item_activated', self.toggle_visible, None)
+            self.quicklist.child_append(self.ql_show_window)
 
             self.ql_stations = {}
 
@@ -454,6 +467,17 @@ else:
                     self.ql_playpause.property_set_int(Dbusmenu.MENUITEM_PROP_TOGGLE_STATE, Dbusmenu.MENUITEM_TOGGLE_STATE_UNCHECKED)
             except AttributeError:
                 pass
+
+        def toggle_visible(self, *ignore):
+            self.window.toggle_visible(quicklist=True)
+            self.signal_show_window()
+
+        def signal_show_window(self, *ignore):
+            if self.window.visible:
+                self.ql_show_window.property_set_int(Dbusmenu.MENUITEM_PROP_TOGGLE_STATE, Dbusmenu.MENUITEM_TOGGLE_STATE_CHECKED)
+            else:
+                self.ql_show_window.property_set_int(Dbusmenu.MENUITEM_PROP_TOGGLE_STATE, Dbusmenu.MENUITEM_TOGGLE_STATE_UNCHECKED)
+
 
         def PropertiesChanged(self, interface_name, changed_properties,
                               invalidated_properties):
