@@ -289,8 +289,9 @@
   <object class="PithosWindow" id="pithos_window">
     <property name="title" translatable="yes">Pithos</property>
     <property name="default_width">500</property>
-    <property name="default_height">360</property>
+    <property name="default_height">500</property>
     <property name="icon_name">pithos</property>
+    <property name="window_position">center</property>
     <signal name="destroy" handler="on_destroy" swapped="no"/>
     <signal name="key-press-event" handler="on_kb_playpause" swapped="no"/>
     <child>
@@ -301,6 +302,18 @@
             <property name="visible">True</property>
             <property name="toolbar_style">icons</property>
             <property name="show_arrow">False</property>
+            <child>
+              <object class="GtkToolButton" id="prevsong">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Previous Song</property>
+                <property name="use_underline">True</property>
+                <property name="stock_id">gtk-media-previous</property>
+                <signal name="clicked" handler="prev_song" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+              </packing>
+            </child>
             <child>
               <object class="GtkToolButton" id="playpause_button">
                 <property name="visible">True</property>
@@ -416,10 +429,62 @@
             <property name="position">1</property>
           </packing>
         </child>
+
+        <child>
+          <object class="GtkBox" id="box_progress">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="spacing">5</property>
+            <child>
+              <object class="GtkLabel" id="pos_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="no">0:00</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkProgressBar" id="progressbar">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="adjustment">progress_adjustment</property>
+                <property name="draw_value">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="dur_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="no">0:00</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+
         <child>
           <object class="GtkStatusbar" id="statusbar1">
             <property name="visible">True</property>
-            <property name="spacing">2</property>
+            <property name="spacing">5</property>
             <child>
               <placeholder/>
             </child>
@@ -427,7 +492,7 @@
           <packing>
             <property name="expand">False</property>
             <property name="fill">True</property>
-            <property name="position">2</property>
+            <property name="position">3</property>
           </packing>
         </child>
       </object>

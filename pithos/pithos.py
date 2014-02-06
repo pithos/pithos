@@ -28,7 +28,8 @@ import contextlib
 import cgi
 import math
 import webbrowser
-import urllib2
+import urllib, urllib2
+from mutagen import mp4
 import json
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
@@ -51,7 +52,7 @@ from .pithosconfig import getdatapath, VERSION
 from .gobject_worker import GObjectWorker
 from .plugin import load_plugins
 from .dbus_service import PithosDBusProxy
-from .mpris import PithosMprisService
+from .mpris import PithosMprisService, UNITY
 from .pandora import *
 from .pandora.data import *
 
@@ -148,7 +149,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         PithosWindow object.
 
         """
-        pass
+        self.visible = True
 
     def finish_initializing(self, builder, cmdopts):
         """finish_initalizing should be called after parsing the ui definition
@@ -252,6 +253,10 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.songs_treeview = self.builder.get_object('songs_treeview')
         self.songs_treeview.set_model(self.songs_model)
+
+        self.pos_label = self.builder.get_object("pos_label")
+        self.dur_label = self.builder.get_object("dur_label")
+        self.progressbar = self.builder.get_object("progressbar")
 
         title_col   = Gtk.TreeViewColumn()
 
@@ -420,6 +425,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.station_changed(selected, reconnecting = self.have_stations)
         self.have_stations = True
 
+        self.mpris.load_stations()
+
     @property
     def current_song(self):
         if self.current_song_index is not None:
@@ -431,7 +438,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if songs_remaining <= 0:
             # We don't have this song yet. Get a new playlist.
             return self.get_playlist(start = True)
-        elif songs_remaining == 1:
+        elif songs_remaining <= 2:
             # Preload next playlist so there's no delay
             self.get_playlist()
 
@@ -465,6 +472,15 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.emit('song-changed', self.current_song)
 
+    def prev_song(self, *ignore):
+        i = self.current_song_index
+        if time.time() - self.current_song.start_time < 3 and i > 0:
+            print True
+            self.start_song(i - 1)
+        else:
+            print False
+            self.start_song(i)
+
     def next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
 
@@ -492,7 +508,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.update_song_row()
         self.emit('play-state-changed', False)
 
-
     def stop(self):
         prev = self.current_song
         if prev and prev.start_time:
@@ -518,6 +533,9 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.user_pause()
         else:
             self.user_play()
+
+    def reload_songs(self, *ignore):
+        self.get_playlist()
 
     def get_playlist(self, start = False):
         self.start_new_playlist = self.start_new_playlist or start
@@ -610,6 +628,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if not reconnecting:
             self.get_playlist(start = True)
         self.stations_combo.set_active(self.station_index(station))
+        self.mpris.station_changed(station)
 
     def on_gst_eos(self, bus, message):
         logging.info("EOS")
@@ -748,12 +767,25 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song.rating == RATE_BAN:
             return Gtk.STOCK_CANCEL
 
-    def update_song_row(self, song = None):
+    def update_song_row(self, song=None):
         if song is None:
             song = self.current_song
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
             self.songs_model[song.index][2] = self.song_icon(song) or ""
+
+            dur_stat, dur_int = self.player.query_duration(self.time_format)
+            pos_stat, pos_int = self.player.query_position(self.time_format)
+
+            if dur_stat and pos_stat:
+                pos_str = self.format_time(pos_int)
+                dur_str = self.format_time(dur_int)
+
+                self.pos_label.set_text(pos_str)
+                self.dur_label.set_text(dur_str)
+
+                self.progressbar.set_fraction(float(pos_int)/dur_int)
+
         return self.playing
 
     def stations_combo_changed(self, widget):
@@ -864,8 +896,9 @@ class PithosWindow(Gtk.ApplicationWindow):
 
             if event.button == 1 and event.type == Gdk.EventType._2BUTTON_PRESS:
                 logging.info("Double clicked on song %s", self.selected_song().index)
-                if self.selected_song().index <= self.current_song_index:
-                    return False
+                # Why put limits? Play all the songs in the playlist!
+                #if self.selected_song().index <= self.current_song_index:
+                #    return False
                 self.start_song(self.selected_song().index)
 
     def set_player_volume(self, value):
@@ -941,6 +974,15 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.playpause()
             return True
 
+    def toggle_visible(self, *args):
+        if self.visible:
+            self.hide()
+        else:
+            self.show()
+            self.bring_to_top()
+        
+        self.visible = not self.visible
+
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
         self.destroy()
@@ -965,6 +1007,8 @@ def NewPithosWindow(app, options):
 
     builder = Gtk.Builder()
     builder.add_from_file(ui_filename)
+    toolbar = builder.get_object("toolbar1")
+    toolbar.get_style_context().add_class("primary-toolbar")
     window = builder.get_object("pithos_window")
     window.set_application(app)
     window.finish_initializing(builder, options)

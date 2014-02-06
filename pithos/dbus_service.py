@@ -50,6 +50,10 @@ class PithosDBusProxy(dbus.service.Object):
         self.window.next_song()
     
     @dbus.service.method(DBUS_BUS)
+    def PrevSong(self):
+        self.window.prev_song()
+
+    @dbus.service.method(DBUS_BUS)
     def LoveCurrentSong(self):
         self.window.love_song()
     
