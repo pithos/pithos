@@ -239,10 +239,6 @@
     <property name="visible">True</property>
     <property name="stock">gtk-jump-to</property>
   </object>
-  <object class="GtkImage" id="imagedownload">
-    <property name="visible">True</property>
-    <property name="stock">gtk-save</property>
-  </object>
   <object class="GtkImage" id="image5">
     <property name="visible">True</property>
     <property name="stock">gtk-refresh</property>
@@ -350,49 +346,6 @@
                 <property name="homogeneous">True</property>
               </packing>
             </child>
-
-            <!-- Added by Davide Depau -->
-
-            <child>
-              <object class="GtkToolButton" id="download">
-                <property name="visible">True</property>
-                <property name="has_tooltip">True</property>
-                <property name="tooltip_text" translatable="yes">Download playing song...</property>
-                <property name="label" translatable="yes">Download playing song</property>
-                <property name="use_underline">True</property>
-                <property name="stock_id">gtk-save</property>
-                <signal name="clicked" handler="download_playing_song" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolButton" id="reload_songs">
-                <property name="visible">True</property>
-                <property name="has_tooltip">True</property>
-                <property name="tooltip_text" translatable="yes">Load more songs</property>
-                <property name="label" translatable="yes">Load more songs</property>
-                <property name="use_underline">True</property>
-                <property name="stock_id">gtk-refresh</property>
-                <signal name="clicked" handler="reload_songs" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSeparatorToolItem" id="davseparator">
-                <property name="visible">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-
-            <!-- /Added by Davide Depau -->
-
             <child>
               <object class="GtkToolItem" id="toolbutton_volume">
                 <property name="visible">True</property>
@@ -606,17 +559,6 @@
         <property name="image">image4</property>
         <property name="use_stock">False</property>
         <signal name="activate" handler="on_menuitem_tired" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkImageMenuItem" id="menuitem_download">
-        <property name="label" translatable="yes">_Download this song...</property>
-        <property name="visible">True</property>
-        <property name="tooltip_text" translatable="yes">Save this song to the computer</property>
-        <property name="use_underline">True</property>
-        <property name="image">imagedownload</property>
-        <property name="use_stock">False</property>
-        <signal name="activate" handler="on_menuitem_download" swapped="no"/>
       </object>
     </child>
     <child>
