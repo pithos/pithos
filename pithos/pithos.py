@@ -286,7 +286,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         render_text = Gtk.CellRendererText()
         render_text.props.ellipsize = Pango.EllipsizeMode.END
-        title_col.pack_start(render_text, True) # was True
+        title_col.pack_start(render_text, True)
         title_col.add_attribute(render_text, "markup", 1)
         title_col.set_cell_data_func(render_text, bgcolor_data_func)
 
