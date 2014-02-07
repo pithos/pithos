@@ -81,6 +81,18 @@ def buttonMenu(button, menu):
 
     button.connect('clicked', cb)
 
+class CellRendererClickablePixbuf(Gtk.CellRendererPixbuf):
+    __gsignals__ = {'clicked': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
+                                (GObject.TYPE_STRING,))
+                   }
+    def __init__(self):
+        super(CellRendererClickablePixbuf,self).__init__()
+        # Gtk.CellRendererPixbuf.__init__(self)
+        self.set_property('mode', Gtk.CellRendererMode.ACTIVATABLE)
+    def do_activate(self, event, widget, path, background_area, cell_area,
+                    flags):
+        self.emit('clicked', path)
+
 ALBUM_ART_SIZE = 96
 ALBUM_ART_X_PAD = 6
 
@@ -190,8 +202,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.pandora_connect()
 
     def init_core(self):
-        #                                Song object            display text  icon  album art
-        self.songs_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str,          str,  GdkPixbuf.Pixbuf)
+        #                                Song object            display text  icon album art         thumb up    thumb down
+        self.songs_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str,          str, GdkPixbuf.Pixbuf, GdkPixbuf.Pixbuf, GdkPixbuf.Pixbuf)
         #                                   Station object         station name
         self.stations_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
 
@@ -231,6 +243,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         aa = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
 
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
+        self.thumb_up = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'thumbs_up.png'))
+        self.thumb_up_s = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'thumbs_up_selected.png'))
+        self.thumb_down = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'thumbs_down.png'))
+        self.thumb_down_s = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'thumbs_down_selected.png'))
 
     def init_ui(self):
         GLib.set_application_name("Pithos")
@@ -270,9 +286,48 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         render_text = Gtk.CellRendererText()
         render_text.props.ellipsize = Pango.EllipsizeMode.END
-        title_col.pack_start(render_text, True)
+        title_col.pack_start(render_text, False) # was True
         title_col.add_attribute(render_text, "markup", 1)
         title_col.set_cell_data_func(render_text, bgcolor_data_func)
+
+
+        ####################################### OTHER MAJOR PART
+        def love_cb(s, path, userdata):
+            self, model, column = userdata
+            song = model.get_model()[path][0]
+            print dir(model.get_model()[path])
+            # TODO - change icon-changing to where it's usually set
+            if song.rating != RATE_LOVE:
+                model.get_model()[path][5] = self.thumb_down
+                model.get_model()[path][4] = self.thumb_up_s
+                self.love_song(song)
+            else:
+                model.get_model()[path][4] = self.thumb_up
+                self.unrate_song(song)
+        
+        render_love = CellRendererClickablePixbuf()
+        render_love.connect("clicked", love_cb, (self, self.songs_treeview, title_col))
+        
+        def ban_cb(s, path, userdata):
+            self, model, column = userdata
+            song = model.get_model()[path][0]
+            # TODO - change icon-changing to where it's usually set
+            if song.rating != RATE_BAN:
+                model.get_model()[path][4] = self.thumb_up
+                model.get_model()[path][5] = self.thumb_down_s
+                self.ban_song(song)
+            else:
+                model.get_model()[path][5] = self.thumb_down
+                self.unrate_song(song)
+                
+        render_ban = CellRendererClickablePixbuf()
+        render_ban.connect("clicked", ban_cb, (self, self.songs_treeview, title_col))
+
+        title_col.pack_start(render_love, False)
+        title_col.add_attribute(render_love, "pixbuf", 4)
+
+        title_col.pack_start(render_ban, False)
+        title_col.add_attribute(render_ban, "pixbuf", 5)
 
         self.songs_treeview.append_column(title_col)
 
@@ -541,7 +596,8 @@ class PithosWindow(Gtk.ApplicationWindow):
             start_index = len(self.songs_model)
             for i in l:
                 i.index = len(self.songs_model)
-                self.songs_model.append((i, '', '', self.default_album_art))
+                ########################### MAIN POINT
+                self.songs_model.append((i, '', '', self.default_album_art, self.thumb_up, self.thumb_down))
                 self.update_song_row(i)
 
                 i.art_pixbuf = None
@@ -740,6 +796,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         return "%s\n<small>%s</small>" % (description, msg)
 
+    # TODO - Need to refactor song_icon and update_song_row to change icons
     def song_icon(self, song):
         if song.tired:
             return Gtk.STOCK_JUMP_TO
