@@ -286,23 +286,16 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         render_text = Gtk.CellRendererText()
         render_text.props.ellipsize = Pango.EllipsizeMode.END
-        title_col.pack_start(render_text, False) # was True
+        title_col.pack_start(render_text, True) # was True
         title_col.add_attribute(render_text, "markup", 1)
         title_col.set_cell_data_func(render_text, bgcolor_data_func)
 
-
-        ####################################### OTHER MAJOR PART
         def love_cb(s, path, userdata):
             self, model, column = userdata
             song = model.get_model()[path][0]
-            print dir(model.get_model()[path])
-            # TODO - change icon-changing to where it's usually set
             if song.rating != RATE_LOVE:
-                model.get_model()[path][5] = self.thumb_down
-                model.get_model()[path][4] = self.thumb_up_s
                 self.love_song(song)
             else:
-                model.get_model()[path][4] = self.thumb_up
                 self.unrate_song(song)
         
         render_love = CellRendererClickablePixbuf()
@@ -311,13 +304,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         def ban_cb(s, path, userdata):
             self, model, column = userdata
             song = model.get_model()[path][0]
-            # TODO - change icon-changing to where it's usually set
             if song.rating != RATE_BAN:
-                model.get_model()[path][4] = self.thumb_up
-                model.get_model()[path][5] = self.thumb_down_s
                 self.ban_song(song)
             else:
-                model.get_model()[path][5] = self.thumb_down
                 self.unrate_song(song)
                 
         render_ban = CellRendererClickablePixbuf()
@@ -596,7 +585,6 @@ class PithosWindow(Gtk.ApplicationWindow):
             start_index = len(self.songs_model)
             for i in l:
                 i.index = len(self.songs_model)
-                ########################### MAIN POINT
                 self.songs_model.append((i, '', '', self.default_album_art, self.thumb_up, self.thumb_down))
                 self.update_song_row(i)
 
@@ -796,7 +784,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         return "%s\n<small>%s</small>" % (description, msg)
 
-    # TODO - Need to refactor song_icon and update_song_row to change icons
     def song_icon(self, song):
         if song.tired:
             return Gtk.STOCK_JUMP_TO
@@ -804,6 +791,14 @@ class PithosWindow(Gtk.ApplicationWindow):
             return Gtk.STOCK_ABOUT
         if song.rating == RATE_BAN:
             return Gtk.STOCK_CANCEL
+     
+    def song_thumb(self, song):
+        if song.rating == RATE_LOVE:
+            return (self.thumb_up_s, self.thumb_down)
+        elif song.rating == RATE_BAN:
+            return (self.thumb_up, self.thumb_down_s)
+        else:
+            return (self.thumb_up, self.thumb_down)
 
     def update_song_row(self, song = None):
         if song is None:
@@ -811,6 +806,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
             self.songs_model[song.index][2] = self.song_icon(song) or ""
+            self.songs_model[song.index][4], self.songs_model[song.index][5] = self.song_thumb(song)
         return self.playing
 
     def stations_combo_changed(self, widget):
