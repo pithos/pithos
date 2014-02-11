@@ -18,14 +18,22 @@ import logging
 import html
 from pithos.plugin import PithosPlugin
 from pithos.pithosconfig import get_data_file
-from gi.repository import (GLib, Gtk, Notify)
+from gi.repository import (GLib, Gtk)
 
 class NotifyPlugin(PithosPlugin):
     preference = 'notify'
 
+    has_notify = False
     supports_actions = False
-    
+
     def on_prepare(self):
+        try:
+            from gi.repository import Notify
+            self.has_notify = True
+        except ImportError:
+            logging.warning ("libnotify not found.")
+            return
+
         Notify.init('Pithos')
         self.notification = Notify.Notification()
         self.notification.set_category('x-gnome.music')
@@ -44,8 +52,9 @@ class NotifyPlugin(PithosPlugin):
         #    self.notification.set_hint('resident', GLib.Variant.new_boolean(True))
 
     def on_enable(self):
-        self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
-        self.state_changed_handle = self.window.connect("user-changed-play-state", self.playstate_changed)
+        if self.has_notify:
+            self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
+            self.state_changed_handle = self.window.connect("user-changed-play-state", self.playstate_changed)
 
     def set_actions(self, playing=True):
         self.notification.clear_actions()
@@ -86,15 +95,16 @@ class NotifyPlugin(PithosPlugin):
 
     def notification_skip_cb(self, notification, action, data, ignore=None):
         self.window.next_song()
-        
+
     def song_changed(self, window,  song):
         if not self.window.is_active():
             GLib.idle_add(self.set_notification, window.current_song)
-            
+
     def playstate_changed(self, window, state):
         if not self.window.is_active():
             GLib.idle_add(self.set_notification, window.current_song, state)
-        
+
     def on_disable(self):
-        self.window.disconnect(self.song_callback_handle)
-        self.window.disconnect(self.state_changed_handle)
+        if self.has_notify:
+            self.window.disconnect(self.song_callback_handle)
+            self.window.disconnect(self.state_changed_handle)
