@@ -30,8 +30,9 @@ import math
 import webbrowser
 import urllib.request, urllib.error, urllib.parse
 import json
-from dbus.mainloop.glib import DBusGMainLoop
-DBusGMainLoop(set_as_default=True)
+if sys.platform != 'win32':
+    from dbus.mainloop.glib import DBusGMainLoop
+    DBusGMainLoop(set_as_default=True)
 
 # Check if we are working in the source tree or from the installed
 # package and mangle the python path accordingly
@@ -50,8 +51,9 @@ from .util import *
 from .pithosconfig import getdatapath, VERSION
 from .gobject_worker import GObjectWorker
 from .plugin import load_plugins
-from .dbus_service import PithosDBusProxy
-from .mpris import PithosMprisService
+if sys.platform != 'win32':
+    from .dbus_service import PithosDBusProxy
+    from .mpris import PithosMprisService
 from .pandora import *
 from .pandora.data import *
 
@@ -178,8 +180,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.plugins = {}
         load_plugins(self)
 
-        self.dbus_service = PithosDBusProxy(self)
-        self.mpris = PithosMprisService(self)
+        if sys.platform != 'win32':
+            self.dbus_service = PithosDBusProxy(self)
+            self.mpris = PithosMprisService(self)
 
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)
