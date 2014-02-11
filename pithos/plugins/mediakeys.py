@@ -15,7 +15,7 @@
 ### END LICENSE
 
 from pithos.plugin import PithosPlugin
-import dbus
+import sys
 import logging
 
 APP_ID = 'Pithos'
@@ -24,6 +24,10 @@ class MediaKeyPlugin(PithosPlugin):
     preference = 'enable_mediakeys'
     
     def bind_dbus(self):
+        try:
+            import dbus
+        except ImportError:
+            return False
         try:
             bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
             mk = bus.get_object("org.gnome.SettingsDaemon","/org/gnome/SettingsDaemon/MediaKeys")
@@ -64,9 +68,30 @@ class MediaKeyPlugin(PithosPlugin):
         logging.info("Bound media keys with keybinder")
         self.method = 'keybinder'
         return True
+
+    def kbevent(self, event):
+        if event.KeyID == 179 or event.Key == 'Media_Play_Pause':
+            self.window.playpause_notify()
+        if event.KeyID == 176 or event.Key == 'Media_Next_Track':
+            self.window.next_song()
+        return True
+
+    def bind_win32(self):
+        try:
+            import pyHook
+        except ImportError:
+            logging.warning('Please install PyHook: http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyhook')
+            return False
+        self.hookman = pyHook.HookManager()
+        self.hookman.KeyDown = self.kbevent
+        self.hookman.HookKeyboard()
+        return True
         
     def on_enable(self):
-        self.bind_dbus() or self.bind_keybinder() or logging.error("Could not bind media keys")     
+        if sys.platform == 'win32':
+            self.bind_win32() or logging.error("Could not bind media keys")
+        else:
+            self.bind_dbus() or self.bind_keybinder() or logging.error("Could not bind media keys")
         
     def on_disable(self):
         logging.error("Not implemented: Can't disable media keys")
