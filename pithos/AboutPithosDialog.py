@@ -18,7 +18,7 @@ import sys
 import os
 from gi.repository import Gtk
 
-from .pithosconfig import getdatapath
+from .pithosconfig import get_ui_file
 
 class AboutPithosDialog(Gtk.AboutDialog):
     __gtype_name__ = "AboutPithosDialog"
@@ -54,13 +54,8 @@ def NewAboutPithosDialog():
     
     """
 
-    #look for the ui file that describes the ui
-    ui_filename = os.path.join(getdatapath(), 'ui', 'AboutPithosDialog.ui')
-    if not os.path.exists(ui_filename):
-        ui_filename = None
-
     builder = Gtk.Builder()
-    builder.add_from_file(ui_filename)    
+    builder.add_from_file(get_ui_file('about'))    
     dialog = builder.get_object("about_pithos_dialog")
     dialog.finish_initializing(builder)
     return dialog
