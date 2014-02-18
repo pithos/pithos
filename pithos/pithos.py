@@ -48,7 +48,7 @@ sys.path.insert(0, os.path.dirname(fullPath))
 
 from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from .util import *
-from .pithosconfig import getdatapath, VERSION
+from .pithosconfig import get_ui_file, get_media_file, VERSION
 from .gobject_worker import GObjectWorker
 from .plugin import load_plugins
 if sys.platform != 'win32':
@@ -91,7 +91,7 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
         GObject.GObject.__init__(self)
         self.icon = None
         self.pixbuf = None
-        self.rate_bg = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'rate_bg.png'))
+        self.rate_bg = GdkPixbuf.Pixbuf.new_from_file(get_media_file('rate'))
 
     __gproperties__ = {
         'icon': (str, 'icon', 'icon', '', GObject.PARAM_READWRITE),
@@ -231,7 +231,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
 
-        aa = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
+        aa = GdkPixbuf.Pixbuf.new_from_file(get_media_file('album'))
 
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
 
@@ -958,13 +958,8 @@ def NewPithosWindow(app, options):
     creating a PithosWindow directly.
     """
 
-    #look for the ui file that describes the ui
-    ui_filename = os.path.join(getdatapath(), 'ui', 'PithosWindow.ui')
-    if not os.path.exists(ui_filename):
-        ui_filename = None
-
     builder = Gtk.Builder()
-    builder.add_from_file(ui_filename)
+    builder.add_from_file(get_ui_file('main'))
     window = builder.get_object("pithos_window")
     window.set_application(app)
     window.finish_initializing(builder, options)
@@ -982,9 +977,8 @@ class PithosApplication(Gtk.Application):
         Gtk.Application.do_startup(self)
 
         # Setup appmenu
-        ui_filename = os.path.join(getdatapath(), 'ui', 'app_menu.ui')
         builder = Gtk.Builder()
-        builder.add_from_file(ui_filename)
+        builder.add_from_file(get_ui_file('menu'))
         menu = builder.get_object("app-menu")
         self.set_app_menu(menu)
 

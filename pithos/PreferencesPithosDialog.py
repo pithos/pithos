@@ -23,7 +23,7 @@ from gi.repository import Gtk
 from gi.repository import GObject
 from gi.repository import GLib
 
-from .pithosconfig import *
+from .pithosconfig import get_ui_file
 from .pandora.data import *
 from .plugins.scrobble import LastFmAuth
 
@@ -244,13 +244,8 @@ def NewPreferencesPithosDialog():
     creating a PreferencesPithosDialog instance directly.
     """
 
-    #look for the ui file that describes the ui
-    ui_filename = os.path.join(getdatapath(), 'ui', 'PreferencesPithosDialog.ui')
-    if not os.path.exists(ui_filename):
-        ui_filename = None
-
     builder = Gtk.Builder()
-    builder.add_from_file(ui_filename)
+    builder.add_from_file(get_ui_file('preferences'))
     dialog = builder.get_object("preferences_pithos_dialog")
     dialog.finish_initializing(builder)
     return dialog
