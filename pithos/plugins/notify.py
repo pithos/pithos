@@ -34,6 +34,10 @@ class NotifyPlugin(PithosPlugin):
             logging.warning ("libnotify not found.")
             return
 
+        if (Notify.VERSION_MAJOR, Notify.VERSION_MINOR, Notify.VERSION_MICRO) < (0, 7, 6):
+            old_add_action = Notify.Notification.add_action
+            Notify.Notification.add_action = lambda *args: old_add_action(*(args + (None,)))
+
         Notify.init('Pithos')
         self.notification = Notify.Notification()
         self.notification.set_category('x-gnome.music')
@@ -69,13 +73,13 @@ class NotifyPlugin(PithosPlugin):
 
         if playing:
             self.notification.add_action(pause_action, 'Pause',
-                                         self.notification_playpause_cb, None, None)
+                                         self.notification_playpause_cb, None)
         else:
             self.notification.add_action(play_action, 'Play',
-                                         self.notification_playpause_cb, None, None)
+                                         self.notification_playpause_cb, None)
 
         self.notification.add_action(skip_action, 'Skip',
-                                     self.notification_skip_cb, None, None)
+                                     self.notification_skip_cb, None)
 
     def set_notification(self, song, playing=True):
         if self.supports_actions:
