@@ -27,17 +27,17 @@ class project_path_not_found(Exception):
     pass
 
 ui_files = {
-    'about'         : 'AboutPithosDialog.ui',
-    'preferences'   : 'PreferencesPithosDialog.ui',
-    'search'        : 'SearchDialog.ui',
-    'stations'      : 'StationsDialog.ui',
-    'main'          : 'PithosWindow.ui',
-    'menu'          : 'app_menu.ui'
+    'about': 'AboutPithosDialog.ui',
+    'preferences': 'PreferencesPithosDialog.ui',
+    'search': 'SearchDialog.ui',
+    'stations': 'StationsDialog.ui',
+    'main': 'PithosWindow.ui',
+    'menu': 'app_menu.ui'
 }
 
 media_files = {
-    'rate'          : 'rate_bg.png',
-    'album'         : 'album_default.png'
+    'rate': 'rate_bg.png',
+    'album': 'album_default.png'
 }
 
 def get_media_file(name):
