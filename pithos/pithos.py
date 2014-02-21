@@ -82,14 +82,31 @@ def buttonMenu(button, menu):
     button.connect('clicked', cb)
 
 class CellRendererSongText(Gtk.CellRendererText):
+    __gsignals__ = {'clicked': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
+                                (GObject.TYPE_STRING,)) }
     def __init__(self):
         super(CellRendererSongText,self).__init__()
+        self.set_property('mode', Gtk.CellRendererMode.ACTIVATABLE)
+        self.lovepix = None
+        self.banpix = None
+    __gproperties__ = {
+        'lovepix': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.PARAM_READWRITE),
+        'banpix': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.PARAM_READWRITE)
+    }
+    def do_set_property(self, pspec, value):
+        setattr(self, pspec.name, value)
+    def do_get_property(self, pspec):
+        return getattr(self, pspec.name)
+    def do_get_size(self, widget, cell_area):
+        return (0, 0, ALBUM_ART_SIZE + ALBUM_ART_X_PAD, ALBUM_ART_SIZE)
     def do_render(self, ctx, widget, background_area, cell_area, flags):
-        # Uncomment if we figure out how to stop pre-whiteout of columns.
-        # If we get CellRendererClickablePixbuf to not whiteout it's background
-        # (or draw before SongText), then this will let it stretch over their column.
-        # cell_area.width += 64
         Gtk.CellRendererText.do_render(self,ctx,widget,background_area,cell_area,flags)
+        Gdk.cairo_set_source_pixbuf(ctx, self.lovepix, cell_area.x+10, cell_area.y + cell_area.height-42)
+        ctx.paint()
+        Gdk.cairo_set_source_pixbuf(ctx, self.banpix, cell_area.x+45, cell_area.y + cell_area.height-42)
+        ctx.paint()
+    def do_activate(self, event, widget, path, background_area, cell_area, flags):
+        self.emit('clicked', (path,event,cell_area))
 
 class CellRendererClickablePixbuf(Gtk.CellRendererPixbuf):
     __gsignals__ = {'clicked': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
@@ -245,10 +262,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         aa = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
 
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
-        self.love_active = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'love-active-32.png'))
-        self.love_inactive = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'love-inactive-desat-32.png'))
-        self.ban_active = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'ban-active-32.png'))
-        self.ban_inactive = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'ban-inactive-desat-32.png'))
+        self.love_active = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'love-active.png'))
+        self.love_inactive = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'love-inactive-desat.png'))
+        self.ban_active = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'ban-active.png'))
+        self.ban_inactive = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'ban-inactive-desat.png'))
 
     def init_ui(self):
         GLib.set_application_name("Pithos")
@@ -285,13 +302,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         title_col.add_attribute(render_icon, "pixbuf", 2)
         title_col.set_cell_data_func(render_icon, bgcolor_data_func)
 
-        # render_text = Gtk.CellRendererText()
-        render_text = CellRendererSongText()
-        render_text.props.ellipsize = Pango.EllipsizeMode.END
-        title_col.pack_start(render_text, True)
-        title_col.add_attribute(render_text, "markup", 1)
-        title_col.set_cell_data_func(render_text, bgcolor_data_func)
-        
         def love_cb(s, path, userdata):
             self, model, column = userdata
             song = model.get_model()[path][0]
@@ -299,13 +309,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.love_song(song)
             else:
                 self.unrate_song(song)
-        
-        render_love = CellRendererClickablePixbuf()
-        render_love.set_alignment(0.5,0.99)
-        render_love.set_padding(5,10)
-        render_love.set_property("cell-background-rgba",Gdk.RGBA(red=0.0,green=0.0,blue=0.0,alpha=0.0))
-        render_love.connect("clicked", love_cb, (self, self.songs_treeview, title_col))
-        
+
         def ban_cb(s, path, userdata):
             self, model, column = userdata
             song = model.get_model()[path][0]
@@ -313,18 +317,44 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.ban_song(song)
             else:
                 self.unrate_song(song)
-                
-        render_ban = CellRendererClickablePixbuf()
-        render_ban.set_alignment(0.5,0.99)
-        render_ban.set_padding(10,10)
-        render_ban.set_property("cell-background-rgba",Gdk.RGBA(red=0.0,green=0.0,blue=0.0,alpha=0.0))
-        render_ban.connect("clicked", ban_cb, (self, self.songs_treeview, title_col))
-        
-        title_col.pack_start(render_love, False) # ORIGINAL
-        title_col.add_attribute(render_love, "pixbuf", 3) # ORIGINAL 
 
-        title_col.pack_start(render_ban, False) # ORIGINAL 
-        title_col.add_attribute(render_ban, "pixbuf", 4) # ORIGINAL
+        def lb_cb(s, data, userdata):
+            print isinstance(data,str)
+            return
+            if love(path):
+                love_cb(s,path,userdata)
+            elif ban(path):
+                ban_cb(s,path,userdata)
+
+        # render_text = Gtk.CellRendererText()
+        render_text = CellRendererSongText()
+        render_text.props.ellipsize = Pango.EllipsizeMode.END
+        render_text.connect("clicked", lb_cb, (self, self.songs_treeview, title_col))
+        title_col.pack_start(render_text, True)
+        title_col.add_attribute(render_text, "markup", 1)
+        title_col.add_attribute(render_text, "lovepix", 3)
+        title_col.add_attribute(render_text, "banpix", 4)
+        title_col.set_cell_data_func(render_text, bgcolor_data_func)
+        
+        
+        #render_love = CellRendererClickablePixbuf()
+        #render_love.set_alignment(0.5,0.99)
+        #render_love.set_padding(5,10)
+        #render_love.set_property("cell-background-rgba",Gdk.RGBA(red=0.0,green=0.0,blue=0.0,alpha=0.0))
+        #render_love.connect("clicked", love_cb, (self, self.songs_treeview, title_col))
+        
+                
+        #render_ban = CellRendererClickablePixbuf()
+        #render_ban.set_alignment(0.5,0.99)
+        #render_ban.set_padding(10,10)
+        #render_ban.set_property("cell-background-rgba",Gdk.RGBA(red=0.0,green=0.0,blue=0.0,alpha=0.0))
+        #render_ban.connect("clicked", ban_cb, (self, self.songs_treeview, title_col))
+        
+        #title_col.pack_start(render_love, False) # ORIGINAL
+        #title_col.add_attribute(render_love, "pixbuf", 3) # ORIGINAL 
+
+        #title_col.pack_start(render_ban, False) # ORIGINAL 
+        #title_col.add_attribute(render_ban, "pixbuf", 4) # ORIGINAL
 
         self.songs_treeview.append_column(title_col)
 
