@@ -81,16 +81,29 @@ def buttonMenu(button, menu):
 
     button.connect('clicked', cb)
 
+class CellRendererSongText(Gtk.CellRendererText):
+    def __init__(self):
+        super(CellRendererSongText,self).__init__()
+    def do_render(self, ctx, widget, background_area, cell_area, flags):
+        # Uncomment if we figure out how to stop pre-whiteout of columns.
+        # If we get CellRendererClickablePixbuf to not whiteout it's background
+        # (or draw before SongText), then this will let it stretch over their column.
+        # cell_area.width += 64
+        Gtk.CellRendererText.do_render(self,ctx,widget,background_area,cell_area,flags)
+
 class CellRendererClickablePixbuf(Gtk.CellRendererPixbuf):
     __gsignals__ = {'clicked': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
                                 (GObject.TYPE_STRING,))
                    }
     def __init__(self):
         super(CellRendererClickablePixbuf,self).__init__()
-        # Gtk.CellRendererPixbuf.__init__(self)
         self.set_property('mode', Gtk.CellRendererMode.ACTIVATABLE)
+    def do_render(self, ctx, widget, background_area, cell_area, flags):
+        Gtk.CellRendererPixbuf.do_render(self,ctx,widget,background_area,cell_area,flags)
     def do_activate(self, event, widget, path, background_area, cell_area,
                     flags):
+        # TODO - right now, clicking anywhere in the column emits a click. Change
+        # to only click for icon.
         self.emit('clicked', path)
 
 ALBUM_ART_SIZE = 96
@@ -99,12 +112,9 @@ ALBUM_ART_X_PAD = 6
 class CellRendererAlbumArt(Gtk.CellRenderer):
     def __init__(self):
         GObject.GObject.__init__(self)
-        self.icon = None
         self.pixbuf = None
-        self.rate_bg = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'rate_bg.png'))
 
     __gproperties__ = {
-        'icon': (str, 'icon', 'icon', '', GObject.PARAM_READWRITE),
         'pixbuf': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.PARAM_READWRITE)
     }
 
@@ -117,18 +127,6 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
     def do_render(self, ctx, widget, background_area, cell_area, flags):
         if self.pixbuf:
             Gdk.cairo_set_source_pixbuf(ctx, self.pixbuf, cell_area.x, cell_area.y)
-            ctx.paint()
-        if self.icon:
-            x = cell_area.x+(cell_area.width-self.rate_bg.get_width()) - ALBUM_ART_X_PAD # right
-            y = cell_area.y+(cell_area.height-self.rate_bg.get_height()) # bottom
-            Gdk.cairo_set_source_pixbuf(ctx, self.rate_bg, x, y)
-            ctx.paint()
-
-            icon = widget.get_style_context().lookup_icon_set(self.icon)
-            pixbuf = icon.render_icon_pixbuf(widget.get_style_context(), Gtk.IconSize.MENU)
-            x = cell_area.x+(cell_area.width-pixbuf.get_width())-5 - ALBUM_ART_X_PAD # right
-            y = cell_area.y+(cell_area.height-pixbuf.get_height())-5 # bottom
-            Gdk.cairo_set_source_pixbuf(ctx, pixbuf, x, y)
             ctx.paint()
 
 def get_album_art(url, *extra):
@@ -202,10 +200,14 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.pandora_connect()
 
     def init_core(self):
-        #                                Song object            display text  icon album art         thumb up    thumb down
-        self.songs_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str,          str, GdkPixbuf.Pixbuf, GdkPixbuf.Pixbuf, GdkPixbuf.Pixbuf)
+        self.songs_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, # song object
+                                        str, # Display Text
+                                        GdkPixbuf.Pixbuf, # album art
+                                        GdkPixbuf.Pixbuf, # love image
+                                        GdkPixbuf.Pixbuf) # ban image
         #                                   Station object         station name
-        self.stations_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
+        self.stations_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, # Station
+                                            str) # Station Name
 
         Gst.init(None)
         self.player = Gst.ElementFactory.make("playbin", "player");
@@ -243,10 +245,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         aa = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
 
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
-        self.thumb_up = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'thumbs_up.png'))
-        self.thumb_up_s = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'thumbs_up_selected.png'))
-        self.thumb_down = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'thumbs_down.png'))
-        self.thumb_down_s = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'thumbs_down_selected.png'))
+        self.love_active = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'love-active-32.png'))
+        self.love_inactive = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'love-inactive-desat-32.png'))
+        self.ban_active = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'ban-active-32.png'))
+        self.ban_inactive = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'ban-inactive-desat-32.png'))
 
     def init_ui(self):
         GLib.set_application_name("Pithos")
@@ -280,16 +282,16 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         render_icon = CellRendererAlbumArt()
         title_col.pack_start(render_icon, False)
-        title_col.add_attribute(render_icon, "icon", 2)
-        title_col.add_attribute(render_icon, "pixbuf", 3)
+        title_col.add_attribute(render_icon, "pixbuf", 2)
         title_col.set_cell_data_func(render_icon, bgcolor_data_func)
 
-        render_text = Gtk.CellRendererText()
+        # render_text = Gtk.CellRendererText()
+        render_text = CellRendererSongText()
         render_text.props.ellipsize = Pango.EllipsizeMode.END
         title_col.pack_start(render_text, True)
         title_col.add_attribute(render_text, "markup", 1)
         title_col.set_cell_data_func(render_text, bgcolor_data_func)
-
+        
         def love_cb(s, path, userdata):
             self, model, column = userdata
             song = model.get_model()[path][0]
@@ -299,6 +301,9 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.unrate_song(song)
         
         render_love = CellRendererClickablePixbuf()
+        render_love.set_alignment(0.5,0.99)
+        render_love.set_padding(5,10)
+        render_love.set_property("cell-background-rgba",Gdk.RGBA(red=0.0,green=0.0,blue=0.0,alpha=0.0))
         render_love.connect("clicked", love_cb, (self, self.songs_treeview, title_col))
         
         def ban_cb(s, path, userdata):
@@ -310,13 +315,16 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.unrate_song(song)
                 
         render_ban = CellRendererClickablePixbuf()
+        render_ban.set_alignment(0.5,0.99)
+        render_ban.set_padding(10,10)
+        render_ban.set_property("cell-background-rgba",Gdk.RGBA(red=0.0,green=0.0,blue=0.0,alpha=0.0))
         render_ban.connect("clicked", ban_cb, (self, self.songs_treeview, title_col))
+        
+        title_col.pack_start(render_love, False) # ORIGINAL
+        title_col.add_attribute(render_love, "pixbuf", 3) # ORIGINAL 
 
-        title_col.pack_start(render_love, False)
-        title_col.add_attribute(render_love, "pixbuf", 4)
-
-        title_col.pack_start(render_ban, False)
-        title_col.add_attribute(render_ban, "pixbuf", 5)
+        title_col.pack_start(render_ban, False) # ORIGINAL 
+        title_col.add_attribute(render_ban, "pixbuf", 4) # ORIGINAL
 
         self.songs_treeview.append_column(title_col)
 
@@ -578,14 +586,14 @@ class PithosWindow(Gtk.ApplicationWindow):
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
                 logging.info("Downloaded album art for %i"%song.index)
                 song.art_pixbuf = pixbuf
-                self.songs_model[index][3]=pixbuf
+                self.songs_model[index][2]=pixbuf
                 self.update_song_row(song)
 
         def callback(l):
             start_index = len(self.songs_model)
             for i in l:
                 i.index = len(self.songs_model)
-                self.songs_model.append((i, '', '', self.default_album_art, self.thumb_up, self.thumb_down))
+                self.songs_model.append([i, '', self.default_album_art, self.love_inactive, self.ban_inactive])
                 self.update_song_row(i)
 
                 i.art_pixbuf = None
@@ -784,29 +792,20 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         return "%s\n<small>%s</small>" % (description, msg)
 
-    def song_icon(self, song):
-        if song.tired:
-            return Gtk.STOCK_JUMP_TO
-        if song.rating == RATE_LOVE:
-            return Gtk.STOCK_ABOUT
-        if song.rating == RATE_BAN:
-            return Gtk.STOCK_CANCEL
-     
     def song_thumb(self, song):
         if song.rating == RATE_LOVE:
-            return (self.thumb_up_s, self.thumb_down)
+            return (self.love_active, self.ban_inactive)
         elif song.rating == RATE_BAN:
-            return (self.thumb_up, self.thumb_down_s)
+            return (self.love_inactive, self.ban_active)
         else:
-            return (self.thumb_up, self.thumb_down)
+            return (self.love_inactive, self.ban_inactive)
 
     def update_song_row(self, song = None):
         if song is None:
             song = self.current_song
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
-            self.songs_model[song.index][2] = self.song_icon(song) or ""
-            self.songs_model[song.index][4], self.songs_model[song.index][5] = self.song_thumb(song)
+            self.songs_model[song.index][3], self.songs_model[song.index][4] = self.song_thumb(song)
         return self.playing
 
     def stations_combo_changed(self, widget):
