@@ -452,7 +452,8 @@ class PithosWindow(Gtk.ApplicationWindow):
             return self.next_song()
 
         logging.info("Starting song: index = %i"%(song_index))
-        self.buffer_percent = 100
+        self.buffer_percent = 0
+        self.song_started = False
         self.player.set_property("uri", self.current_song.audioUrl)
         self.play()
         self.playcount += 1
@@ -470,13 +471,14 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def user_play(self, *ignore):
         self.play()
+        self.song_started = True
         self.emit('user-changed-play-state', True)
 
     def play(self):
         if not self.playing:
             self.playing = True
-            self.player.set_state(Gst.State.PLAYING)
-            GLib.timeout_add_seconds(1, self.update_song_row)
+        self.player.set_state(Gst.State.PLAYING)
+        GLib.timeout_add_seconds(1, self.update_song_row)
         self.playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PAUSE)
         self.update_song_row()
         self.emit('play-state-changed', True)
@@ -507,7 +509,11 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.player.set_state(Gst.State.NULL)
         self.emit('play-state-changed', False)
 
+    def user_playpause(self, *ignore):
+        self.playpause_notify()
+        
     def playpause(self, *ignore):
+        logging.info("playpause")
         if self.playing:
             self.pause()
         else:
@@ -679,13 +685,23 @@ class PithosWindow(Gtk.ApplicationWindow):
         tag_info.foreach(tag_handler, None)
 
     def on_gst_buffering(self, bus, message):
+        # per GST documentation:
+        # Note that applications should keep/set the pipeline in the PAUSED state when a BUFFERING
+        # message is received with a buffer percent value < 100 and set the pipeline back to PLAYING
+        # state when a BUFFERING message with a value of 100 percent is received.
+        
+        # 100% doesn't mean the entire song is downloaded, but it does mean that it's safe to play.
+        # trying to play before 100% will cause stuttering.
         percent = message.parse_buffering()
         self.buffer_percent = percent
-        #if percent < 100:
-            #self.player.set_state(Gst.State.PAUSED)
-        #elif self.playing:
-            #self.player.set_state(Gst.State.PLAYING)
+        if percent < 100:
+            self.player.set_state(Gst.State.PAUSED)
+        else:
+            if self.playing:
+                self.play()
+                self.song_started = True
         self.update_song_row()
+        logging.debug("Buffering (%i%%)"%self.buffer_percent)
 
     def set_volume_cb(self, volume):
         # Convert to the cubic scale that the volume slider uses
@@ -717,6 +733,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song is self.current_song:
             dur_stat, dur_int = self.player.query_duration(self.time_format)
             pos_stat, pos_int = self.player.query_position(self.time_format)
+            if not self.song_started:
+                pos_int = 0
             if not song.bitrate is None:
                 msg.append("%0dkbit/s" % (song.bitrate / 1000))
             if dur_stat and pos_stat:

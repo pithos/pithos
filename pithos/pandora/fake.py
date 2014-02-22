@@ -18,6 +18,8 @@ from pithos.pandora.pandora import *
 from gi.repository import Gtk
 import logging
 
+TEST_FILE = "http://pithos.github.io/testfile.aac"
+
 class FakePandora(Pandora):
     def __init__(self):
         super(FakePandora, self).__init__()
@@ -105,18 +107,19 @@ class FakePandora(Pandora):
 
     def makeFakeSong(self, stationId):
         c = self.count()
+        audio_url = TEST_FILE + '?val='+'0'*48
         return {
             'albumName':"AlbumName",
             'artistName':"ArtistName",
             'audioUrlMap': {
                 'highQuality': {
-                    'audioUrl': 'http://pithos.github.io/testfile.aac?val='+'0'*48
+                    'audioUrl': audio_url
                 },
                 'mediumQuality': {
-                    'audioUrl': 'http://pithos.github.io/testfile.aac?val='+'0'*48
+                    'audioUrl': audio_url
                 },
                 'lowQuality': {
-                    'audioUrl': 'http://pithos.github.io/testfile.aac?val='+'0'*48
+                    'audioUrl': audio_url
                 },
             },
             'trackGain':0,
