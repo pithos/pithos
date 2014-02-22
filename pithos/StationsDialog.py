@@ -20,7 +20,7 @@ from gi.repository import Gtk
 import logging
 import webbrowser
 
-from .pithosconfig import getdatapath
+from .pithosconfig import get_ui_file
 from . import SearchDialog
 
 class StationsDialog(Gtk.Dialog):
@@ -202,13 +202,8 @@ def NewStationsDialog(pithos):
     
     """
 
-    #look for the ui file that describes the ui
-    ui_filename = os.path.join(getdatapath(), 'ui', 'StationsDialog.ui')
-    if not os.path.exists(ui_filename):
-        ui_filename = None
-
     builder = Gtk.Builder()
-    builder.add_from_file(ui_filename)    
+    builder.add_from_file(get_ui_file('stations'))    
     dialog = builder.get_object("stations_dialog")
     dialog.finish_initializing(builder, pithos)
     return dialog

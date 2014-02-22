@@ -20,7 +20,7 @@ import html
 from gi.repository import Gtk
 from gi.repository import GObject
 
-from .pithosconfig import getdatapath
+from .pithosconfig import get_ui_file
 
 class SearchDialog(Gtk.Dialog):
     __gtype_name__ = "SearchDialog"
@@ -110,13 +110,8 @@ def NewSearchDialog(worker_run):
     
     """
 
-    #look for the ui file that describes the ui
-    ui_filename = os.path.join(getdatapath(), 'ui', 'SearchDialog.ui')
-    if not os.path.exists(ui_filename):
-        ui_filename = None
-
     builder = Gtk.Builder()
-    builder.add_from_file(ui_filename)    
+    builder.add_from_file(get_ui_file('search'))    
     dialog = builder.get_object("search_dialog")
     dialog.finish_initializing(builder, worker_run)
     return dialog
