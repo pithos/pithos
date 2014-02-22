@@ -24,7 +24,7 @@
                 <property name="visible">True</property>
                 <property name="label" translatable="yes">Play</property>
                 <property name="stock_id">gtk-media-play</property>
-                <signal name="clicked" handler="playpause"/>
+                <signal name="clicked" handler="user_playpause"/>
               </object>
               <packing>
                 <property name="expand">False</property>
