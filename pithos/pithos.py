@@ -89,6 +89,7 @@ class CellRendererSongText(Gtk.CellRendererText):
         self.set_property('mode', Gtk.CellRendererMode.ACTIVATABLE)
         self.lovepix = None
         self.banpix = None
+        self.offsets = (10, -20, 32) # x, y of love icon, then space from topleft corner of love and ban icon
     __gproperties__ = {
         'lovepix': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.PARAM_READWRITE),
         'banpix': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.PARAM_READWRITE)
@@ -101,13 +102,20 @@ class CellRendererSongText(Gtk.CellRendererText):
         return (0, 0, ALBUM_ART_SIZE + ALBUM_ART_X_PAD, ALBUM_ART_SIZE)
     def do_render(self, ctx, widget, background_area, cell_area, flags):
         Gtk.CellRendererText.do_render(self,ctx,widget,background_area,cell_area,flags)
-        Gdk.cairo_set_source_pixbuf(ctx, self.lovepix, cell_area.x+10, cell_area.y + cell_area.height-42)
+        Gdk.cairo_set_source_pixbuf(ctx, self.lovepix, cell_area.x+self.offsets[0], cell_area.y + cell_area.height + self.offsets[1])
         ctx.paint()
-        Gdk.cairo_set_source_pixbuf(ctx, self.banpix, cell_area.x+45, cell_area.y + cell_area.height-42)
+        Gdk.cairo_set_source_pixbuf(ctx, self.banpix, cell_area.x + self.offsets[0] + self.offsets[2], cell_area.y + cell_area.height + self.offsets[1])
         ctx.paint()
     def do_activate(self, event, widget, path, background_area, cell_area, flags):
-        self.emit('clicked', (path,event,cell_area))
+        # So, emit only passes information as a string. So we're passing "love" 
+        # or "ban" with the path concatenated. Hack-y, but I don't think I'd be
+        # able to get the right context to perform the song-stuff here.
+        if event.get_coords()[1] > cell_area.x+self.offsets[0] and event.get_coords()[1] < cell_area.x+self.offsets[0]+self.lovepix.get_property('width') and event.get_coords()[2] > cell_area.y + cell_area.height+self.offsets[1] and event.get_coords()[2] <  cell_area.y + cell_area.height+self.offsets[1]+self.lovepix.get_property('height'):
+            self.emit('clicked', "love"+path)
+        if event.get_coords()[1] > cell_area.x+self.offsets[0]+self.offsets[2] and event.get_coords()[1] < cell_area.x+self.offsets[0]+self.offsets[2]+self.banpix.get_property('width') and event.get_coords()[2] > cell_area.y + cell_area.height+self.offsets[1] and event.get_coords()[2] <  cell_area.y + cell_area.height+self.offsets[1]+self.banpix.get_property('height'):
+            self.emit('clicked', "ban"+path)
 
+# Obselete by CellRendererSongText
 class CellRendererClickablePixbuf(Gtk.CellRendererPixbuf):
     __gsignals__ = {'clicked': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
                                 (GObject.TYPE_STRING,))
@@ -262,10 +270,12 @@ class PithosWindow(Gtk.ApplicationWindow):
         aa = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'album_default.png'))
 
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
-        self.love_active = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'love-active.png'))
-        self.love_inactive = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'love-inactive-desat.png'))
-        self.ban_active = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'ban-active.png'))
-        self.ban_inactive = GdkPixbuf.Pixbuf.new_from_file(os.path.join(getdatapath(), 'media', 'ban-inactive-desat.png'))
+        self.love_active = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(getdatapath(), 'media', 'love.svg'), 16, 16)
+        self.love_inactive = self.love_active.copy()
+        self.love_inactive.saturate_and_pixelate(self.love_inactive, 0.1, False)
+        self.ban_active = GdkPixbuf.Pixbuf.new_from_file_at_size(os.path.join(getdatapath(), 'media', 'ban.svg'), 16, 16)
+        self.ban_inactive = self.ban_active.copy()
+        self.ban_inactive.saturate_and_pixelate(self.ban_inactive, 0.1, False)
 
     def init_ui(self):
         GLib.set_application_name("Pithos")
@@ -318,44 +328,22 @@ class PithosWindow(Gtk.ApplicationWindow):
             else:
                 self.unrate_song(song)
 
-        def lb_cb(s, data, userdata):
-            print isinstance(data,str)
-            return
-            if love(path):
-                love_cb(s,path,userdata)
-            elif ban(path):
-                ban_cb(s,path,userdata)
+        def loveban_cb(s, data, userdata):
+            if data[:3] == 'ban':
+                ban_cb(s,data[3:],userdata)
+            elif data[:4] == 'love':
+                love_cb(s,data[4:],userdata)
 
-        # render_text = Gtk.CellRendererText()
         render_text = CellRendererSongText()
         render_text.props.ellipsize = Pango.EllipsizeMode.END
-        render_text.connect("clicked", lb_cb, (self, self.songs_treeview, title_col))
+        render_text.set_alignment(0.0,0.25)
+        render_text.connect("clicked", loveban_cb, (self, self.songs_treeview, title_col))
         title_col.pack_start(render_text, True)
         title_col.add_attribute(render_text, "markup", 1)
         title_col.add_attribute(render_text, "lovepix", 3)
         title_col.add_attribute(render_text, "banpix", 4)
         title_col.set_cell_data_func(render_text, bgcolor_data_func)
         
-        
-        #render_love = CellRendererClickablePixbuf()
-        #render_love.set_alignment(0.5,0.99)
-        #render_love.set_padding(5,10)
-        #render_love.set_property("cell-background-rgba",Gdk.RGBA(red=0.0,green=0.0,blue=0.0,alpha=0.0))
-        #render_love.connect("clicked", love_cb, (self, self.songs_treeview, title_col))
-        
-                
-        #render_ban = CellRendererClickablePixbuf()
-        #render_ban.set_alignment(0.5,0.99)
-        #render_ban.set_padding(10,10)
-        #render_ban.set_property("cell-background-rgba",Gdk.RGBA(red=0.0,green=0.0,blue=0.0,alpha=0.0))
-        #render_ban.connect("clicked", ban_cb, (self, self.songs_treeview, title_col))
-        
-        #title_col.pack_start(render_love, False) # ORIGINAL
-        #title_col.add_attribute(render_love, "pixbuf", 3) # ORIGINAL 
-
-        #title_col.pack_start(render_ban, False) # ORIGINAL 
-        #title_col.add_attribute(render_ban, "pixbuf", 4) # ORIGINAL
-
         self.songs_treeview.append_column(title_col)
 
         self.songs_treeview.connect('button_press_event', self.on_treeview_button_press_event)
