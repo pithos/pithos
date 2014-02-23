@@ -89,7 +89,7 @@ class CellRendererSongText(Gtk.CellRendererText):
         self.set_property('mode', Gtk.CellRendererMode.ACTIVATABLE)
         self.lovepix = None
         self.banpix = None
-        self.offsets = (10, -20, 32) # x, y of love icon, then space from topleft corner of love and ban icon
+        self.offsets = (5, -20, 20) # x, y of love icon, then space from topleft corner of love and ban icon
     __gproperties__ = {
         'lovepix': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.PARAM_READWRITE),
         'banpix': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.PARAM_READWRITE)
