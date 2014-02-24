@@ -15,3 +15,8 @@ var/
 *.egg
 config/
 *.patch
+debian/
+build-debian.sh
+.project
+.pydevproject
+.settings/

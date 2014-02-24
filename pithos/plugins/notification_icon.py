@@ -34,8 +34,8 @@ class PithosNotificationIcon(PithosPlugin):
             
     def on_prepare(self):
         if indicator_capable:
-            self.ind = AppIndicator.Indicator.new_with_path("pithos", \
-                                  "pithos-mono", \
+            self.ind = AppIndicator.Indicator.new_with_path("pithos-tray-icon", \
+                                  "pithos-tray-icon", \
                                    AppIndicator.IndicatorCategory.APPLICATION_STATUS, \
                                    get_data_file('media'))
     
@@ -52,7 +52,7 @@ class PithosNotificationIcon(PithosPlugin):
             if icon_info and Gtk.IconInfo.get_filename (icon_info):
                 filename = Gtk.IconInfo.get_filename (icon_info)
             else:
-                filename = get_data_file('media', 'icon.png')
+                filename = get_data_file('media', 'icon.svg')
 
             self.statusicon = Gtk.StatusIcon.new ()
             self.statusicon.set_from_file (filename)
