@@ -27,7 +27,6 @@ from gi.repository import Gst, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 import contextlib
 import html
 import math
-import webbrowser
 import urllib.request, urllib.error, urllib.parse
 import json
 if sys.platform != 'win32':
@@ -47,7 +46,7 @@ else:
 sys.path.insert(0, os.path.dirname(fullPath))
 
 from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
-from .util import *
+from .util import parse_proxy, open_browser
 from .pithosconfig import getdatapath, VERSION
 from .gobject_worker import GObjectWorker
 from .plugin import load_plugins
@@ -63,15 +62,6 @@ try:
     pacparser_imported = True
 except ImportError:
     logging.warning("Disabled proxy auto-config support because python-pacparser module was not found.")
-
-def openBrowser(url):
-    logging.info("Opening URL {}".format(url))
-    webbrowser.open(url)
-    if isinstance(webbrowser.get(), webbrowser.BackgroundBrowser):
-        try:
-            os.wait() # workaround for http://bugs.python.org/issue5993
-        except:
-            pass
 
 def buttonMenu(button, menu):
     def cb(button):
@@ -597,7 +587,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         dialog = self.builder.get_object("api_update_dialog")
         response = dialog.run()
         if response:
-            openBrowser("http://pithos.github.io/itbroke?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
+            open_browser("http://pithos.github.io/itbroke?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
         self.quit()
 
     def station_index(self, station):
@@ -852,7 +842,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def on_menuitem_info(self, widget):
         song = self.selected_song()
-        openBrowser(song.songDetailURL)
+        open_browser(song.songDetailURL)
 
     def on_menuitem_bookmark_song(self, widget):
         self.bookmark_song(self.selected_song())
@@ -904,7 +894,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.set_player_volume(value)
 
     def station_properties(self, *ignore):
-        openBrowser(self.current_station.info_url)
+        open_browser(self.current_station.info_url)
 
     def show_about(self):
         """about - display the about box for pithos """

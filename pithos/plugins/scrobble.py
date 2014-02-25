@@ -15,10 +15,10 @@
 ### END LICENSE
 
 import pylast
-import webbrowser
 import logging
 from pithos.gobject_worker import GObjectWorker
 from pithos.plugin import PithosPlugin
+from pithos.util import open_browser
 
 #getting an API account: http://www.last.fm/api/account
 API_KEY = '997f635176130d5d6fe3a7387de601a8'
@@ -129,7 +129,7 @@ class LastFmAuth:
             def callback(url):
                 self.auth_url = url
                 self.set_button_text()
-                webbrowser.open(self.auth_url)
+                open_browser(self.auth_url)
             
             get_worker().send(self.sg.get_web_auth_url, (), callback)
             self.button.set_label("Connecting...")

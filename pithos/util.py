@@ -14,6 +14,8 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
+import logging
+import webbrowser
 from urllib.parse import splittype, splituser, splitpasswd
 
 def parse_proxy(proxy):
@@ -40,3 +42,11 @@ def parse_proxy(proxy):
         user = password = None
     return scheme, user, password, hostport
 
+def open_browser(url):
+    logging.info("Opening URL {}".format(url))
+    webbrowser.open(url)
+    if isinstance(webbrowser.get(), webbrowser.BackgroundBrowser):
+        try:
+            os.wait() # workaround for http://bugs.python.org/issue5993
+        except:
+            pass

@@ -18,9 +18,9 @@ import sys
 import os
 from gi.repository import Gtk
 import logging
-import webbrowser
 
 from .pithosconfig import getdatapath
+from .util import open_browser
 from . import SearchDialog
 
 class StationsDialog(Gtk.Dialog):
@@ -128,7 +128,7 @@ class StationsDialog(Gtk.Dialog):
         self.hide()
         
     def on_menuitem_info(self, widget):
-        webbrowser.open(self.selected_station().info_url)
+        open_browser(self.selected_station().info_url)
         
     def on_menuitem_rename(self, widget):
         sel = self.treeview.get_selection().get_selected()
