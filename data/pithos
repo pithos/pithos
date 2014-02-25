@@ -1,9 +1,0 @@
-#! /usr/bin/python3
-__requires__ = 'pithos'
-import sys
-from pkg_resources import load_entry_point
-
-if __name__ == '__main__':
-    sys.exit(
-        load_entry_point('pithos', 'gui_scripts', 'pithos')()
-    )
