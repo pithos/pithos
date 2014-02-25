@@ -14,6 +14,7 @@
     <property name="logo">../media/icon.svg</property>
     <property name="type_hint">dialog</property>
     <property name="modal">True</property>
+    <signal name="activate-link" handler="activate_link_cb" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">
         <property name="visible">True</property>

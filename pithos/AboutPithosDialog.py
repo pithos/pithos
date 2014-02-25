@@ -14,11 +14,10 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-import sys
-import os
 from gi.repository import Gtk
 
 from .pithosconfig import get_ui_file
+from .util import open_browser
 
 class AboutPithosDialog(Gtk.AboutDialog):
     __gtype_name__ = "AboutPithosDialog"
@@ -46,6 +45,10 @@ class AboutPithosDialog(Gtk.AboutDialog):
         self.builder.connect_signals(self)
 
         #code for other initialization actions should be added here
+
+    def activate_link_cb(self, wid, uri):
+        open_browser(uri)
+        return True
 
 def NewAboutPithosDialog():
     """NewAboutPithosDialog - returns a fully instantiated
