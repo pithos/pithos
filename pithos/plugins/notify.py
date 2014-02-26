@@ -34,9 +34,15 @@ class NotifyPlugin(PithosPlugin):
             logging.warning ("libnotify not found.")
             return
 
-        if (Notify.VERSION_MAJOR, Notify.VERSION_MINOR, Notify.VERSION_MICRO) < (0, 7, 6):
-            old_add_action = Notify.Notification.add_action
-            Notify.Notification.add_action = lambda *args: old_add_action(*(args + (None,)))
+        # Work-around Ubuntu's incompatible workaround for Gnome's API breaking mistake.
+        # https://bugzilla.gnome.org/show_bug.cgi?id=702390
+        old_add_action = Notify.Notification.add_action
+        def new_add_action(*args):
+            try:
+                old_add_action(*args)
+            except TypeError:
+                old_add_action(*(args + (None,)))
+        Notify.Notification.add_action = new_add_action
 
         Notify.init('Pithos')
         self.notification = Notify.Notification()
