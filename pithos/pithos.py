@@ -112,12 +112,17 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
             ctx.paint()
 
 def get_album_art(url, *extra):
-    l = GdkPixbuf.PixbufLoader()
-    l.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
-    with contextlib.closing(urllib.request.urlopen(url)) as f:
-        l.write(f.read())
-    l.close()
-    return (l.get_pixbuf(),) + extra
+    try:
+        with urllib.request.urlopen(url) as f:
+            image = f.read()
+    except urllib.error.HTTPError:
+        logging.warn('Invalid image url received')
+        return (None,) + extra
+
+    with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
+        loader.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
+        loader.write(image)
+        return (loader.get_pixbuf(),) + extra
 
 
 class PithosWindow(Gtk.ApplicationWindow):
