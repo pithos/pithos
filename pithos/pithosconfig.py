@@ -36,6 +36,7 @@ ui_files = {
 }
 
 media_files = {
+    'icon': 'icon.svg',
     'rate': 'rate_bg.png',
     'album': 'album_default.png'
 }

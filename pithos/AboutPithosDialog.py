@@ -14,9 +14,9 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from gi.repository import Gtk
+from gi.repository import Gtk, GdkPixbuf
 
-from .pithosconfig import get_ui_file
+from .pithosconfig import get_ui_file, get_media_file
 from .util import open_browser
 
 class AboutPithosDialog(Gtk.AboutDialog):
@@ -43,6 +43,8 @@ class AboutPithosDialog(Gtk.AboutDialog):
         #get a reference to the builder and set up the signals
         self.builder = builder
         self.builder.connect_signals(self)
+
+        self.set_logo(GdkPixbuf.Pixbuf.new_from_file_at_scale(get_media_file('icon'), -1, 96, True))
 
         #code for other initialization actions should be added here
 

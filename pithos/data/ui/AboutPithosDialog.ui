@@ -24,7 +24,6 @@ Glenn Moss
 
 </property>
     <property name="artists">Jason Gray</property>
-    <property name="logo">../media/icon.svg</property>
     <property name="license_type">gpl-3-0</property>
     <signal name="activate-link" handler="activate_link_cb" swapped="no"/>
     <child internal-child="vbox">
