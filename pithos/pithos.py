@@ -235,9 +235,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         Gtk.Window.set_default_icon_name('pithos')
         os.environ['PULSE_PROP_media.role'] = 'music'
 
-        self.playpause_button = self.builder.get_object('playpause_button')
+        self.playpause_image = self.builder.get_object('playpause_image')
 
         self.volume = self.builder.get_object('volume')
+        self.volume.set_relief(Gtk.ReliefStyle.NORMAL)  # It ignores glade...
         self.volume.set_property("value", math.pow(float(self.preferences['volume']), 1.0/3.0))
 
         self.statusbar = self.builder.get_object('statusbar1')
@@ -474,7 +475,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.playing = True
         self.player.set_state(Gst.State.PLAYING)
         GLib.timeout_add_seconds(1, self.update_song_row)
-        self.playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PAUSE)
+        self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
         self.update_song_row()
         self.emit('play-state-changed', True)
 
@@ -485,7 +486,7 @@ class PithosWindow(Gtk.ApplicationWindow):
     def pause(self):
         self.playing = False
         self.player.set_state(Gst.State.PAUSED)
-        self.playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PLAY)
+        self.playpause_image.set_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
         self.update_song_row()
         self.emit('play-state-changed', False)
 
@@ -567,6 +568,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         dialog.props.text = message
         dialog.props.secondary_text = submsg
+        dialog.set_default_response(3)
 
         response = dialog.run()
         dialog.hide()
@@ -582,6 +584,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         dialog = self.builder.get_object("fatal_error_dialog")
         dialog.props.text = message
         dialog.props.secondary_text = submsg
+        dialog.set_default_response(1)
 
         response = dialog.run()
         dialog.hide()
@@ -590,6 +593,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def api_update_dialog(self):
         dialog = self.builder.get_object("api_update_dialog")
+        dialog.set_default_response(0)
         response = dialog.run()
         if response:
             open_browser("http://pithos.github.io/itbroke?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
