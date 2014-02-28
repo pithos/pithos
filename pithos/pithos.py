@@ -109,12 +109,13 @@ class CellRendererSongText(Gtk.CellRendererText):
             ctx.paint()
         else: # otherwise, if there is a rating already, display the appropriate icon.
             # If there is a better way to determine the path of a cell in this scope, it should be used here. :)
-            if widget.get_model()[widget.get_path_at_pos(cell_area.x, cell_area.y)[0]][0].rating == RATE_LOVE:
-                Gdk.cairo_set_source_pixbuf(ctx, self.lovepix, cell_area.x+self.offsets[0], cell_area.y + cell_area.height + self.offsets[1])
-                ctx.paint()
-            elif widget.get_model()[widget.get_path_at_pos(cell_area.x, cell_area.y)[0]][0].rating == RATE_BAN:
-                Gdk.cairo_set_source_pixbuf(ctx, self.banpix, cell_area.x + self.offsets[0] + self.offsets[2], cell_area.y + cell_area.height + self.offsets[1])
-                ctx.paint()
+            if widget.get_path_at_pos(cell_area.x, cell_area.y) is not None:
+                if widget.get_model()[widget.get_path_at_pos(cell_area.x, cell_area.y)[0]][0].rating == RATE_LOVE:
+                    Gdk.cairo_set_source_pixbuf(ctx, self.lovepix, cell_area.x+self.offsets[0], cell_area.y + cell_area.height + self.offsets[1])
+                    ctx.paint()
+                elif widget.get_model()[widget.get_path_at_pos(cell_area.x, cell_area.y)[0]][0].rating == RATE_BAN:
+                    Gdk.cairo_set_source_pixbuf(ctx, self.banpix, cell_area.x + self.offsets[0] + self.offsets[2], cell_area.y + cell_area.height + self.offsets[1])
+                    ctx.paint()
     def do_activate(self, event, widget, path, background_area, cell_area, flags):
         # So, emit only passes information as a string. So we're passing "love" 
         # or "ban" with the path concatenated. Hack-y, but I don't think I'd be
