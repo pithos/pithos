@@ -32,6 +32,7 @@ import urllib2
 import json
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
+import weakref
 
 # Check if we are working in the source tree or from the installed
 # package and mangle the python path accordingly
@@ -84,11 +85,13 @@ def buttonMenu(button, menu):
 class CellRendererSongText(Gtk.CellRendererText):
     __gsignals__ = {'clicked': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
                                 (GObject.TYPE_STRING,)) }
-    def __init__(self):
+    def __init__(self,parent, iconsize=16):
+        self.parentref = parent
         super(CellRendererSongText,self).__init__()
         self.set_property('mode', Gtk.CellRendererMode.ACTIVATABLE)
         self.lovepix = None
         self.banpix = None
+        self.iconsize = iconsize
         self.offsets = (2, -22, 20) # x, y of love icon, then space from topleft corner of love and ban icon
     __gproperties__ = {
         'lovepix': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.PARAM_READWRITE),
@@ -117,13 +120,13 @@ class CellRendererSongText(Gtk.CellRendererText):
                     Gdk.cairo_set_source_pixbuf(ctx, self.banpix, cell_area.x + self.offsets[0] + self.offsets[2], cell_area.y + cell_area.height + self.offsets[1])
                     ctx.paint()
     def do_activate(self, event, widget, path, background_area, cell_area, flags):
-        # So, emit only passes information as a string. So we're passing "love" 
-        # or "ban" with the path concatenated. Hack-y, but I don't think I'd be
-        # able to get the right context to perform the song-stuff here.
-        if event.get_coords()[1] > cell_area.x+self.offsets[0] and event.get_coords()[1] < cell_area.x+self.offsets[0]+self.lovepix.get_property('width') and event.get_coords()[2] > cell_area.y + cell_area.height+self.offsets[1] and event.get_coords()[2] <  cell_area.y + cell_area.height+self.offsets[1]+self.lovepix.get_property('height'):
-            self.emit('clicked', "love"+path)
-        if event.get_coords()[1] > cell_area.x+self.offsets[0]+self.offsets[2] and event.get_coords()[1] < cell_area.x+self.offsets[0]+self.offsets[2]+self.banpix.get_property('width') and event.get_coords()[2] > cell_area.y + cell_area.height+self.offsets[1] and event.get_coords()[2] <  cell_area.y + cell_area.height+self.offsets[1]+self.banpix.get_property('height'):
-            self.emit('clicked', "ban"+path)
+        if ((event.get_coords()[2] > cell_area.y + cell_area.height + self.offsets[1]) and (event.get_coords()[2] < cell_area.y + cell_area.height + self.offsets[1] + self.iconsize)):
+            if event.get_coords()[1] > cell_area.x+self.offsets[0] and event.get_coords()[1] < cell_area.x+self.offsets[0]+self.lovepix.get_property('width'):
+                # self.emit('clicked', "love"+path)
+                self.parentref.love_song(widget.get_model()[path][0])
+            elif event.get_coords()[1] > cell_area.x+self.offsets[0]+self.offsets[2] and event.get_coords()[1] < cell_area.x+self.offsets[0]+self.offsets[2]+self.banpix.get_property('width'):
+                #self.emit('clicked', "ban"+path)
+                self.parentref.ban_song(widget.get_model()[path][0])
 
 # Obselete by CellRendererSongText
 class CellRendererClickablePixbuf(Gtk.CellRendererPixbuf):
@@ -322,32 +325,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         title_col.add_attribute(render_icon, "pixbuf", 2)
         title_col.set_cell_data_func(render_icon, bgcolor_data_func)
 
-        def love_cb(s, path, userdata):
-            self, model, column = userdata
-            song = model.get_model()[path][0]
-            if song.rating != RATE_LOVE:
-                self.love_song(song)
-            else:
-                self.unrate_song(song)
-
-        def ban_cb(s, path, userdata):
-            self, model, column = userdata
-            song = model.get_model()[path][0]
-            if song.rating != RATE_BAN:
-                self.ban_song(song)
-            else:
-                self.unrate_song(song)
-
-        def loveban_cb(s, data, userdata):
-            if data[:3] == 'ban':
-                ban_cb(s,data[3:],userdata)
-            elif data[:4] == 'love':
-                love_cb(s,data[4:],userdata)
-
-        render_text = CellRendererSongText()
+        render_text = CellRendererSongText(weakref.ref(self)())
         render_text.props.ellipsize = Pango.EllipsizeMode.END
         render_text.set_alignment(0.0,0.25)
-        render_text.connect("clicked", loveban_cb, (self, self.songs_treeview, title_col))
+        render_text.connect("clicked", clickicon_cb, (self, self.songs_treeview, title_col))
         title_col.pack_start(render_text, True)
         title_col.add_attribute(render_text, "markup", 1)
         title_col.add_attribute(render_text, "lovepix", 3)
