@@ -48,11 +48,11 @@ class PithosNotificationIcon(PithosPlugin):
         if indicator_capable:
             self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         else:
-            icon_info = Gtk.IconTheme.lookup_icon (Gtk.IconTheme.get_default(), 'pithos', 48, 0)
+            icon_info = Gtk.IconTheme.lookup_icon (Gtk.IconTheme.get_default(), 'pithos-tray-icon', 48, 0)
             if icon_info and Gtk.IconInfo.get_filename (icon_info):
                 filename = Gtk.IconInfo.get_filename (icon_info)
             else:
-                filename = get_data_file('media', 'icon.svg')
+                filename = get_data_file('media', 'pithos-tray-icon.png')
 
             self.statusicon = Gtk.StatusIcon.new ()
             self.statusicon.set_from_file (filename)
