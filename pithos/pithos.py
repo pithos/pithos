@@ -61,7 +61,7 @@ try:
     import pacparser
     pacparser_imported = True
 except ImportError:
-    logging.warning("Disabled proxy auto-config support because python-pacparser module was not found.")
+    pass
 
 def buttonMenu(button, menu):
     def cb(button):
@@ -360,6 +360,8 @@ class PithosWindow(Gtk.ApplicationWindow):
                 if match:
                     control_proxy = match.group(1)
                     break
+        elif control_proxy_pac and not pacparser_imported:
+            logging.warn("Disabled proxy auto-config support because python-pacparser module was not found.")
 
         self.worker_run('set_url_opener', (control_opener,))
 

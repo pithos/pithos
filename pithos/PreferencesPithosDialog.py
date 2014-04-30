@@ -32,7 +32,7 @@ try:
     import pacparser
     pacparser_imported = True
 except ImportError:
-    logging.warning("Could not import python-pacparser.")
+    logging.info("Could not import python-pacparser.")
 
 config_home = GLib.get_user_config_dir()
 configfilename = os.path.join(config_home, 'pithos.ini')
