@@ -956,7 +956,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.present()
 
     def on_kb_playpause(self, widget=None, data=None):
-        if not isinstance(widget.get_focus(), Gtk.Button) and data.keyval == 32:
+        if not isinstance(widget.get_focus(), Gtk.Button) and data.keyval == Gdk.KEY_space:
             self.playpause()
             return True
 
