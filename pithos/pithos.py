@@ -955,7 +955,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.show()
         self.present()
 
-    def on_kb_playpause(self, widget=None, data=None):
+    def on_key_press(self, widget=None, data=None):
         control_pressed = data.state & Gdk.ModifierType.CONTROL_MASK
         alt_pressed = data.state & Gdk.ModifierType.MOD1_MASK
         button_focused = isinstance(widget.get_focus(), Gtk.Button)
