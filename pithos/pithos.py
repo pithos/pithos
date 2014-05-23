@@ -464,6 +464,12 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.emit('song-changed', self.current_song)
 
+    def start_selected_song(self):
+        playable = self.selected_song().index > self.current_song_index
+        if playable:
+            self.start_song(self.selected_song().index)
+        return playable
+
     def next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
 
@@ -883,9 +889,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
             if event.button == 1 and event.type == Gdk.EventType._2BUTTON_PRESS:
                 logging.info("Double clicked on song %s", self.selected_song().index)
-                if self.selected_song().index <= self.current_song_index:
-                    return False
-                self.start_song(self.selected_song().index)
+                return self.start_selected_song()
 
     def set_player_volume(self, value):
         logging.info('%.3f' % value)
@@ -967,6 +971,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         if not button_focused:
             if data.keyval == Gdk.KEY_space:
                 self.playpause()
+                return True
+            elif data.keyval == Gdk.KEY_Return:
+                self.start_selected_song()
                 return True
         elif control_pressed:
             if data.keyval == Gdk.KEY_Right:
