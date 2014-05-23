@@ -956,9 +956,32 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.present()
 
     def on_kb_playpause(self, widget=None, data=None):
-        if not isinstance(widget.get_focus(), Gtk.Button) and data.keyval == Gdk.KEY_space:
+        control_pressed = data.state & Gdk.ModifierType.CONTROL_MASK
+        alt_pressed = data.state & Gdk.ModifierType.MOD1_MASK
+        button_focused = isinstance(widget.get_focus(), Gtk.Button)
+        if not button_focused and data.keyval == Gdk.KEY_space:
             self.playpause()
             return True
+        elif control_pressed and alt_pressed:
+            if data.keyval == Gdk.KEY_s:
+                # Show station dropdown menu
+                pass
+        elif control_pressed:
+            if data.keyval == Gdk.KEY_Right:
+                self.next_song()
+                return True
+            elif data.keyval == Gdk.KEY_b:
+                self.ban_song()
+                return True
+            elif data.keyval == Gdk.KEY_l:
+                self.love_song()
+                return True
+            elif data.keyval == Gdk.KEY_Up:
+                self.adjust_volume(+2)
+                return True
+            elif data.keyval == Gdk.KEY_Down:
+                self.adjust_volume(-2)
+                return True
 
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
