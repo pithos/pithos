@@ -956,16 +956,18 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.present()
 
     def on_key_press(self, widget=None, data=None):
+        """Callback for key presses
+
+        C-q for quit, C-p for preferences, and C-s for displaying the "edit
+        stations dialog" are handled by Pithos' single menubar item. Tab may be
+        used to cycle focus from the songs list to the stations combobox.
+        """
         control_pressed = data.state & Gdk.ModifierType.CONTROL_MASK
-        alt_pressed = data.state & Gdk.ModifierType.MOD1_MASK
         button_focused = isinstance(widget.get_focus(), Gtk.Button)
-        if not button_focused and data.keyval == Gdk.KEY_space:
-            self.playpause()
-            return True
-        elif control_pressed and alt_pressed:
-            if data.keyval == Gdk.KEY_s:
-                # Show station dropdown menu
-                pass
+        if not button_focused:
+            if data.keyval == Gdk.KEY_space:
+                self.playpause()
+                return True
         elif control_pressed:
             if data.keyval == Gdk.KEY_Right:
                 self.next_song()
