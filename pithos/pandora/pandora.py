@@ -305,6 +305,20 @@ class Song(object):
         self.playlist_time = time.time()
         self.feedbackId = None
 
+    def download(self):
+        import os
+        from subprocess import call, Popen, DEVNULL
+        audiourl = self.audioUrlMap['highQuality']['audioUrl']
+        file_name = os.path.join(os.getcwd(),'tmp',self.make_safe(self.artist),self.make_safe(self.album),self.make_safe(self.songName+'.mp4'))
+        command = ['curl', audiourl, '-o', file_name, '--create-dirs', '--retry', '3', '--progress-bar'] 
+        Popen(command)
+        print('Saving to %s' % file_name)
+
+    def make_safe(self, filename):
+        import string
+        valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+        return ''.join(c for c in filename if c in valid_chars)
+
     @property
     def title(self):
         if not hasattr(self, '_title'):
@@ -377,7 +391,6 @@ class Song(object):
 
     def is_still_valid(self):
         return (time.time() - self.playlist_time) < PLAYLIST_VALIDITY_TIME
-
 
 class SearchResult(object):
     def __init__(self, resultType, d):
