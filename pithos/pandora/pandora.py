@@ -286,6 +286,8 @@ class Station(object):
         logging.info("pandora: Deleting Station")
         self.pandora.json_call('station.deleteStation', {'stationToken': self.idToken})
 
+downloads = {}
+
 class Song(object):
     def __init__(self, pandora, d):
         self.pandora = pandora
@@ -331,24 +333,20 @@ class Song(object):
         self.file_name = os.path.join(os.getcwd(),'tmp',artist_dir,album_dir,song_file)
 
         # Create required folders if not already created
-        try:
-            os.makedirs(os.path.join(os.getcwd(),'tmp',artist_dir,album_dir))
-        except OSError as exception:
-            if exception.errno != errno.EEXIST:
-                raise
+        file_path = os.path.join(os.getcwd(),'tmp',artist_dir,album_dir,'')
+        if not os.path.exists(file_path):
+            os.makedirs(file_path)
 
-        print('Saving %s' % song_file)
         # Download song in seperate process
         def runInThread():
             try:
-                urllib.request.urlretrieve(audiourl, self.file_name, reporthook=self.dlProgress)
+                tmp_filename, headers = urllib.request.urlretrieve(audiourl, self.file_name, reporthook=self.dlProgress)
             except Exception:
                 import traceback
                 print(traceback.format_exc())
-                print('Download Failed')
+                print('Download Failed\n')
                 self.file_name = None
             else:
-                print('File saved to %s.' % tmp_filename)
                 self.file_name = tmp_filename
             return
         thread = threading.Thread(target=runInThread)
@@ -356,12 +354,20 @@ class Song(object):
 
     def dlProgress(self, count, blockSize, totalSize):
         percent = int(count*blockSize*100/totalSize)
+        global downloads
         if percent >= 100:
             self.downloaded = True
+            downloads.pop(self.songName, None)
+        else:
+            downloads[self.songName] = percent
+        dl_strings = []
+        for key, value in downloads.items():
+            dl_strings.append(key+"...%d%%"%value)
+        dl_string = ', '.join(dl_strings)
+        sys.stdout.write("{0}\r".format(dl_string))
         sys.stdout.flush()
-        sys.stdout.write("\r" + self.file_name + "...%d%%" % percent)
 
-    def delete(self, directory):
+    def delete(self):
         # Check that the artist, album, song name doesn't begin with ~ or /
         # Check that artist/album only contains one track
          # If not, remove the song
@@ -371,9 +377,10 @@ class Song(object):
         # TODO
         pass
 
-    def store(self, current_directory, music_directory):
+    def store(self, music_directory=None):
         # Move from temp to music
         # TODO
+        # os.rename(self.file_name, os.path.join(music_directory, 
         pass
 
     def make_safe(self, filename):
@@ -406,7 +413,7 @@ class Song(object):
     @property
     def audioUrl(self):
         import time
-        while not self.file_name:
+        while not self.downloaded:
             time.sleep(1)
         return 'file://'+self.file_name
 
