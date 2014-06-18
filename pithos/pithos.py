@@ -679,7 +679,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                 else:
                     logging.info('Not an Ad..')
                     self.current_song.is_ad = False
-                    self.current_song.download()
+                    self.current_song.store()
 
     def on_gst_tag(self, bus, message):
         tag_info = message.parse_tag()

@@ -24,6 +24,11 @@ import logging
 import time
 import urllib.request, urllib.parse, urllib.error
 import codecs
+import os
+import sys
+import urllib.request
+import threading
+import string
 
 # This is an implementation of the Pandora JSON API using Android partner
 # credentials.
@@ -305,17 +310,73 @@ class Song(object):
         self.playlist_time = time.time()
         self.feedbackId = None
 
+        self.downloaded = False
+        self.download()
+
     def download(self):
-        import os
-        from subprocess import call, Popen, DEVNULL
-        audiourl = self.audioUrlMap['highQuality']['audioUrl']
-        file_name = os.path.join(os.getcwd(),'tmp',self.make_safe(self.artist),self.make_safe(self.album),self.make_safe(self.songName+'.mp4'))
-        command = ['curl', audiourl, '-o', file_name, '--create-dirs', '--retry', '3', '--progress-bar'] 
-        Popen(command)
-        print('Saving to %s' % file_name)
+        # Get URL to download from
+        quality = self.pandora.audio_quality
+        try:
+            q = self.audioUrlMap[quality]
+        except KeyError:
+            logging.warn("Unable to use audio format %s. Using %s", quality, list(self.audioUrlMap.keys())[0])
+            q = list(self.audioUrlMap.values())[0]['audioUrl']
+        logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
+        audiourl = q['audioUrl']
+
+        # Resolve filename
+        artist_dir = self.make_safe(self.artist)
+        album_dir = self.make_safe(self.album)
+        song_file = self.make_safe(self.songName + '.mp4')
+        self.file_name = os.path.join(os.getcwd(),'tmp',artist_dir,album_dir,song_file)
+
+        # Create required folders if not already created
+        try:
+            os.makedirs(os.path.join(os.getcwd(),'tmp',artist_dir,album_dir))
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+
+        print('Saving %s' % song_file)
+        # Download song in seperate process
+        def runInThread():
+            try:
+                urllib.request.urlretrieve(audiourl, self.file_name, reporthook=self.dlProgress)
+            except Exception:
+                import traceback
+                print(traceback.format_exc())
+                print('Download Failed')
+                self.file_name = None
+            else:
+                print('File saved to %s.' % tmp_filename)
+                self.file_name = tmp_filename
+            return
+        thread = threading.Thread(target=runInThread)
+        thread.start()
+
+    def dlProgress(self, count, blockSize, totalSize):
+        percent = int(count*blockSize*100/totalSize)
+        if percent >= 100:
+            self.downloaded = True
+        sys.stdout.flush()
+        sys.stdout.write("\r" + self.file_name + "...%d%%" % percent)
+
+    def delete(self, directory):
+        # Check that the artist, album, song name doesn't begin with ~ or /
+        # Check that artist/album only contains one track
+         # If not, remove the song
+         # Else, check that the artist only contains one folder
+          # If not, remove the album folder recursively
+          # Else, remove the artist folder recursively
+        # TODO
+        pass
+
+    def store(self, current_directory, music_directory):
+        # Move from temp to music
+        # TODO
+        pass
 
     def make_safe(self, filename):
-        import string
         valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
         return ''.join(c for c in filename if c in valid_chars)
 
@@ -344,15 +405,10 @@ class Song(object):
 
     @property
     def audioUrl(self):
-        quality = self.pandora.audio_quality
-        try:
-            q = self.audioUrlMap[quality]
-            logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
-            return q['audioUrl']
-        except KeyError:
-            logging.warn("Unable to use audio format %s. Using %s",
-                           quality, list(self.audioUrlMap.keys())[0])
-            return list(self.audioUrlMap.values())[0]['audioUrl']
+        import time
+        while not self.file_name:
+            time.sleep(1)
+        return 'file://'+self.file_name
 
     @property
     def station(self):
