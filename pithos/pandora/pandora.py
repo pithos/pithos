@@ -330,7 +330,9 @@ class Song(object):
         artist_dir = self.make_safe(self.artist)
         album_dir = self.make_safe(self.album)
         song_file = self.make_safe(self.songName + '.mp4')
-        self.file_name = os.path.join(os.getcwd(),'tmp',artist_dir,album_dir,song_file)
+        self.temp_dir = os.path.join(os.getcwd(),'tmp')
+        self.file_path = os.path.join(artist_dir, album_dir, song_file)
+        self.file_name = os.path.join(self.temp_dir, self.file_path)
 
         # Create required folders if not already created
         file_path = os.path.join(os.getcwd(),'tmp',artist_dir,album_dir,'')
@@ -358,14 +360,16 @@ class Song(object):
         if percent >= 100:
             self.downloaded = True
             downloads.pop(self.songName, None)
+            print('Finished Downloading %s' % self.file_path)
         else:
             downloads[self.songName] = percent
         dl_strings = []
         for key, value in downloads.items():
             dl_strings.append(key+"...%d%%"%value)
         dl_string = ', '.join(dl_strings)
-        sys.stdout.write("{0}\r".format(dl_string))
+        sys.stdout.write("%s\r" % dl_string)
         sys.stdout.flush()
+        sys.stdout.write('\x1b[2K')
 
     def delete(self):
         # Check that the artist, album, song name doesn't begin with ~ or /
