@@ -29,6 +29,7 @@ import sys
 import urllib.request
 import threading
 import string
+import shutil
 
 # This is an implementation of the Pandora JSON API using Android partner
 # credentials.
@@ -287,7 +288,8 @@ class Station(object):
         self.pandora.json_call('station.deleteStation', {'stationToken': self.idToken})
 
 downloads = {}
-
+temp_dir = os.path.join(os.path.expanduser('~'),'Pithos','Temp')
+music_dir = os.path.join(os.path.expanduser('~'),'Pithos','Music')
 class Song(object):
     def __init__(self, pandora, d):
         self.pandora = pandora
@@ -315,8 +317,7 @@ class Song(object):
         self.downloaded = False
         self.download()
 
-    def download(self):
-        # Get URL to download from
+    def get_download_url(self):
         quality = self.pandora.audio_quality
         try:
             q = self.audioUrlMap[quality]
@@ -325,24 +326,59 @@ class Song(object):
             q = list(self.audioUrlMap.values())[0]['audioUrl']
         logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
         audiourl = q['audioUrl']
+        return audiourl
 
-        # Resolve filename
-        artist_dir = self.make_safe(self.artist)
-        album_dir = self.make_safe(self.album)
-        song_file = self.make_safe(self.songName + '.mp4')
-        self.temp_dir = os.path.join(os.getcwd(),'tmp')
-        self.file_path = os.path.join(artist_dir, album_dir, song_file)
-        self.file_name = os.path.join(self.temp_dir, self.file_path)
+    def resolve_filename(self):
+        return os.path.join(self.get_folders_path(), self.get_song_filename())
 
+    def get_artist_folder(self):
+        return self.make_safe(self.artist)
+
+    def get_album_folder(self):
+        return self.make_safe(self.album)
+
+    def get_song_filename(self):
+        return self.make_safe(self.songName + '.mp4')
+
+    def get_folders_path(self):
+        artist_dir = self.get_artist_folder()
+        album_dir = self.get_album_folder()
+        return os.path.join(artist_dir, album_dir)
+
+    def get_temp_dir(self):
+        global temp_dir
+        return temp_dir
+
+    def get_music_dir(self):
+        global music_dir
+        return music_dir
+
+    def get_stored_filename(self):
+        return os.path.join(self.get_music_dir(), self.resolve_filename())
+
+    def get_temp_filename(self):
+        return os.path.join(self.get_temp_dir(), self.resolve_filename())
+
+    def is_stored(self):
+        return os.path.exists(self.get_stored_filename())
+
+    def download(self):
+        # If stored, return stored filename
+        stored_filename = self.get_stored_filename()
+        if os.path.exists(stored_filename):
+            self.file_name = stored_filename
         # Create required folders if not already created
-        file_path = os.path.join(os.getcwd(),'tmp',artist_dir,album_dir,'')
-        if not os.path.exists(file_path):
-            os.makedirs(file_path)
-
+        folders_path = os.path.join(self.get_temp_dir(),self.get_folders_path())
+        if not os.path.exists(folders_path):
+            os.makedirs(folders_path)
+        # Get URL to download from
+        audiourl = self.get_download_url()
+        # Get the temp file path
+        temp_filename = self.get_temp_filename()
         # Download song in seperate process
         def runInThread():
             try:
-                tmp_filename, headers = urllib.request.urlretrieve(audiourl, self.file_name, reporthook=self.dlProgress)
+                tmp_filename, headers = urllib.request.urlretrieve(audiourl, temp_filename, reporthook=self.dlProgress)
             except Exception:
                 import traceback
                 print(traceback.format_exc())
@@ -360,7 +396,7 @@ class Song(object):
         if percent >= 100:
             self.downloaded = True
             downloads.pop(self.songName, None)
-            print('Finished Downloading %s' % self.file_path)
+            print('Finished Downloading %s' % self.resolve_filename())
         else:
             downloads[self.songName] = percent
         dl_strings = []
@@ -381,11 +417,12 @@ class Song(object):
         # TODO
         pass
 
-    def store(self, music_directory=None):
+    def store(self):
         # Move from temp to music
-        # TODO
-        # os.rename(self.file_name, os.path.join(music_directory, 
-        pass
+        stored_dirs = os.path.join(self.get_music_dir(), self.get_folders_path())
+        if not os.path.exists(stored_dirs):
+            os.makedirs(stored_dirs)
+        shutil.copy(self.get_temp_filename(), self.get_stored_filename())
 
     def make_safe(self, filename):
         valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
