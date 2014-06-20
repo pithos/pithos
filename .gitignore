@@ -20,3 +20,4 @@ build-debian.sh
 .project
 .pydevproject
 .settings/
+tmp/
