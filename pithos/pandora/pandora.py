@@ -365,8 +365,10 @@ class Song(object):
     def download(self):
         # If stored, return stored filename
         stored_filename = self.get_stored_filename()
-        if os.path.exists(stored_filename):
+        if os.path.isfile(stored_filename):
             self.file_name = stored_filename
+            self.downloaded = True
+            return
         # Create required folders if not already created
         folders_path = os.path.join(self.get_temp_dir(),self.get_folders_path())
         if not os.path.exists(folders_path):
@@ -422,7 +424,8 @@ class Song(object):
         stored_dirs = os.path.join(self.get_music_dir(), self.get_folders_path())
         if not os.path.exists(stored_dirs):
             os.makedirs(stored_dirs)
-        shutil.copy(self.get_temp_filename(), self.get_stored_filename())
+            if not os.path.isfile(self.get_stored_filename()):
+                shutil.copy(self.get_temp_filename(), self.get_stored_filename())
 
     def make_safe(self, filename):
         valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
