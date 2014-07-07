@@ -281,6 +281,14 @@ class Station(object):
         logging.info("pandora: Deleting Station")
         self.pandora.json_call('station.deleteStation', {'stationToken': self.idToken})
 
+    def __repr__(self):
+        return '<{}.{} {} "{}">'.format(
+            __name__,
+            __class__.__name__,
+            self.id,
+            self.name,
+        )
+
 class Song(object):
     def __init__(self, pandora, d):
         self.pandora = pandora
@@ -377,6 +385,16 @@ class Song(object):
 
     def is_still_valid(self):
         return (time.time() - self.playlist_time) < PLAYLIST_VALIDITY_TIME
+
+    def __repr__(self):
+        return '<{}.{} {} "{}" by "{}" from "{}">'.format(
+            __name__,
+            __class__.__name__,
+            self.trackToken,
+            self.songName,
+            self.artist,
+            self.album,
+        )
 
 
 class SearchResult(object):
