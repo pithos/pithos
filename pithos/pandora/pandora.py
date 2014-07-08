@@ -24,6 +24,12 @@ import logging
 import time
 import urllib.request, urllib.parse, urllib.error
 import codecs
+import os
+import sys
+import urllib.request
+import threading
+import string
+import shutil
 
 # This is an implementation of the Pandora JSON API using Android partner
 # credentials.
@@ -263,6 +269,7 @@ class Station(object):
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
+                i['stationName'] = self.name
                 songs.append(Song(self.pandora, i))
         return songs
 
@@ -281,6 +288,9 @@ class Station(object):
         logging.info("pandora: Deleting Station")
         self.pandora.json_call('station.deleteStation', {'stationToken': self.idToken})
 
+downloads = {}
+temp_dir = os.path.join(os.path.expanduser('~'),'Pithos','Temp')
+music_dir = os.path.join(os.path.expanduser('~'),'Pithos','Music')
 class Song(object):
     def __init__(self, pandora, d):
         self.pandora = pandora
@@ -295,6 +305,7 @@ class Song(object):
         self.songDetailURL = d['songDetailUrl']
         self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
+        self.stationName = d['stationName']
 
         self.bitrate = None
         self.is_ad = None  # None = we haven't checked, otherwise True/False
@@ -304,6 +315,139 @@ class Song(object):
         self.finished = False
         self.playlist_time = time.time()
         self.feedbackId = None
+
+        self.downloaded = False
+        self.download()
+
+    def get_download_url(self):
+        quality = self.pandora.audio_quality
+        try:
+            q = self.audioUrlMap[quality]
+        except KeyError:
+            logging.warn("Unable to use audio format %s. Using %s", quality, list(self.audioUrlMap.keys())[0])
+            q = list(self.audioUrlMap.values())[0]['audioUrl']
+        logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
+        audiourl = q['audioUrl']
+        return audiourl
+
+    def resolve_filename(self):
+        return os.path.join(self.get_folders_path(), self.get_song_filename())
+
+    def get_artist_folder(self):
+        return self.make_safe(self.artist)
+
+    def get_album_folder(self):
+        return self.make_safe(self.album)
+
+    def get_song_filename(self):
+        return self.make_safe(self.songName + '.mp4')
+
+    def get_station_folder(self):
+        return self.make_safe(self.stationName)
+
+    def get_folders_path(self):
+        station_dir = self.get_station_folder()
+        artist_dir = self.get_artist_folder()
+        album_dir = self.get_album_folder()
+        return os.path.join(station_dir, artist_dir, album_dir)
+
+    def get_temp_dir(self):
+        global temp_dir
+        return temp_dir
+
+    def get_music_dir(self):
+        global music_dir
+        return music_dir
+
+    def get_stored_filename(self):
+        return os.path.join(self.get_music_dir(), self.resolve_filename())
+
+    def get_temp_filename(self):
+        return os.path.join(self.get_temp_dir(), self.resolve_filename())
+
+    def is_stored(self):
+        return os.path.exists(self.get_stored_filename())
+
+    def download(self):
+        # If stored, return stored filename
+        stored_filename = self.get_stored_filename()
+        if os.path.isfile(stored_filename):
+            self.file_name = stored_filename
+            self.downloaded = True
+            return
+        # Create required folders if not already created
+        folders_path = os.path.join(self.get_temp_dir(),self.get_folders_path())
+        if not os.path.exists(folders_path):
+            os.makedirs(folders_path)
+        # Get URL to download from
+        audiourl = self.get_download_url()
+        # Get the temp file path
+        temp_filename = self.get_temp_filename()
+        # Download song in seperate process
+        def runInThread():
+            try:
+                tmp_filename, headers = urllib.request.urlretrieve(audiourl, temp_filename, reporthook=self.dlProgress)
+            except Exception:
+                import traceback
+                print(traceback.format_exc())
+                print('Download Failed\n')
+                self.file_name = None
+            else:
+                self.file_name = tmp_filename
+            return
+        thread = threading.Thread(target=runInThread)
+        thread.start()
+
+    def dlProgress(self, count, blockSize, totalSize):
+        percent = int(count*blockSize*100/totalSize)
+        global downloads
+        if percent >= 100:
+            self.downloaded = True
+            downloads.pop(self.songName, None)
+            print('Finished Downloading %s' % self.resolve_filename())
+        else:
+            downloads[self.songName] = percent
+        dl_strings = []
+        for key, value in downloads.items():
+            dl_strings.append(key+"...%d%%"%value)
+        dl_string = ', '.join(dl_strings)
+        sys.stdout.write("%s\r" % dl_string)
+        sys.stdout.flush()
+        sys.stdout.write('\x1b[2K')
+
+    def delete_temp(self):
+        # Delete the file
+        file_name = self.get_temp_filename()
+        if os.path.isfile(file_name):
+            os.remove(file_name)
+        # Delete the album folder if empty
+        album_folder = os.path.join(self.get_temp_dir(), self.get_station_folder(), self.get_artist_folder(), self.get_album_folder())
+        if os.path.exists(album_folder):
+            if not os.listdir(album_folder):
+                os.rmdir(album_folder)
+        # Delete the artist folder if empty
+        artist_folder = os.path.join(self.get_temp_dir(), self.get_station_folder(), self.get_artist_folder())
+        if os.path.exists(artist_folder):
+            if not os.listdir(artist_folder):
+                os.rmdir(artist_folder)
+        # Delete the station folder if empty
+        station_folder = os.path.join(self.get_temp_dir(), self.get_station_folder())
+        if os.path.exists(station_folder):
+            if not os.listdir(station_folder):
+                os.rmdir(station_folder)
+
+    def store(self):
+        # Move from temp to music
+        stored_dirs = os.path.join(self.get_music_dir(), self.get_folders_path())
+        if not os.path.exists(stored_dirs):
+            os.makedirs(stored_dirs)
+            if not os.path.isfile(self.get_stored_filename()):
+                shutil.copy(self.get_temp_filename(), self.get_stored_filename())
+        self.delete_temp()
+
+    def make_safe(self, filename):
+        valid_chars = "&+-_.() %s%s" % (string.ascii_letters, string.digits)
+        return ''.join(c for c in filename if c in valid_chars)
 
     @property
     def title(self):
@@ -330,15 +474,10 @@ class Song(object):
 
     @property
     def audioUrl(self):
-        quality = self.pandora.audio_quality
-        try:
-            q = self.audioUrlMap[quality]
-            logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
-            return q['audioUrl']
-        except KeyError:
-            logging.warn("Unable to use audio format %s. Using %s",
-                           quality, list(self.audioUrlMap.keys())[0])
-            return list(self.audioUrlMap.values())[0]['audioUrl']
+        import time
+        while not self.downloaded:
+            time.sleep(1)
+        return 'file://'+self.file_name
 
     @property
     def station(self):
@@ -377,7 +516,6 @@ class Song(object):
 
     def is_still_valid(self):
         return (time.time() - self.playlist_time) < PLAYLIST_VALIDITY_TIME
-
 
 class SearchResult(object):
     def __init__(self, resultType, d):

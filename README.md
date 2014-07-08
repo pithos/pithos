@@ -11,3 +11,10 @@ For screenshots, install instructions and more, see
 License: GNU GPLv3+
 
 Pithos is not affiliated with or endorsed by Pandora Media, Inc.
+
+
+Random notes:
+
+extra requirements:
+python3-setuptools python3-dbus python3-gobject python3-pylast gstreamer1 gstreamer1-plugins-good gstreamer1-plugins-bad gtk3 git (optionally libnotify appindicator3 keybinder3) 
+
