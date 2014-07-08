@@ -676,7 +676,13 @@ class PithosWindow(Gtk.ApplicationWindow):
                     logging.info('Ad detected!')
                     self.current_song.is_ad = True
                     self.update_song_row()
+                    if not self.skips:
+                        self.skips = 0
+                    if self.skips < 3:
+                        self.skips+=1
+                        self.next_song()
                 else:
+                    self.skips = 0
                     logging.info('Not an Ad..')
                     self.current_song.is_ad = False
                     self.current_song.store()
