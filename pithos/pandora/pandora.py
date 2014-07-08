@@ -269,6 +269,7 @@ class Station(object):
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
+                i['stationName'] = self.name
                 songs.append(Song(self.pandora, i))
         return songs
 
@@ -304,6 +305,7 @@ class Song(object):
         self.songDetailURL = d['songDetailUrl']
         self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
+        self.stationName = d['stationName']
 
         self.bitrate = None
         self.is_ad = None  # None = we haven't checked, otherwise True/False
@@ -341,7 +343,7 @@ class Song(object):
         return self.make_safe(self.songName + '.mp4')
 
     def get_station_folder(self):
-        return self.make_safe(self.stationId)
+        return self.make_safe(self.stationName)
 
     def get_folders_path(self):
         station_dir = self.get_station_folder()
