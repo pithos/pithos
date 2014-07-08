@@ -424,17 +424,17 @@ class Song(object):
         album_folder = os.path.join(self.get_temp_dir(), self.get_station_folder(), self.get_artist_folder(), self.get_album_folder())
         if os.path.exists(album_folder):
             if not os.listdir(album_folder):
-                os.remove(album_folder)
+                os.rmdir(album_folder)
         # Delete the artist folder if empty
         artist_folder = os.path.join(self.get_temp_dir(), self.get_station_folder(), self.get_artist_folder())
         if os.path.exists(artist_folder):
             if not os.listdir(artist_folder):
-                os.remove(artist_folder)
+                os.rmdir(artist_folder)
         # Delete the station folder if empty
         station_folder = os.path.join(self.get_temp_dir(), self.get_station_folder())
         if os.path.exists(station_folder):
             if not os.listdir(station_folder):
-                os.remove(station_folder)
+                os.rmdir(station_folder)
 
     def store(self):
         # Move from temp to music
