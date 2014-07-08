@@ -443,7 +443,7 @@ class Song(object):
             os.makedirs(stored_dirs)
             if not os.path.isfile(self.get_stored_filename()):
                 shutil.copy(self.get_temp_filename(), self.get_stored_filename())
-        delete_temp()
+        self.delete_temp()
 
     def make_safe(self, filename):
         valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
