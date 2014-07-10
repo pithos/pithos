@@ -14,7 +14,7 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from pithos.pandora.pandora import *
+from .pandora import *
 from gi.repository import Gtk
 import logging
 
