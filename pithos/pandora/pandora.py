@@ -15,6 +15,11 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
+"""Pandora JSON v5 API
+
+See http://6xq.net/playground/pandora-apidoc/json/ for API documentation.
+"""
+
 from .blowfish import Blowfish
 # from Crypto.Cipher import Blowfish
 from xml.dom import minidom
@@ -24,10 +29,6 @@ import logging
 import time
 import urllib.request, urllib.parse, urllib.error
 import codecs
-
-# This is an implementation of the Pandora JSON API using Android partner
-# credentials.
-# See http://pan-do-ra-api.wikia.com/wiki/Json/5 for API documentation.
 
 HTTP_TIMEOUT = 30
 USER_AGENT = 'pithos'
@@ -65,6 +66,17 @@ def pad(s, l):
     return s + b'\0' * (l - len(s))
 
 class Pandora(object):
+    """Access the Pandora API
+
+    To use the Pandora class, make sure to call :py:meth:`set_audio_quality`
+    and :py:meth:`connect` methods.
+
+    Get information from Pandora using:
+
+    - :py:meth:`get_stations` which populates the :py:attr:`stations` attribute
+    - :py:meth:`search` to find songs to add to stations or create a new station with
+    - :py:meth:`json_call` call into the JSON API directly
+    """
     def __init__(self):
         self.opener = urllib.request.build_opener()
         pass
@@ -158,12 +170,24 @@ class Pandora(object):
             return tree['result']
 
     def set_audio_quality(self, fmt):
+        """Set the desired audio quality
+
+        Used by the :py:attr:`Song.audioUrl` property.
+
+        :param fmt: An audio quality format from :py:data:`pithos.pandora.data.valid_audio_formats`
+        """
         self.audio_quality = fmt
 
     def set_url_opener(self, opener):
         self.opener = opener
 
     def connect(self, client, user, password):
+        """Connect to the Pandora API and log the user in
+
+        :param client:   The client ID from :py:data:`pithos.pandora.data.client_keys`
+        :param user:     The user's login email
+        :param password: The user's login password
+        """
         self.partnerId = self.userId = self.partnerAuthToken = None
         self.userAuthToken = self.time_offset = None
 
