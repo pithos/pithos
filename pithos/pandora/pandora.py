@@ -225,6 +225,8 @@ class Pandora(object):
                 if i.id in self.quickMixStationIds:
                     i.useQuickMix = True
 
+        return self.stations
+
     def save_quick_mix(self):
         stationIds = []
         for i in self.stations:
