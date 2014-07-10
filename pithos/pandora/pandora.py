@@ -15,6 +15,11 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
+"""Pandora JSON v5 API
+
+See http://6xq.net/playground/pandora-apidoc/json/ for API documentation.
+"""
+
 from .blowfish import Blowfish
 # from Crypto.Cipher import Blowfish
 from xml.dom import minidom
@@ -24,10 +29,6 @@ import logging
 import time
 import urllib.request, urllib.parse, urllib.error
 import codecs
-
-# This is an implementation of the Pandora JSON API using Android partner
-# credentials.
-# See http://pan-do-ra-api.wikia.com/wiki/Json/5 for API documentation.
 
 HTTP_TIMEOUT = 30
 USER_AGENT = 'pithos'
