@@ -65,6 +65,15 @@ def pad(s, l):
     return s + b'\0' * (l - len(s))
 
 class Pandora(object):
+    """Access the Pandora API
+
+    To use the Pandora class, make sure to call set_audio_quality() and connect() methods.
+
+    Get information from Pandora using:
+    - get_stations() which populates the stations attribute
+    - search() to find songs to add to stations or create a new station with
+    - json_call() call into the JSON API directly
+    """
     def __init__(self):
         self.opener = urllib.request.build_opener()
         pass
@@ -158,12 +167,24 @@ class Pandora(object):
             return tree['result']
 
     def set_audio_quality(self, fmt):
+        """Set the desired audio quality
+
+        Used by the Song.audioUrl property.
+
+        fmt -- audio quality format from .data.valid_audio_formats
+        """
         self.audio_quality = fmt
 
     def set_url_opener(self, opener):
         self.opener = opener
 
     def connect(self, client, user, password):
+        """Connect to the Pandora API and log the user in
+
+        client   -- the client ID from .data.client_keys
+        user     -- the user's login email
+        password -- the user's login password
+        """
         self.partnerId = self.userId = self.partnerAuthToken = None
         self.userAuthToken = self.time_offset = None
 
