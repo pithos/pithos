@@ -464,6 +464,12 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.emit('song-changed', self.current_song)
 
+    def start_selected_song(self):
+        playable = self.selected_song().index > self.current_song_index
+        if playable:
+            self.start_song(self.selected_song().index)
+        return playable
+
     def next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
 
@@ -883,9 +889,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
             if event.button == 1 and event.type == Gdk.EventType._2BUTTON_PRESS:
                 logging.info("Double clicked on song %s", self.selected_song().index)
-                if self.selected_song().index <= self.current_song_index:
-                    return False
-                self.start_song(self.selected_song().index)
+                return self.start_selected_song()
 
     def set_player_volume(self, value):
         logging.info('%.3f' % value)
@@ -955,10 +959,38 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.show()
         self.present()
 
-    def on_kb_playpause(self, widget=None, data=None):
-        if not isinstance(widget.get_focus(), Gtk.Button) and data.keyval == 32:
-            self.playpause()
-            return True
+    def on_key_press(self, widget=None, data=None):
+        """Callback for key presses
+
+        C-q for quit, C-p for preferences, and C-s for displaying the "edit
+        stations dialog" are handled by Pithos' single menubar item. Tab may be
+        used to cycle focus from the songs list to the stations combobox.
+        """
+        control_pressed = data.state & Gdk.ModifierType.CONTROL_MASK
+        button_focused = isinstance(widget.get_focus(), Gtk.Button)
+        if not button_focused:
+            if data.keyval == Gdk.KEY_space:
+                self.playpause()
+                return True
+            elif data.keyval == Gdk.KEY_Return:
+                self.start_selected_song()
+                return True
+        elif control_pressed:
+            if data.keyval == Gdk.KEY_Right:
+                self.next_song()
+                return True
+            elif data.keyval == Gdk.KEY_b:
+                self.ban_song()
+                return True
+            elif data.keyval == Gdk.KEY_l:
+                self.love_song()
+                return True
+            elif data.keyval == Gdk.KEY_Up:
+                self.adjust_volume(+2)
+                return True
+            elif data.keyval == Gdk.KEY_Down:
+                self.adjust_volume(-2)
+                return True
 
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
