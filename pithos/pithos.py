@@ -353,15 +353,24 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         elif control_proxy_pac and pacparser_imported:
             pacparser.init()
-            pacparser.parse_pac_string(urllib.request.urlopen(control_proxy_pac).read())
-            proxies = pacparser.find_proxy("http://pandora.com", "pandora.com").split(";")
-            for proxy in proxies:
-                match = re.search("PROXY (.*)", proxy)
-                if match:
-                    control_proxy = match.group(1)
-                    break
+            with urllib.request.urlopen(control_proxy_pac) as f:
+                pacstring = f.read().decode('utf-8')
+                try:
+                    pacparser.parse_pac_string(pacstring)
+                except:
+                    logging.warning('Failed to parse PAC.')
+            try:
+                proxies = pacparser.find_proxy("http://pandora.com", "pandora.com").split(";")
+                for proxy in proxies:
+                    match = re.search("PROXY (.*)", proxy)
+                    if match:
+                        control_proxy = match.group(1)
+                        break
+            except:
+                logging.warning('Failed to find proxy via PAC.')
+            pacparser.cleanup()
         elif control_proxy_pac and not pacparser_imported:
-            logging.warn("Disabled proxy auto-config support because python-pacparser module was not found.")
+            logging.warning("Disabled proxy auto-config support because python-pacparser module was not found.")
 
         self.worker_run('set_url_opener', (control_opener,))
 
