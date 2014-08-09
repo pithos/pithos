@@ -502,7 +502,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             if(self.current_song.artRadio.startswith("http")):
                 try:
                     if not os.path.exists(pathname + "/album_art/"):
-                        os.makedir(pathname + "/album_art/")
+                        os.makedirs(pathname + "/album_art/")
                     album_art = urllib.request.urlopen(self.current_song.artRadio)
                     f = open(pathname + "/album_art/" + md5value + ".jpg", 'wb')
                     f.close
