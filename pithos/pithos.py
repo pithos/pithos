@@ -46,16 +46,16 @@ else:
     fullPath = os.getcwd()
 sys.path.insert(0, os.path.dirname(fullPath))
 
-import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
-from util import parse_proxy, open_browser
-from pithosconfig import get_ui_file, get_media_file, VERSION
-from gobject_worker import GObjectWorker
-from plugin import load_plugins
+from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
+from .util import parse_proxy, open_browser
+from .pithosconfig import get_ui_file, get_media_file, VERSION
+from .gobject_worker import GObjectWorker
+from .plugin import load_plugins
 if sys.platform != 'win32':
-    from dbus_service import PithosDBusProxy
-    from mpris import PithosMprisService
-from pandora import *
-from pandora.data import *
+    from .dbus_service import PithosDBusProxy
+    from .mpris import PithosMprisService
+from .pandora import *
+from .pandora.data import *
 
 pacparser_imported = False
 try:
