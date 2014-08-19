@@ -17,13 +17,14 @@
 from pithos.plugin import PithosPlugin
 import logging
 
-
+dbus = None
 class ScreenSaverPausePlugin(PithosPlugin):
     preference = 'enable_screensaverpause'
 
     session_bus = None
 
     def bind_session_bus(self):
+        global dbus
         try:
             import dbus
         except ImportError:
