@@ -42,6 +42,9 @@ class ScreenSaverPausePlugin(PithosPlugin):
             return
         self.connect_events() or logging.error("Could not connect events")
 
+        self.locked = 0
+        self.wasplaying = False
+
     def on_disable(self):
         if self.session_bus:
             self.disconnect_events()
@@ -68,21 +71,26 @@ class ScreenSaverPausePlugin(PithosPlugin):
     def disconnect_events(self):
         try:
             for r in self.receivers:
-              r.remove()
+                r.remove()
             return True
         except dbus.DBusException:
             return False
 
     def play(self):
-        self.playPause(False)
+        self.locked -= 1
+        if self.locked < 0:
+            self.locked = 0
+        if not self.locked and self.wasplaying:
+            self.window.user_play()
 
     def pause(self):
-        self.playPause(True)
-
-    def playPause(self,state):
-        if not state:
-            if self.wasplaying:
-                self.window.user_play()
-        else:
+        if not self.locked:
             self.wasplaying = self.window.playing
             self.window.pause()
+        self.locked += 1
+
+    def playPause(self, screensaver_on):
+        if screensaver_on:
+            self.pause()
+        else:
+            self.play()
