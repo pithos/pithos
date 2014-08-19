@@ -50,11 +50,16 @@ class ScreenSaverPausePlugin(PithosPlugin):
 
     def connect_events(self):
         try:
-            self.session_bus.add_signal_receiver(self.playPause, 'ActiveChanged', 'org.gnome.ScreenSaver')
-            self.session_bus.add_signal_receiver(self.playPause, 'ActiveChanged', 'org.cinnamon.ScreenSaver')
-            self.session_bus.add_signal_receiver(self.playPause, 'ActiveChanged', 'org.freedesktop.ScreenSaver')
-            self.session_bus.add_signal_receiver(self.pause, 'Locked', 'com.canonical.Unity.Session')
-            self.session_bus.add_signal_receiver(self.play, 'Unlocked', 'com.canonical.Unity.Session')
+            self.receivers = [
+                self.session_bus.add_signal_receiver(*args)
+                for args in ((self.playPause, 'ActiveChanged', 'org.gnome.ScreenSaver'),
+                             (self.playPause, 'ActiveChanged', 'org.cinnamon.ScreenSaver'),
+                             (self.playPause, 'ActiveChanged', 'org.freedesktop.ScreenSaver'),
+                             (self.pause, 'Locked', 'com.canonical.Unity.Session'),
+                             (self.play, 'Unlocked', 'com.canonical.Unity.Session'),
+                            )
+                ]
+
             return True
         except dbus.DBusException:
             logging.info("Enable failed")
@@ -62,11 +67,8 @@ class ScreenSaverPausePlugin(PithosPlugin):
 
     def disconnect_events(self):
         try:
-            self.session_bus.remove_signal_receiver(self.playPause, 'ActiveChanged', 'org.gnome.ScreenSaver')
-            self.session_bus.remove_signal_receiver(self.playPause, 'ActiveChanged', 'org.cinnamon.ScreenSaver')
-            self.session_bus.remove_signal_receiver(self.playPause, 'ActiveChanged', 'org.freedesktop.ScreenSaver')
-            self.session_bus.remove_signal_receiver(self.pause, 'Locked', 'com.canonical.Unity.Session')
-            self.session_bus.remove_signal_receiver(self.play, 'Unlocked', 'com.canonical.Unity.Session')
+            for r in self.receivers:
+              r.remove()
             return True
         except dbus.DBusException:
             return False
