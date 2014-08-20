@@ -1062,7 +1062,7 @@ class PithosApplication(Gtk.Application):
 
     def do_shutdown(self):
         Gtk.Application.do_shutdown(self)
-        self.quit()
+        self.window.destroy()
 
     def stations_cb(self, action, param):
         self.window.show_stations()
@@ -1074,7 +1074,7 @@ class PithosApplication(Gtk.Application):
         self.window.show_about()
 
     def quit_cb(self, action, param):
-        self.quit()
+        self.window.destroy()
 
 def main():
     app = PithosApplication()
