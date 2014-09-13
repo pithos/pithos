@@ -143,7 +143,7 @@ class Pandora(object):
                 raise PandoraAuthTokenInvalid(msg)
             elif code == API_ERROR_COUNTRY_NOT_SUPPORTED:
                  raise PandoraError("Pandora not available", code,
-                    submsg="Pandora is not available outside the United States.")
+                    submsg="Pandora is not available in your country.")
             elif code == API_ERROR_API_VERSION_NOT_SUPPORTED:
                 raise PandoraAPIVersionError(msg)
             elif code == API_ERROR_INSUFFICIENT_CONNECTIVITY:
