@@ -23,7 +23,7 @@ import signal
 
 import gi
 gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
+from gi.repository import Gst, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 import contextlib
 import html
 import math
@@ -201,6 +201,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         bus.connect("message::eos", self.on_gst_eos)
         bus.connect("message::buffering", self.on_gst_buffering)
         bus.connect("message::error", self.on_gst_error)
+        bus.connect("message::element", self.on_gst_element)
         bus.connect("message::tag", self.on_gst_tag)
         self.player.connect("notify::volume", self.on_gst_volume)
         self.player.connect("notify::source", self.on_gst_source)
@@ -581,6 +582,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         dialog.props.secondary_text = submsg
         dialog.set_default_response(3)
 
+        if retry_cb is None:
+            btn = self.builder.get_object("button2")
+            btn.hide()
+
         response = dialog.run()
         dialog.hide()
 
@@ -631,19 +636,34 @@ class PithosWindow(Gtk.ApplicationWindow):
         logging.info("EOS")
         self.next_song()
 
+    def on_gst_plugin_installed(self, result, userdata):
+        if result == GstPbutils.InstallPluginsReturn.SUCCESS:
+            self.fatal_error_dialog("Codec installation successful",
+                        submsg="The required codec was installed, please restart Pithos.")
+        else:
+            self.error_dialog("Codec installation failed", None,
+                        submsg="The required codec failed to install. Either manually install it or try another quality setting.")
+
+    def on_gst_element(self, bus, message):
+        if GstPbutils.is_missing_plugin_message(message):
+            if GstPbutils.install_plugins_supported():
+                details = GstPbutils.missing_plugin_message_get_installer_detail(message)
+                GstPbutils.install_plugins_async([details,], None, self.on_gst_plugin_installed, None)
+            else:
+                self.error_dialog("Missing codec", None,
+                        submsg="GStreamer is missing a plugin and it could not be automatically installed. Either manually install it or try another quality setting.")
+
     def on_gst_error(self, bus, message):
         err, debug = message.parse_error()
         logging.error("Gstreamer error: %s, %s, %s" % (err, debug, err.code))
         if self.current_song:
             self.current_song.message = "Error: "+str(err)
 
-        #if err.code is int(Gst.CORE_ERROR_MISSING_PLUGIN):
-        #    self.fatal_error_dialog("Missing codec", submsg="GStreamer is missing a plugin")
-        #    return
-
         self.gstreamer_error = str(err)
         self.gstreamer_errorcount_1 += 1
-        self.next_song()
+
+        if not GstPbutils.install_plugins_installation_in_progress():
+            self.next_song()
 
     def gst_tag_handler(self, tag_info):
         def handler(_x, tag, _y):
