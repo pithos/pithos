@@ -44,6 +44,14 @@ class PithosDBusProxy(dbus.service.Object):
     @dbus.service.method(DBUS_BUS)
     def PlayPause(self):
         self.window.playpause_notify()
+
+    @dbus.service.method(DBUS_BUS)
+    def Play(self):
+        self.window.play()
+
+    @dbus.service.method(DBUS_BUS)
+    def Pause(self):
+        self.window.pause()
     
     @dbus.service.method(DBUS_BUS)
     def SkipSong(self):
