@@ -1,4 +1,4 @@
 include README.md
-recursive-include data *.svg pithos.desktop
+recursive-include data *.svg pithos.desktop *.xml
 recursive-include pithos/data/ui *.ui *.xml
 recursive-include pithos/data/media *.png *.svg
