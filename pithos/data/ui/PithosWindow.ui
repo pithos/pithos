@@ -17,6 +17,7 @@
     <property name="icon_name">pithos</property>
     <signal name="destroy" handler="on_destroy" swapped="no"/>
     <signal name="key-press-event" handler="on_kb_playpause" swapped="no"/>
+    <signal name="configure-event" handler="on_configure_event" swapped="no"/>
     <child>
       <object class="GtkBox" id="vbox1">
         <property name="visible">True</property>

@@ -87,6 +87,8 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.__preferences = {
             "username":'',
             "password":'',
+            "x_pos": None,
+            "y_pos": None,
             "notify":True,
             "last_station_id":None,
             "proxy":'',

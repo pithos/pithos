@@ -285,6 +285,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_combo.add_attribute(render_text, "text", 1)
         self.stations_combo.set_row_separator_func(lambda model, iter, data=None: model.get_value(iter, 0) is None, None)
 
+        self.set_initial_pos()
+
     def worker_run(self, fn, args=(), callback=None, message=None, context='net'):
         if context and message:
             self.statusbar.push(self.statusbar.get_context_id(context), message)
@@ -980,9 +982,19 @@ class PithosWindow(Gtk.ApplicationWindow):
     def refresh_stations(self, *ignore):
         self.worker_run(self.pandora.get_stations, (), self.process_stations, "Refreshing stations...")
 
+    def set_initial_pos(self):
+        """ Moves window to position stored in preferences """
+        x, y = self.preferences['x_pos'], self.preferences['y_pos']
+        if not x is None and not y is None:
+            self.move(int(x), int(y))
+
     def bring_to_top(self, *ignore):
+        self.set_initial_pos()
         self.show()
         self.present()
+
+    def on_configure_event(self, widget, event):
+        self.preferences['x_pos'], self.preferences['y_pos'] = event.x, event.y
 
     def on_kb_playpause(self, widget=None, data=None):
         if not isinstance(widget.get_focus(), Gtk.Button) and data.keyval == 32:
