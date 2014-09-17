@@ -22,7 +22,7 @@ APP_ID = 'Pithos'
 
 class MediaKeyPlugin(PithosPlugin):
     preference = 'enable_mediakeys'
-    
+
     def bind_dbus(self):
         try:
             import dbus
@@ -86,12 +86,42 @@ class MediaKeyPlugin(PithosPlugin):
         self.hookman.KeyDown = self.kbevent
         self.hookman.HookKeyboard()
         return True
+
+    def osx_playpause_handler(self):
+        self.window.playpause_notify()
+        return False # Don't let others get event
+
+    def osx_skip_handler(self):
+        self.window.next_song()
+        return False
+
+    def bind_osx(self):
+        try:
+            import osxmmkeys
+        except ImportError:
+            logging.warning('Please install osxmmkeys: https://github.com/pushrax/osxmmkeys')
+            return False
+        except RuntimeError as e:
+            logging.warning('osxmmkeys failed to import: {}'.format(e))
+            return False
+
+        tap = osxmmkeys.Tap()
+        tap.on('play_pause', self.osx_playpause_handler)
+        tap.on('next_track', self.osx_skip_handler)
+        tap.start()
+
+        return True
         
     def on_enable(self):
         if sys.platform == 'win32':
-            self.bind_win32() or logging.error("Could not bind media keys")
+            loaded = self.bind_win32()
+        elif sys.platform == 'darwin':
+            loaded = self.bind_osx()
         else:
-            self.bind_dbus() or self.bind_keybinder() or logging.error("Could not bind media keys")
+            loaded = self.bind_dbus() or self.bind_keybinder()
+
+        if not loaded:
+            logging.error("Could not bind media keys")
         
     def on_disable(self):
         logging.error("Not implemented: Can't disable media keys")
