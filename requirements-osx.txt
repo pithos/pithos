@@ -1,0 +1,11 @@
+# scrobble
+pylast
+
+# notify
+pync
+
+# mediakeys
+pyobjc-core
+pyobjc-framework-Cocoa
+pyobjc-framework-Quartz
+osxmmkeys
