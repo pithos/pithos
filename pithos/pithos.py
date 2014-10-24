@@ -477,6 +477,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         filename = self.removeNonAscii(filename)
         filename = filename.replace("/", " ")
         filename = filename.replace("%", "")
+	re.sub(' +',' ',filename)
         pathname = os.path.expanduser(pathname)
         pathname = os.path.abspath(pathname)
         if not os.path.exists(pathname):
