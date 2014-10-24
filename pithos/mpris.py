@@ -96,6 +96,9 @@ class PithosMprisService(dbus.service.Object):
     def _get_volume(self):
         return self.window.player.get_property("volume")
 
+    def _set_volume(self, new_volume):
+        self.window.player.set_property('volume', new_volume)
+
     def _get_position(self):
         return self.window.player.query_position(self.window.time_format)[0] / 1000
 
@@ -112,7 +115,8 @@ class PithosMprisService(dbus.service.Object):
         if interface_name == self.MEDIA_PLAYER2_IFACE:
             pass
         elif interface_name == self.MEDIA_PLAYER2_PLAYER_IFACE:
-            pass # TODO: volume
+            if property_name == 'Volume':
+                self._set_volume(new_value)
         else:
             raise dbus.exceptions.DBusException(
                 'org.mpris.MediaPlayer2.pithos',

@@ -40,7 +40,6 @@ class PithosNotificationIcon(PithosPlugin):
                                    get_data_file('media'))
     
     def on_enable(self):
-        self.visible = True
         self.delete_callback_handle = self.window.connect("delete-event", self.toggle_visible)
         self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
         self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
@@ -131,16 +130,14 @@ class PithosNotificationIcon(PithosPlugin):
             self.statusicon.set_tooltip_text("%s by %s"%(song.title, song.artist))
         
     def _toggle_visible(self, *args):
-        if self.visible:
-            self.window.hide()
-        else:
+        self.window.set_visible(not self.window.get_visible())
+
+        if self.window.get_visible(): # Ensure it's on top
             self.window.bring_to_top()
-        
-        self.visible = not self.visible
         
     def toggle_visible(self, *args):
         if hasattr(self, 'visible_check'):
-            self.visible_check.set_active(not self.visible)
+            self.visible_check.set_active(not self.window.get_visible())
         else:
             self._toggle_visible()
         

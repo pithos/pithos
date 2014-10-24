@@ -24,7 +24,7 @@ import hashlib
 import taglib
 import gi
 gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
+from gi.repository import Gst, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 import contextlib
 import html
 import math
@@ -202,6 +202,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         bus.connect("message::eos", self.on_gst_eos)
         bus.connect("message::buffering", self.on_gst_buffering)
         bus.connect("message::error", self.on_gst_error)
+        bus.connect("message::element", self.on_gst_element)
         bus.connect("message::tag", self.on_gst_tag)
         self.player.connect("notify::volume", self.on_gst_volume)
         self.player.connect("notify::source", self.on_gst_source)
@@ -284,6 +285,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_combo.pack_start(render_text, True)
         self.stations_combo.add_attribute(render_text, "text", 1)
         self.stations_combo.set_row_separator_func(lambda model, iter, data=None: model.get_value(iter, 0) is None, None)
+
+        self.set_initial_pos()
 
     def worker_run(self, fn, args=(), callback=None, message=None, context='net'):
         if context and message:
@@ -648,6 +651,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         dialog.props.secondary_text = submsg
         dialog.set_default_response(3)
 
+        if retry_cb is None:
+            btn = self.builder.get_object("button2")
+            btn.hide()
+
         response = dialog.run()
         dialog.hide()
 
@@ -698,19 +705,34 @@ class PithosWindow(Gtk.ApplicationWindow):
         logging.info("EOS")
         self.next_song()
 
+    def on_gst_plugin_installed(self, result, userdata):
+        if result == GstPbutils.InstallPluginsReturn.SUCCESS:
+            self.fatal_error_dialog("Codec installation successful",
+                        submsg="The required codec was installed, please restart Pithos.")
+        else:
+            self.error_dialog("Codec installation failed", None,
+                        submsg="The required codec failed to install. Either manually install it or try another quality setting.")
+
+    def on_gst_element(self, bus, message):
+        if GstPbutils.is_missing_plugin_message(message):
+            if GstPbutils.install_plugins_supported():
+                details = GstPbutils.missing_plugin_message_get_installer_detail(message)
+                GstPbutils.install_plugins_async([details,], None, self.on_gst_plugin_installed, None)
+            else:
+                self.error_dialog("Missing codec", None,
+                        submsg="GStreamer is missing a plugin and it could not be automatically installed. Either manually install it or try another quality setting.")
+
     def on_gst_error(self, bus, message):
         err, debug = message.parse_error()
         logging.error("Gstreamer error: %s, %s, %s" % (err, debug, err.code))
         if self.current_song:
             self.current_song.message = "Error: "+str(err)
 
-        #if err.code is int(Gst.CORE_ERROR_MISSING_PLUGIN):
-        #    self.fatal_error_dialog("Missing codec", submsg="GStreamer is missing a plugin")
-        #    return
-
         self.gstreamer_error = str(err)
         self.gstreamer_errorcount_1 += 1
-        self.next_song()
+
+        if not GstPbutils.install_plugins_installation_in_progress():
+            self.next_song()
 
     def gst_tag_handler(self, tag_info):
         def handler(_x, tag, _y):
@@ -1027,9 +1049,19 @@ class PithosWindow(Gtk.ApplicationWindow):
     def refresh_stations(self, *ignore):
         self.worker_run(self.pandora.get_stations, (), self.process_stations, "Refreshing stations...")
 
+    def set_initial_pos(self):
+        """ Moves window to position stored in preferences """
+        x, y = self.preferences['x_pos'], self.preferences['y_pos']
+        if not x is None and not y is None:
+            self.move(int(x), int(y))
+
     def bring_to_top(self, *ignore):
+        self.set_initial_pos()
         self.show()
         self.present()
+
+    def on_configure_event(self, widget, event):
+        self.preferences['x_pos'], self.preferences['y_pos'] = event.x, event.y
 
     def on_kb_playpause(self, widget=None, data=None):
         if not isinstance(widget.get_focus(), Gtk.Button) and data.keyval == 32:
@@ -1129,7 +1161,7 @@ class PithosApplication(Gtk.Application):
 
     def do_shutdown(self):
         Gtk.Application.do_shutdown(self)
-        self.quit()
+        self.window.destroy()
 
     def stations_cb(self, action, param):
         self.window.show_stations()
@@ -1141,7 +1173,7 @@ class PithosApplication(Gtk.Application):
         self.window.show_about()
 
     def quit_cb(self, action, param):
-        self.quit()
+        self.window.destroy()
 
 def main():
     app = PithosApplication()

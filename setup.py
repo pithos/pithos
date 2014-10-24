@@ -18,11 +18,27 @@
 ###################### DO NOT TOUCH THIS (HEAD TO THE SECOND PART) ######################
 
 try:
-    from setuptools import setup, find_packages
+    from setuptools import setup, find_packages, Command
 except ImportError:
     import ez_setup
     ez_setup.use_setuptools()
-    from setuptools import setup, find_packages
+    from setuptools import setup, find_packages, Command
+
+try:
+    from sphinx.setup_command import BuildDoc
+except ImportError:
+    class BuildDoc(Command):
+        description = "Build documentation with Sphinx."
+        user_options = []
+        version = None
+        release = None
+
+        def initialize_options(self):
+            pass
+        def finalize_options(self):
+            pass
+        def run(self):
+            print("Error: Sphinx not found!")
 
 import os
 import sys
@@ -41,6 +57,7 @@ if sys.platform != 'win32':
         ('/usr/share/icons/hicolor/48x48/apps', ['data/icons/hicolor/pithos-tray-icon.png']),
         ('/usr/share/icons/ubuntu-mono-dark/apps/16', ['data/icons/ubuntu-mono-dark/pithos-tray-icon.svg']),
         ('/usr/share/icons/ubuntu-mono-light/apps/16', ['data/icons/ubuntu-mono-light/pithos-tray-icon.svg']),
+        ('/usr/share/appdata', ['data/pithos.appdata.xml']),
         ('/usr/share/applications', ['data/pithos.desktop'])
     ]
 else:
@@ -64,6 +81,15 @@ setup(
         'Programming Language :: Python',
         'Programming Language :: Python :: 3'
     ],
+    cmdclass={
+        'build_doc': BuildDoc
+    },
+    command_options={
+        'build_doc': {
+            'version': ('setup.py', VERSION),
+            'release': ('setup.py', VERSION)
+        }
+    },
     data_files=data_files,
     package_data={
         'pithos': [
