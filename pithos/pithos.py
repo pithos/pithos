@@ -205,6 +205,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         bus.connect("message::tag", self.on_gst_tag)
         self.player.connect("notify::volume", self.on_gst_volume)
         self.player.connect("notify::source", self.on_gst_source)
+        self.player.connect("deep-notify::temp-location", self.got_location)
         self.time_format = Gst.Format.TIME
 
         self.stations_dlg = None
@@ -637,6 +638,10 @@ class PithosWindow(Gtk.ApplicationWindow):
     def on_gst_eos(self, bus, message):
         logging.info("EOS")
         self.next_song()
+
+    def got_location(self, playbin, prop_object, prop):
+        location = prop_object.props.temp_location
+        logging.info("Temporary file: {0}".format(location))
 
     def on_gst_plugin_installed(self, result, userdata):
         if result == GstPbutils.InstallPluginsReturn.SUCCESS:
