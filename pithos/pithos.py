@@ -258,6 +258,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.songs_treeview = self.builder.get_object('songs_treeview')
         self.songs_treeview.set_model(self.songs_model)
+        self.buffer_progressbar = self.builder.get_object('buffer-progress')
 
         title_col   = Gtk.TreeViewColumn()
 
@@ -754,12 +755,15 @@ class PithosWindow(Gtk.ApplicationWindow):
                 # If our previous buffer was at 100, but now it's < 100,
                 # then we should pause until the buffer is full.
                 if self.player_status.buffer_percent == 100:
-                  self.player.set_state(Gst.State.PAUSED)
-                  self.player_status.began_buffering = time.time()
+                    self.player.set_state(Gst.State.PAUSED)
+                    self.player_status.began_buffering = time.time()
+                self.buffer_progressbar.show()
+                self.buffer_progressbar.set_fraction(percent / 100)
             else:
                 self.player.set_state(Gst.State.PLAYING)
                 logging.debug("Took %.3f to buffer", time.time() - self.player_status.began_buffering)
                 self.player_status.began_buffering = None
+                self.buffer_progressbar.hide()
         self.player_status.buffer_percent = percent
         self.update_song_row()
         logging.debug("Buffering (%i%%)", self.player_status.buffer_percent)
@@ -801,8 +805,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                 msg.append("%s / %s" % (pos_str, song.duration_message))
                 if not self.playing:
                     msg.append("Paused")
-            if self.player_status.buffer_percent < 100:
-                msg.append("Buffering (%i%%)" % self.player_status.buffer_percent)
+
         if song.message:
             msg.append(song.message)
         msg = " - ".join(msg)
