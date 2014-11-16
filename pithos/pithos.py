@@ -448,6 +448,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         prev = self.current_song
 
         self.stop()
+        self.ui_loop_timer_id = None
         self.current_song_index = song_index
 
         if prev:
@@ -465,7 +466,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.buffer_percent = 0
         self.song_started = False
         self.player.set_property("uri", self.current_song.audioUrl)
-        self.play()
+        self.playing = True
+        self.player.set_state(Gst.State.PLAYING)
         self.playcount += 1
 
         self.current_song.start_time = time.time()
@@ -475,11 +477,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.set_title("Pithos - %s by %s" % (self.current_song.title, self.current_song.artist))
 
         self.emit('song-changed', self.current_song)
+        self.create_ui_loop()
 
     def next_song(self, *ignore):
+        self.destroy_ui_loop()
         self.start_song(self.current_song_index + 1)
 
     def user_play(self, *ignore):
+        if not self.playing:
+            self.create_ui_loop()
         self.play()
         self.song_started = True
         self.emit('user-changed-play-state', True)
@@ -488,12 +494,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         if not self.playing:
             self.playing = True
         self.player.set_state(Gst.State.PLAYING)
-        GLib.timeout_add_seconds(1, self.update_song_row)
         self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
         self.update_song_row()
         self.emit('play-state-changed', True)
 
     def user_pause(self, *ignore):
+        if self.playing:
+            self.destroy_ui_loop()
         self.pause()
         self.emit('user-changed-play-state', False)
 
@@ -525,8 +532,10 @@ class PithosWindow(Gtk.ApplicationWindow):
     def playpause(self, *ignore):
         logging.info("playpause")
         if self.playing:
+            self.destroy_ui_loop()
             self.pause()
         else:
+            self.create_ui_loop()
             self.play()
 
     def playpause_notify(self, *ignore):
@@ -804,7 +813,18 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
             self.songs_model[song.index][2] = self.song_icon(song) or ""
-        return self.playing
+        if self.playing:
+            return True
+
+    def create_ui_loop(self):
+        if self.ui_loop_timer_id is not None:
+            return
+        self.ui_loop_timer_id = GLib.timeout_add(1000, self.update_song_row)
+
+    def destroy_ui_loop(self):
+        if self.ui_loop_timer_id is not None:
+            GLib.source_remove(self.ui_loop_timer_id)
+            self.ui_loop_timer_id = None
 
     def stations_combo_changed(self, widget):
         index = widget.get_active()
@@ -1007,6 +1027,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def on_destroy(self, widget, data=None):
         """on_destroy - called when the PithosWindow is close. """
+        self.destroy_ui_loop()
         self.stop()
         self.preferences['last_station_id'] = self.current_station_id
         self.prefs_dlg.save()
