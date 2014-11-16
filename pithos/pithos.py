@@ -436,6 +436,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             return self.songs_model[self.current_song_index][0]
 
     def start_song(self, song_index):
+        self.time_mismatch_error = None
         songs_remaining = len(self.songs_model) - song_index
 
         if songs_remaining <= 0:
@@ -694,6 +695,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             logging.debug('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
 
             if tag == 'audio-codec':
+                self.check_for_song_time_mismatch()
                 # At that point we should have duration information, check for ads
                 self.check_if_song_is_ad()
 
@@ -702,6 +704,21 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.update_song_row()
 
         return handler
+
+    def check_for_song_time_mismatch(self):
+        #If the detected song position is more than 2 secs a time mismatch error is assumed and the song is reloaded.
+        #Temporary workaround for https://github.com/pithos/pithos/issues/94  
+         if self.song_started and self.time_mismatch_error is None:
+             pos_stat, pos_int = self.player.query_position(self.time_format)
+             pos_int /= 1e9 
+             logging.info("Detected song position: %s" %(pos_int))
+             if pos_int > 2:       
+                 logging.info("Song start time mismatch detected, reloading song.")
+                 self.player.set_state(Gst.State.READY)
+                 self.player.set_property("uri", self.current_song.audioUrl)
+                 self.player.set_state(Gst.State.PAUSED)
+             else:
+                 self.time_mismatch_error = True
 
     def check_if_song_is_ad(self):
         if self.current_song.is_ad is None:
