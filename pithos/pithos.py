@@ -436,6 +436,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             return self.songs_model[self.current_song_index][0]
 
     def start_song(self, song_index):
+        self.time_mismatch_error = None
         songs_remaining = len(self.songs_model) - song_index
 
         if songs_remaining <= 0:
@@ -448,6 +449,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         prev = self.current_song
 
         self.stop()
+        self.ui_loop_timer_id = None
         self.current_song_index = song_index
 
         if prev:
@@ -465,7 +467,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.buffer_percent = 0
         self.song_started = False
         self.player.set_property("uri", self.current_song.audioUrl)
-        self.play()
+        self.playing = True
+        self.player.set_state(Gst.State.PLAYING)
         self.playcount += 1
 
         self.current_song.start_time = time.time()
@@ -475,11 +478,14 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.set_title("Pithos - %s by %s" % (self.current_song.title, self.current_song.artist))
 
         self.emit('song-changed', self.current_song)
+        self.create_ui_loop()
 
     def next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
 
     def user_play(self, *ignore):
+        if not self.playing:
+            self.create_ui_loop()
         self.play()
         self.song_started = True
         self.emit('user-changed-play-state', True)
@@ -488,12 +494,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         if not self.playing:
             self.playing = True
         self.player.set_state(Gst.State.PLAYING)
-        GLib.timeout_add_seconds(1, self.update_song_row)
         self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
         self.update_song_row()
         self.emit('play-state-changed', True)
 
     def user_pause(self, *ignore):
+        if self.playing:
+            self.destroy_ui_loop()
         self.pause()
         self.emit('user-changed-play-state', False)
 
@@ -514,6 +521,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             pos_stat, pos = self.player.query_position(self.time_format)
             prev.position = pos//1000000000 if pos_stat else None
             self.emit("song-ended", prev)
+            self.destroy_ui_loop()
 
         self.playing = False
         self.player.set_state(Gst.State.NULL)
@@ -525,8 +533,10 @@ class PithosWindow(Gtk.ApplicationWindow):
     def playpause(self, *ignore):
         logging.info("playpause")
         if self.playing:
+            self.destroy_ui_loop()
             self.pause()
         else:
+            self.create_ui_loop()
             self.play()
 
     def playpause_notify(self, *ignore):
@@ -685,6 +695,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             logging.debug('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
 
             if tag == 'audio-codec':
+                self.check_for_song_time_mismatch()
                 # At that point we should have duration information, check for ads
                 self.check_if_song_is_ad()
 
@@ -693,6 +704,21 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.update_song_row()
 
         return handler
+
+    def check_for_song_time_mismatch(self):
+        #If the detected song position is more than 2 secs a time mismatch error is assumed and the song is reloaded.
+        #Temporary workaround for https://github.com/pithos/pithos/issues/94  
+         if self.song_started and self.time_mismatch_error is None:
+             pos_stat, pos_int = self.player.query_position(self.time_format)
+             pos_int /= 1e9 
+             logging.info("Detected song position: %s" %(pos_int))
+             if pos_int > 2:       
+                 logging.info("Song start time mismatch detected, reloading song.")
+                 self.player.set_state(Gst.State.READY)
+                 self.player.set_property("uri", self.current_song.audioUrl)
+                 self.player.set_state(Gst.State.PAUSED)
+             else:
+                 self.time_mismatch_error = True
 
     def check_if_song_is_ad(self):
         if self.current_song.is_ad is None:
@@ -804,7 +830,18 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
             self.songs_model[song.index][2] = self.song_icon(song) or ""
-        return self.playing
+        if self.playing:
+            return True
+
+    def create_ui_loop(self):
+        if self.ui_loop_timer_id is not None:
+            return
+        self.ui_loop_timer_id = GLib.timeout_add(1000, self.update_song_row)
+
+    def destroy_ui_loop(self):
+        if self.ui_loop_timer_id is not None:
+            GLib.source_remove(self.ui_loop_timer_id)
+            self.ui_loop_timer_id = None
 
     def stations_combo_changed(self, widget):
         index = widget.get_active()
