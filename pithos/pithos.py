@@ -814,10 +814,6 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.songs_model[song.index][2] = self.song_icon(song) or ""
         return self.playing
 
-    def next_song(self, *ignore):
-        self.destroy_ui_loop()
-        self.start_song(self.current_song_index + 1)
-
     def create_ui_loop(self):
         if self.ui_loop_timer_id is not None:
             return
