@@ -466,7 +466,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.buffer_percent = 0
         self.song_started = False
         self.player.set_property("uri", self.current_song.audioUrl)
-        self.play()
+        self.playing = True
+        self.player.set_state(Gst.State.PLAYING)
         self.playcount += 1
 
         self.current_song.start_time = time.time()
@@ -812,7 +813,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
             self.songs_model[song.index][2] = self.song_icon(song) or ""
-        return self.playing
+        if self.playing:
+            return True
 
     def create_ui_loop(self):
         if self.ui_loop_timer_id is not None:
