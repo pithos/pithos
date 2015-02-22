@@ -38,6 +38,7 @@ class PithosMprisService(dbus.service.Object):
         self.song_changed()
         
         self.window.connect("song-changed", self.songchange_handler)
+        self.window.connect("song-rating-changed", self.ratingchange_handler)
         self.window.connect("play-state-changed", self.playstate_handler)
         
     def playstate_handler(self, window, state):
@@ -47,10 +48,26 @@ class PithosMprisService(dbus.service.Object):
             self.signal_paused()
         
     def songchange_handler(self, window, song):
-        self.song_changed([song.artist], song.album, song.title, song.artRadio)
+        self.song_changed([song.artist], song.album, song.title, song.artRadio,
+                          song.rating)
         self.signal_playing()
 
-    def song_changed(self, artists = None, album = None, title = None, artUrl=''):
+    def ratingchange_handler(self, window, song):
+        """Handle rating changes and update MPRIS metadata accordingly"""
+        # Pithos fires rating-changed signals for all songs, not just the
+        # currently playing one, so we need ignore signals for irrelevant songs.
+        if song is not self.window.current_song:
+            return
+
+        self.__metadata["pithos:rating"] = song.rating or ""
+        self.PropertiesChanged("org.mpris.MediaPlayer2.Player",
+                               dbus.Dictionary({"Metadata": self.__metadata},
+                                               "sv",
+                                               variant_level=1),
+                               [])
+
+    def song_changed(self, artists=None, album=None, title=None, artUrl='',
+                     rating=None):
         """song_changed - sets the info for the current song.
 
         This method is not typically overriden. It should be called
@@ -64,20 +81,14 @@ class PithosMprisService(dbus.service.Object):
 
         """
         
-        if artists is None:
-            artists = ["Artist Unknown"]
-        if album is None:
-            album = "Album Unknown"
-        if title is None:
-            title = "Title Unknown"
-        if artUrl is None:
-            artUrl = ''
-   
-        self.__meta_data = dbus.Dictionary({"xesam:album":album,
-                            "xesam:title":title,
-                            "xesam:artist":artists,
-                            "mpris:artUrl":artUrl,
-                            }, "sv", variant_level=1)
+        self.__metadata = dbus.Dictionary({
+            "xesam:title": title or "Title Unknown",
+            "xesam:artist": artists or ["Artist Unknown"],
+            "xesam:album": album or "Album Unknown",
+            "xesam:title": title or "Title Unknown",
+            "mpris:artUrl": artUrl or "",
+            "pithos:rating": rating or "",
+        }, "sv", variant_level=1)
 
     # Properties
     def _get_playback_status(self):
@@ -91,7 +102,7 @@ class PithosMprisService(dbus.service.Object):
 
     def _get_metadata(self):
         """The info for the current song."""
-        return self.__meta_data
+        return self.__metadata
 
     def _get_volume(self):
         return self.window.player.get_property("volume")
@@ -205,7 +216,7 @@ class PithosMprisService(dbus.service.Object):
         """
        
         self.__playback_status = "Playing"
-        d = dbus.Dictionary({"PlaybackStatus":self.__playback_status, "Metadata":self.__meta_data},
+        d = dbus.Dictionary({"PlaybackStatus":self.__playback_status, "Metadata":self.__metadata},
                                     "sv",variant_level=1)
         self.PropertiesChanged("org.mpris.MediaPlayer2.Player",d,[])
 
