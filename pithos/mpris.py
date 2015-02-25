@@ -17,6 +17,7 @@
 
 import dbus
 import dbus.service
+from xml.etree import ElementTree
 
 class PithosMprisService(dbus.service.Object):
     MEDIA_PLAYER2_IFACE = 'org.mpris.MediaPlayer2'
@@ -241,3 +242,35 @@ class PithosMprisService(dbus.service.Object):
         """
 
         pass
+
+    # python-dbus does not have our properties for introspection, so we must manually add them
+    @dbus.service.method(dbus.INTROSPECTABLE_IFACE, in_signature="", out_signature="s",
+                         path_keyword="object_path", connection_keyword="connection")
+    def Introspect(self, object_path, connection):
+        data = dbus.service.Object.Introspect(self, object_path, connection)
+        xml = ElementTree.fromstring(data)
+
+        for iface in xml.findall("interface"):
+            name = iface.attrib["name"]
+            if name.startswith(self.MEDIA_PLAYER2_IFACE):
+                for item, value in self.GetAll(name).items():
+                    prop = {"name": item, "access": "read"}
+                    if item == "Volume": # Hardcode the only writable property..
+                        prop["access"] = "readwrite"
+
+                    # Ugly mapping of types to signatures, is there a helper for this?
+                    # KEEP IN SYNC!
+                    if isinstance(value, str):
+                        prop["type"] = "s"
+                    elif isinstance(value, bool):
+                        prop["type"] = "b"
+                    elif isinstance(value, float):
+                        prop["type"] = "d"
+                    elif isinstance(value, int):
+                        prop["type"] = "x"
+                    elif isinstance(value, list):
+                        prop["type"] = "as"
+                    elif isinstance(value, dict):
+                        prop["type"] = "a{sv}"
+                    iface.append(ElementTree.Element("property", prop))
+        return ElementTree.tostring(xml, encoding="UTF-8")
