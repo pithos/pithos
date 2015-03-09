@@ -141,7 +141,6 @@ class PlayerStatus (object):
     self.began_buffering = None
     self.buffer_percent = 100
     self.pending_duration_query = False
-    self.song_started = False
 
 
 class PithosWindow(Gtk.ApplicationWindow):
@@ -504,7 +503,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def user_play(self, *ignore):
         self.play()
-        self.player_status.song_started = True
         self.emit('user-changed-play-state', True)
 
     def play(self):
@@ -812,14 +810,11 @@ class PithosWindow(Gtk.ApplicationWindow):
         album = html.escape(song.album)
         msg = []
         if song is self.current_song:
-            if self.player_status.song_started:
-                song.position = self.query_position()
-            else:
-                song.position = 0
+            song.position = self.query_position()
             if not song.bitrate is None:
                 msg.append("%0dkbit/s" % (song.bitrate / 1000))
 
-            if song.position is not None:
+            if song.position is not None and song.duration is not None:
                 dur_str = self.format_time(song.duration)
                 pos_str = self.format_time(song.position)
                 msg.append("%s / %s" % (pos_str, dur_str))
@@ -863,7 +858,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def format_time(self, time_int):
         if time_int is None:
-          return '?'
+          return None
 
         time_int = time_int // 1000000000
         s = time_int % 60
