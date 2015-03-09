@@ -133,10 +133,10 @@ def get_album_art(url, *extra):
         return (loader.get_pixbuf(),) + extra
 
 class PlayerStatus (object):
-  def __init__ (self):
+  def __init__(self):
     self.reset()
 
-  def reset (self):
+  def reset(self):
     self.async_done = False
     self.began_buffering = None
     self.buffer_percent = 100
@@ -211,7 +211,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         #                                   Station object         station name
         self.stations_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
 
-        Gst.init()
+        Gst.init(None)
         self._query_duration = Gst.Query.new_duration(Gst.Format.TIME)
         self._query_position = Gst.Query.new_position(Gst.Format.TIME)
         self.player = Gst.ElementFactory.make("playbin", "player");
@@ -652,27 +652,29 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.get_playlist(start = True)
         self.stations_combo.set_active(self.station_index(station))
 
-    def query_position (self):
+    def query_position(self):
       pos_stat = self.player.query(self._query_position)
       if pos_stat:
         _, position = self._query_position.parse_position()
         return position
 
-    def query_duration (self):
+    def query_duration(self):
       dur_stat = self.player.query(self._query_duration)
       if dur_stat:
         _, duration = self._query_duration.parse_duration()
         return duration
 
-    def on_gst_async_done (self, bus, message):
+    def on_gst_async_done(self, bus, message):
       self.player_status.async_done = True
       if self.player_status.pending_duration_query:
         self.current_song.duration = self.query_duration()
+        self.check_if_song_is_ad()
         self.player_status.pending_duration_query = False
 
-    def on_gst_duration_changed (self, bus, message):
+    def on_gst_duration_changed(self, bus, message):
       if self.player_status.async_done:
         self.current_song.duration = self.query_duration()
+        self.check_if_song_is_ad()
       else:
         self.player_status.pending_duration_query = True
 
@@ -726,10 +728,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
             logging.debug('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
 
-            if tag == 'audio-codec':
-                # At that point we should have duration information, check for ads
-                self.check_if_song_is_ad()
-
             if tag == 'bitrate':
                 self.current_song.bitrate = value
                 self.update_song_row()
@@ -738,20 +736,16 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def check_if_song_is_ad(self):
         if self.current_song.is_ad is None:
-            dur_stat, dur_int = self.player.query_duration(self.time_format)
-
-            if not dur_stat:
-                logging.warning('dur_stat is False. The assumption that duration is available once the audio-codec messages feeds is bad.')
-            else:
-                dur_int /= 1e9
-
-                if dur_int < 45.0:  # Less than 45 seconds we assume it's an ad
+            if self.current_song.duration:
+                if self.current_song.get_duration_sec() < 45:  # Less than 45 seconds we assume it's an ad
                     logging.info('Ad detected!')
                     self.current_song.is_ad = True
                     self.update_song_row()
                 else:
                     logging.info('Not an Ad..')
                     self.current_song.is_ad = False
+            else:
+                logging.warning('dur_stat is False. The assumption that duration is available once the audio-codec messages feeds is bad.')
 
     def on_gst_tag(self, bus, message):
         tag_info = message.parse_tag()

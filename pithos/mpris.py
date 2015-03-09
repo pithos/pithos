@@ -111,7 +111,7 @@ class PithosMprisService(dbus.service.Object):
         self.window.player.set_property('volume', new_volume)
 
     def _get_position(self):
-        return self.window.player.query_position(self.window.time_format)[0] / 1000
+        return self.window.query_position() / 1000
 
     @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='ss', out_signature='v')
     def Get(self, interface_name, property_name):
