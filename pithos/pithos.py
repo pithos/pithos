@@ -774,7 +774,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.player_status.began_buffering = None
         self.player_status.buffer_percent = percent
         self.update_song_row()
-        logging.debug("Buffering (%i%%)"%self.buffer_percent)
+        logging.debug("Buffering (%i%%)", self.player_status.buffer_percent)
 
     def set_volume_cb(self, volume):
         # Convert to the cubic scale that the volume slider uses
