@@ -26,6 +26,7 @@ class NotifyPlugin(PithosPlugin):
 
     has_notifications = False
     supports_actions = False
+    escape_markup = False
 
     def on_prepare(self):
         if platform == 'darwin':
@@ -71,6 +72,9 @@ class NotifyPlugin(PithosPlugin):
             logging.info('Notify supports actions')
             self.supports_actions = True
 
+        if 'body-markup' in caps:
+            self.escape_markup = True
+
         if 'action-icons' in caps:
             self.notification.set_hint('action-icons', GLib.Variant.new_boolean(True))
 
@@ -113,7 +117,9 @@ class NotifyPlugin(PithosPlugin):
         else:
             self.notification.set_hint('image-data', None)
 
-        msg = html.escape('by {} from {}'.format(song.artist, song.album))
+        msg = 'by {} from {}'.format(song.artist, song.album)
+        if self.escape_markup:
+            msg = html.escape(msg)
         self.notification.update(song.title, msg, 'audio-x-generic')
         self.notification.show()
 
