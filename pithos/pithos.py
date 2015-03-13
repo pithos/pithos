@@ -22,13 +22,24 @@ import logging, argparse
 import signal
 
 import gi
-gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 import contextlib
 import html
 import math
 import urllib.request, urllib.error, urllib.parse
 import json
+
+try:
+    gi.require_version('Gst', '1.0')
+except ValueError, e:
+    if e[0].startswith("Namespace Gst not available for version"):
+        print "Received error %s from Gstreamer." % e[0]
+        print "This workstation may not have the version of gstreamer or GTK required."
+        print "See also https://github.com/pithos/pithos/issues/32"
+        sys.exit(1)
+    else:
+        raise
+
 if sys.platform != 'win32':
     from dbus.mainloop.glib import DBusGMainLoop
     DBusGMainLoop(set_as_default=True)
