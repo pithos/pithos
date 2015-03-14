@@ -20,7 +20,7 @@
 import sys
 
 if sys.version_info[0] != 3:
-	sys.exit("Only python 3 is supported!")
+    sys.exit("Only python 3 is supported!")
 
 try:
     from setuptools import setup, find_packages, Command
