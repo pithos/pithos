@@ -39,6 +39,7 @@ if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 14:
     sys.exit('Gtk 3.14 is required')
 
 from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
+from .StationsPopover import StationsPopover
 from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
@@ -176,8 +177,8 @@ class PithosWindow(Gtk.ApplicationWindow):
     def init_core(self):
         #                                Song object            display text  icon  album art
         self.songs_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str,          str,  GdkPixbuf.Pixbuf)
-        #                                   Station object         station name
-        self.stations_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
+        #                                   Station object         station name  index
+        self.stations_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str,          int)
 
         Gst.init(None)
         self._query_duration = Gst.Query.new_duration(Gst.Format.TIME)
@@ -269,12 +270,13 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.songs_treeview.connect('button_press_event', self.on_treeview_button_press_event)
 
-        self.stations_combo = self.builder.get_object('stations')
-        self.stations_combo.set_model(self.stations_model)
-        render_text = Gtk.CellRendererText()
-        self.stations_combo.pack_start(render_text, True)
-        self.stations_combo.add_attribute(render_text, "text", 1)
-        self.stations_combo.set_row_separator_func(lambda model, iter, data=None: model.get_value(iter, 0) is None, None)
+        self.stations_button = self.builder.get_object('stations')
+        self.stations_popover = StationsPopover()
+        self.stations_popover.set_relative_to(self.stations_button)
+        self.stations_popover.set_model(self.stations_model)
+        self.stations_popover.listbox.connect('row-activated', self.active_station_changed)
+        self.stations_button.set_popover(self.stations_popover)
+        self.stations_label = self.builder.get_object('stationslabel')
 
         self.set_initial_pos()
 
@@ -403,19 +405,18 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def process_stations(self, *ignore):
         self.stations_model.clear()
+        self.stations_popover.clear()
         self.current_station = None
         selected = None
 
-        for i in self.pandora.stations:
-            if i.isQuickMix and i.isCreator:
-                self.stations_model.append((i, "QuickMix"))
-        self.stations_model.append((None, 'sep'))
-        for i in self.pandora.stations:
-            if not (i.isQuickMix and i.isCreator):
-                self.stations_model.append((i, i.name))
-            if i.id == self.current_station_id:
-                logging.info("Restoring saved station: id = %s"%(i.id))
-                selected = i
+        for i, s in enumerate(self.pandora.stations):
+            if s.isQuickMix and s.isCreator:
+                self.stations_model.append((s, "QuickMix", i))
+            else:
+                self.stations_model.append((s, s.name, i))
+            if s.id == self.current_station_id:
+                logging.info("Restoring saved station: id = %s"%(s.id))
+                selected = s
         if not selected:
             selected=self.stations_model[0][0]
         self.station_changed(selected, reconnecting = self.have_stations)
@@ -605,9 +606,6 @@ class PithosWindow(Gtk.ApplicationWindow):
             open_browser("http://pithos.github.io/itbroke?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
         self.quit()
 
-    def station_index(self, station):
-        return [i[0] for i in self.stations_model].index(station)
-
     def station_changed(self, station, reconnecting=False):
         if station is self.current_station: return
         self.waiting_for_playlist = False
@@ -620,7 +618,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_station = station
         if not reconnecting:
             self.get_playlist(start = True)
-        self.stations_combo.set_active(self.station_index(station))
+        self.stations_label.set_text(station.name)
+        self.stations_popover.select_station(station)
 
     def query_position(self):
       pos_stat = self.player.query(self._query_position)
@@ -833,10 +832,8 @@ class PithosWindow(Gtk.ApplicationWindow):
             GLib.source_remove(self.ui_loop_timer_id)
             self.ui_loop_timer_id = 0
 
-    def stations_combo_changed(self, widget):
-        index = widget.get_active()
-        if index>=0:
-            self.station_changed(self.stations_model[index][0])
+    def active_station_changed(self, listbox, row):
+        self.station_changed(row.station)
 
     def format_time(self, time_int):
         if time_int is None:
@@ -963,9 +960,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def on_volume_change_event(self, volumebutton, value):
         self.set_player_volume(value)
-
-    def station_properties(self, *ignore):
-        open_browser(self.current_station.info_url)
 
     def show_about(self):
         """about - display the about box for pithos """
