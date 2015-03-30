@@ -245,7 +245,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.gstreamer_error = ''
         self.waiting_for_playlist = False
         self.start_new_playlist = False
-
+        self.ui_loop_timer_id = 0
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
 
@@ -508,8 +508,8 @@ class PithosWindow(Gtk.ApplicationWindow):
     def play(self):
         if not self.playing:
             self.playing = True
+            self.create_ui_loop()
         self.player.set_state(Gst.State.PLAYING)
-        GLib.timeout_add_seconds(1, self.update_song_row)
         self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
         self.update_song_row()
         self.emit('play-state-changed', True)
@@ -520,6 +520,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def pause(self):
         self.playing = False
+        self.destroy_ui_loop()
         self.player.set_state(Gst.State.PAUSED)
         self.playpause_image.set_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
         self.update_song_row()
@@ -534,6 +535,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.emit("song-ended", prev)
 
         self.playing = False
+        self.destroy_ui_loop()
         self.player.set_state(Gst.State.NULL)
         self.emit('play-state-changed', False)
 
@@ -844,6 +846,15 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.songs_model[song.index][1] = self.song_text(song)
             self.songs_model[song.index][2] = self.song_icon(song) or ""
         return self.playing
+
+    def create_ui_loop(self):
+        if not self.ui_loop_timer_id:
+            self.ui_loop_timer_id = GLib.timeout_add_seconds(1, self.update_song_row)
+
+    def destroy_ui_loop(self):
+        if self.ui_loop_timer_id:
+            GLib.source_remove(self.ui_loop_timer_id)
+            self.ui_loop_timer_id = 0
 
     def stations_combo_changed(self, widget):
         index = widget.get_active()
