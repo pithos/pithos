@@ -670,12 +670,14 @@ class PithosWindow(Gtk.ApplicationWindow):
       self.player_status.async_done = True
       if self.player_status.pending_duration_query:
         self.current_song.duration = self.query_duration()
+        self.current_song.duration_message = self.format_time(self.current_song.duration)        
         self.check_if_song_is_ad()
         self.player_status.pending_duration_query = False
 
     def on_gst_duration_changed(self, bus, message):
       if self.player_status.async_done:
         self.current_song.duration = self.query_duration()
+        self.current_song.duration_message = self.format_time(self.current_song.duration)
         self.check_if_song_is_ad()
       else:
         self.player_status.pending_duration_query = True
@@ -731,7 +733,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             logging.debug('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
 
             if tag == 'bitrate':
-                self.current_song.bitrate = value
+                self.current_song.bitrate = value / 1000
                 self.update_song_row()
 
         return handler
@@ -808,12 +810,11 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song is self.current_song:
             song.position = self.query_position()
             if not song.bitrate is None:
-                msg.append("%0dkbit/s" % (song.bitrate / 1000))
+                msg.append("%0dkbit/s" % (song.bitrate))
 
             if song.position is not None and song.duration is not None:
-                dur_str = self.format_time(song.duration)
                 pos_str = self.format_time(song.position)
-                msg.append("%s / %s" % (pos_str, dur_str))
+                msg.append("%s / %s" % (pos_str, self.current_song.duration_message))
                 if not self.playing:
                     msg.append("Paused")
             if self.player_status.buffer_percent < 100:
