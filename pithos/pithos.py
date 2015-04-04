@@ -112,8 +112,7 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
             Gdk.cairo_set_source_pixbuf(ctx, self.rate_bg, x, y)
             ctx.paint()
 
-            icon = widget.get_style_context().lookup_icon_set(self.icon)
-            pixbuf = icon.render_icon_pixbuf(widget.get_style_context(), Gtk.IconSize.MENU)
+            pixbuf = Gtk.IconTheme.get_default().load_icon(self.icon, Gtk.IconSize.MENU, 0)
             x = cell_area.x+(cell_area.width-pixbuf.get_width())-5 - ALBUM_ART_X_PAD # right
             y = cell_area.y+(cell_area.height-pixbuf.get_height())-5 # bottom
             Gdk.cairo_set_source_pixbuf(ctx, pixbuf, x, y)
@@ -833,11 +832,11 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def song_icon(self, song):
         if song.tired:
-            return Gtk.STOCK_JUMP_TO
+            return 'go-jump'
         if song.rating == RATE_LOVE:
-            return Gtk.STOCK_ABOUT
+            return 'emblem-favorite'
         if song.rating == RATE_BAN:
-            return Gtk.STOCK_CANCEL
+            return 'dialog-error'
 
     def update_song_row(self, song = None):
         if song is None:
