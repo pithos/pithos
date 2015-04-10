@@ -38,18 +38,6 @@ if sys.platform != 'win32':
     from dbus.mainloop.glib import DBusGMainLoop
     DBusGMainLoop(set_as_default=True)
 
-# Check if we are working in the source tree or from the installed
-# package and mangle the python path accordingly
-realPath = os.path.realpath(sys.argv[0])  # If this file is run from a symlink, it needs to follow the symlink
-if os.path.dirname(realPath) != ".":
-    if realPath[0] == "/":
-        fullPath = os.path.dirname(realPath)
-    else:
-        fullPath = os.getcwd() + "/" + os.path.dirname(realPath)
-else:
-    fullPath = os.getcwd()
-sys.path.insert(0, os.path.dirname(fullPath))
-
 from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from .gobject_worker import GObjectWorker
 from .pandora import *
