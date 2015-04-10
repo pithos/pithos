@@ -277,12 +277,11 @@ audio-volume-medium-symbolic</property>
             </child>
             <child>
               <object class="GtkButton" id="button5">
-                <property name="label">gtk-quit</property>
+                <property name="label">Quit</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="can_default">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -326,12 +325,11 @@ audio-volume-medium-symbolic</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="button-error-quit">
-                <property name="label">gtk-quit</property>
+                <property name="label">Quit</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="can_default">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -387,11 +385,6 @@ audio-volume-medium-symbolic</property>
       </object>
     </child>
   </object>
-  <object class="GtkImage" id="image5">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-refresh</property>
-  </object>
   <object class="GtkMessageDialog" id="error_dialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
@@ -412,11 +405,10 @@ audio-volume-medium-symbolic</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="button1">
-                <property name="label">gtk-cancel</property>
+                <property name="label">Cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -430,7 +422,6 @@ audio-volume-medium-symbolic</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="receives_default">True</property>
-                <property name="image">image5</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -440,12 +431,11 @@ audio-volume-medium-symbolic</property>
             </child>
             <child>
               <object class="GtkButton" id="button3">
-                <property name="label">gtk-preferences</property>
+                <property name="label">Preferences</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="can_default">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
