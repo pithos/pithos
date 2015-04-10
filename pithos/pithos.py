@@ -55,10 +55,7 @@ from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
 from .pithosconfig import get_ui_file, get_media_file, VERSION
-from .pithosconfig import getdatapath, VERSION
 from .plugin import load_plugins
-from .plugin import load_plugins
-from .util import parse_proxy
 from .util import parse_proxy, open_browser
 if sys.platform != 'win32':
     from .dbus_service import PithosDBusProxy
