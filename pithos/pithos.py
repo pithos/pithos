@@ -759,6 +759,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                     self.player_status.began_buffering = time.time()
                 self.buffer_progressbar.show()
                 self.buffer_progressbar.set_fraction(percent / 100)
+                self.buffer_progressbar.set_text("Buffering (%i%%)" % percent)
             else:
                 self.player.set_state(Gst.State.PLAYING)
                 logging.debug("Took %.3f to buffer", time.time() - self.player_status.began_buffering)
