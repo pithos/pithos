@@ -18,12 +18,15 @@ import logging
 import glob
 import os
 
-class PithosPlugin(object):
+class PithosPlugin:
     _PITHOS_PLUGIN = True # used to find the plugin class in a module
     preference = None
+    description = ""
+
     def __init__(self, name, window):
         self.name = name
         self.window = window
+        self.preferences_dialog = None
         self.prepared = False
         self.enabled = False
         
@@ -65,7 +68,7 @@ def load_plugin(name, window):
         module = getattr(module.plugins, name)
         
     except ImportError as e:
-        return ErrorPlugin(name, e.message)
+        return ErrorPlugin(name, e.msg)
         
     # find the class object for the actual plugin
     for key, item in module.__dict__.items():

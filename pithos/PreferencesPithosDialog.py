@@ -19,13 +19,10 @@ import os
 import stat
 import logging
 
-from gi.repository import Gtk
-from gi.repository import GObject
-from gi.repository import GLib
+from gi.repository import Gtk, GObject, GLib, Pango
 
 from .pithosconfig import get_ui_file
 from .pandora.data import *
-from .plugins.scrobble import LastFmAuth
 
 pacparser_imported = False
 try:
@@ -36,6 +33,51 @@ except ImportError:
 
 config_home = GLib.get_user_config_dir()
 configfilename = os.path.join(config_home, 'pithos.ini')
+
+class PithosPluginRow(Gtk.ListBoxRow):
+
+    def __init__(self, plugin, enabled):
+        Gtk.ListBoxRow.__init__(self)
+
+        self.plugin = plugin
+
+        box = Gtk.Box()
+        label = Gtk.Label()
+        label.set_markup('<b>{}</b>\n{}'.format(plugin.name.title().replace('_', ' '), plugin.description))
+        label.set_halign(Gtk.Align.START)
+        label.set_ellipsize(Pango.EllipsizeMode.END)
+        label.set_max_width_chars(30)
+        label.set_line_wrap(True)
+        label.set_lines(1)
+        box.pack_start(label, True, True, 4)
+
+        self.switch = Gtk.Switch()
+        self.switch.set_active(enabled)
+        self.switch.connect('notify::active', self.on_activated)
+        self.switch.set_valign(Gtk.Align.CENTER)
+        box.pack_end(self.switch, False, False, 2)
+
+        if plugin.prepared and plugin.error:
+            self.set_sensitive(False)
+            self.set_tooltip_text(plugin.error)
+
+        self.add(box)
+
+    def on_activated(self, obj, params):
+        if not self.is_selected():
+            self.get_parent().select_row(self)
+
+        if self.switch.get_active():
+            self.plugin.enable()
+        else:
+            self.plugin.disable()
+
+        if self.plugin.prepared and self.plugin.error:
+            self.get_parent().unselect_row(self)
+            self.set_sensitive(False)
+            self.set_tooltip_text(self.plugin.error)
+        elif self.plugin.prepared:
+            self.get_toplevel().preference_btn.set_sensitive(self.plugin.preferences_dialog != None)
 
 class PreferencesPithosDialog(Gtk.Dialog):
     __gtype_name__ = "PreferencesPithosDialog"
@@ -62,6 +104,8 @@ class PreferencesPithosDialog(Gtk.Dialog):
         # get a reference to the builder and set up the signals
         self.builder = builder
         self.builder.connect_signals(self)
+        self.preference_btn = self.builder.get_object('prefs_btn')
+        self.listbox = self.builder.get_object('plugins_listbox')
 
         # initialize the "Audio Quality" combobox backing list
         audio_quality_combo = self.builder.get_object('prefs_audio_quality')
@@ -75,12 +119,33 @@ class PreferencesPithosDialog(Gtk.Dialog):
 
         self.__load_preferences()
 
+    def set_plugins(self, plugins):
+        self.listbox.set_header_func(self.on_listbox_update_header)
+        for plugin in plugins.values():
+            row = PithosPluginRow(plugin, self.__preferences[plugin.preference])
+            self.listbox.add(row)
+        self.listbox.show_all()
 
     def get_preferences(self):
         """get_preferences  - returns a dictionary object that contains
         preferences for pithos.
         """
         return self.__preferences
+
+    def on_plugins_row_selected(self, box, row):
+        if row:
+            self.preference_btn.set_sensitive(row.plugin.preferences_dialog != None)
+
+    def on_prefs_btn_clicked(self, btn):
+        dialog = self.listbox.get_selected_rows()[0].plugin.preferences_dialog
+        dialog.set_transient_for(self)
+        dialog.set_destroy_with_parent(True)
+        dialog.set_modal(True)
+        dialog.show_all()
+
+    def on_listbox_update_header(self, row, before):
+        if before and not row.get_header():
+            row.set_header(Gtk.Separator.new(Gtk.Orientation.HORIZONTAL))
 
     def __load_preferences(self):
         #default preferences that will be overwritten if some are saved
@@ -98,6 +163,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
             "lastfm_key": False,
             "enable_mediakeys":True,
             "enable_screensaverpause":False,
+            "enable_lastfm":False,
             "volume": 1.0,
             # If set, allow insecure permissions. Implements CVE-2011-1500
             "unsafe_permissions": False,
@@ -203,11 +269,8 @@ class PreferencesPithosDialog(Gtk.Dialog):
                 audio_quality_combo.set_active_iter(row.iter)
                 break
 
-        self.builder.get_object('checkbutton_notify').set_active(self.__preferences["notify"])
-        self.builder.get_object('checkbutton_screensaverpause').set_active(self.__preferences["enable_screensaverpause"])
-        self.builder.get_object('checkbutton_icon').set_active(self.__preferences["show_icon"])
-
-        self.lastfm_auth = LastFmAuth(self.__preferences, "lastfm_key", self.builder.get_object('lastfm_btn'))
+        for row in self.listbox.get_children():
+            row.switch.set_active(self.__preferences[row.plugin.preference])
 
     def ok(self, widget, data=None):
         """ok - The user has elected to save the changes.
@@ -220,14 +283,14 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.__preferences["proxy"] = self.builder.get_object('prefs_proxy').get_text()
         self.__preferences["control_proxy"] = self.builder.get_object('prefs_control_proxy').get_text()
         self.__preferences["control_proxy_pac"] = self.builder.get_object('prefs_control_proxy_pac').get_text()
-        self.__preferences["notify"] = self.builder.get_object('checkbutton_notify').get_active()
-        self.__preferences["enable_screensaverpause"] = self.builder.get_object('checkbutton_screensaverpause').get_active()
-        self.__preferences["show_icon"] = self.builder.get_object('checkbutton_icon').get_active()
 
         audio_quality = self.builder.get_object('prefs_audio_quality')
         active_idx = audio_quality.get_active()
         if active_idx != -1: # ignore unknown format
             self.__preferences["audio_quality"] = audio_quality.get_model()[active_idx][0]
+
+        for row in self.listbox.get_children():
+            self.__preferences[row.plugin.preference] = row.switch.get_active()
 
         self.save()
 

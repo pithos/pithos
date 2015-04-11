@@ -37,7 +37,7 @@ def get_worker():
     return _worker
 
 class LastfmPlugin(PithosPlugin):
-    preference='lastfm_key'
+    preference = 'enable_lastfm'
     
     def on_prepare(self):
         self.worker = get_worker()

@@ -176,6 +176,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.plugins = {}
         load_plugins(self)
+        self.prefs_dlg.set_plugins(self.plugins)
 
         if sys.platform != 'win32':
             self.dbus_service = PithosDBusProxy(self)
@@ -1007,7 +1008,6 @@ class PithosWindow(Gtk.ApplicationWindow):
                         self.pandora_connect()
             else:
                 self.prefs_dlg.set_type_hint(Gdk.WindowTypeHint.DIALOG)
-            load_plugins(self)
 
     def show_stations(self):
         if self.stations_dlg:
