@@ -20,6 +20,7 @@ import logging
 dbus = None
 class ScreenSaverPausePlugin(PithosPlugin):
     preference = 'enable_screensaverpause'
+    description = 'Pause playback when screensaver starts'
 
     session_bus = None
 

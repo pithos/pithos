@@ -23,6 +23,7 @@ from gi.repository import (GLib, Gtk)
 
 class NotifyPlugin(PithosPlugin):
     preference = 'notify'
+    description = 'Shows notifications on song change'
 
     has_notifications = False
     supports_actions = False
@@ -30,9 +31,9 @@ class NotifyPlugin(PithosPlugin):
 
     def on_prepare(self):
         if platform == 'darwin':
-            self.prepare_osx()
+            return self.prepare_osx()
         else:
-            self.prepare_notify()
+            return self.prepare_notify()
 
     def prepare_osx(self):
         try:
@@ -40,7 +41,7 @@ class NotifyPlugin(PithosPlugin):
             self.has_notifications = True
         except ImportError:
             logging.warning("pync not found.")
-            return
+            return "pync not found"
 
         self.notifier = Notifier
 
@@ -50,7 +51,7 @@ class NotifyPlugin(PithosPlugin):
             self.has_notifications = True
         except ImportError:
             logging.warning ("libnotify not found.")
-            return
+            return "libnotify not found"
 
         # Work-around Ubuntu's incompatible workaround for Gnome's API breaking mistake.
         # https://bugzilla.gnome.org/show_bug.cgi?id=702390

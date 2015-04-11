@@ -31,6 +31,7 @@ except:
 
 class PithosNotificationIcon(PithosPlugin):    
     preference = 'show_icon'
+    description = 'Adds pithos icon to system tray'
             
     def on_prepare(self):
         if indicator_capable:

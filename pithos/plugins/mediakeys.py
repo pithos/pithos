@@ -22,6 +22,7 @@ APP_ID = 'Pithos'
 
 class MediaKeyPlugin(PithosPlugin):
     preference = 'enable_mediakeys'
+    description = 'Control playback with media keys'
 
     def bind_dbus(self):
         try:
