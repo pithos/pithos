@@ -26,6 +26,8 @@ class MediaKeyPlugin(PithosPlugin):
     def bind_dbus(self):
         try:
             import dbus
+            from dbus.mainloop.glib import DBusGMainLoop
+            DBusGMainLoop(set_as_default=True)
         except ImportError:
             return False
         try:

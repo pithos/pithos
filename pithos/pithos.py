@@ -34,9 +34,6 @@ import urllib.request
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
-if sys.platform != 'win32':
-    from dbus.mainloop.glib import DBusGMainLoop
-    DBusGMainLoop(set_as_default=True)
 
 from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from .gobject_worker import GObjectWorker
@@ -45,9 +42,6 @@ from .pandora.data import *
 from .pithosconfig import get_ui_file, get_media_file, VERSION
 from .plugin import load_plugins
 from .util import parse_proxy, open_browser
-if sys.platform != 'win32':
-    from .dbus_service import PithosDBusProxy
-    from .mpris import PithosMprisService
 
 pacparser_imported = False
 try:
@@ -177,10 +171,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.plugins = {}
         load_plugins(self)
         self.prefs_dlg.set_plugins(self.plugins)
-
-        if sys.platform != 'win32':
-            self.dbus_service = PithosDBusProxy(self)
-            self.mpris = PithosMprisService(self)
 
         if not self.preferences['username']:
             self.show_preferences(is_startup=True)

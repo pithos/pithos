@@ -85,7 +85,7 @@ def load_plugins(window):
     prefs = window.preferences
     
     plugins_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
-    discovered_plugins = [ fname.replace(".py", "") for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("__") ]
+    discovered_plugins = [ fname.replace(".py", "") for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("_") ]
     
     for name in discovered_plugins:
         if not name in plugins:

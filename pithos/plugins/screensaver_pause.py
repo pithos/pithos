@@ -27,6 +27,8 @@ class ScreenSaverPausePlugin(PithosPlugin):
         global dbus
         try:
             import dbus
+            from dbus.mainloop.glib import DBusGMainLoop
+            DBusGMainLoop(set_as_default=True)
         except ImportError:
             return False
 
