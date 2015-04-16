@@ -2,16 +2,16 @@
 ### BEGIN LICENSE
 # Copyright (C) 2011 Rick Spencer <rick.spencer@canonical.com>
 # Copyright (C) 2011-2012 Kevin Mehall <km@kevinmehall.net>
-#This program is free software: you can redistribute it and/or modify it 
-#under the terms of the GNU General Public License version 3, as published 
+#This program is free software: you can redistribute it and/or modify it
+#under the terms of the GNU General Public License version 3, as published
 #by the Free Software Foundation.
 #
-#This program is distributed in the hope that it will be useful, but 
-#WITHOUT ANY WARRANTY; without even the implied warranties of 
-#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR 
+#This program is distributed in the hope that it will be useful, but
+#WITHOUT ANY WARRANTY; without even the implied warranties of
+#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
 #PURPOSE.  See the GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License along 
+#You should have received a copy of the GNU General Public License along
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
@@ -37,17 +37,17 @@ class PithosMprisService(dbus.service.Object):
         self.window = window
 
         self.song_changed()
-        
+
         self.window.connect("song-changed", self.songchange_handler)
         self.window.connect("song-rating-changed", self.ratingchange_handler)
         self.window.connect("play-state-changed", self.playstate_handler)
-        
+
     def playstate_handler(self, window, state):
         if state:
             self.signal_playing()
         else:
             self.signal_paused()
-        
+
     def songchange_handler(self, window, song):
         self.song_changed([song.artist], song.album, song.title, song.artRadio,
                           song.rating)
@@ -74,14 +74,14 @@ class PithosMprisService(dbus.service.Object):
         This method is not typically overriden. It should be called
         by implementations of this class when the player has changed
         songs.
-            
+
         named arguments:
             artists - a list of strings representing the artists"
             album - a string for the name of the album
             title - a string for the title of the song
 
         """
-        
+
         self.__metadata = dbus.Dictionary({
             "xesam:title": title or "Title Unknown",
             "xesam:artist": artists or ["Artist Unknown"],
@@ -95,7 +95,7 @@ class PithosMprisService(dbus.service.Object):
         """Current status "Playing", "Paused", or "Stopped"."""
         if not self.window.current_song:
             return "Stopped"
-        if self.window.playing:
+        if self.window.player.playing:
             return "Playing"
         else:
             return "Paused"
@@ -111,7 +111,7 @@ class PithosMprisService(dbus.service.Object):
         self.window.player.set_property('volume', new_volume)
 
     def _get_position(self):
-        return self.window.query_position() / 1000
+        return self.window.player.get_current_position() / 1000
 
     @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='ss', out_signature='v')
     def Get(self, interface_name, property_name):
@@ -192,7 +192,7 @@ class PithosMprisService(dbus.service.Object):
     def Next(self):
         """Play next song"""
 
-        self.window.next_song()
+        self.window.play_next_song()
 
     @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def PlayPause(self):
@@ -214,7 +214,7 @@ class PithosMprisService(dbus.service.Object):
         """signal_playing - Tell the Sound Menu that the player has
         started playing.
         """
-       
+
         self.__playback_status = "Playing"
         d = dbus.Dictionary({"PlaybackStatus":self.__playback_status, "Metadata":self.__metadata},
                                     "sv",variant_level=1)

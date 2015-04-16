@@ -331,9 +331,8 @@ class Song(object):
         self.artRadio = d['albumArtUrl']
 
         self.bitrate = None
-        self.is_ad = None  # None = we haven't checked, otherwise True/False
-        self.tired=False
-        self.message=''
+        self.tired = False
+        self.message = ''
         self.duration = None
         self.position = None
         self.start_time = None
@@ -380,11 +379,18 @@ class Song(object):
     def station(self):
         return self.pandora.get_station_by_id(self.stationId)
 
-    def get_duration_sec (self):
+    @property
+    def is_ad(self):
+        """ None if we don't have a duration yet, otherwise True/False."""
+        if self.duration is not None:
+            # Less than 45 seconds we assume it's an ad
+            return self.duration < 45e9
+
+    def get_duration_sec(self):
       if self.duration is not None:
         return self.duration / 1000000000
 
-    def get_position_sec (self):
+    def get_position_sec(self):
       if self.position is not None:
         return self.position / 1000000000
 
@@ -444,4 +450,3 @@ class SearchResult(object):
             self.artist = d['artistName']
         elif resultType == 'artist':
             self.name = d['artistName']
-
