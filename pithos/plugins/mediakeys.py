@@ -1,16 +1,16 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
 ### BEGIN LICENSE
 # Copyright (C) 2010-2012 Kevin Mehall <km@kevinmehall.net>
-#This program is free software: you can redistribute it and/or modify it 
-#under the terms of the GNU General Public License version 3, as published 
+#This program is free software: you can redistribute it and/or modify it
+#under the terms of the GNU General Public License version 3, as published
 #by the Free Software Foundation.
 #
-#This program is distributed in the hope that it will be useful, but 
-#WITHOUT ANY WARRANTY; without even the implied warranties of 
-#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR 
+#This program is distributed in the hope that it will be useful, but
+#WITHOUT ANY WARRANTY; without even the implied warranties of
+#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
 #PURPOSE.  See the GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License along 
+#You should have received a copy of the GNU General Public License along
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
@@ -41,18 +41,18 @@ class MediaKeyPlugin(PithosPlugin):
             return True
         except dbus.DBusException:
             return False
-            
+
     def mediakey_pressed(self, app, action):
        if app == APP_ID:
             if action == 'Play':
                 self.window.playpause_notify()
             elif action == 'Next':
-                self.window.next_song()
+                self.window.play_next_song()
             elif action == 'Stop':
                 self.window.user_pause()
             elif action == 'Previous':
                 self.window.bring_to_top()
-            
+
     def bind_keybinder(self):
         try:
             import gi
@@ -62,12 +62,12 @@ class MediaKeyPlugin(PithosPlugin):
             Keybinder.init()
         except:
             return False
-        
+
         Keybinder.bind('XF86AudioPlay', self.window.playpause, None)
         Keybinder.bind('XF86AudioStop', self.window.user_pause, None)
-        Keybinder.bind('XF86AudioNext', self.window.next_song, None)
+        Keybinder.bind('XF86AudioNext', self.window.play_next_song, None)
         Keybinder.bind('XF86AudioPrev', self.window.bring_to_top, None)
-        
+
         logging.info("Bound media keys with keybinder")
         self.method = 'keybinder'
         return True
@@ -76,7 +76,7 @@ class MediaKeyPlugin(PithosPlugin):
         if event.KeyID == 179 or event.Key == 'Media_Play_Pause':
             self.window.playpause_notify()
         if event.KeyID == 176 or event.Key == 'Media_Next_Track':
-            self.window.next_song()
+            self.window.play_next_song()
         return True
 
     def bind_win32(self):
@@ -95,7 +95,7 @@ class MediaKeyPlugin(PithosPlugin):
         return False # Don't let others get event
 
     def osx_skip_handler(self):
-        self.window.next_song()
+        self.window.play_next_song()
         return False
 
     def bind_osx(self):
@@ -114,7 +114,7 @@ class MediaKeyPlugin(PithosPlugin):
         tap.start()
 
         return True
-        
+
     def on_enable(self):
         if sys.platform == 'win32':
             loaded = self.bind_win32()
@@ -125,6 +125,6 @@ class MediaKeyPlugin(PithosPlugin):
 
         if not loaded:
             logging.error("Could not bind media keys")
-        
+
     def on_disable(self):
         logging.error("Not implemented: Can't disable media keys")

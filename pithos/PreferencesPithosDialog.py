@@ -21,8 +21,9 @@ import logging
 
 from gi.repository import Gtk, GObject, GLib, Pango
 
-from .pithosconfig import get_ui_file
 from .pandora.data import *
+from .pithosconfig import get_ui_file
+from .player import get_players
 
 pacparser_imported = False
 try:
@@ -107,13 +108,24 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.preference_btn = self.builder.get_object('prefs_btn')
         self.listbox = self.builder.get_object('plugins_listbox')
 
+        render_text = Gtk.CellRendererText()
+
+        # initialize the "Audio Player" combobox backing list
+        audio_player_combo = self.builder.get_object('prefs_audio_player')
+        player_store = Gtk.ListStore(str, str)
+        player_store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
+        for name, player in get_players().items():
+            player_store.append((name, player.description))
+        audio_player_combo.set_model(player_store)
+        audio_player_combo.pack_start(render_text, True)
+        audio_player_combo.add_attribute(render_text, "text", 1)
+
         # initialize the "Audio Quality" combobox backing list
         audio_quality_combo = self.builder.get_object('prefs_audio_quality')
-        fmt_store = Gtk.ListStore(GObject.TYPE_STRING, GObject.TYPE_STRING)
+        fmt_store = Gtk.ListStore(str, str)
         for audio_quality in valid_audio_formats:
             fmt_store.append(audio_quality)
         audio_quality_combo.set_model(fmt_store)
-        render_text = Gtk.CellRendererText()
         audio_quality_combo.pack_start(render_text, True)
         audio_quality_combo.add_attribute(render_text, "text", 1)
 
@@ -150,42 +162,46 @@ class PreferencesPithosDialog(Gtk.Dialog):
     def __load_preferences(self):
         #default preferences that will be overwritten if some are saved
         self.__preferences = {
-            "username":'',
-            "password":'',
+            "username": '',
+            "password": '',
             "x_pos": None,
             "y_pos": None,
-            "notify":True,
-            "last_station_id":None,
-            "proxy":'',
-            "control_proxy":'',
-            "control_proxy_pac":'',
+            "notify": True,
+            "last_station_id": None,
+            "proxy": '',
+            "control_proxy": '',
+            "control_proxy_pac": '',
             "show_icon": False,
             "lastfm_key": False,
-            "enable_mediakeys":True,
-            "enable_screensaverpause":False,
-            "enable_lastfm":False,
-            "enable_mpris":True,
+            "enable_mediakeys": True,
+            "enable_screensaverpause": False,
+            "enable_lastfm": False,
+            "enable_mpris": True,
             "volume": 1.0,
             # If set, allow insecure permissions. Implements CVE-2011-1500
             "unsafe_permissions": False,
+            "audio_player": "GstPlayer",
             "audio_quality": default_audio_quality,
             "pandora_one": False,
             "force_client": None,
         }
 
         try:
-            f = open(configfilename)
+            with open(configfilename) as f:
+                for line in f:
+                    sep = line.find('=')
+                    key = line[:sep]
+                    val = line[sep+1:].strip()
+                    if val == 'None':
+                        val = None
+                    elif val == 'False':
+                        val = False
+                    elif val == 'True':
+                        val = True
+                    self.__preferences[key] = val
         except IOError:
-            f = []
+            pass
 
-        for line in f:
-            sep = line.find('=')
-            key = line[:sep]
-            val = line[sep+1:].strip()
-            if val == 'None': val=None
-            elif val == 'False': val=False
-            elif val == 'True': val=True
-            self.__preferences[key]=val
 
         if 'audio_format' in self.__preferences:
             # Pithos <= 0.3.17, replaced by audio_quality
@@ -243,15 +259,13 @@ class PreferencesPithosDialog(Gtk.Dialog):
 
     def save(self):
         existed = os.path.exists(configfilename)
-        f = open(configfilename, 'w')
+        with open(configfilename, 'w') as f:
+            if not existed:
+                # make the file owner-readable and writable only
+                os.fchmod(f.fileno(), (stat.S_IRUSR | stat.S_IWUSR))
 
-        if not existed:
-            # make the file owner-readable and writable only
-            os.fchmod(f.fileno(), (stat.S_IRUSR | stat.S_IWUSR))
-
-        for key in self.__preferences:
-            f.write('%s=%s\n'%(key, self.__preferences[key]))
-        f.close()
+            for key in self.__preferences:
+                f.write('%s=%s\n' % (key, self.__preferences[key]))
 
     def setup_fields(self):
         self.builder.get_object('prefs_username').set_text(self.__preferences["username"])
@@ -263,6 +277,12 @@ class PreferencesPithosDialog(Gtk.Dialog):
         if not pacparser_imported:
             self.builder.get_object('prefs_control_proxy_pac').set_sensitive(False)
             self.builder.get_object('prefs_control_proxy_pac').set_tooltip_text("Please install python-pacparser")
+
+        audio_player_combo = self.builder.get_object('prefs_audio_player')
+        for row in audio_player_combo.get_model():
+            if row[0] == self.__preferences["audio_player"]:
+                audio_player_combo.set_active_iter(row.iter)
+                break
 
         audio_quality_combo = self.builder.get_object('prefs_audio_quality')
         for row in audio_quality_combo.get_model():
@@ -284,6 +304,11 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.__preferences["proxy"] = self.builder.get_object('prefs_proxy').get_text()
         self.__preferences["control_proxy"] = self.builder.get_object('prefs_control_proxy').get_text()
         self.__preferences["control_proxy_pac"] = self.builder.get_object('prefs_control_proxy_pac').get_text()
+
+        audio_player = self.builder.get_object('prefs_audio_player')
+        active_idx = audio_player.get_active()
+        if active_idx != -1: # ignore unknown player
+            self.__preferences["audio_player"] = audio_player.get_model()[active_idx][0]
 
         audio_quality = self.builder.get_object('prefs_audio_quality')
         active_idx = audio_quality.get_active()

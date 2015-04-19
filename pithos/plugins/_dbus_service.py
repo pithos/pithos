@@ -1,16 +1,16 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
 ### BEGIN LICENSE
 # Copyright (C) 2010 Kevin Mehall <km@kevinmehall.net>
-#This program is free software: you can redistribute it and/or modify it 
-#under the terms of the GNU General Public License version 3, as published 
+#This program is free software: you can redistribute it and/or modify it
+#under the terms of the GNU General Public License version 3, as published
 #by the Free Software Foundation.
 #
-#This program is distributed in the hope that it will be useful, but 
-#WITHOUT ANY WARRANTY; without even the implied warranties of 
-#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR 
+#This program is distributed in the hope that it will be useful, but
+#WITHOUT ANY WARRANTY; without even the implied warranties of
+#MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
 #PURPOSE.  See the GNU General Public License for more details.
 #
-#You should have received a copy of the GNU General Public License along 
+#You should have received a copy of the GNU General Public License along
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
@@ -25,7 +25,7 @@ def song_to_dict(song):
         for i in ['artist', 'title', 'album', 'songDetailURL']:
             d[i] = getattr(song, i)
     return d
-  
+
 class PithosDBusProxy(dbus.service.Object):
     def __init__(self, window):
         self.bus = dbus.SessionBus()
@@ -34,49 +34,49 @@ class PithosDBusProxy(dbus.service.Object):
         self.window = window
         self.window.connect("song-changed", self.songchange_handler)
         self.window.connect("play-state-changed", self.playstate_handler)
-        
+
     def playstate_handler(self, window, state):
         self.PlayStateChanged(state)
-        
+
     def songchange_handler(self, window, song):
         self.SongChanged(song_to_dict(song))
-    
+
     @dbus.service.method(DBUS_BUS)
     def PlayPause(self):
         self.window.playpause_notify()
-    
+
     @dbus.service.method(DBUS_BUS)
     def SkipSong(self):
-        self.window.next_song()
-    
+        self.window.play_next_song()
+
     @dbus.service.method(DBUS_BUS)
     def LoveCurrentSong(self):
         self.window.love_song()
-    
+
     @dbus.service.method(DBUS_BUS)
     def BanCurrentSong(self):
         self.window.ban_song()
-    
+
     @dbus.service.method(DBUS_BUS)
     def TiredCurrentSong(self):
         self.window.tired_song()
-        
+
     @dbus.service.method(DBUS_BUS)
     def Present(self):
         self.window.bring_to_top()
-        
+
     @dbus.service.method(DBUS_BUS, out_signature='a{sv}')
     def GetCurrentSong(self):
         return song_to_dict(self.window.current_song)
-        
+
     @dbus.service.method(DBUS_BUS, out_signature='b')
     def IsPlaying(self):
-        return self.window.playing
-        
+        return self.window.player.playing
+
     @dbus.service.signal(DBUS_BUS, signature='b')
     def PlayStateChanged(self, state):
         pass
-        
+
     @dbus.service.signal(DBUS_BUS, signature='a{sv}')
     def SongChanged(self, songinfo):
         pass

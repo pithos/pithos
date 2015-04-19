@@ -16,32 +16,28 @@
 ### END LICENSE
 
 import argparse
-import cgi
 import contextlib
 import html
 import json
 import logging
-import math
 import os
 import re
 import signal
 import sys
-import time
 import urllib.error
-import urllib.parse
 import urllib.request
 
-import gi
-gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
+from gi.repository import GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
+
 
 from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
 from .pithosconfig import get_ui_file, get_media_file, VERSION
+from .player import Player, NoPlayerImplementationError
 from .plugin import load_plugins
-from .util import parse_proxy, open_browser
+from .util import open_browser, PeriodicCallback, ignore_source
 
 pacparser_imported = False
 try:
@@ -110,16 +106,6 @@ def get_album_art(url, *extra):
         loader.write(image)
         return (loader.get_pixbuf(),) + extra
 
-class PlayerStatus (object):
-  def __init__(self):
-    self.reset()
-
-  def reset(self):
-    self.async_done = False
-    self.began_buffering = None
-    self.buffer_percent = 100
-    self.pending_duration_query = False
-
 
 class PithosWindow(Gtk.ApplicationWindow):
     __gtype_name__ = "PithosWindow"
@@ -173,7 +159,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.prefs_dlg.set_plugins(self.plugins)
 
         if not self.preferences['username']:
-            self.show_preferences(is_startup=True)
+            self.show_preferences(apply_changes=False)
 
         self.pandora = make_pandora(self.cmdopts.test)
         self.set_proxy()
@@ -186,28 +172,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         #                                   Station object         station name
         self.stations_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
 
-        Gst.init(None)
-        self._query_duration = Gst.Query.new_duration(Gst.Format.TIME)
-        self._query_position = Gst.Query.new_position(Gst.Format.TIME)
-        self.player = Gst.ElementFactory.make("playbin", "player");
-        self.player.props.flags |= (1 << 7) # enable progressive download (GST_PLAY_FLAG_DOWNLOAD)
-        bus = self.player.get_bus()
-        bus.add_signal_watch()
-        bus.connect("message::async-done", self.on_gst_async_done)
-        bus.connect("message::duration-changed", self.on_gst_duration_changed)
-        bus.connect("message::eos", self.on_gst_eos)
-        bus.connect("message::buffering", self.on_gst_buffering)
-        bus.connect("message::error", self.on_gst_error)
-        bus.connect("message::element", self.on_gst_element)
-        bus.connect("message::tag", self.on_gst_tag)
-        self.player.connect("notify::volume", self.on_gst_volume)
-        self.player.connect("notify::source", self.on_gst_source)
-
-        self.player_status = PlayerStatus()
-
         self.stations_dlg = None
 
-        self.playing = False
         self.current_song_index = None
         self.current_station = None
         self.current_station_id = self.preferences.get('last_station_id')
@@ -220,13 +186,46 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.gstreamer_error = ''
         self.waiting_for_playlist = False
         self.start_new_playlist = False
-        self.ui_loop_timer_id = 0
+
+        self.player = None
+        self.create_player(is_startup=True)
+
+        self._song_row_updater = PeriodicCallback("UpdateSongRow", self.update_song_row, 1000, seconds_ok=True)
+
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
 
         aa = GdkPixbuf.Pixbuf.new_from_file(get_media_file('album'))
 
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
+
+    def create_player(self, is_startup=False):
+        if self.player:
+            self.player.dispose()
+            self.player = None
+        elif not is_startup:
+            # If it's not startup time and there's no existing player, then
+            # we're in a pref-dialog loop trying to get a working player. We
+            # will return early here and allow the outer callers to do the
+            # work.
+            return
+
+        while True:
+            try:
+                self.player = Player(self.preferences, self.get_application().extra_args)
+                self.player.connect("song-ended", ignore_source(self.play_next_song))
+                self.player.connect("song-info-changed", ignore_source(self.update_song_row))
+                self.player.connect("volume-changed", ignore_source(self.set_volume))
+                self.player.connect("error", ignore_source(self._on_error))
+
+                if not is_startup:
+                    self.start_song(self.current_song_index)
+
+                return
+            except NoPlayerImplementationError as e:
+                if not self.error_dialog(str(e), None, e.args[1], apply_pref_changes=not is_startup):
+                    self.fatal_error_dialog("No audio player available.")
+                    raise NoPlayerImplementationError("No audio player available")
 
     def init_ui(self):
         GLib.set_application_name("Pithos")
@@ -237,7 +236,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.volume = self.builder.get_object('volume')
         self.volume.set_relief(Gtk.ReliefStyle.NORMAL)  # It ignores glade...
-        self.volume.set_property("value", math.pow(float(self.preferences['volume']), 1.0/3.0))
+        self.set_volume(float(self.preferences['volume']))
 
         self.statusbar = self.builder.get_object('statusbar1')
 
@@ -316,18 +315,6 @@ class PithosWindow(Gtk.ApplicationWindow):
                 logging.warn(e.traceback)
 
         self.worker.send(fn, args, cb, eb)
-
-    def get_proxy(self):
-        """ Get HTTP proxy, first trying preferences then system proxy """
-
-        if self.preferences['proxy']:
-            return self.preferences['proxy']
-
-        system_proxies = urllib.request.getproxies()
-        if 'http' in system_proxies:
-            return system_proxies['http']
-
-        return None
 
     def set_proxy(self):
         # proxy preference is used for all Pithos HTTP traffic
@@ -429,8 +416,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     @property
     def current_song(self):
-        if self.current_song_index is not None:
-            return self.songs_model[self.current_song_index][0]
+        return self.player and self.player.current_song
 
     def start_song(self, song_index):
         songs_remaining = len(self.songs_model) - song_index
@@ -446,46 +432,48 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.stop()
         self.current_song_index = song_index
+        next_song = self.songs_model[song_index][0]
 
         if prev:
             self.update_song_row(prev)
 
-        if not self.current_song.is_still_valid():
-            self.current_song.message = "Playlist expired"
+        if not next_song.is_still_valid():
+            next_song.message = "Playlist expired"
             self.update_song_row()
-            return self.next_song()
+            return self.play_next_song()
 
-        if self.current_song.tired or self.current_song.rating == RATE_BAN:
-            return self.next_song()
+        if next_song.tired or next_song.rating == RATE_BAN:
+            return self.play_next_song()
 
         logging.info("Starting song: index = %i"%(song_index))
-        self.player_status.reset()
 
-        self.player.set_property("uri", self.current_song.audioUrl)
+        self.player.play_song(next_song)
         self.play()
         self.playcount += 1
 
-        self.current_song.start_time = time.time()
-
         self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
         self.songs_treeview.set_cursor(song_index, None, 0)
-        self.set_title("Pithos - %s by %s" % (self.current_song.title, self.current_song.artist))
+        self.set_title("Pithos - %s by %s" % (next_song.title, next_song.artist))
 
-        self.emit('song-changed', self.current_song)
+        self.emit('song-changed', next_song)
 
-    def next_song(self, *ignore):
+    def play_next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
 
     def user_play(self, *ignore):
         self.play()
         self.emit('user-changed-play-state', True)
 
+    def _update_playpause_icon(self):
+        self.playpause_image.set_from_icon_name(
+            'media-playback-{}-symbolic'.format(
+                'pause' if self.player.playing else 'start'),
+            Gtk.IconSize.SMALL_TOOLBAR)
+
     def play(self):
-        if not self.playing:
-            self.playing = True
-            self.create_ui_loop()
-        self.player.set_state(Gst.State.PLAYING)
-        self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+        self.player.play()
+        self._song_row_updater.start()
+        self._update_playpause_icon()
         self.update_song_row()
         self.emit('play-state-changed', True)
 
@@ -494,10 +482,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.emit('user-changed-play-state', False)
 
     def pause(self):
-        self.playing = False
-        self.destroy_ui_loop()
-        self.player.set_state(Gst.State.PAUSED)
-        self.playpause_image.set_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+        self.player.pause()
+        self._update_playpause_icon()
         self.update_song_row()
         self.emit('play-state-changed', False)
 
@@ -506,12 +492,11 @@ class PithosWindow(Gtk.ApplicationWindow):
         prev = self.current_song
         if prev and prev.start_time:
             prev.finished = True
-            prev.position = self.query_position()
+            prev.position = self.player.get_current_position()
             self.emit("song-ended", prev)
 
-        self.playing = False
-        self.destroy_ui_loop()
-        self.player.set_state(Gst.State.NULL)
+        self.player.stop()
+        self._update_playpause_icon()
         self.emit('play-state-changed', False)
 
     def user_playpause(self, *ignore):
@@ -519,20 +504,21 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def playpause(self, *ignore):
         logging.info("playpause")
-        if self.playing:
+        if self.player.playing:
             self.pause()
         else:
             self.play()
 
     def playpause_notify(self, *ignore):
-        if self.playing:
+        if self.player.playing:
             self.user_pause()
         else:
             self.user_play()
 
-    def get_playlist(self, start = False):
+    def get_playlist(self, start=False):
         self.start_new_playlist = self.start_new_playlist or start
-        if self.waiting_for_playlist: return
+        if self.waiting_for_playlist:
+          return
 
         if self.gstreamer_errorcount_1 >= self.playcount and self.gstreamer_errorcount_2 >=1:
             logging.warn("Too many gstreamer errors. Not retrying")
@@ -572,7 +558,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.waiting_for_playlist = True
         self.worker_run(self.current_station.get_playlist, (), callback, "Getting songs...")
 
-    def error_dialog(self, message, retry_cb, submsg=None):
+    def _on_error(self, message, submsg=None, fatal=False):
+      if fatal:
+        self.fatal_error_dialog(message, submsg)
+      else:
+        self.error_dialog(message, None, submsg)
+
+    def error_dialog(self, message, retry_cb, submsg=None, apply_pref_changes=True):
         dialog = self.builder.get_object("error_dialog")
 
         dialog.props.text = message
@@ -591,12 +583,13 @@ class PithosWindow(Gtk.ApplicationWindow):
             logging.info("Manual retry")
             return retry_cb()
         elif response == 3:
-            self.show_preferences()
+            return self.show_preferences(apply_changes=apply_pref_changes)
 
-    def fatal_error_dialog(self, message, submsg):
+    def fatal_error_dialog(self, message, submsg=None):
         dialog = self.builder.get_object("fatal_error_dialog")
         dialog.props.text = message
-        dialog.props.secondary_text = submsg
+        if submsg:
+            dialog.props.secondary_text = submsg
         dialog.set_default_response(1)
 
         dialog.run()
@@ -616,7 +609,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         return [i[0] for i in self.stations_model].index(station)
 
     def station_changed(self, station, reconnecting=False):
-        if station is self.current_station: return
+        if station is self.current_station:
+          return
         self.waiting_for_playlist = False
         if not reconnecting:
             self.stop()
@@ -629,171 +623,28 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.get_playlist(start = True)
         self.stations_combo.set_active(self.station_index(station))
 
-    def query_position(self):
-      pos_stat = self.player.query(self._query_position)
-      if pos_stat:
-        _, position = self._query_position.parse_position()
-        return position
-
-    def query_duration(self):
-      dur_stat = self.player.query(self._query_duration)
-      if dur_stat:
-        _, duration = self._query_duration.parse_duration()
-        return duration
-
-    def on_gst_async_done(self, bus, message):
-      self.player_status.async_done = True
-      if self.player_status.pending_duration_query:
-        self.current_song.duration = self.query_duration()
-        self.current_song.duration_message = self.format_time(self.current_song.duration)
-        self.check_if_song_is_ad()
-        self.player_status.pending_duration_query = False
-
-    def on_gst_duration_changed(self, bus, message):
-      if self.player_status.async_done:
-        self.current_song.duration = self.query_duration()
-        self.current_song.duration_message = self.format_time(self.current_song.duration)
-        self.check_if_song_is_ad()
-      else:
-        self.player_status.pending_duration_query = True
-
-    def on_gst_eos(self, bus, message):
-        logging.info("EOS")
-        self.next_song()
-
-    def on_gst_plugin_installed(self, result, userdata):
-        if result == GstPbutils.InstallPluginsReturn.SUCCESS:
-            self.fatal_error_dialog("Codec installation successful",
-                        submsg="The required codec was installed, please restart Pithos.")
-        else:
-            self.error_dialog("Codec installation failed", None,
-                        submsg="The required codec failed to install. Either manually install it or try another quality setting.")
-
-    def on_gst_element(self, bus, message):
-        if GstPbutils.is_missing_plugin_message(message):
-            if GstPbutils.install_plugins_supported():
-                details = GstPbutils.missing_plugin_message_get_installer_detail(message)
-                GstPbutils.install_plugins_async([details,], None, self.on_gst_plugin_installed, None)
-            else:
-                self.error_dialog("Missing codec", None,
-                        submsg="GStreamer is missing a plugin and it could not be automatically installed. Either manually install it or try another quality setting.")
-
-    def on_gst_error(self, bus, message):
-        err, debug = message.parse_error()
-        logging.error("Gstreamer error: %s, %s, %s" % (err, debug, err.code))
-        if self.current_song:
-            self.current_song.message = "Error: "+str(err)
-
-        self.gstreamer_error = str(err)
-        self.gstreamer_errorcount_1 += 1
-
-        if not GstPbutils.install_plugins_installation_in_progress():
-            self.next_song()
-
-    def gst_tag_handler(self, tag_info):
-        def handler(_x, tag, _y):
-            # An exhaustive list of tags is available at
-            # https://developer.gnome.org/gstreamer/stable/gstreamer-GstTagList.html
-            # but Pandora seems to only use those
-            if tag == 'datetime':
-                _, datetime = tag_info.get_date_time(tag)
-                value = datetime.to_iso8601_string()
-            elif tag in ('container-format', 'audio-codec'):
-                _, value = tag_info.get_string(tag)
-            elif tag in ('bitrate', 'maximum-bitrate', 'minimum-bitrate'):
-                _, value = tag_info.get_uint(tag)
-            else:
-                value = 'Don\'t know the type of this'
-
-            logging.debug('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
-
-            if tag == 'bitrate':
-                self.current_song.bitrate = value / 1000
-                self.update_song_row()
-
-        return handler
-
-    def check_if_song_is_ad(self):
-        if self.current_song.is_ad is None:
-            if self.current_song.duration:
-                if self.current_song.get_duration_sec() < 45:  # Less than 45 seconds we assume it's an ad
-                    logging.info('Ad detected!')
-                    self.current_song.is_ad = True
-                    self.update_song_row()
-                else:
-                    logging.info('Not an Ad..')
-                    self.current_song.is_ad = False
-            else:
-                logging.warning('dur_stat is False. The assumption that duration is available once the audio-codec messages feeds is bad.')
-
-    def on_gst_tag(self, bus, message):
-        tag_info = message.parse_tag()
-        tag_handler = self.gst_tag_handler(tag_info)
-        tag_info.foreach(tag_handler, None)
-
-    def on_gst_buffering(self, bus, message):
-        # per GST documentation:
-        # Note that applications should keep/set the pipeline in the PAUSED state when a BUFFERING
-        # message is received with a buffer percent value < 100 and set the pipeline back to PLAYING
-        # state when a BUFFERING message with a value of 100 percent is received.
-
-        # 100% doesn't mean the entire song is downloaded, but it does mean that it's safe to play.
-        # trying to play before 100% will cause stuttering.
-        percent = message.parse_buffering()
-        if self.playing:
-            if percent < 100:
-                # If our previous buffer was at 100, but now it's < 100,
-                # then we should pause until the buffer is full.
-                if self.player_status.buffer_percent == 100:
-                  self.player.set_state(Gst.State.PAUSED)
-                  self.player_status.began_buffering = time.time()
-            else:
-                self.player.set_state(Gst.State.PLAYING)
-                logging.debug("Took %.3f to buffer", time.time() - self.player_status.began_buffering)
-                self.player_status.began_buffering = None
-        self.player_status.buffer_percent = percent
-        self.update_song_row()
-        logging.debug("Buffering (%i%%)", self.player_status.buffer_percent)
-
-    def set_volume_cb(self, volume):
-        # Convert to the cubic scale that the volume slider uses
-        scaled_volume = math.pow(volume, 1.0/3.0)
-        self.volume.handler_block_by_func(self.on_volume_change_event)
-        self.volume.set_property("value", scaled_volume)
-        self.volume.handler_unblock_by_func(self.on_volume_change_event)
-        self.preferences['volume'] = volume
-
-    def on_gst_volume(self, player, volumespec):
-        vol = self.player.get_property('volume')
-        GLib.idle_add(self.set_volume_cb, vol)
-
-    def on_gst_source(self, player, params):
-        """ Setup httpsoupsrc to match Pithos proxy settings """
-        soup = player.props.source.props
-        proxy = self.get_proxy()
-        if proxy and hasattr(soup, 'proxy'):
-            scheme, user, password, hostport = parse_proxy(proxy)
-            soup.proxy = hostport
-            soup.proxy_id = user
-            soup.proxy_pw = password
-
     def song_text(self, song):
         title = html.escape(song.title)
         artist = html.escape(song.artist)
         album = html.escape(song.album)
         msg = []
-        if song is self.current_song:
-            song.position = self.query_position()
-            if not song.bitrate is None:
-                msg.append("%0dkbit/s" % (song.bitrate))
 
-            if song.position is not None and song.duration is not None:
-                pos_str = self.format_time(song.position)
-                msg.append("%s / %s" % (pos_str, song.duration_message))
-                if not self.playing:
+        if not song.bitrate is None:
+            msg.append("%0dkbit/s" % (song.bitrate / 1000))
+
+        if song is self.current_song:
+            position = self.player.get_current_position()
+            if position is not None and song.duration is not None:
+                dur_str = self.format_time(song.duration)
+                pos_str = self.format_time(position)
+                msg.append("%s / %s" % (pos_str, dur_str))
+                if not self.player.playing:
                     msg.append("Paused")
-            if self.player_status.buffer_percent < 100:
-                msg.append("Buffering (%i%%)" % self.player_status.buffer_percent)
+            if self.player.buffer_percent is not None:
+                msg.append("Buffering (%i%%)" % (self.player.buffer_percent*100))
+        elif song.duration is not None:
+            dur_str = self.format_time(song.duration)
+            msg.append(dur_str)
         if song.message:
             msg.append(song.message)
         msg = " - ".join(msg)
@@ -815,13 +666,12 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song.rating == RATE_BAN:
             return 'dialog-error'
 
-    def update_song_row(self, song = None):
-        if song is None:
-            song = self.current_song
+    def update_song_row(self, song=None):
+        song = song or self.current_song
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
             self.songs_model[song.index][2] = self.song_icon(song) or ""
-        return self.playing
+            return self.player.playing
 
     def create_ui_loop(self):
         if not self.ui_loop_timer_id:
@@ -873,7 +723,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.emit('song-rating-changed', song)
         self.worker_run(song.rate, (RATE_BAN,), callback, "Banning song...")
         if song is self.current_song:
-            self.next_song()
+            self.play_next_song()
 
     def unrate_song(self, song=None):
         song = song or self.current_song
@@ -889,7 +739,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.emit('song-rating-changed', song)
         self.worker_run(song.set_tired, (), callback, "Putting song on shelf...")
         if song is self.current_song:
-            self.next_song()
+            self.play_next_song()
 
     def bookmark_song(self, song=None):
         song = song or self.current_song
@@ -947,22 +797,29 @@ class PithosWindow(Gtk.ApplicationWindow):
                     return False
                 self.start_song(self.selected_song().index)
 
-    def set_player_volume(self, value):
-        logging.info('%.3f' % value)
-        # Use a cubic scale for volume. This matches what PulseAudio uses.
-        volume = math.pow(value, 3)
-        self.player.set_property("volume", volume)
-        self.preferences['volume'] = volume
-
     def adjust_volume(self, amount):
-        old_volume = self.volume.get_property("value")
+        old_volume = self.volume.get_value()
         new_volume = max(0.0, min(1.0, old_volume + 0.02 * amount))
 
         if new_volume != old_volume:
-            self.volume.set_property("value", new_volume)
+            self.set_volume(new_volume)
 
-    def on_volume_change_event(self, volumebutton, value):
-        self.set_player_volume(value)
+    def on_volume_change_event(self, volume_button, volume):
+        self.set_volume(volume, update_ui=False)
+
+    def _set_ui_volume(self, volume):
+      self.volume.handler_block_by_func(self.on_volume_change_event)
+      self.volume.set_value(volume)
+      self.volume.handler_unblock_by_func(self.on_volume_change_event)
+
+    def set_volume(self, volume, update_ui=True):
+        self.player.volume = volume
+        self.preferences['volume'] = volume
+
+        if update_ui:
+          Gdk.threads_add_idle(GLib.PRIORITY_DEFAULT_IDLE,
+                               self._set_ui_volume, volume)
+
 
     def station_properties(self, *ignore):
         open_browser(self.current_station.info_url)
@@ -975,9 +832,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         about.run()
         about.destroy()
 
-    def show_preferences(self, is_startup=False):
+    def show_preferences(self, apply_changes=True):
         """preferences - display the preferences window for pithos """
-        if is_startup:
+
+        if self.props.visible:
+            self.prefs_dlg.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+        else:
+            # Make this a normal window when the main window is not visible.
             self.prefs_dlg.set_type_hint(Gdk.WindowTypeHint.NORMAL)
 
         old_prefs = dict(self.preferences)
@@ -986,7 +847,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         if response == Gtk.ResponseType.OK:
             self.preferences = self.prefs_dlg.get_preferences()
-            if not is_startup:
+            if apply_changes:
                 if (   self.preferences['proxy'] != old_prefs['proxy']
                     or self.preferences['control_proxy'] != old_prefs['control_proxy']):
                     self.set_proxy()
@@ -996,8 +857,9 @@ class PithosWindow(Gtk.ApplicationWindow):
                     or self.preferences['password'] != old_prefs['password']
                     or self.preferences['pandora_one'] != old_prefs['pandora_one']):
                         self.pandora_connect()
-            else:
-                self.prefs_dlg.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+                if self.preferences['audio_player'] != old_prefs['audio_player']:
+                    self.create_player()
+            return True
 
     def show_stations(self):
         if self.stations_dlg:
@@ -1034,8 +896,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.destroy()
 
     def on_destroy(self, widget, data=None):
-        """on_destroy - called when the PithosWindow is close. """
-        self.stop()
+        """on_destroy - called when the PithosWindow is closed."""
+        if self.player:
+          self.stop()
         self.preferences['last_station_id'] = self.current_station_id
         self.prefs_dlg.save()
         self.quit()
@@ -1060,6 +923,7 @@ class PithosApplication(Gtk.Application):
                                 flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.window = None
         self.options = None
+        self.extra_args = None
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -1093,7 +957,8 @@ class PithosApplication(Gtk.Application):
         parser = argparse.ArgumentParser()
         parser.add_argument("-v", "--verbose", action="count", default=0, dest="verbose", help="Show debug messages")
         parser.add_argument("-t", "--test", action="store_true", dest="test", help="Use a mock web interface instead of connecting to the real Pandora server")
-        self.options = parser.parse_args(args.get_arguments()[1:])
+        self.options, self.extra_args = parser.parse_known_args(
+            args.get_arguments()[1:])
 
         # First, get rid of existing logging handlers due to call in header as per
         # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig
@@ -1107,7 +972,7 @@ class PithosApplication(Gtk.Application):
         else:
             log_level = logging.WARN
 
-        logging.basicConfig(level=log_level, format='%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
+        logging.basicConfig(level=log_level, format='%(asctime)s %(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
 
         self.do_activate()
 
@@ -1122,7 +987,8 @@ class PithosApplication(Gtk.Application):
 
     def do_shutdown(self):
         Gtk.Application.do_shutdown(self)
-        self.window.destroy()
+        if self.window:
+          self.window.destroy()
 
     def stations_cb(self, action, param):
         self.window.show_stations()
