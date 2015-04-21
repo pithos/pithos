@@ -121,6 +121,7 @@ class PlayerStatus (object):
     self.buffer_percent = 0
     self.pending_duration_query = False
     self.rebuffer_count = 0
+    self.song_started = False
 
   def play_state_reset(self):    
     self.playing = False
@@ -819,8 +820,14 @@ class PithosWindow(Gtk.ApplicationWindow):
                 msg.append("%0dkbit/s" % (song.bitrate))
 
             if song.position is not None and song.duration is not None:
-                pos_str = self.format_time(song.position)
-                msg.append("%s / %s" % (pos_str, song.duration_message))
+                if self.player_status.song_started: 
+                    song.position = self.query_position()
+                    pos_str = self.format_time(song.position)
+                    if pos_str is not None:
+                        msg.append("%s / %s" % (pos_str, song.duration_message))
+                else:
+                    msg.append("0:00 / %s" % (song.duration_message))
+
                 if self.player_status.paused:
                     msg.append("Paused")
             if self.player_status.buffer_percent < 100:
