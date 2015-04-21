@@ -285,7 +285,7 @@ class Station(object):
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken}, https=True)
+        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken, 'includeTrackLength': True}, https=True)
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
@@ -318,18 +318,18 @@ class Station(object):
 class Song(object):
     def __init__(self, pandora, d):
         self.pandora = pandora
-
+        self.ui_duration = d['trackLength']
         self.album = d['albumName']
         self.artist = d['artistName']
+        self.songName = d['songName']
+        self.artRadio = d['albumArtUrl']    
         self.audioUrlMap = d['audioUrlMap']
         self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
         self.stationId = d['stationId']
-        self.songName = d['songName']
         self.songDetailURL = d['songDetailUrl']
         self.songExplorerUrl = d['songExplorerUrl']
-        self.artRadio = d['albumArtUrl']
-
+        self.codec = None
         self.bitrate = None
         self.is_ad = None  # None = we haven't checked, otherwise True/False
         self.tired=False
@@ -369,11 +369,15 @@ class Song(object):
         quality = self.pandora.audio_quality
         try:
             q = self.audioUrlMap[quality]
+            self.codec = q['encoding']
+            self.bitrate = q['bitrate']
             logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
             return q['audioUrl']
         except KeyError:
             logging.warn("Unable to use audio format %s. Using %s",
                            quality, list(self.audioUrlMap.keys())[0])
+            self.codec = list(self.audioUrlMap.values())[0]['encoding']
+            self.bitrate = list(self.audioUrlMap.values())[0]['bitrate']
             return list(self.audioUrlMap.values())[0]['audioUrl']
 
     @property
@@ -444,4 +448,3 @@ class SearchResult(object):
             self.artist = d['artistName']
         elif resultType == 'artist':
             self.name = d['artistName']
-
