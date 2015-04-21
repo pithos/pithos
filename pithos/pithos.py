@@ -746,11 +746,11 @@ class PithosWindow(Gtk.ApplicationWindow):
             else:
                 if not self.player_status.paused:
                     self.play()
-            if self.player_status.rebuffer_count:
-                logging.debug("Rebuffered %s time(s)"% (self.player_status.rebuffer_count))
-                logging.debug("Took %.3f to rebuffer", time.time() - self.player_status.began_buffering)
-            else:
-                logging.debug("Took %.3f to buffer", time.time() - self.player_status.began_buffering)
+                if self.player_status.rebuffer_count:
+                    logging.debug("Rebuffered %s time(s)"% (self.player_status.rebuffer_count))
+                    logging.debug("Took %.3f to rebuffer", time.time() - self.player_status.began_buffering)
+                else:
+                    logging.debug("Took %.3f to buffer", time.time() - self.player_status.began_buffering)
 
                 self.player_status.rebuffer_count += 1
         self.player_status.buffer_percent = percent
