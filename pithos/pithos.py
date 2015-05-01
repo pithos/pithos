@@ -50,16 +50,6 @@ try:
 except ImportError:
     pass
 
-def buttonMenu(button, menu):
-    def cb(button):
-        allocation = button.get_allocation()
-        x, y = button.get_window().get_origin()[1:]
-        x += allocation.x
-        y += allocation.y + allocation.height
-        menu.popup(None, None, (lambda *ignore: (x, y, True)), None, 1, Gtk.get_current_event_time())
-
-    button.connect('clicked', cb)
-
 ALBUM_ART_SIZE = 96
 ALBUM_ART_X_PAD = 6
 
