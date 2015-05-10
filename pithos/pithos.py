@@ -463,8 +463,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.player_status.reset()
 
         self.player.set_property("uri", self.current_song.audioUrl)
-        if self.player_status.paused:
-            self.player_status.began_buffering = time.time()
+        self.player_status.began_buffering = time.time()
         self.buffering()
         self.playcount += 1
 
@@ -522,15 +521,16 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.emit('play-state-changed', False)
 
     def buffering(self):
-        self.player.set_state(Gst.State.PAUSED)
-        self.player_status.began_buffering = time.time()
-        if not self.player_status.paused:
-            self.player_status.play_state_reset()
-            self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
-        self.player_status.buffering = True
-        self.player_status.stopped = False
-        self.emit('play-state-changed', True)
-        self.destroy_ui_loop()
+        if not self.player_status.buffering:
+            self.player.set_state(Gst.State.PAUSED)
+            if not self.player_status.paused:
+                self.player_status.play_state_reset()
+                self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+            self.player_status.began_buffering = time.time()
+            self.player_status.buffering = True
+            self.player_status.stopped = False
+            self.emit('play-state-changed', True)
+            self.destroy_ui_loop()
 
     def user_playpause(self, *ignore):
         self.playpause_notify()
