@@ -180,7 +180,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self._query_duration = Gst.Query.new_duration(Gst.Format.TIME)
         self._query_position = Gst.Query.new_position(Gst.Format.TIME)
         self.player = Gst.ElementFactory.make("playbin", "player");
-        self.player.props.flags |= (1 << 7) # enable progressive download (GST_PLAY_FLAG_DOWNLOAD)
         bus = self.player.get_bus()
         bus.add_signal_watch()
         bus.connect("message::async-done", self.on_gst_async_done)
