@@ -195,7 +195,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         Gst.init(None)
         self.player = Gst.ElementFactory.make("playbin", "player");
-        self.player.props.flags |= (1 << 7) # enable progressive download (GST_PLAY_FLAG_DOWNLOAD)
         bus = self.player.get_bus()
         bus.add_signal_watch()
         bus.connect("message::eos", self.on_gst_eos)
