@@ -35,6 +35,9 @@ import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 
+if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 14:
+    sys.exit('Gtk 3.14 is required')
+
 from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from .gobject_worker import GObjectWorker
 from .pandora import *
