@@ -937,7 +937,6 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.start_song(self.selected_song().index)
 
     def set_player_volume(self, value):
-        logging.info('%.3f' % value)
         # Use a cubic scale for volume. This matches what PulseAudio uses.
         volume = math.pow(value, 3)
         self.player.set_property("volume", volume)
