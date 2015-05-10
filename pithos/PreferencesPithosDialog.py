@@ -120,7 +120,12 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.__load_preferences()
 
     def set_plugins(self, plugins):
-        self.listbox.set_header_func(self.on_listbox_update_header)
+        if len(self.listbox.set_header_func.get_arguments()) == 3:
+            # pygobject3 3.10
+            self.listbox.set_header_func(self.on_listbox_update_header, None)
+        else:
+            # pygobject3 3.12+
+            self.listbox.set_header_func(self.on_listbox_update_header)
         for plugin in plugins.values():
             row = PithosPluginRow(plugin, self.__preferences[plugin.preference])
             self.listbox.add(row)
@@ -143,7 +148,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         dialog.set_modal(True)
         dialog.show_all()
 
-    def on_listbox_update_header(self, row, before):
+    def on_listbox_update_header(self, row, before, junk = None):
         if before and not row.get_header():
             row.set_header(Gtk.Separator.new(Gtk.Orientation.HORIZONTAL))
 
