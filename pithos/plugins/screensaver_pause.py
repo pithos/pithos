@@ -88,7 +88,7 @@ class ScreenSaverPausePlugin(PithosPlugin):
 
     def pause(self):
         if not self.locked:
-            self.wasplaying = self.window.playing
+            self.wasplaying = self.window.player_status.playing
             self.window.pause()
         self.locked += 1
 
