@@ -71,7 +71,7 @@ class PithosDBusProxy(dbus.service.Object):
         
     @dbus.service.method(DBUS_BUS, out_signature='b')
     def IsPlaying(self):
-        return self.window.playing
+        return self.window.player_status.playing
         
     @dbus.service.signal(DBUS_BUS, signature='b')
     def PlayStateChanged(self, state):

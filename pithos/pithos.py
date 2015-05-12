@@ -103,16 +103,28 @@ def get_album_art(url, *extra):
         loader.write(image)
         return (loader.get_pixbuf(),) + extra
 
-class PlayerStatus (object):
-  def __init__(self):
-    self.reset()
+class PlayerStatus(object):
+    def __init__(self):
+        self.async_done = False
+        self.began_buffering = None
+        self.rebuffered = False
+        self.song_started = False
+        self.playing = False
+        self.buffering = False
+        self.paused = False
+        self.stopped = False
 
-  def reset(self):
-    self.async_done = False
-    self.began_buffering = None
-    self.buffer_percent = 100
-    self.pending_duration_query = False
+    def reset(self):
+        self.async_done = False
+        self.began_buffering = None
+        self.rebuffered = False
+        self.song_started = False
 
+    def play_state_reset(self):
+        self.playing = False
+        self.buffering = False
+        self.paused = False
+        self.stopped = False
 
 class PithosWindow(Gtk.ApplicationWindow):
     __gtype_name__ = "PithosWindow"
@@ -180,6 +192,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
 
         Gst.init(None)
+        self._query_buffer = Gst.Query.new_buffering(Gst.Format.PERCENT)
         self._query_duration = Gst.Query.new_duration(Gst.Format.TIME)
         self._query_position = Gst.Query.new_position(Gst.Format.TIME)
         self.player = Gst.ElementFactory.make("playbin", "player");
@@ -198,8 +211,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.player_status = PlayerStatus()
 
         self.stations_dlg = None
-
-        self.playing = False
         self.current_song_index = None
         self.current_station = None
         self.current_station_id = self.preferences.get('last_station_id')
@@ -213,6 +224,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.waiting_for_playlist = False
         self.start_new_playlist = False
         self.ui_loop_timer_id = 0
+        self.buffer_watch_loop_timer_id = 0
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
 
@@ -454,7 +466,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.player_status.reset()
 
         self.player.set_property("uri", self.current_song.audioUrl)
-        self.play()
+        self.player_status.began_buffering = time.time()
+        self.buffering()
         self.playcount += 1
 
         self.current_song.start_time = time.time()
@@ -470,29 +483,30 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def user_play(self, *ignore):
         self.play()
-        self.emit('user-changed-play-state', True)
 
     def play(self):
-        if not self.playing:
-            self.playing = True
-            self.create_ui_loop()
-        self.player.set_state(Gst.State.PLAYING)
-        self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
-        self.update_song_row()
-        self.emit('play-state-changed', True)
+        if not self.player_status.playing:
+            if self.player_status.async_done:
+                self.player_status.play_state_reset()
+                self.player_status.playing = True
+                self.player.set_state(Gst.State.PLAYING)
+                self.create_ui_loop()
+                self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+                self.emit('play-state-changed', True)
 
     def user_pause(self, *ignore):
         self.pause()
-        self.emit('user-changed-play-state', False)
 
     def pause(self):
-        self.playing = False
-        self.destroy_ui_loop()
-        self.player.set_state(Gst.State.PAUSED)
-        self.playpause_image.set_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
-        self.update_song_row()
-        self.emit('play-state-changed', False)
-
+        if not self.player_status.paused:
+            if self.player_status.async_done:
+                self.player.set_state(Gst.State.PAUSED)
+            if not self.player_status.buffering:
+                self.player_status.play_state_reset()
+            self.player_status.paused = True
+            self.destroy_ui_loop()
+            self.playpause_image.set_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+            self.emit('play-state-changed', False)
 
     def stop(self):
         prev = self.current_song
@@ -500,26 +514,41 @@ class PithosWindow(Gtk.ApplicationWindow):
             prev.finished = True
             prev.position = self.query_position()
             self.emit("song-ended", prev)
-
-        self.playing = False
+        if not self.player_status.paused:
+            self.player_status.play_state_reset()
+        self.player_status.stopped = True
+        self.player_status.reset()
         self.destroy_ui_loop()
-        self.player.set_state(Gst.State.NULL)
+        self.destroy_buffer_watch_loop()
+        self.player.set_state(Gst.State.READY)
         self.emit('play-state-changed', False)
+
+    def buffering(self):
+        if not self.player_status.buffering:
+            self.player.set_state(Gst.State.PAUSED)
+            if not self.player_status.paused:
+                self.player_status.play_state_reset()
+                self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+            self.player_status.began_buffering = time.time()
+            self.player_status.buffering = True
+            self.player_status.stopped = False
+            self.emit('play-state-changed', True)
+            self.destroy_ui_loop()
 
     def user_playpause(self, *ignore):
         self.playpause_notify()
 
     def playpause(self, *ignore):
         logging.info("playpause")
-        if self.playing:
+        if self.player_status.playing or self.player_status.buffering:
             self.pause()
-        else:
+        elif self.player_status.paused or self.player_status.buffering:
             self.play()
 
     def playpause_notify(self, *ignore):
-        if self.playing:
+        if self.player_status.playing or self.player_status.buffering:
             self.user_pause()
-        else:
+        elif self.player_status.paused or self.player_status.buffering:
             self.user_play()
 
     def get_playlist(self, start = False):
@@ -622,16 +651,28 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_combo.set_active(self.station_index(station))
 
     def query_position(self):
-      pos_stat = self.player.query(self._query_position)
-      if pos_stat:
-        _, position = self._query_position.parse_position()
+        pos_stat = self.player.query(self._query_position)
+        if pos_stat:
+            position = self._query_position.parse_position()[1]
+        else:
+            position = 0
         return position
 
     def query_duration(self):
-      dur_stat = self.player.query(self._query_duration)
-      if dur_stat:
-        _, duration = self._query_duration.parse_duration()
+        dur_stat = self.player.query(self._query_duration)
+        if dur_stat:
+            duration = self._query_duration.parse_duration()[1]
+        else:
+            duration = 0
         return duration
+
+    def query_buffer(self):
+        buf_stat = self.player.query(self._query_buffer)
+        if buf_stat:
+            percent = self._query_buffer.parse_buffering_percent()[1]
+        else:
+            percent = 0
+        return percent
 
     def on_gst_async_done(self, bus, message):
       self.player_status.async_done = True
@@ -724,28 +765,27 @@ class PithosWindow(Gtk.ApplicationWindow):
         tag_info.foreach(tag_handler, None)
 
     def on_gst_buffering(self, bus, message):
-        # per GST documentation:
-        # Note that applications should keep/set the pipeline in the PAUSED state when a BUFFERING
-        # message is received with a buffer percent value < 100 and set the pipeline back to PLAYING
-        # state when a BUFFERING message with a value of 100 percent is received.
+        self.create_buffer_watch_loop()
 
-        # 100% doesn't mean the entire song is downloaded, but it does mean that it's safe to play.
-        # trying to play before 100% will cause stuttering.
-        percent = message.parse_buffering()
-        if self.playing:
-            if percent < 100:
-                # If our previous buffer was at 100, but now it's < 100,
-                # then we should pause until the buffer is full.
-                if self.player_status.buffer_percent == 100:
-                  self.player.set_state(Gst.State.PAUSED)
-                  self.player_status.began_buffering = time.time()
+    def on_buffer_timer(self):
+        buffer_percent = self.query_buffer()
+        logging.debug("Buffering (%i%%)", buffer_percent)
+        if buffer_percent < 100:
+            self.buffering()
+        else:
+            if self.player_status.paused:
+                self.player_status.buffering = False
+                self.destroy_buffer_watch_loop()    
             else:
-                self.player.set_state(Gst.State.PLAYING)
-                logging.debug("Took %.3f to buffer", time.time() - self.player_status.began_buffering)
-                self.player_status.began_buffering = None
-        self.player_status.buffer_percent = percent
-        self.update_song_row()
-        logging.debug("Buffering (%i%%)", self.player_status.buffer_percent)
+                self.play()
+            if self.player_status.rebuffered:
+                logging.debug("It took %.3f seconds to rebuffer.", time.time() - self.player_status.began_buffering)
+            else:
+                logging.debug("It took %.3f seconds to buffer.", time.time() - self.player_status.began_buffering)
+            self.player_status.rebuffered = True
+            if not self.player_status.async_done:
+                logging.debug("The buffer is full but the async-done message was not received in time, or at all.")
+        return True
 
     def set_volume_cb(self, volume):
         # Convert to the cubic scale that the volume slider uses
@@ -778,14 +818,14 @@ class PithosWindow(Gtk.ApplicationWindow):
             song.position = self.query_position()
             if not song.bitrate is None:
                 msg.append("%0dkbit/s" % (song.bitrate))
-
-            if song.position is not None and song.duration is not None:
-                pos_str = self.format_time(song.position)
-                msg.append("%s / %s" % (pos_str, song.duration_message))
-                if not self.playing:
-                    msg.append("Paused")
-            if self.player_status.buffer_percent < 100:
-                msg.append("Buffering (%i%%)" % self.player_status.buffer_percent)
+            if self.player_status.async_done:
+                if song.position is not None and song.duration is not None:
+                    pos_str = self.format_time(song.position)
+                    msg.append("%s / %s" % (pos_str, song.duration_message))
+            if self.player_status.paused:
+                msg.append("Paused")
+            if self.player_status.buffering:
+                msg.append("Buffering...")
         if song.message:
             msg.append(song.message)
         msg = " - ".join(msg)
@@ -813,16 +853,31 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
             self.songs_model[song.index][2] = self.song_icon(song) or ""
-        return self.playing
+        return True
 
     def create_ui_loop(self):
         if not self.ui_loop_timer_id:
+            self.destroy_buffer_watch_loop()
             self.ui_loop_timer_id = GLib.timeout_add_seconds(1, self.update_song_row)
+            self.update_song_row()
 
     def destroy_ui_loop(self):
+        self.update_song_row()
         if self.ui_loop_timer_id:
             GLib.source_remove(self.ui_loop_timer_id)
             self.ui_loop_timer_id = 0
+
+    def create_buffer_watch_loop(self):
+        if not self.buffer_watch_loop_timer_id:
+            self.destroy_ui_loop()
+            self.buffer_watch_loop_timer_id = GLib.timeout_add(100, self.on_buffer_timer)
+            self.update_song_row()
+
+    def destroy_buffer_watch_loop(self):
+        if self.buffer_watch_loop_timer_id:
+            GLib.source_remove(self.buffer_watch_loop_timer_id)
+            self.buffer_watch_loop_timer_id = 0
+            self.update_song_row()
 
     def stations_combo_changed(self, widget):
         index = widget.get_active()
