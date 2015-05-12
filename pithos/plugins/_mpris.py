@@ -95,7 +95,7 @@ class PithosMprisService(dbus.service.Object):
         """Current status "Playing", "Paused", or "Stopped"."""
         if not self.window.current_song:
             return "Stopped"
-        if self.window.playing:
+        if not self.window.player_status.paused:
             return "Playing"
         else:
             return "Paused"
