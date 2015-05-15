@@ -76,6 +76,8 @@ def buttonMenu(button, menu):
 ALBUM_ART_SIZE = 96
 ALBUM_ART_X_PAD = 6
 
+BUFFER_SIZE = 192 * 1000 * 3
+
 class CellRendererAlbumArt(Gtk.CellRenderer):
     def __init__(self):
         GObject.GObject.__init__(self)
@@ -464,7 +466,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.buffer_percent = 0
         self.song_started = False
         self.player.set_property("uri", self.current_song.audioUrl)
-        self.play()
+        self.player.set_state(Gst.State.PAUSED)
         self.playcount += 1
 
         self.current_song.start_time = time.time()
@@ -724,15 +726,22 @@ class PithosWindow(Gtk.ApplicationWindow):
         # 100% doesn't mean the entire song is downloaded, but it does mean that it's safe to play.
         # trying to play before 100% will cause stuttering.
         percent = message.parse_buffering()
-        self.buffer_percent = percent
+        logging.debug("Buffering (%i%%)", percent)
+
         if percent < 100:
-            self.player.set_state(Gst.State.PAUSED)
+            # If our previous buffer was at 100, but now it's < 100,
+            # then we should pause until the buffer is full.
+            if self.buffer_percent == 100:
+                self.player.set_state(Gst.State.PAUSED)
         else:
-            if self.playing:
+            logging.debug("Buffer is 100%,  playing")
+            if not self.playing:
                 self.play()
                 self.song_started = True
+            self.player.set_state(Gst.State.PLAYING)
+
+        self.buffer_percent = percent
         self.update_song_row()
-        logging.debug("Buffering (%i%%)"%self.buffer_percent)
 
     def set_volume_cb(self, volume):
         # Convert to the cubic scale that the volume slider uses
