@@ -205,6 +205,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_dlg = None
 
         self.playing = False
+        self.user_paused = False
         self.current_song_index = None
         self.current_station = None
         self.current_station_id = self.preferences.get('last_station_id')
@@ -474,6 +475,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def user_play(self, *ignore):
         self.play()
+        self.user_paused = False
         self.emit('user-changed-play-state', True)
 
     def play(self):
@@ -487,6 +489,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def user_pause(self, *ignore):
         self.pause()
+        self.user_paused = True
         self.emit('user-changed-play-state', False)
 
     def pause(self):
@@ -743,13 +746,19 @@ class PithosWindow(Gtk.ApplicationWindow):
             # If our previous buffer was at 100, but now it's < 100,
             # then we should pause until the buffer is full.
             if self.player_status.buffer_percent == 100:
-              self.player.set_state(Gst.State.PAUSED)
-              self.player_status.began_buffering = time.time()
+                logging.debug("Buffer underrun. Pausing pipeline")
+                self.player.set_state(Gst.State.PAUSED)
+                self.player_status.began_buffering = time.time()
         else:
-            logging.debug("Buffer is 100%,  playing")
-            if not self.playing:
-                self.play()
-            self.player.set_state(Gst.State.PLAYING)
+            if self.user_paused:
+                logging.debug("Buffer recovery. Ready to play (user paused)")
+            else :
+                if self.playing:
+                    logging.debug("Buffer recovery. Restarting pipeline")
+                    self.player.set_state(Gst.State.PLAYING)
+                else: # first play
+                    logging.debug("Buffer is 100%. Starting song")
+                    self.play()
             self.player_status.began_buffering = None
         self.player_status.buffer_percent = percent
         self.update_song_row()
