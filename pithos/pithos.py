@@ -56,6 +56,8 @@ except ImportError:
 ALBUM_ART_SIZE = 96
 ALBUM_ART_X_PAD = 6
 
+BUFFER_SIZE = 192 * 1000 * 3
+
 class CellRendererAlbumArt(Gtk.CellRenderer):
     def __init__(self):
         GObject.GObject.__init__(self)
@@ -110,7 +112,7 @@ class PlayerStatus (object):
   def reset(self):
     self.async_done = False
     self.began_buffering = None
-    self.buffer_percent = 100
+    self.buffer_percent = 0
     self.pending_duration_query = False
 
 
@@ -183,6 +185,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         self._query_duration = Gst.Query.new_duration(Gst.Format.TIME)
         self._query_position = Gst.Query.new_position(Gst.Format.TIME)
         self.player = Gst.ElementFactory.make("playbin", "player");
+
+        self.player.set_property('buffer-size', BUFFER_SIZE)
+
         bus = self.player.get_bus()
         bus.add_signal_watch()
         bus.connect("message::async-done", self.on_gst_async_done)
@@ -454,11 +459,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.player_status.reset()
 
         self.player.set_property("uri", self.current_song.audioUrl)
-        self.play()
+        self.player.set_state(Gst.State.PAUSED)
         self.playcount += 1
 
         self.current_song.start_time = time.time()
-
         self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
         self.songs_treeview.set_cursor(song_index, None, 0)
         self.set_title("Pithos - %s by %s" % (self.current_song.title, self.current_song.artist))
@@ -634,6 +638,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         return duration
 
     def on_gst_async_done(self, bus, message):
+      logging.debug("on_gst_async_done")
       self.player_status.async_done = True
       if self.player_status.pending_duration_query:
         self.current_song.duration = self.query_duration()
@@ -732,20 +737,22 @@ class PithosWindow(Gtk.ApplicationWindow):
         # 100% doesn't mean the entire song is downloaded, but it does mean that it's safe to play.
         # trying to play before 100% will cause stuttering.
         percent = message.parse_buffering()
-        if self.playing:
-            if percent < 100:
-                # If our previous buffer was at 100, but now it's < 100,
-                # then we should pause until the buffer is full.
-                if self.player_status.buffer_percent == 100:
-                  self.player.set_state(Gst.State.PAUSED)
-                  self.player_status.began_buffering = time.time()
-            else:
-                self.player.set_state(Gst.State.PLAYING)
-                logging.debug("Took %.3f to buffer", time.time() - self.player_status.began_buffering)
-                self.player_status.began_buffering = None
+        logging.debug("Buffering (%i%%)", percent)
+
+        if percent < 100:
+            # If our previous buffer was at 100, but now it's < 100,
+            # then we should pause until the buffer is full.
+            if self.player_status.buffer_percent == 100:
+              self.player.set_state(Gst.State.PAUSED)
+              self.player_status.began_buffering = time.time()
+        else:
+            logging.debug("Buffer is 100%,  playing")
+            if not self.playing:
+                self.play()
+            self.player.set_state(Gst.State.PLAYING)
+            self.player_status.began_buffering = None
         self.player_status.buffer_percent = percent
         self.update_song_row()
-        logging.debug("Buffering (%i%%)", self.player_status.buffer_percent)
 
     def set_volume_cb(self, volume):
         # Convert to the cubic scale that the volume slider uses
