@@ -204,7 +204,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.stations_dlg = None
 
-        self.playing = False
+        self.playing = None # None is a special "Waiting to play" state
         self.current_song_index = None
         self.current_station = None
         self.current_station_id = self.preferences.get('last_station_id')
@@ -460,6 +460,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.player.set_property("uri", self.current_song.audioUrl)
         self.player.set_state(Gst.State.PAUSED)
+        self.playing = None
         self.playcount += 1
 
         self.current_song.start_time = time.time()
@@ -747,9 +748,10 @@ class PithosWindow(Gtk.ApplicationWindow):
               self.player_status.began_buffering = time.time()
         else:
             logging.debug("Buffer is 100%,  playing")
-            if not self.playing:
+            if self.playing is None: # Not playing but waiting to
                 self.play()
-            self.player.set_state(Gst.State.PLAYING)
+            elif self.playing:
+                self.player.set_state(Gst.State.PLAYING)
             self.player_status.began_buffering = None
         self.player_status.buffer_percent = percent
         self.update_song_row()
