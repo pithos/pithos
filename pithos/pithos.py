@@ -210,7 +210,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.stations_dlg = None
 
-        self.playing = False
+        self.playing = None # None is a special "Waiting to play" state
         self.current_song_index = None
         self.current_station = None
         self.current_station_id = self.preferences.get('last_station_id')
@@ -467,6 +467,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.song_started = False
         self.player.set_property("uri", self.current_song.audioUrl)
         self.player.set_state(Gst.State.PAUSED)
+        self.playing = None
         self.playcount += 1
 
         self.current_song.start_time = time.time()
@@ -732,14 +733,18 @@ class PithosWindow(Gtk.ApplicationWindow):
             # If our previous buffer was at 100, but now it's < 100,
             # then we should pause until the buffer is full.
             if self.buffer_percent == 100:
+                logging.debug("Buffer underrun. Pausing pipeline")
                 self.player.set_state(Gst.State.PAUSED)
         else:
-            logging.debug("Buffer is 100%,  playing")
-            if not self.playing:
+            if self.playing is None: # Not playing but waiting to
+                logging.debug("Buffer 100%. Song starting")
                 self.play()
                 self.song_started = True
-            self.player.set_state(Gst.State.PLAYING)
-
+            elif self.playing:
+                logging.debug("Buffer recovery. Restarting pipeline")
+                self.player.set_state(Gst.State.PLAYING)
+            else:
+                logging.debug("Buffer recovery. User paused")
         self.buffer_percent = percent
         self.update_song_row()
 
