@@ -744,14 +744,18 @@ class PithosWindow(Gtk.ApplicationWindow):
             # If our previous buffer was at 100, but now it's < 100,
             # then we should pause until the buffer is full.
             if self.player_status.buffer_percent == 100:
-              self.player.set_state(Gst.State.PAUSED)
-              self.player_status.began_buffering = time.time()
+                logging.debug("Buffer underrun. Pausing pipeline")
+                self.player.set_state(Gst.State.PAUSED)
+                self.player_status.began_buffering = time.time()
         else:
-            logging.debug("Buffer is 100%,  playing")
             if self.playing is None: # Not playing but waiting to
+                logging.debug("Buffer 100%. Song starting")
                 self.play()
             elif self.playing:
+                logging.debug("Buffer recovery. Restarting pipeline")
                 self.player.set_state(Gst.State.PLAYING)
+            else:
+                logging.debug("Buffer recovery. User paused")
             self.player_status.began_buffering = None
         self.player_status.buffer_percent = percent
         self.update_song_row()
