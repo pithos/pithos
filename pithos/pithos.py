@@ -405,11 +405,12 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_station = None
         selected = None
 
-        for i in self.pandora.stations:
+        def extract_name(station): return station.name
+        for i in sorted(self.pandora.stations, key=extract_name):
             if i.isQuickMix and i.isCreator:
                 self.stations_model.append((i, "QuickMix"))
         self.stations_model.append((None, 'sep'))
-        for i in self.pandora.stations:
+        for i in sorted(self.pandora.stations, key=extract_name):
             if not (i.isQuickMix and i.isCreator):
                 self.stations_model.append((i, i.name))
             if i.id == self.current_station_id:
