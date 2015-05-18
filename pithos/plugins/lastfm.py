@@ -50,6 +50,7 @@ class LastfmPlugin(PithosPlugin):
         self.pylast = pylast
         self.worker = get_worker()
         self.is_really_enabled = False
+        self.user_rated = False
         self.preferences_dialog = LastFmAuth(self.pylast, self.window.preferences, "lastfm_key", self.window)
         self.preferences_dialog.connect('delete-event', self.auth_closed)
 
@@ -69,17 +70,22 @@ class LastfmPlugin(PithosPlugin):
         self.connect(self.window.preferences['lastfm_key'])
         self.song_ended_handle = self.window.connect('song-ended', self.song_ended)
         self.song_changed_handle = self.window.connect('song-changed', self.song_changed)
+        self.song_rating_handle = self.window.connect('song-rating-changed', self.send_rating_change)
         self.is_really_enabled = True
         
     def on_disable(self):
         if self.is_really_enabled:
             self.window.disconnect(self.song_ended_handle)
             self.window.disconnect(self.song_changed_handle)
+            self.window.disconnect(self.song_rating_handle)
             self.is_really_enabled = False
         
     def song_ended(self, window, song):
         self.scrobble(song)
-        
+        if not self.user_rated:
+            self.send_rating_at_end(song)
+        self.user_rated = False
+
     def connect(self, session_key):
         self.network = self.pylast.get_lastfm_network(
             api_key=API_KEY, api_secret=API_SECRET,
@@ -90,19 +96,30 @@ class LastfmPlugin(PithosPlugin):
     def song_changed(self, window, song):
         self.worker.send(self.scrobbler.report_now_playing, (song.artist, song.title, song.album))
         
-    def send_rating(self, song, rating):
-        if song.rating:
+    def send_rating_change(self, window, song):
             track = self.network.get_track(song.artist, song.title)
-            if rating == 'love':
+            if song.rating == 'love':
                 self.worker.send(track.love)
-            elif rating == 'ban':
+                logging.info("Sending song rating love to last.fm")
+                self.user_rated = True     
+            elif song.rating == 'ban':
                 self.worker.send(track.ban)
-            logging.info("Sending song rating to last.fm")
+                logging.info("Sending song rating ban to last.fm")
+                self.user_rated = True
+
+    def send_rating_at_end(self, song):
+            track = self.network.get_track(song.artist, song.title)
+            if song.rating == 'love':
+                self.worker.send(track.love)
+                logging.info("Sending song rating love to last.fm")     
+            elif song.rating == 'ban':
+                self.worker.send(track.ban)
+                logging.info("Sending song rating ban to last.fm")
 
     def scrobble(self, song):
         duration = song.get_duration_sec()
         position = song.get_position_sec()
-        if duration > 30 and (position > 240 or position > duration/2):
+        if duration > 45 and (position > 240 or position > duration/2):
             logging.info("Scrobbling song")
             mode = self.pylast.SCROBBLE_MODE_PLAYED
             source = self.pylast.SCROBBLE_SOURCE_PERSONALIZED_BROADCAST
@@ -174,4 +191,3 @@ class LastFmAuth(Gtk.Dialog):
             get_worker().send(self.sg.get_web_auth_url, (), callback)
             self.button.set_label("Connecting...")
             self.button.set_sensitive(False)
-
