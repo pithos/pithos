@@ -56,8 +56,6 @@ except ImportError:
 ALBUM_ART_SIZE = 96
 ALBUM_ART_X_PAD = 6
 
-BUFFER_SIZE = 192 * 1000 * 3
-
 class CellRendererAlbumArt(Gtk.CellRenderer):
     def __init__(self):
         GObject.GObject.__init__(self)
@@ -185,8 +183,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self._query_duration = Gst.Query.new_duration(Gst.Format.TIME)
         self._query_position = Gst.Query.new_position(Gst.Format.TIME)
         self.player = Gst.ElementFactory.make("playbin", "player");
-
-        self.player.set_property('buffer-size', BUFFER_SIZE)
 
         bus = self.player.get_bus()
         bus.add_signal_watch()
