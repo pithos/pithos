@@ -456,7 +456,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.player.set_property("uri", self.current_song.audioUrl)
         self.player.set_state(Gst.State.PAUSED)
-        self.playing = None
         self.playcount += 1
 
         self.current_song.start_time = time.time()
@@ -502,7 +501,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             prev.position = self.query_position()
             self.emit("song-ended", prev)
 
-        self.playing = False
+        self.playing = None
         self.destroy_ui_loop()
         self.player.set_state(Gst.State.NULL)
         self.emit('play-state-changed', False)
