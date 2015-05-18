@@ -76,8 +76,6 @@ def buttonMenu(button, menu):
 ALBUM_ART_SIZE = 96
 ALBUM_ART_X_PAD = 6
 
-BUFFER_SIZE = 192 * 1000 * 3
-
 class CellRendererAlbumArt(Gtk.CellRenderer):
     def __init__(self):
         GObject.GObject.__init__(self)
