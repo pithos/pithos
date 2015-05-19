@@ -233,6 +233,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.volume.set_property("value", math.pow(float(self.preferences['volume']), 1.0/3.0))
 
         self.statusbar = self.builder.get_object('statusbar1')
+        self.buffer_spinner = self.builder.get_object('buffer_spinner')
 
         self.song_menu = self.builder.get_object('song_menu')
         self.song_menu_love = self.builder.get_object('menuitem_love')
@@ -744,7 +745,11 @@ class PithosWindow(Gtk.ApplicationWindow):
                 logging.debug("Buffer underrun. Pausing pipeline")
                 self.player.set_state(Gst.State.PAUSED)
                 self.player_status.began_buffering = time.time()
+                self.statusbar.push(self.statusbar.get_context_id('buffer'), 'Buffering')
+                self.buffer_spinner.props.active = True
         else:
+            self.buffer_spinner.props.active = False
+            self.statusbar.pop(self.statusbar.get_context_id('buffer'))
             if self.playing is None: # Not playing but waiting to
                 logging.debug("Buffer 100%. Song starting")
                 self.play()
@@ -755,7 +760,6 @@ class PithosWindow(Gtk.ApplicationWindow):
                 logging.debug("Buffer recovery. User paused")
             self.player_status.began_buffering = None
         self.player_status.buffer_percent = percent
-        self.update_song_row()
 
     def set_volume_cb(self, volume):
         # Convert to the cubic scale that the volume slider uses
@@ -794,8 +798,6 @@ class PithosWindow(Gtk.ApplicationWindow):
                 msg.append("%s / %s" % (pos_str, song.duration_message))
                 if not self.playing:
                     msg.append("Paused")
-            if self.player_status.buffer_percent < 100:
-                msg.append("Buffering (%i%%)" % self.player_status.buffer_percent)
         if song.message:
             msg.append(song.message)
         msg = " - ".join(msg)

@@ -232,6 +232,17 @@ audio-volume-medium-symbolic</property>
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="spacing">2</property>
+            <child>
+              <object class="GtkSpinner" id="buffer_spinner">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="expand">False</property>
