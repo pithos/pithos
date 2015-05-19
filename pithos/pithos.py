@@ -626,7 +626,9 @@ class PithosWindow(Gtk.ApplicationWindow):
       pos_stat = self.player.query(self._query_position)
       if pos_stat:
         _, position = self._query_position.parse_position()
-        return position
+      else:
+          position = 0
+      return position
 
     def query_duration(self):
       dur_stat = self.player.query(self._query_duration)
@@ -639,14 +641,14 @@ class PithosWindow(Gtk.ApplicationWindow):
       self.player_status.async_done = True
       if self.player_status.pending_duration_query:
         self.current_song.duration = self.query_duration()
-        self.current_song.duration_message = self.format_time(self.current_song.duration)
+        self.current_song.ad_duration_message = self.format_time(self.current_song.duration)
         self.check_if_song_is_ad()
         self.player_status.pending_duration_query = False
 
     def on_gst_duration_changed(self, bus, message):
       if self.player_status.async_done:
         self.current_song.duration = self.query_duration()
-        self.current_song.duration_message = self.format_time(self.current_song.duration)
+        self.current_song.ad_duration_message = self.format_time(self.current_song.duration)
         self.check_if_song_is_ad()
       else:
         self.player_status.pending_duration_query = True
@@ -784,15 +786,22 @@ class PithosWindow(Gtk.ApplicationWindow):
         album = html.escape(song.album)
         msg = []
         if song is self.current_song:
-            song.position = self.query_position()
-            if not song.bitrate is None:
-                msg.append("%0dkbit/s" % (song.bitrate))
-
-            if song.position is not None and song.duration is not None:
-                pos_str = self.format_time(song.position)
-                msg.append("%s / %s" % (pos_str, song.duration_message))
-                if self.playing == False:
-                    msg.append("Paused")
+            msg.append("%skbit/s %s" % (song.ui_bitrate, song.ui_codec))
+            if not song.is_ad:
+                duration_str = song.ui_duration
+            else:
+                if song.duration is not None:
+                    duration_str = song.ad_duration_message
+                else:
+                    duration_str = "0:00"
+            if self.playing == None:
+                msg.append("0:00 / %s" % (duration_str))
+            else:
+                position = self.query_position()
+                pos_str = self.format_time(position)
+                msg.append("%s / %s" % (pos_str, duration_str))
+            if self.playing == False:
+                msg.append("Paused")
             if self.player_status.buffer_percent < 100:
                 msg.append("Buffering (%i%%)" % self.player_status.buffer_percent)
         if song.message:
