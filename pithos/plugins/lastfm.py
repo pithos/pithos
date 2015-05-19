@@ -102,7 +102,7 @@ class LastfmPlugin(PithosPlugin):
     def scrobble(self, song):
         duration = song.get_duration_sec()
         position = song.get_position_sec()
-        if duration > 30 and (position > 240 or position > duration/2):
+        if duration > 45 and (position > 240 or position > duration/2):
             logging.info("Scrobbling song")
             mode = self.pylast.SCROBBLE_MODE_PLAYED
             source = self.pylast.SCROBBLE_SOURCE_PERSONALIZED_BROADCAST
