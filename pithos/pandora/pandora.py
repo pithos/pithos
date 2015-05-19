@@ -285,7 +285,7 @@ class Station(object):
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken}, https=True)
+        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken, 'includeTrackLength': True}, https=True)
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
@@ -319,6 +319,7 @@ class Song(object):
     def __init__(self, pandora, d):
         self.pandora = pandora
 
+        self.ui_duration = self.format_ui_duration(d['trackLength'])
         self.album = d['albumName']
         self.artist = d['artistName']
         self.audioUrlMap = d['audioUrlMap']
@@ -340,6 +341,20 @@ class Song(object):
         self.finished = False
         self.playlist_time = time.time()
         self.feedbackId = None
+        self.ui_codec = None
+        self.ui_bitrate = None
+
+    def format_ui_duration(self, time_int):
+        s = time_int % 60
+        time_int //= 60
+        m = time_int % 60
+        time_int //= 60
+        h = time_int
+
+        if h:
+            return "%i:%02i:%02i"%(h, m, s)
+        else:
+            return "%i:%02i"%(m, s)
 
     @property
     def title(self):
@@ -369,11 +384,15 @@ class Song(object):
         quality = self.pandora.audio_quality
         try:
             q = self.audioUrlMap[quality]
+            self.ui_codec = q['encoding']
+            self.ui_bitrate = q['bitrate']
             logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
             return q['audioUrl']
         except KeyError:
             logging.warn("Unable to use audio format %s. Using %s",
                            quality, list(self.audioUrlMap.keys())[0])
+            self.ui_codec = list(self.audioUrlMap.values())[0]['encoding']
+            self.Ui_bitrate = list(self.audioUrlMap.values())[0]['bitrate']
             return list(self.audioUrlMap.values())[0]['audioUrl']
 
     @property
@@ -444,4 +463,3 @@ class SearchResult(object):
             self.artist = d['artistName']
         elif resultType == 'artist':
             self.name = d['artistName']
-
