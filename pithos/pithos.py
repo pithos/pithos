@@ -792,7 +792,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             if song.position is not None and song.duration is not None:
                 pos_str = self.format_time(song.position)
                 msg.append("%s / %s" % (pos_str, song.duration_message))
-                if not self.playing:
+                if self.playing == False:
                     msg.append("Paused")
             if self.player_status.buffer_percent < 100:
                 msg.append("Buffering (%i%%)" % self.player_status.buffer_percent)
