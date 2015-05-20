@@ -822,7 +822,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
             self.songs_model[song.index][2] = self.song_icon(song) or ""
-        return self.playing
+        return True
 
     def create_ui_loop(self):
         if not self.ui_loop_timer_id:
