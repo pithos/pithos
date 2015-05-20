@@ -392,7 +392,7 @@ class Song(object):
             logging.warn("Unable to use audio format %s. Using %s",
                            quality, list(self.audioUrlMap.keys())[0])
             self.ui_codec = list(self.audioUrlMap.values())[0]['encoding']
-            self.Ui_bitrate = list(self.audioUrlMap.values())[0]['bitrate']
+            self.ui_bitrate = list(self.audioUrlMap.values())[0]['bitrate']
             return list(self.audioUrlMap.values())[0]['audioUrl']
 
     @property
