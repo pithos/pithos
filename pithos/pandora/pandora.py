@@ -330,7 +330,6 @@ class Song(object):
         self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
 
-        self.bitrate = None
         self.is_ad = None  # None = we haven't checked, otherwise True/False
         self.tired=False
         self.message=''
@@ -369,11 +368,15 @@ class Song(object):
         quality = self.pandora.audio_quality
         try:
             q = self.audioUrlMap[quality]
+            self.codec = q['encoding']
+            self.bitrate = q['bitrate']
             logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
             return q['audioUrl']
         except KeyError:
             logging.warn("Unable to use audio format %s. Using %s",
                            quality, list(self.audioUrlMap.keys())[0])
+            self.codec = list(self.audioUrlMap.values())[0]['encoding']
+            self.bitrate = list(self.audioUrlMap.values())[0]['bitrate']
             return list(self.audioUrlMap.values())[0]['audioUrl']
 
     @property
@@ -444,4 +447,3 @@ class SearchResult(object):
             self.artist = d['artistName']
         elif resultType == 'artist':
             self.name = d['artistName']
-
