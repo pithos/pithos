@@ -65,7 +65,6 @@
       <object class="GtkHeaderBar" id="headerbar1">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="title">Pithos</property>
         <property name="show_close_button">True</property>
         <child>
           <object class="GtkBox" id="playcontrol_box">
@@ -157,49 +156,74 @@ audio-volume-medium-symbolic</property>
             </style>
           </object>
         </child>
-        <child>
-          <object class="GtkMenuButton" id="stations">
+        <child type="title">
+          <object class="GtkBox" id="box1">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="receives_default">True</property>
+            <property name="orientation">vertical</property>
             <child>
-              <object class="GtkBox" id="box2">
+              <object class="GtkMenuButton" id="stations">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="relief">none</property>
                 <child>
-                  <object class="GtkLabel" id="stationslabel">
+                  <object class="GtkBox" id="box2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="single_line_mode">True</property>
-                    <property name="max_width_chars">40</property>
+                    <property name="spacing">5</property>
+                    <child>
+                      <object class="GtkLabel" id="stationslabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="single_line_mode">True</property>
+                        <property name="max_width_chars">40</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkImage" id="stations_image">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="halign">end</property>
+                        <property name="valign">center</property>
+                        <property name="icon_name">pan-down-symbolic</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
                   </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkImage" id="stations_image">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="halign">end</property>
-                    <property name="valign">center</property>
-                    <property name="icon_name">radio-station-symbolic</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
                 </child>
               </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="subtitle">
+                <property name="visible">True</property>
+                <property name="sensitive">False</property>
+                <property name="can_focus">False</property>
+                <attributes>
+                  <attribute name="scale" value="0.80000000000000004"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
             </child>
           </object>
-          <packing>
-            <property name="pack_type">end</property>
-            <property name="position">1</property>
-          </packing>
         </child>
       </object>
     </child>

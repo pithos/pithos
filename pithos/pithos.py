@@ -227,7 +227,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         Gtk.Window.set_default_icon_name('pithos')
         os.environ['PULSE_PROP_media.role'] = 'music'
 
-        self.headerbar = self.builder.get_object('headerbar1')
+        self.subtitle = self.builder.get_object('subtitle')
 
         self.playpause_image = self.builder.get_object('playpause_image')
 
@@ -465,7 +465,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_song.start_time = time.time()
         self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
         self.songs_treeview.set_cursor(song_index, None, 0)
-        self.headerbar.set_subtitle("%s - %s" % (self.current_song.title, self.current_song.artist))
+        self.subtitle.set_text("%s - %s" % (self.current_song.title, self.current_song.artist))
 
         self.emit('song-changed', self.current_song)
 
@@ -620,7 +620,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_station = station
         if not reconnecting:
             self.get_playlist(start = True)
-        self.set_title(station.name)
+        self.stations_label.set_text(station.name)
         self.stations_popover.select_station(station)
 
     def query_position(self):
