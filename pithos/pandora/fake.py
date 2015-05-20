@@ -113,16 +113,22 @@ class FakePandora(Pandora):
             'artistName':"ArtistName",
             'audioUrlMap': {
                 'highQuality': {
-                    'audioUrl': audio_url
+                    'audioUrl': audio_url,
+                    'bitrate':'19',
+                    'encoding':'aac'
                 },
                 'mediumQuality': {
-                    'audioUrl': audio_url
+                    'audioUrl': audio_url,
+                    'bitrate':'19',
+                    'encoding':'aac'
                 },
                 'lowQuality': {
-                    'audioUrl': audio_url
+                    'audioUrl': audio_url,
+                    'bitrate':'19',
+                    'encoding':'aac'
                 },
             },
-            'trackGain':0,
+            'trackLength':121,
             'trackToken':'5908540384',
             'songRating': 1 if c%3 == 0 else 0,
             'stationId': stationId,
@@ -132,4 +138,3 @@ class FakePandora(Pandora):
             'albumArtUrl':'http://pithos.github.io/img/pithos_logo.png',
             'songExplorerUrl':'http://pithos.github.io/test-song.xml',
         }
-
