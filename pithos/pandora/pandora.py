@@ -330,6 +330,8 @@ class Song(object):
         self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
 
+
+        self.scrobbled = False
         self.bitrate = None
         self.is_ad = None  # None = we haven't checked, otherwise True/False
         self.tired=False
@@ -444,4 +446,3 @@ class SearchResult(object):
             self.artist = d['artistName']
         elif resultType == 'artist':
             self.name = d['artistName']
-
