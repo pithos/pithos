@@ -43,7 +43,7 @@ from .StationsPopover import StationsPopover
 from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
-from .pithosconfig import get_ui_file, get_media_file, VERSION
+from .pithosconfig import *
 from .plugin import load_plugins
 from .util import parse_proxy, open_browser
 
@@ -226,6 +226,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         GLib.set_application_name("Pithos")
         Gtk.Window.set_default_icon_name('pithos')
         os.environ['PULSE_PROP_media.role'] = 'music'
+
+        self.headerbar = self.builder.get_object('headerbar1')
 
         self.playpause_image = self.builder.get_object('playpause_image')
 
@@ -463,7 +465,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_song.start_time = time.time()
         self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
         self.songs_treeview.set_cursor(song_index, None, 0)
-        self.set_title("Pithos - %s by %s" % (self.current_song.title, self.current_song.artist))
+        self.headerbar.set_subtitle("%s - %s" % (self.current_song.title, self.current_song.artist))
 
         self.emit('song-changed', self.current_song)
 
@@ -618,7 +620,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_station = station
         if not reconnecting:
             self.get_playlist(start = True)
-        self.stations_label.set_text(station.name)
+        self.set_title(station.name)
         self.stations_popover.select_station(station)
 
     def query_position(self):
@@ -1110,8 +1112,9 @@ class PithosApplication(Gtk.Application):
     def do_activate(self):
         if not self.window:
             logging.info("Pithos %s" %VERSION)
+            icon_theme = Gtk.IconTheme.get_default()
+            icon_theme.append_search_path(os.path.join(getdatapath(), 'media'))
             self.window = NewPithosWindow(self, self.options)
-
         self.window.present()
 
     def do_shutdown(self):
