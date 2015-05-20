@@ -783,6 +783,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         artist = html.escape(song.artist)
         album = html.escape(song.album)
         msg = []
+        if song.scrobbled:
+            msg.append("<small>Scrobbled to Last.fm</small>")
         if song is self.current_song:
             song.position = self.query_position()
             if not song.bitrate is None:
