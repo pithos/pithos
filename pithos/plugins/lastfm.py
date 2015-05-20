@@ -107,6 +107,7 @@ class LastfmPlugin(PithosPlugin):
             mode = self.pylast.SCROBBLE_MODE_PLAYED
             source = self.pylast.SCROBBLE_SOURCE_PERSONALIZED_BROADCAST
             self.worker.send(self.scrobbler.scrobble, (song.artist, song.title, int(song.start_time), source, mode, duration, song.album))
+            song.scrobbled = True
 
 
 class LastFmAuth(Gtk.Dialog):
@@ -174,4 +175,3 @@ class LastFmAuth(Gtk.Dialog):
             get_worker().send(self.sg.get_web_auth_url, (), callback)
             self.button.set_label("Connecting...")
             self.button.set_sensitive(False)
-
