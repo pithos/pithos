@@ -28,6 +28,9 @@ bin/pithos: bin/pithos.in
 
 # ------------ data ----------------
 
+gsettings_SCHEMAS = data/pithos.gschema.xml
+@GSETTINGS_RULES@
+
 pkgdata_DATA = pithos.gresource
 noinst_DATA = $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=data --generate-dependencies data/pithos.gresource.xml)
 pithos.gresource: data/pithos.gresource.xml $(noinst_DATA)

@@ -1,5 +1,6 @@
 data/pithos.appdata.xml.in
 data/pithos.desktop.in
+[type: gettext/gsettings]data/pithos.gschema.xml
 [type: gettext/glade]data/ui/AboutPithosDialog.ui
 [type: gettext/glade]data/ui/PithosWindow.ui
 [type: gettext/glade]data/ui/PreferencesPithosDialog.ui

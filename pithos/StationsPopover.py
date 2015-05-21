@@ -16,7 +16,7 @@
 ### END LICENSE
 
 from .util import open_browser
-from gi.repository import GLib, Gtk, Gdk, Pango
+from gi.repository import GLib, Gio, Gtk, Gdk, Pango
 import logging
 
 
@@ -52,6 +52,9 @@ class StationsPopover(Gtk.Popover):
         box.props.margin = 3
         box.pack_start(box2, True, False, 3)
         box.pack_start(sw, True, True, 0)
+
+        settings = Gio.Settings.new('io.github.Pithos')
+        settings.bind('sort-stations', self.sort, 'active', Gio.SettingsBindFlags.DEFAULT)
 
         box.show_all()
         self.add (box)

@@ -17,6 +17,7 @@
 import logging
 import glob
 import os
+from gi.repository import Gio
 
 class PithosPlugin:
     _PITHOS_PLUGIN = True # used to find the plugin class in a module
@@ -82,7 +83,6 @@ def load_plugin(name, window):
 
 def load_plugins(window):
     plugins = window.plugins
-    prefs = window.preferences
     
     plugins_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
     discovered_plugins = [ fname.replace(".py", "") for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("_") ]
@@ -93,7 +93,9 @@ def load_plugins(window):
         else:
             plugin = plugins[name]
 
-        if plugin.preference and prefs.get(plugin.preference, False):
+        plugin.settings = Gio.Settings.new_with_path('io.github.Pithos.plugin', '/io/github/Pithos/%s/' %name)
+
+        if plugin.settings.get_boolean('enabled'):
             plugin.enable()
         else:
             plugin.disable()

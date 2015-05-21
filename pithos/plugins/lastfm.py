@@ -46,23 +46,23 @@ class LastfmPlugin(PithosPlugin):
         self.pylast = pylast
         self.worker = get_worker()
         self.is_really_enabled = False
-        self.preferences_dialog = LastFmAuth(self.pylast, self.window.preferences, "lastfm_key", self.window)
+        self.preferences_dialog = LastFmAuth(self.pylast, self.settings, 'data', self.window)
         self.preferences_dialog.connect('delete-event', self.auth_closed)
 
     def on_enable(self):
-        if self.window.preferences['lastfm_key']:
+        if self.settings.get_string('data'):
             self._enable_real()
 
     def auth_closed(self, widget, event):
-        if self.window.preferences['lastfm_key']:
+        if self.settings.get_string('data'):
             self._enable_real()
         else:
-            self.window.preferences['enable_lastfm'] = False
+            self.settings.set_boolean('enabled', False)
         widget.hide()
         return True # Don't delete window
 
     def _enable_real(self):
-        self.connect(self.window.preferences['lastfm_key'])
+        self.connect(self.settings.get_string('data'))
         self.song_ended_handle = self.window.connect('song-ended', self.song_ended)
         self.song_changed_handle = self.window.connect('song-changed', self.song_changed)
         self.is_really_enabled = True
@@ -104,12 +104,12 @@ class LastfmPlugin(PithosPlugin):
 
 
 class LastFmAuth(Gtk.Dialog):
-    def __init__(self, pylast, d,  prefname, parent):
+    def __init__(self, pylast, settings, key, parent):
         Gtk.Dialog.__init__(self)
         self.set_default_size(200, -1)
 
-        self.dict = d
-        self.prefname = prefname
+        self.settings = settings
+        self.prefname = key
         self.pylast = pylast
         self.auth_url= False
 
@@ -128,10 +128,13 @@ class LastFmAuth(Gtk.Dialog):
     
     @property
     def enabled(self):
-        return self.dict[self.prefname]
+        return self.settings.get_string(self.prefname)
     
     def setkey(self, key):
-        self.dict[self.prefname] = key
+        if not key:
+            self.settings.reset(self.prefname)
+        else:
+            self.settings.set_string(self.prefname, key)
         self.set_button_text()
         
     def set_button_text(self):
@@ -155,7 +158,7 @@ class LastFmAuth(Gtk.Dialog):
             self.auth_url = False
                 
         elif self.enabled:
-            self.setkey(False)
+            self.setkey('')
         else:
             self.network = self.pylast.get_lastfm_network(api_key=API_KEY, api_secret=API_SECRET)
             self.sg = self.pylast.SessionKeyGenerator(self.network)
