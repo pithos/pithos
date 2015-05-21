@@ -18,7 +18,6 @@ import sys
 import os
 import stat
 import logging
-from copy import deepcopy
 
 from gi.repository import Gtk, GObject, GLib, Pango
 
@@ -138,7 +137,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         """get_preferences  - returns a dictionary object that contains
         preferences for pithos.
         """
-        return deepcopy(self.__preferences)
+        return self.__preferences
 
     def on_plugins_row_selected(self, box, row):
         if row:

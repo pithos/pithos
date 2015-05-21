@@ -29,6 +29,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from copy import deepcopy
 
 import gi
 gi.require_version('Gst', '1.0')
@@ -1045,16 +1046,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.prefs_dlg.hide()
 
         if response == Gtk.ResponseType.APPLY:
-            old_prefs = self.preferences
             self.preferences = self.prefs_dlg.get_preferences()
-            if (   self.preferences['proxy'] != old_prefs['proxy']
-                or self.preferences['control_proxy'] != old_prefs['control_proxy']):
+            if (   self.preferences['proxy'] != self.old_prefs['proxy']
+                or self.preferences['control_proxy'] != self.old_prefs['control_proxy']):
                 self.set_proxy()
-            if self.preferences['audio_quality'] != old_prefs['audio_quality']:
+            if self.preferences['audio_quality'] != self.old_prefs['audio_quality']:
                 self.set_audio_quality()
-            if (   self.preferences['username'] != old_prefs['username']
-                or self.preferences['password'] != old_prefs['password']
-                or self.preferences['pandora_one'] != old_prefs['pandora_one']):
+            if (   self.preferences['username'] != self.old_prefs['username']
+                or self.preferences['password'] != self.old_prefs['password']
+                or self.preferences['pandora_one'] != self.old_prefs['pandora_one']):
                     self.pandora_connect()
         else:
             if not self.preferences['username'] or not self.preferences['password']:
@@ -1062,6 +1062,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def show_preferences(self):
         """preferences - display the preferences window for pithos """
+        self.old_prefs = deepcopy(self.preferences)
         self.prefs_dlg.show()
 
     def show_stations(self):
