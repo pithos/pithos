@@ -15,6 +15,7 @@
 ### END LICENSE
 
 import sys
+import signal
 import logging
 import argparse
 
@@ -23,7 +24,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GLib
 
 from .pithosconfig import get_ui_file, VERSION
-from .pithos import NewPithosWindow
+from .pithos import PithosWindow
 
 class PithosApplication(Gtk.Application):
     def __init__(self):
@@ -35,6 +36,7 @@ class PithosApplication(Gtk.Application):
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
 
         # Setup appmenu
         builder = Gtk.Builder()
@@ -88,7 +90,7 @@ class PithosApplication(Gtk.Application):
     def do_activate(self):
         if not self.window:
             logging.info("Pithos %s" %VERSION)
-            self.window = NewPithosWindow(self, self.options)
+            self.window = PithosWindow(self, self.options)
 
         self.window.present()
 

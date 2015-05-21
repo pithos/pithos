@@ -2,14 +2,13 @@
 <!-- Generated with glade 3.18.1 -->
 <interface>
   <requires lib="gtk+" version="3.14"/>
-  <requires lib="pithos_window" version="1.0"/>
   <object class="GtkAdjustment" id="adjustment1">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
     <property name="page_size">10</property>
   </object>
-  <object class="PithosWindow" id="pithos_window">
+  <template class="PithosWindow" parent="GtkApplicationWindow">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Pithos</property>
     <property name="default_width">500</property>
@@ -144,7 +143,7 @@ audio-volume-medium-symbolic</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
-                  <object class="GtkMenuButton" id="stations">
+                  <object class="GtkMenuButton" id="stations_button">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="receives_default">True</property>
@@ -154,7 +153,7 @@ audio-volume-medium-symbolic</property>
                         <property name="can_focus">False</property>
                         <property name="spacing">5</property>
                         <child>
-                          <object class="GtkLabel" id="stationslabel">
+                          <object class="GtkLabel" id="stations_label">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="single_line_mode">True</property>
@@ -224,7 +223,7 @@ audio-volume-medium-symbolic</property>
           </packing>
         </child>
         <child>
-          <object class="GtkStatusbar" id="statusbar1">
+          <object class="GtkStatusbar" id="statusbar">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="spacing">2</property>
@@ -237,13 +236,13 @@ audio-volume-medium-symbolic</property>
         </child>
       </object>
     </child>
-  </object>
+  </template>
   <object class="GtkMessageDialog" id="api_update_dialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="modal">True</property>
     <property name="type_hint">dialog</property>
-    <property name="transient_for">pithos_window</property>
+    <property name="transient_for">PithosWindow</property>
     <property name="message_type">error</property>
     <property name="text" translatable="yes">Pithos Upgrade Required</property>
     <property name="secondary_text" translatable="yes">Pithos needs to be updated for compatibility with Pandora's latest changes.</property>
@@ -306,7 +305,7 @@ audio-volume-medium-symbolic</property>
     <property name="border_width">5</property>
     <property name="modal">True</property>
     <property name="type_hint">dialog</property>
-    <property name="transient_for">pithos_window</property>
+    <property name="transient_for">PithosWindow</property>
     <property name="message_type">error</property>
     <property name="text" translatable="yes">Error</property>
     <child internal-child="vbox">
@@ -381,7 +380,7 @@ audio-volume-medium-symbolic</property>
     <property name="modal">True</property>
     <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">True</property>
-    <property name="transient_for">pithos_window</property>
+    <property name="transient_for">PithosWindow</property>
     <property name="message_type">error</property>
     <property name="text" translatable="yes">Error</property>
     <child internal-child="vbox">
@@ -427,7 +426,7 @@ audio-volume-medium-symbolic</property>
     <property name="border_width">5</property>
     <property name="modal">True</property>
     <property name="type_hint">dialog</property>
-    <property name="transient_for">pithos_window</property>
+    <property name="transient_for">PithosWindow</property>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox3">
         <property name="visible">True</property>
@@ -460,7 +459,7 @@ audio-volume-medium-symbolic</property>
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
-      <object class="GtkMenuItem" id="menuitem_info">
+      <object class="GtkMenuItem" id="song_menu_info">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">Song _Info...</property>
@@ -469,7 +468,7 @@ audio-volume-medium-symbolic</property>
       </object>
     </child>
     <child>
-      <object class="GtkMenuItem" id="menuitem_love">
+      <object class="GtkMenuItem" id="song_menu_love">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">_Love Song</property>
@@ -478,7 +477,7 @@ audio-volume-medium-symbolic</property>
       </object>
     </child>
     <child>
-      <object class="GtkMenuItem" id="menuitem_unlove">
+      <object class="GtkMenuItem" id="song_menu_unlove">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">_Unlove Song</property>
@@ -487,7 +486,7 @@ audio-volume-medium-symbolic</property>
       </object>
     </child>
     <child>
-      <object class="GtkMenuItem" id="menuitem_ban">
+      <object class="GtkMenuItem" id="song_menu_ban">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">_Ban Song</property>
@@ -496,7 +495,7 @@ audio-volume-medium-symbolic</property>
       </object>
     </child>
     <child>
-      <object class="GtkMenuItem" id="menuitem_unban">
+      <object class="GtkMenuItem" id="song_menu_unban">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="label" translatable="yes">_Unban Song</property>
@@ -505,7 +504,7 @@ audio-volume-medium-symbolic</property>
       </object>
     </child>
     <child>
-      <object class="GtkMenuItem" id="menuitem_tired">
+      <object class="GtkMenuItem" id="song_menu_tired">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Don't play song for a month</property>
