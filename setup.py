@@ -107,6 +107,6 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     entry_points={
-        'gui_scripts': ['pithos = pithos.pithos:main']
+        'gui_scripts': ['pithos = pithos.application:main']
     }
 )

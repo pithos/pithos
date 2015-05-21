@@ -1,3 +1,3 @@
-from pithos.pithos import main
+from pithos.application import main
 
 main()
