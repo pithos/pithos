@@ -18,6 +18,7 @@ import sys
 import os
 import stat
 import logging
+from copy import deepcopy
 
 from gi.repository import Gtk, GObject, GLib, Pango
 
@@ -106,6 +107,8 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.builder.connect_signals(self)
         self.preference_btn = self.builder.get_object('prefs_btn')
         self.listbox = self.builder.get_object('plugins_listbox')
+        self.email = self.builder.get_object('prefs_username')
+        self.password = self.builder.get_object('prefs_password')
 
         # initialize the "Audio Quality" combobox backing list
         audio_quality_combo = self.builder.get_object('prefs_audio_quality')
@@ -135,7 +138,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         """get_preferences  - returns a dictionary object that contains
         preferences for pithos.
         """
-        return self.__preferences
+        return deepcopy(self.__preferences)
 
     def on_plugins_row_selected(self, box, row):
         if row:
@@ -147,6 +150,12 @@ class PreferencesPithosDialog(Gtk.Dialog):
         dialog.set_destroy_with_parent(True)
         dialog.set_modal(True)
         dialog.show_all()
+
+    def on_account_changed(self, widget):
+        if not self.email.get_text() or not self.password.get_text():
+            self.set_response_sensitive(Gtk.ResponseType.APPLY, False)
+        else:
+            self.set_response_sensitive(Gtk.ResponseType.APPLY, True)
 
     def on_listbox_update_header(self, row, before, junk = None):
         if before and not row.get_header():
@@ -259,8 +268,8 @@ class PreferencesPithosDialog(Gtk.Dialog):
         f.close()
 
     def setup_fields(self):
-        self.builder.get_object('prefs_username').set_text(self.__preferences["username"])
-        self.builder.get_object('prefs_password').set_text(self.__preferences["password"])
+        self.email.set_text(self.__preferences["username"])
+        self.password.set_text(self.__preferences["password"])
         self.builder.get_object('checkbutton_pandora_one').set_active(self.__preferences["pandora_one"])
         self.builder.get_object('prefs_proxy').set_text(self.__preferences["proxy"])
         self.builder.get_object('prefs_control_proxy').set_text(self.__preferences["control_proxy"])
@@ -268,6 +277,8 @@ class PreferencesPithosDialog(Gtk.Dialog):
         if not pacparser_imported:
             self.builder.get_object('prefs_control_proxy_pac').set_sensitive(False)
             self.builder.get_object('prefs_control_proxy_pac').set_tooltip_text("Please install python-pacparser")
+
+        self.on_account_changed(None)
 
         audio_quality_combo = self.builder.get_object('prefs_audio_quality')
         for row in audio_quality_combo.get_model():
@@ -278,35 +289,26 @@ class PreferencesPithosDialog(Gtk.Dialog):
         for row in self.listbox.get_children():
             row.switch.set_active(self.__preferences[row.plugin.preference])
 
-    def ok(self, widget, data=None):
-        """ok - The user has elected to save the changes.
-        Called before the dialog returns Gtk.RESONSE_OK from run().
-        """
+    def do_response(self, response_id):
+        if response_id == Gtk.ResponseType.APPLY:
+            self.__preferences["username"] = self.email.get_text()
+            self.__preferences["password"] = self.password.get_text()
+            self.__preferences["pandora_one"] = self.builder.get_object('checkbutton_pandora_one').get_active()
+            self.__preferences["proxy"] = self.builder.get_object('prefs_proxy').get_text()
+            self.__preferences["control_proxy"] = self.builder.get_object('prefs_control_proxy').get_text()
+            self.__preferences["control_proxy_pac"] = self.builder.get_object('prefs_control_proxy_pac').get_text()
 
-        self.__preferences["username"] = self.builder.get_object('prefs_username').get_text()
-        self.__preferences["password"] = self.builder.get_object('prefs_password').get_text()
-        self.__preferences["pandora_one"] = self.builder.get_object('checkbutton_pandora_one').get_active()
-        self.__preferences["proxy"] = self.builder.get_object('prefs_proxy').get_text()
-        self.__preferences["control_proxy"] = self.builder.get_object('prefs_control_proxy').get_text()
-        self.__preferences["control_proxy_pac"] = self.builder.get_object('prefs_control_proxy_pac').get_text()
+            audio_quality = self.builder.get_object('prefs_audio_quality')
+            active_idx = audio_quality.get_active()
+            if active_idx != -1: # ignore unknown format
+                self.__preferences["audio_quality"] = audio_quality.get_model()[active_idx][0]
 
-        audio_quality = self.builder.get_object('prefs_audio_quality')
-        active_idx = audio_quality.get_active()
-        if active_idx != -1: # ignore unknown format
-            self.__preferences["audio_quality"] = audio_quality.get_model()[active_idx][0]
+            for row in self.listbox.get_children():
+                self.__preferences[row.plugin.preference] = row.switch.get_active()
 
-        for row in self.listbox.get_children():
-            self.__preferences[row.plugin.preference] = row.switch.get_active()
-
-        self.save()
-
-    def cancel(self, widget, data=None):
-        """cancel - The user has elected cancel changes.
-        Called before the dialog returns Gtk.ResponseType.CANCEL for run()
-        """
-
-        self.setup_fields() # restore fields to previous values
-        pass
+            self.save()
+        else:
+            self.setup_fields() # restore fields to previous values
 
 
 def NewPreferencesPithosDialog():

@@ -152,6 +152,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog()
         self.prefs_dlg.set_transient_for(self)
+        self.prefs_dlg.connect_after('response', self.on_prefs_response)
         self.preferences = self.prefs_dlg.get_preferences()
 
         if self.prefs_dlg.fix_perms():
@@ -166,13 +167,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         load_plugins(self)
         self.prefs_dlg.set_plugins(self.plugins)
 
-        if not self.preferences['username']:
-            self.show_preferences(is_startup=True)
-
         self.pandora = make_pandora(self.cmdopts.test)
         self.set_proxy()
         self.set_audio_quality()
-        self.pandora_connect()
+
+        if not self.preferences['username'] or not self.preferences['password']:
+            self.show()
+            self.show_preferences()
+        else:
+            self.pandora_connect()
 
     def init_core(self):
         #                                Song object            display text  icon  album art
@@ -1038,29 +1041,28 @@ class PithosWindow(Gtk.ApplicationWindow):
         about.run()
         about.destroy()
 
-    def show_preferences(self, is_startup=False):
-        """preferences - display the preferences window for pithos """
-        if is_startup:
-            self.prefs_dlg.set_type_hint(Gdk.WindowTypeHint.NORMAL)
-
-        old_prefs = dict(self.preferences)
-        response = self.prefs_dlg.run()
+    def on_prefs_response(self, widget, response):
         self.prefs_dlg.hide()
 
-        if response == Gtk.ResponseType.OK:
+        if response == Gtk.ResponseType.APPLY:
+            old_prefs = self.preferences
             self.preferences = self.prefs_dlg.get_preferences()
-            if not is_startup:
-                if (   self.preferences['proxy'] != old_prefs['proxy']
-                    or self.preferences['control_proxy'] != old_prefs['control_proxy']):
-                    self.set_proxy()
-                if self.preferences['audio_quality'] != old_prefs['audio_quality']:
-                    self.set_audio_quality()
-                if (   self.preferences['username'] != old_prefs['username']
-                    or self.preferences['password'] != old_prefs['password']
-                    or self.preferences['pandora_one'] != old_prefs['pandora_one']):
-                        self.pandora_connect()
-            else:
-                self.prefs_dlg.set_type_hint(Gdk.WindowTypeHint.DIALOG)
+            if (   self.preferences['proxy'] != old_prefs['proxy']
+                or self.preferences['control_proxy'] != old_prefs['control_proxy']):
+                self.set_proxy()
+            if self.preferences['audio_quality'] != old_prefs['audio_quality']:
+                self.set_audio_quality()
+            if (   self.preferences['username'] != old_prefs['username']
+                or self.preferences['password'] != old_prefs['password']
+                or self.preferences['pandora_one'] != old_prefs['pandora_one']):
+                    self.pandora_connect()
+        else:
+            if not self.preferences['username'] or not self.preferences['password']:
+                self.quit()
+
+    def show_preferences(self):
+        """preferences - display the preferences window for pithos """
+        self.prefs_dlg.show()
 
     def show_stations(self):
         if self.stations_dlg:
