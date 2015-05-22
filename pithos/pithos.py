@@ -56,6 +56,7 @@ except ImportError:
 
 ALBUM_ART_SIZE = 96
 ALBUM_ART_X_PAD = 6
+GENERIC_LOGO = 'http://cont-sv5-1.pandora.com/images/public/devicead/1/n/r/a/daarcmdywarn1_500W_500H.jpg'
 
 class CellRendererAlbumArt(Gtk.CellRenderer):
     def __init__(self):
@@ -95,14 +96,17 @@ def get_album_art(url, *extra):
     try:
         with urllib.request.urlopen(url) as f:
             image = f.read()
-    except urllib.error.HTTPError:
-        logging.warn('Invalid image url received')
-        return (None,) + extra
 
-    with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
-        loader.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
-        loader.write(image)
-        return (loader.get_pixbuf(),) + extra
+        with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
+            loader.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
+            loader.write(image)
+            return (loader.get_pixbuf(),) + extra
+
+    except urllib.error.HTTPError:
+        logging.warn('The url for GENERIC_LOGO is no longer valid. Using default_album_art.')
+        aa = GdkPixbuf.Pixbuf.new_from_file(get_media_file('album'))
+        default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
+        return (default_album_art,) + extra
 
 class PlayerStatus (object):
   def __init__(self):
@@ -612,6 +616,10 @@ class PithosWindow(Gtk.ApplicationWindow):
                 i.art_pixbuf = None
                 if i.artRadio:
                     self.art_worker.send(get_album_art, (i.artRadio, i, i.index), art_callback)
+                else:
+                    logging.debug('No album art for %i, using generic Pandora logo.' %i.index)
+                    self.worker.send(get_album_art, (GENERIC_LOGO, i, i.index), art_callback)
+
 
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if self.start_new_playlist:
@@ -1113,4 +1121,3 @@ def NewPithosWindow(app, options):
     window.set_application(app)
     window.finish_initializing(builder, options, app)
     return window
-

@@ -18,6 +18,7 @@
 import dbus
 import dbus.service
 from xml.etree import ElementTree
+GENERIC_LOGO = 'http://cont-sv5-1.pandora.com/images/public/devicead/1/n/r/a/daarcmdywarn1_500W_500H.jpg'
 
 class PithosMprisService(dbus.service.Object):
     MEDIA_PLAYER2_IFACE = 'org.mpris.MediaPlayer2'
@@ -86,7 +87,7 @@ class PithosMprisService(dbus.service.Object):
             "xesam:title": title or "Title Unknown",
             "xesam:artist": artists or ["Artist Unknown"],
             "xesam:album": album or "Album Unknown",
-            "mpris:artUrl": artUrl or "",
+            "mpris:artUrl": artUrl or GENERIC_LOGO or "",
             "pithos:rating": rating or "",
         }, "sv", variant_level=1)
 
