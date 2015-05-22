@@ -30,7 +30,7 @@ class StationsPopover(Gtk.Popover):
         self.search = Gtk.SearchEntry()
         self.sorted = False
         sort = Gtk.ToggleButton.new()
-        sort.add(Gtk.Image.new_from_icon_name("view-sort-ascending-symbolic", Gtk.IconSize.BUTTON))
+        sort.add(Gtk.Image.new_from_icon_name("go-down-symbolic", Gtk.IconSize.BUTTON))
         sort.connect("toggled", self.sort_changed)
         box2.pack_start(self.search, True, True, 0)
         box2.add(sort)
