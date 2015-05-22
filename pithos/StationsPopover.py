@@ -85,6 +85,8 @@ class StationsPopover(Gtk.Popover):
     def listbox_header(self, row, before):
         if before and before.station.isQuickMix and not row.get_header():
             row.set_header(Gtk.Separator.new(Gtk.Orientation.HORIZONTAL))
+        elif row.get_header():
+            row.set_header(None)
 
     def listbox_filter(self, row, entry):
         search_text = entry.get_text().lower()
