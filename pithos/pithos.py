@@ -812,6 +812,8 @@ class PithosWindow(Gtk.ApplicationWindow):
             else:
                 logging.debug("Buffer recovery. User paused")
             self.player_status.began_buffering = None
+        if percent == 0 or percent == self.player_status.buffer_percent:
+            return
         self.player_status.buffer_percent = percent
         self.update_song_row()
 
