@@ -100,13 +100,15 @@ class LastfmPlugin(PithosPlugin):
             logging.info("Sending song rating to last.fm")
 
     def scrobble(self, song):
-        duration = song.get_duration_sec()
-        position = song.get_position_sec()
-        if not song.is_ad and duration > 30 and (position > 240 or position > duration/2):
-            logging.info("Scrobbling song")
-            mode = self.pylast.SCROBBLE_MODE_PLAYED
-            source = self.pylast.SCROBBLE_SOURCE_PERSONALIZED_BROADCAST
-            self.worker.send(self.scrobbler.scrobble, (song.artist, song.title, int(song.start_time), source, mode, duration, song.album))
+        if song.is_ad == False:
+            duration = song.get_duration_sec()
+            position = song.get_position_sec()
+            if duration is not None and position is not None:
+                if duration > 30 and (position > 240 or position > duration/2):
+                    logging.info("Scrobbling song")
+                    mode = self.pylast.SCROBBLE_MODE_PLAYED
+                    source = self.pylast.SCROBBLE_SOURCE_PERSONALIZED_BROADCAST
+                    self.worker.send(self.scrobbler.scrobble, (song.artist, song.title, int(song.start_time), source, mode, duration, song.album))
 
 
 class LastFmAuth(Gtk.Dialog):
