@@ -184,7 +184,7 @@ class PithosMprisService(dbus.service.Object):
 
     @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def Previous(self):
-        """Play prvious song, not implemented"""
+        """Play previous song, not implemented"""
 
         pass
 
@@ -208,7 +208,8 @@ class PithosMprisService(dbus.service.Object):
 
     @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def Stop(self):
-        self.window.stop()
+        """Stop is only used internally, mapping to pause instead"""
+        self.window.pause()
 
     def signal_playing(self):
         """signal_playing - Tell the Sound Menu that the player has
