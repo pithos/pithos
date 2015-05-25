@@ -2,14 +2,23 @@
 
 import os
 import sys
+import locale
+import gettext
 
 sys.path.insert(1, '@pyexecdir@')
 sys.path.insert(1, '@pythondir@')
 
+localedir = '@localedir@'
 srcdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if os.path.exists(os.path.join(srcdir, 'configure.ac')):
     print('Running locally...')
     sys.path.insert(1, srcdir)
+
+
+locale.bindtextdomain('pithos', localedir)
+locale.textdomain('pithos')
+gettext.bindtextdomain('pithos', localedir)
+gettext.textdomain('pithos')
 
 if __name__ == "__main__":
     from pithos import application

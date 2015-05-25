@@ -8,11 +8,16 @@ AM_INIT_AUTOMAKE([1.11 dist-xz no-dist-gzip foreign subdir-objects -Wall -Wno-po
 AM_SILENT_RULES([yes])
 AM_PATH_PYTHON([3.3])
 
+GETTEXT_PACKAGE=pithos
+AC_SUBST(GETTEXT_PACKAGE)
+
+IT_PROG_INTLTOOL([0.50.0])
 DESKTOP_FILE
 APPSTREAM_XML
 
 AC_CONFIG_FILES([
     Makefile
+    po/Makefile.in
 ])
 AC_OUTPUT
 

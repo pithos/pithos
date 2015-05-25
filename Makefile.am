@@ -37,10 +37,14 @@ bin/pithos: bin/pithos.in
 
 # ------------ data ----------------
 
-desktop_FILES = data/pithos.desktop
+desktop_in_files = data/pithos.desktop.in
+desktop_FILES = $(desktop_in_files:.desktop.in=.desktop)
+@INTLTOOL_DESKTOP_RULE@
 @DESKTOP_FILE_RULES@
 
-appstream_XML = data/pithos.appdata.xml
+appstream_in_files = data/pithos.appdata.xml.in
+appstream_XML = $(appstream_in_files:.xml.in=.xml)
+@INTLTOOL_XML_RULE@
 @APPSTREAM_XML_RULES@
 
 hicolor_scalabledir = $(datadir)/icons/hicolor/scalable/apps
@@ -63,7 +67,8 @@ install-data-hook:
 uninstall-hook:
 	$(UPDATE_ICON_CACHE);
 
-CLEANFILES = $(bin_SCRIPTS)
+SUBDIRS = po
+CLEANFILES = $(bin_SCRIPTS) $(desktop_FILES) $(appstream_XML)
 EXTRA_DIST = license README.md autogen.sh requirements-osx.txt bin/pithos.in \
-	$(pithosui_DATA) $(pithosmedia_DATA) $(appstream_XML) $(desktop_FILES) \
+	$(pithosui_DATA) $(pithosmedia_DATA) $(appstream_in_files) $(desktop_in_files) \
 	$(hicolor_scalable_DATA) $(hicolor_48_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA)

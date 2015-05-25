@@ -10,6 +10,7 @@ test -z "$srcdir" && srcdir=.
 }
 
 aclocal --install -I m4 || exit 1
+intltoolize --force --copy --automake || exit 1
 autoreconf --force --install -Wno-portability || exit 1
 
 if [ "$NOCONFIGURE" = "" ]; then

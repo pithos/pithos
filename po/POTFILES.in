@@ -1,0 +1,10 @@
+data/pithos.appdata.xml.in
+data/pithos.desktop.in
+[type: gettext/glade]pithos/data/ui/AboutPithosDialog.ui
+[type: gettext/glade]pithos/data/ui/PithosWindow.ui
+[type: gettext/glade]pithos/data/ui/PreferencesPithosDialog.ui
+[type: gettext/glade]pithos/data/ui/SearchDialog.ui
+[type: gettext/glade]pithos/data/ui/StationsDialog.ui
+[type: gettext/glade]pithos/data/ui/app_menu.ui
+pithos/pithos.py
+

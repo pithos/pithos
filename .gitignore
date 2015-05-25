@@ -11,3 +11,12 @@ config.*
 autom4te.cache/
 aclocal.m4
 install-sh
+data/pithos.appdata.xml
+data/pithos.desktop
+*.valid
+*.pot
+Makefile.in.in
+stamp-it
+.intltool-merge-cache
+POTFILES
+compile

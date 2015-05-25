@@ -30,6 +30,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from copy import deepcopy
+from gettext import gettext as _
 
 import gi
 gi.require_version('Gst', '1.0')
@@ -719,11 +720,11 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def on_gst_plugin_installed(self, result, userdata):
         if result == GstPbutils.InstallPluginsReturn.SUCCESS:
-            self.fatal_error_dialog("Codec installation successful",
-                        submsg="The required codec was installed, please restart Pithos.")
+            self.fatal_error_dialog(_("Codec installation successful"),
+                        submsg=_("The required codec was installed, please restart Pithos."))
         else:
-            self.error_dialog("Codec installation failed", None,
-                        submsg="The required codec failed to install. Either manually install it or try another quality setting.")
+            self.error_dialog(_("Codec installation failed"), None,
+                        submsg=_("The required codec failed to install. Either manually install it or try another quality setting."))
 
     def on_gst_element(self, bus, message):
         if GstPbutils.is_missing_plugin_message(message):
@@ -731,8 +732,8 @@ class PithosWindow(Gtk.ApplicationWindow):
                 details = GstPbutils.missing_plugin_message_get_installer_detail(message)
                 GstPbutils.install_plugins_async([details,], None, self.on_gst_plugin_installed, None)
             else:
-                self.error_dialog("Missing codec", None,
-                        submsg="GStreamer is missing a plugin and it could not be automatically installed. Either manually install it or try another quality setting.")
+                self.error_dialog(_("Missing codec"), None,
+                        submsg=_("GStreamer is missing a plugin and it could not be automatically installed. Either manually install it or try another quality setting."))
 
     def on_gst_error(self, bus, message):
         err, debug = message.parse_error()
