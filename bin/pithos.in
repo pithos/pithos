@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+
+sys.path.insert(1, '@pyexecdir@')
+sys.path.insert(1, '@pythondir@')
+
+srcdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if os.path.exists(os.path.join(srcdir, 'configure.ac')):
+    print('Running locally...')
+    sys.path.insert(1, srcdir)
+
+if __name__ == "__main__":
+    from pithos import application
+    application.main()
