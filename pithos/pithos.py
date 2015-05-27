@@ -204,8 +204,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.player_status = PlayerStatus()
 
         self.stations_dlg = None
-
-        self.playing = None # None is a special "Waiting to play" state
+        self.initially_buffered = False
+        self.playing = True
         self.current_song_index = None
         self.current_station = None
         self.current_station_id = self.preferences.get('last_station_id')
@@ -535,10 +535,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.emit('user-changed-play-state', True)
 
     def play(self):
-        if not self.playing:
-            self.playing = True
-            self.create_ui_loop()
-        self.player.set_state(Gst.State.PLAYING)
+        if self.initially_buffered:
+            self.player.set_state(Gst.State.PLAYING)
+        self.playing = True
+        self.create_ui_loop()
         self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
         self.update_song_row()
         self.emit('play-state-changed', True)
@@ -562,8 +562,8 @@ class PithosWindow(Gtk.ApplicationWindow):
             prev.finished = True
             prev.position = self.query_position()
             self.emit("song-ended", prev)
-
-        self.playing = None
+        self.initially_buffered = False
+        self.playing = True
         self.destroy_ui_loop()
         self.player.set_state(Gst.State.NULL)
         self.emit('play-state-changed', False)
@@ -803,14 +803,21 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.player.set_state(Gst.State.PAUSED)
                 self.player_status.began_buffering = time.time()
         else:
-            if self.playing is None: # Not playing but waiting to
-                logging.debug("Buffer 100%. Song starting")
-                self.play()
-            elif self.playing:
-                logging.debug("Buffer recovery. Restarting pipeline")
-                self.player.set_state(Gst.State.PLAYING)
+            if self.initially_buffered:
+                if self.playing:
+                    logging.debug("Buffer recovery. Restarting pipeline")
+                    self.player.set_state(Gst.State.PLAYING)
+                else:
+                    logging.debug("Buffer recovery. User paused")
+
             else:
-                logging.debug("Buffer recovery. User paused")
+                self.initially_buffered = True
+                if self.playing:                
+                    logging.debug("Buffer 100%. Song starting")
+                    self.play()
+                else:
+                    logging.debug("Buffer 100%. User paused")
+
             self.player_status.began_buffering = None
         self.player_status.buffer_percent = percent
         self.update_song_row()
@@ -850,7 +857,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             if song.position is not None and song.duration is not None:
                 pos_str = self.format_time(song.position)
                 msg.append("%s / %s" % (pos_str, song.duration_message))
-                if self.playing == False:
+                if not self.playing:
                     msg.append("Paused")
             if self.player_status.buffer_percent < 100:
                 msg.append("Buffering (%i%%)" % self.player_status.buffer_percent)
