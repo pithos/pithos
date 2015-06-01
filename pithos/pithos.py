@@ -472,7 +472,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         ##storage path needs to be in the Pithos configuration file ~/.config/pithos.ini and end with a terminating /
         ##If I get motivated enough, I'll put this in the preferences dialog.
         rootpath =  self.preferences.get('storage_path')
-        pathname = rootpath + self.current_station.name + "/"
+        ##removing station name from the path as multiple stations can have the same song. 
+        #pathname = rootpath + self.current_station.name + "/"
+        pathname = rootpath
         filename = self.current_song.artist + " - " +  self.current_song.album + " - " + self.current_song.title + ".mp3"
         filename = self.removeNonAscii(filename)
         filename = filename.replace("/", " ")
@@ -503,17 +505,17 @@ class PithosWindow(Gtk.ApplicationWindow):
             tagger.tags["RADIOSTATION"] = [self.current_station.name]
             tagger.tags["ENCODEDBY"] = [md5value]
             tagger.save()
-            if(self.current_song.artRadio.startswith("http")):
-                try:
-                    if not os.path.exists(pathname + "/album_art/"):
-                        os.makedirs(pathname + "/album_art/")
-                    album_art = urllib.request.urlopen(self.current_song.artRadio)
-                    f = open(pathname + "/album_art/" + md5value + ".jpg", 'wb')
-                    f.close
-#                    image_data = { 'frameid' : 'APIC', 'mimetype' : 'image/jpeg', 'picturetype' : 3, 'data' : album_art.read() }
-#                    tagger.append(image_data)
-                except urllib.request.URLError as e:
-                    print (e.reason);
+#            if(self.current_song.artRadio.startswith("http")):
+#                try:
+#                    if not os.path.exists(pathname + "/album_art/"):
+#                        os.makedirs(pathname + "/album_art/")
+#                    album_art = urllib.request.urlopen(self.current_song.artRadio)
+#                    f = open(pathname + "/album_art/" + md5value + ".jpg", 'wb')
+#                    f.close
+##                    image_data = { 'frameid' : 'APIC', 'mimetype' : 'image/jpeg', 'picturetype' : 3, 'data' : album_art.read() }
+##                    tagger.append(image_data)
+#                except urllib.request.URLError as e:
+#                    print (e.reason);
         else:
             print ("Old: " + pathname  +  "/" + filename);
         ###going to start keeping a massive playlist of the songs that play in order. This can be used to extract a group of songs out in order.
