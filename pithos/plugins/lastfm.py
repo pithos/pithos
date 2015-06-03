@@ -88,7 +88,7 @@ class LastfmPlugin(PithosPlugin):
         self.scrobbler = self.network.get_scrobbler(CLIENT_ID, CLIENT_VERSION)
      
     def song_changed(self, window, song):
-        self.worker.send(self.scrobbler.report_now_playing, (song.artist, song.title, song.album))
+        self.worker.send(self.network.update_now_playing, (song.artist, song.title, song.album))
         
     def send_rating(self, song, rating):
         if song.rating:
