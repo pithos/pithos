@@ -20,6 +20,7 @@ import logging
 dbus = None
 class ScreenSaverPausePlugin(PithosPlugin):
     preference = 'enable_screensaverpause'
+    description = 'Pause playback when screensaver starts'
 
     session_bus = None
 
@@ -27,6 +28,8 @@ class ScreenSaverPausePlugin(PithosPlugin):
         global dbus
         try:
             import dbus
+            from dbus.mainloop.glib import DBusGMainLoop
+            DBusGMainLoop(set_as_default=True)
         except ImportError:
             return False
 

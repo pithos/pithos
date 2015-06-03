@@ -17,6 +17,11 @@
 
 ###################### DO NOT TOUCH THIS (HEAD TO THE SECOND PART) ######################
 
+import sys
+
+if sys.version_info[0] != 3:
+    sys.exit("Only python 3 is supported!")
+
 try:
     from setuptools import setup, find_packages, Command
 except ImportError:
@@ -99,12 +104,9 @@ setup(
             'data/media/*.svg'
         ]
     },
-    install_requires=[
-        'pylast'
-    ],
     packages=find_packages(),
     include_package_data=True,
     entry_points={
-        'gui_scripts': ['pithos = pithos.pithos:main']
+        'gui_scripts': ['pithos = pithos.application:main']
     }
 )

@@ -8,6 +8,6 @@ keys, notifications, and the sound menu.
 For screenshots, install instructions and more, see
 [the Pithos home page](http://pithos.github.io).
 
-License: GNU GPLv3+
+License: GNU GPLv3
 
 Pithos is not affiliated with or endorsed by Pandora Media, Inc.

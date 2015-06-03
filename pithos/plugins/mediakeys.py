@@ -22,10 +22,13 @@ APP_ID = 'Pithos'
 
 class MediaKeyPlugin(PithosPlugin):
     preference = 'enable_mediakeys'
+    description = 'Control playback with media keys'
 
     def bind_dbus(self):
         try:
             import dbus
+            from dbus.mainloop.glib import DBusGMainLoop
+            DBusGMainLoop(set_as_default=True)
         except ImportError:
             return False
         try:

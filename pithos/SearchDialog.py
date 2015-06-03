@@ -50,7 +50,6 @@ class SearchDialog(Gtk.Dialog):
         self.entry = self.builder.get_object('entry')
         self.treeview = self.builder.get_object('treeview')
         self.okbtn = self.builder.get_object('okbtn')
-        self.searchbtn = self.builder.get_object('searchbtn')
         self.model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
         self.treeview.set_model(self.model)
         
@@ -87,11 +86,7 @@ class SearchDialog(Gtk.Dialog):
                     mk = "<b>%s</b> (artist)"%(html.escape(i.name))
                 self.model.append((i, mk))
             self.treeview.show()
-            self.searchbtn.set_sensitive(True)
-            self.searchbtn.set_label("Search")
         self.worker_run('search', (query,), callback, "Searching...")
-        self.searchbtn.set_sensitive(False)
-        self.searchbtn.set_label("Searching...")
         
     def get_selected(self):
         sel = self.treeview.get_selection().get_selected()

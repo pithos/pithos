@@ -23,15 +23,17 @@ from gi.repository import (GLib, Gtk)
 
 class NotifyPlugin(PithosPlugin):
     preference = 'notify'
+    description = 'Shows notifications on song change'
 
     has_notifications = False
     supports_actions = False
+    escape_markup = False
 
     def on_prepare(self):
         if platform == 'darwin':
-            self.prepare_osx()
+            return self.prepare_osx()
         else:
-            self.prepare_notify()
+            return self.prepare_notify()
 
     def prepare_osx(self):
         try:
@@ -39,7 +41,7 @@ class NotifyPlugin(PithosPlugin):
             self.has_notifications = True
         except ImportError:
             logging.warning("pync not found.")
-            return
+            return "pync not found"
 
         self.notifier = Notifier
 
@@ -49,7 +51,7 @@ class NotifyPlugin(PithosPlugin):
             self.has_notifications = True
         except ImportError:
             logging.warning ("libnotify not found.")
-            return
+            return "libnotify not found"
 
         # Work-around Ubuntu's incompatible workaround for Gnome's API breaking mistake.
         # https://bugzilla.gnome.org/show_bug.cgi?id=702390
@@ -70,6 +72,9 @@ class NotifyPlugin(PithosPlugin):
         if 'actions' in caps:
             logging.info('Notify supports actions')
             self.supports_actions = True
+
+        if 'body-markup' in caps:
+            self.escape_markup = True
 
         if 'action-icons' in caps:
             self.notification.set_hint('action-icons', GLib.Variant.new_boolean(True))
@@ -113,7 +118,9 @@ class NotifyPlugin(PithosPlugin):
         else:
             self.notification.set_hint('image-data', None)
 
-        msg = html.escape('by {} from {}'.format(song.artist, song.album))
+        msg = 'by {} from {}'.format(song.artist, song.album)
+        if self.escape_markup:
+            msg = html.escape(msg, quote=False)
         self.notification.update(song.title, msg, 'audio-x-generic')
         self.notification.show()
 

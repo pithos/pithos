@@ -31,6 +31,7 @@ except:
 
 class PithosNotificationIcon(PithosPlugin):    
     preference = 'show_icon'
+    description = 'Adds pithos icon to system tray'
             
     def on_prepare(self):
         if indicator_capable:
@@ -73,13 +74,10 @@ class PithosNotificationIcon(PithosPlugin):
     def build_context_menu(self):
         menu = Gtk.Menu()
         
-        def button(text, action, icon=None):
-            if icon == 'check':
+        def button(text, action, checked=False):
+            if checked:
                 item = Gtk.CheckMenuItem(text)
                 item.set_active(True)
-            elif icon:
-                item = Gtk.ImageMenuItem(text)
-                item.set_image(Gtk.Image.new_from_stock(icon, Gtk.IconSize.MENU))
             else:
                 item = Gtk.MenuItem(text)
             item.connect('activate', action) 
@@ -89,14 +87,14 @@ class PithosNotificationIcon(PithosPlugin):
         
         if indicator_capable:
             # We have to add another entry for show / hide Pithos window
-            self.visible_check = button("Show Pithos", self._toggle_visible, 'check')
+            self.visible_check = button("Show Pithos", self._toggle_visible, True)
         
-        self.playpausebtn = button("Pause", self.window.playpause, Gtk.STOCK_MEDIA_PAUSE)
-        button("Skip",  self.window.next_song,                     Gtk.STOCK_MEDIA_NEXT)
-        button("Love",  (lambda *i: self.window.love_song()),      Gtk.STOCK_ABOUT)
-        button("Ban",   (lambda *i: self.window.ban_song()),       Gtk.STOCK_CANCEL)
-        button("Tired", (lambda *i: self.window.tired_song()),     Gtk.STOCK_JUMP_TO)
-        button("Quit",  self.window.quit,                          Gtk.STOCK_QUIT )
+        self.playpausebtn = button("Pause", self.window.playpause)
+        button("Skip",  self.window.next_song)
+        button("Love",  (lambda *i: self.window.love_song()))
+        button("Ban",   (lambda *i: self.window.ban_song()))
+        button("Tired", (lambda *i: self.window.tired_song()))
+        button("Quit",  self.window.quit)
 
         # connect our new menu to the statusicon or the appindicator
         if indicator_capable:
@@ -116,11 +114,8 @@ class PithosNotificationIcon(PithosPlugin):
         button = self.playpausebtn
         if not playing:
             button.set_label("Play")
-            button.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_MEDIA_PLAY, Gtk.IconSize.MENU))
-
         else:
             button.set_label("Pause")
-            button.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_MEDIA_PAUSE, Gtk.IconSize.MENU))
             
         if indicator_capable: # menu needs to be reset to get updated icon
             self.ind.set_menu(self.menu)

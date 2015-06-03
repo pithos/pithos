@@ -20,8 +20,8 @@ if sys.platform != 'win32':
 
     # Enable verbose logging and test mode
     if len(sys.argv) == 1:
-        sys.argv.append('-tv')
+        sys.argv.append('-tvv')
 
-from pithos import pithos
+from pithos import application
 
-pithos.main()
+application.main()

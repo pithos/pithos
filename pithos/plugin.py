@@ -18,12 +18,15 @@ import logging
 import glob
 import os
 
-class PithosPlugin(object):
+class PithosPlugin:
     _PITHOS_PLUGIN = True # used to find the plugin class in a module
     preference = None
+    description = ""
+
     def __init__(self, name, window):
         self.name = name
         self.window = window
+        self.preferences_dialog = None
         self.prepared = False
         self.enabled = False
         
@@ -65,7 +68,7 @@ def load_plugin(name, window):
         module = getattr(module.plugins, name)
         
     except ImportError as e:
-        return ErrorPlugin(name, e.message)
+        return ErrorPlugin(name, e.msg)
         
     # find the class object for the actual plugin
     for key, item in module.__dict__.items():
@@ -82,7 +85,7 @@ def load_plugins(window):
     prefs = window.preferences
     
     plugins_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
-    discovered_plugins = [ fname.replace(".py", "") for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("__") ]
+    discovered_plugins = [ fname.replace(".py", "") for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("_") ]
     
     for name in discovered_plugins:
         if not name in plugins:

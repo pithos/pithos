@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.16.1 -->
+<!-- Generated with glade 3.18.1 -->
 <interface>
-  <requires lib="gtk+" version="3.6"/>
-  <!-- interface-requires pithos_window 1.0 -->
+  <requires lib="gtk+" version="3.14"/>
+  <requires lib="pithos_window" version="1.0"/>
   <object class="GtkAdjustment" id="adjustment1">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
@@ -15,9 +15,8 @@
     <property name="default_width">500</property>
     <property name="default_height">360</property>
     <property name="icon_name">pithos</property>
-    <signal name="destroy" handler="on_destroy" swapped="no"/>
-    <signal name="key-press-event" handler="on_kb_playpause" swapped="no"/>
     <signal name="configure-event" handler="on_configure_event" swapped="no"/>
+    <signal name="destroy" handler="on_destroy" swapped="no"/>
     <child>
       <object class="GtkBox" id="vbox1">
         <property name="visible">True</property>
@@ -43,7 +42,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="receives_default">True</property>
-                        <signal name="clicked" handler="user_playpause" swapped="no"/>
+                        <property name="action_name">win.playpause</property>
                         <child>
                           <object class="GtkImage" id="playpause_image">
                             <property name="visible">True</property>
@@ -64,7 +63,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="receives_default">True</property>
-                        <signal name="clicked" handler="next_song" swapped="no"/>
+                        <property name="action_name">win.skip</property>
                         <child>
                           <object class="GtkImage" id="skip_image">
                             <property name="visible">True</property>
@@ -118,11 +117,11 @@ audio-volume-medium-symbolic</property>
                         <property name="position">2</property>
                       </packing>
                     </child>
+                    <style>
+                      <class name="linked"/>
+                    </style>
                   </object>
                 </child>
-                <style>
-                  <class name="linked"/>
-                </style>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -145,48 +144,45 @@ audio-volume-medium-symbolic</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
-                  <object class="GtkBox" id="box2">
+                  <object class="GtkMenuButton" id="stations">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="receives_default">True</property>
                     <child>
-                      <object class="GtkButton" id="button6">
+                      <object class="GtkBox" id="box2">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="receives_default">True</property>
-                        <property name="image_position">right</property>
-                        <property name="always_show_image">True</property>
-                        <signal name="clicked" handler="station_properties" swapped="no"/>
+                        <property name="spacing">5</property>
                         <child>
-                          <object class="GtkImage" id="image14">
+                          <object class="GtkLabel" id="stationslabel">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="icon_name">dialog-information-symbolic</property>
+                            <property name="single_line_mode">True</property>
+                            <property name="max_width_chars">40</property>
                           </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkImage" id="image1">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="halign">end</property>
+                            <property name="valign">center</property>
+                            <property name="icon_name">pan-down-symbolic</property>
+                            <property name="icon_size">1</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
                         </child>
                       </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
                     </child>
-                    <child>
-                      <object class="GtkComboBox" id="stations">
-                        <property name="width_request">120</property>
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="focus_on_click">False</property>
-                        <signal name="changed" handler="stations_combo_changed" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                    <style>
-                      <class name="linked"/>
-                    </style>
                   </object>
                 </child>
               </object>
@@ -214,6 +210,7 @@ audio-volume-medium-symbolic</property>
                 <property name="can_focus">True</property>
                 <property name="vadjustment">adjustment1</property>
                 <property name="headers_visible">False</property>
+                <property name="fixed_height_mode">True</property>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection" id="treeview-selection1"/>
                 </child>
@@ -277,12 +274,11 @@ audio-volume-medium-symbolic</property>
             </child>
             <child>
               <object class="GtkButton" id="button5">
-                <property name="label">gtk-quit</property>
+                <property name="label">Quit</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="can_default">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -303,6 +299,80 @@ audio-volume-medium-symbolic</property>
     <action-widgets>
       <action-widget response="1">button4</action-widget>
       <action-widget response="0">button5</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkMessageDialog" id="error_dialog">
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="modal">True</property>
+    <property name="type_hint">dialog</property>
+    <property name="transient_for">pithos_window</property>
+    <property name="message_type">error</property>
+    <property name="text" translatable="yes">Error</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="dialog-vbox1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="dialog-action_area1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="button1">
+                <property name="label">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button2">
+                <property name="label" translatable="yes">Retry</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="button3">
+                <property name="label">Preferences</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="can_default">True</property>
+                <property name="receives_default">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="1">button1</action-widget>
+      <action-widget response="2">button2</action-widget>
+      <action-widget response="3">button3</action-widget>
     </action-widgets>
   </object>
   <object class="GtkMessageDialog" id="fatal_error_dialog">
@@ -326,12 +396,11 @@ audio-volume-medium-symbolic</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="button-error-quit">
-                <property name="label">gtk-quit</property>
+                <property name="label">Quit</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="can_default">True</property>
                 <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -387,118 +456,69 @@ audio-volume-medium-symbolic</property>
       </object>
     </child>
   </object>
-  <object class="GtkImage" id="image1">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-dialog-info</property>
-  </object>
-  <object class="GtkImage" id="image11">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-add</property>
-  </object>
-  <object class="GtkImage" id="image12">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-about</property>
-  </object>
-  <object class="GtkImage" id="image13">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-cancel</property>
-  </object>
-  <object class="GtkImage" id="image2">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-about</property>
-  </object>
-  <object class="GtkImage" id="image3">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-cancel</property>
-  </object>
-  <object class="GtkImage" id="image4">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-jump-to</property>
-  </object>
   <object class="GtkMenu" id="song_menu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
     <child>
-      <object class="GtkImageMenuItem" id="menuitem_info">
-        <property name="label" translatable="yes">Song _Info...</property>
+      <object class="GtkMenuItem" id="menuitem_info">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="label" translatable="yes">Song _Info...</property>
         <property name="use_underline">True</property>
-        <property name="image">image1</property>
-        <property name="use_stock">False</property>
         <signal name="activate" handler="on_menuitem_info" swapped="no"/>
       </object>
     </child>
     <child>
-      <object class="GtkImageMenuItem" id="menuitem_love">
-        <property name="label" translatable="yes">_Love Song</property>
+      <object class="GtkMenuItem" id="menuitem_love">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Love Song</property>
         <property name="use_underline">True</property>
-        <property name="image">image2</property>
-        <property name="use_stock">False</property>
         <signal name="activate" handler="on_menuitem_love" swapped="no"/>
       </object>
     </child>
     <child>
-      <object class="GtkImageMenuItem" id="menuitem_unlove">
-        <property name="label" translatable="yes">_Unlove Song</property>
+      <object class="GtkMenuItem" id="menuitem_unlove">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Unlove Song</property>
         <property name="use_underline">True</property>
-        <property name="image">image12</property>
-        <property name="use_stock">False</property>
         <signal name="activate" handler="on_menuitem_unrate" swapped="no"/>
       </object>
     </child>
     <child>
-      <object class="GtkImageMenuItem" id="menuitem_ban">
-        <property name="label" translatable="yes">_Ban Song</property>
+      <object class="GtkMenuItem" id="menuitem_ban">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Ban Song</property>
         <property name="use_underline">True</property>
-        <property name="image">image3</property>
-        <property name="use_stock">False</property>
         <signal name="activate" handler="on_menuitem_ban" swapped="no"/>
       </object>
     </child>
     <child>
-      <object class="GtkImageMenuItem" id="menuitem_unban">
-        <property name="label" translatable="yes">_Unban Song</property>
+      <object class="GtkMenuItem" id="menuitem_unban">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <property name="label" translatable="yes">_Unban Song</property>
         <property name="use_underline">True</property>
-        <property name="image">image13</property>
-        <property name="use_stock">False</property>
         <signal name="activate" handler="on_menuitem_unrate" swapped="no"/>
       </object>
     </child>
     <child>
-      <object class="GtkImageMenuItem" id="menuitem_tired">
-        <property name="label" translatable="yes">_Tired of this song</property>
+      <object class="GtkMenuItem" id="menuitem_tired">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="tooltip_text" translatable="yes">Don't play song for a month</property>
+        <property name="label" translatable="yes">_Tired of this song</property>
         <property name="use_underline">True</property>
-        <property name="image">image4</property>
-        <property name="use_stock">False</property>
         <signal name="activate" handler="on_menuitem_tired" swapped="no"/>
       </object>
     </child>
     <child>
-      <object class="GtkImageMenuItem" id="menuitem4">
-        <property name="label" translatable="yes">Bookmark</property>
+      <object class="GtkMenuItem" id="menuitem4">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="image">image11</property>
-        <property name="use_stock">False</property>
+        <property name="label" translatable="yes">Bookmark</property>
         <child type="submenu">
           <object class="GtkMenu" id="menu1">
             <property name="visible">True</property>
@@ -523,87 +543,5 @@ audio-volume-medium-symbolic</property>
         </child>
       </object>
     </child>
-  </object>
-  <object class="GtkImage" id="image5">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-refresh</property>
-  </object>
-  <object class="GtkMessageDialog" id="error_dialog">
-    <property name="can_focus">False</property>
-    <property name="border_width">5</property>
-    <property name="modal">True</property>
-    <property name="type_hint">dialog</property>
-    <property name="transient_for">pithos_window</property>
-    <property name="message_type">error</property>
-    <property name="text" translatable="yes">Error</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="dialog-vbox1">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="dialog-action_area1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="button1">
-                <property name="label">gtk-cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button2">
-                <property name="label" translatable="yes">Retry</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-                <property name="image">image5</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button3">
-                <property name="label">gtk-preferences</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="can_default">True</property>
-                <property name="receives_default">True</property>
-                <property name="use_stock">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-      </object>
-    </child>
-    <action-widgets>
-      <action-widget response="1">button1</action-widget>
-      <action-widget response="2">button2</action-widget>
-      <action-widget response="3">button3</action-widget>
-    </action-widgets>
   </object>
 </interface>

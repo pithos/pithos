@@ -334,6 +334,8 @@ class Song(object):
         self.is_ad = None  # None = we haven't checked, otherwise True/False
         self.tired=False
         self.message=''
+        self.duration = None
+        self.position = None
         self.start_time = None
         self.finished = False
         self.playlist_time = time.time()
@@ -377,6 +379,14 @@ class Song(object):
     @property
     def station(self):
         return self.pandora.get_station_by_id(self.stationId)
+
+    def get_duration_sec (self):
+      if self.duration is not None:
+        return self.duration / 1000000000
+
+    def get_position_sec (self):
+      if self.position is not None:
+        return self.position / 1000000000
 
     def rate(self, rating):
         if self.rating != rating:

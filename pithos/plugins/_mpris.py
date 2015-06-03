@@ -17,6 +17,7 @@
 
 import dbus
 import dbus.service
+from xml.etree import ElementTree
 
 class PithosMprisService(dbus.service.Object):
     MEDIA_PLAYER2_IFACE = 'org.mpris.MediaPlayer2'
@@ -38,6 +39,7 @@ class PithosMprisService(dbus.service.Object):
         self.song_changed()
         
         self.window.connect("song-changed", self.songchange_handler)
+        self.window.connect("song-rating-changed", self.ratingchange_handler)
         self.window.connect("play-state-changed", self.playstate_handler)
         
     def playstate_handler(self, window, state):
@@ -47,10 +49,26 @@ class PithosMprisService(dbus.service.Object):
             self.signal_paused()
         
     def songchange_handler(self, window, song):
-        self.song_changed([song.artist], song.album, song.title, song.artRadio)
+        self.song_changed([song.artist], song.album, song.title, song.artRadio,
+                          song.rating)
         self.signal_playing()
 
-    def song_changed(self, artists = None, album = None, title = None, artUrl=''):
+    def ratingchange_handler(self, window, song):
+        """Handle rating changes and update MPRIS metadata accordingly"""
+        # Pithos fires rating-changed signals for all songs, not just the
+        # currently playing one, so we need ignore signals for irrelevant songs.
+        if song is not self.window.current_song:
+            return
+
+        self.__metadata["pithos:rating"] = song.rating or ""
+        self.PropertiesChanged("org.mpris.MediaPlayer2.Player",
+                               dbus.Dictionary({"Metadata": self.__metadata},
+                                               "sv",
+                                               variant_level=1),
+                               [])
+
+    def song_changed(self, artists=None, album=None, title=None, artUrl='',
+                     rating=None):
         """song_changed - sets the info for the current song.
 
         This method is not typically overriden. It should be called
@@ -64,20 +82,13 @@ class PithosMprisService(dbus.service.Object):
 
         """
         
-        if artists is None:
-            artists = ["Artist Unknown"]
-        if album is None:
-            album = "Album Unknown"
-        if title is None:
-            title = "Title Unknown"
-        if artUrl is None:
-            artUrl = ''
-   
-        self.__meta_data = dbus.Dictionary({"xesam:album":album,
-                            "xesam:title":title,
-                            "xesam:artist":artists,
-                            "mpris:artUrl":artUrl,
-                            }, "sv", variant_level=1)
+        self.__metadata = dbus.Dictionary({
+            "xesam:title": title or "Title Unknown",
+            "xesam:artist": artists or ["Artist Unknown"],
+            "xesam:album": album or "Album Unknown",
+            "mpris:artUrl": artUrl or "",
+            "pithos:rating": rating or "",
+        }, "sv", variant_level=1)
 
     # Properties
     def _get_playback_status(self):
@@ -91,7 +102,7 @@ class PithosMprisService(dbus.service.Object):
 
     def _get_metadata(self):
         """The info for the current song."""
-        return self.__meta_data
+        return self.__metadata
 
     def _get_volume(self):
         return self.window.player.get_property("volume")
@@ -100,7 +111,7 @@ class PithosMprisService(dbus.service.Object):
         self.window.player.set_property('volume', new_volume)
 
     def _get_position(self):
-        return self.window.player.query_position(self.window.time_format)[0] / 1000
+        return self.window.query_position() / 1000
 
     @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='ss', out_signature='v')
     def Get(self, interface_name, property_name):
@@ -205,7 +216,7 @@ class PithosMprisService(dbus.service.Object):
         """
        
         self.__playback_status = "Playing"
-        d = dbus.Dictionary({"PlaybackStatus":self.__playback_status, "Metadata":self.__meta_data},
+        d = dbus.Dictionary({"PlaybackStatus":self.__playback_status, "Metadata":self.__metadata},
                                     "sv",variant_level=1)
         self.PropertiesChanged("org.mpris.MediaPlayer2.Player",d,[])
 
@@ -231,3 +242,35 @@ class PithosMprisService(dbus.service.Object):
         """
 
         pass
+
+    # python-dbus does not have our properties for introspection, so we must manually add them
+    @dbus.service.method(dbus.INTROSPECTABLE_IFACE, in_signature="", out_signature="s",
+                         path_keyword="object_path", connection_keyword="connection")
+    def Introspect(self, object_path, connection):
+        data = dbus.service.Object.Introspect(self, object_path, connection)
+        xml = ElementTree.fromstring(data)
+
+        for iface in xml.findall("interface"):
+            name = iface.attrib["name"]
+            if name.startswith(self.MEDIA_PLAYER2_IFACE):
+                for item, value in self.GetAll(name).items():
+                    prop = {"name": item, "access": "read"}
+                    if item == "Volume": # Hardcode the only writable property..
+                        prop["access"] = "readwrite"
+
+                    # Ugly mapping of types to signatures, is there a helper for this?
+                    # KEEP IN SYNC!
+                    if isinstance(value, str):
+                        prop["type"] = "s"
+                    elif isinstance(value, bool):
+                        prop["type"] = "b"
+                    elif isinstance(value, float):
+                        prop["type"] = "d"
+                    elif isinstance(value, int):
+                        prop["type"] = "x"
+                    elif isinstance(value, list):
+                        prop["type"] = "as"
+                    elif isinstance(value, dict):
+                        prop["type"] = "a{sv}"
+                    iface.append(ElementTree.Element("property", prop))
+        return ElementTree.tostring(xml, encoding="UTF-8")
