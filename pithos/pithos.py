@@ -525,40 +525,39 @@ class PithosWindow(Gtk.ApplicationWindow):
 #
 #        ##storage path needs to be in the Pithos configuration file ~/.config/pithos.ini and end with a terminating /
 #        ##If I get motivated enough, I'll put this in the preferences dialog.
-#        rootpath =  self.preferences.get('storage_path')
+        rootpath =  self.preferences.get('storage_path')
 #        ##removing station name from the path as multiple stations can have the same song. 
 #        #pathname = rootpath + self.current_station.name + "/"
-#        pathname = rootpath
-#        filename = self.current_song.artist + " - " +  self.current_song.album + " - " + self.current_song.title + ".mp3"
-#        filename = self.removeNonAscii(filename)
-#        filename = filename.replace("/", " ")
-#        filename = filename.replace("%", "")
-#        re.sub(' +',' ',filename)
-#        pathname = os.path.expanduser(pathname)
-#        pathname = os.path.abspath(pathname)
-#        if not os.path.exists(pathname):
-#            os.makedirs(pathname)
-#        if (not os.path.isfile(pathname + "/" + filename)):
-#            print ("New: " + pathname  +  "/" + filename);
-#            audio_file = urllib.request.urlopen(self.current_song.audioUrl)
-#            f = open(pathname + "/" + filename, 'wb')
-#            f.write(audio_file.read())
-#            f.close
-#            d = hashlib.md5()
-#            f = open(pathname + "/" + filename, 'rb')
-#
-#            d.update(f.read())
-#            md5value = d.hexdigest()
-#            f.close
-#
-####ID3 Tagging (needs refactored as pylibid3 is not py3 compat
-#            tagger = taglib.File(pathname + "/" + filename)
-#            tagger.tags["ARTIST"] =  [self.current_song.artist]
-#            tagger.tags["ALBUM"] = [self.current_song.album]
-#            tagger.tags["TITLE"] = [self.current_song.title]
-#            tagger.tags["RADIOSTATION"] = [self.current_station.name]
-#            tagger.tags["ENCODEDBY"] = [md5value]
-#            tagger.save()
+        pathname = rootpath
+        filename = self.current_song.artist + " - " +  self.current_song.album + " - " + self.current_song.title + ".mp3"
+        filename = self.removeNonAscii(filename)
+        filename = filename.replace("/", " ")
+        filename = filename.replace("%", "")
+        re.sub(' +',' ',filename)
+        pathname = os.path.expanduser(pathname)
+        pathname = os.path.abspath(pathname)
+        if not os.path.exists(pathname):
+            os.makedirs(pathname)
+        if (not os.path.isfile(pathname + "/" + filename)):
+            print ("New: " + pathname  +  "/" + filename,end="");
+            audio_file = urllib.request.urlopen(self.current_song.audioUrl)
+            f = open(pathname + "/" + filename, 'wb')
+            f.write(audio_file.read())
+            f.close
+            d = hashlib.md5()
+            f = open(pathname + "/" + filename, 'rb')
+
+            d.update(f.read())
+            md5value = d.hexdigest()
+            f.close
+            tagger = taglib.File(pathname + "/" + filename)
+            tagger.tags["ARTIST"] =  [self.current_song.artist]
+            tagger.tags["ALBUM"] = [self.current_song.album]
+            tagger.tags["TITLE"] = [self.current_song.title]
+            tagger.tags["RADIOSTATION"] = [self.current_station.name]
+            tagger.tags["ENCODEDBY"] = [md5value]
+            tagger.save()
+            print ("...Saved");
 ##            if(self.current_song.artRadio.startswith("http")):
 ##                try:
 ##                    if not os.path.exists(pathname + "/album_art/"):
@@ -570,29 +569,19 @@ class PithosWindow(Gtk.ApplicationWindow):
 ###                    tagger.append(image_data)
 ##                except urllib.request.URLError as e:
 ##                    print (e.reason);
-#        else:
-#            print ("Old: " + pathname  +  "/" + filename);
-#        ###going to start keeping a massive playlist of the songs that play in order. This can be used to extract a group of songs out in order.
-#        if (not os.path.isfile(pathname + "/playlist.m3u")):
-#            f = open(pathname + "/playlist.m3u","a")
-#            #TODO: Add EXTM3U stuff, will need to parse lenght of track, etc.
-#        else:
-#            f = open(pathname + "/playlist.m3u", "a")
-#        f.write(filename + "\n")
-#        f.close
-#
-#            
-#        self.player.set_property("uri", "file://" + pathname + "/" + filename)
-#
-#
-#
-#
-#        self.song_started = False
-##        self.player.set_property("uri", self.current_song.audioUrl)
-#        self.play()
+        else:
+            print ("Old: " + pathname  +  "/" + filename);
+        ###going to start keeping a massive playlist of the songs that play in order. This can be used to extract a group of songs out in order.
+        if (not os.path.isfile(pathname + "/playlist.m3u")):
+            f = open(pathname + "/playlist.m3u","a")
+            #TODO: Add EXTM3U stuff, will need to parse lenght of track, etc.
+        else:
+            f = open(pathname + "/playlist.m3u", "a")
+        f.write(filename + "\n")
+        f.close
         self.player_status.reset()
 
-        self.player.set_property("uri", self.current_song.audioUrl)
+        self.player.set_property("uri", "file://" + pathname + "/" + filename)
         self.player.set_state(Gst.State.PAUSED)
         self.playcount += 1
 
@@ -605,7 +594,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def next_song(self, *ignore):
         self.start_song(self.current_song_index + 1)
-
+        self.play();
     def user_play(self, *ignore):
         self.play()
         self.emit('user-changed-play-state', True)
@@ -928,8 +917,8 @@ class PithosWindow(Gtk.ApplicationWindow):
                 msg.append("%s / %s" % (pos_str, song.duration_message))
                 if self.playing == False:
                     msg.append("Paused")
-            if self.player_status.buffer_percent < 100:
-                msg.append("Buffering (%i%%)" % self.player_status.buffer_percent)
+            #if self.player_status.buffer_percent < 100:
+            #    msg.append("Buffering (%i%%)" % self.player_status.buffer_percent)
         if song.message:
             msg.append(song.message)
         msg = " - ".join(msg)
