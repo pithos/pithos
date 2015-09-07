@@ -33,6 +33,8 @@ import urllib.request
 
 import gi
 gi.require_version('Gst', '1.0')
+gi.require_version('Gtk', '3.0')
+gi.require_version('GstPbutils', '1.0')
 from gi.repository import Gst, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 
 if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 14:

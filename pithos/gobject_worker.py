@@ -19,7 +19,6 @@ import threading
 import queue
 from gi.repository import GObject, GLib
 import traceback
-GObject.threads_init()
 
 class GObjectWorker():
     def __init__(self):
