@@ -24,10 +24,6 @@ from pithos.util import open_browser
 API_KEY = '997f635176130d5d6fe3a7387de601a8'
 API_SECRET = '3243b876f6bf880b923a3c9fb955720c'
 
-#client id, client version info: http://www.last.fm/api/submissions#1.1
-CLIENT_ID = 'pth'
-CLIENT_VERSION = '1.0'
-
 _worker = None
 def get_worker():
     # so it can be shared between the plugin and the authorizer
@@ -85,10 +81,9 @@ class LastfmPlugin(PithosPlugin):
             api_key=API_KEY, api_secret=API_SECRET,
             session_key = session_key
         )
-        self.scrobbler = self.network.get_scrobbler(CLIENT_ID, CLIENT_VERSION)
-     
+
     def song_changed(self, window, song):
-        self.worker.send(self.scrobbler.report_now_playing, (song.artist, song.title, song.album))
+        self.worker.send(self.network.update_now_playing, (song.artist, song.title, song.album))
         
     def send_rating(self, song, rating):
         if song.rating:
@@ -104,9 +99,8 @@ class LastfmPlugin(PithosPlugin):
         position = song.get_position_sec()
         if not song.is_ad and duration > 30 and (position > 240 or position > duration/2):
             logging.info("Scrobbling song")
-            mode = self.pylast.SCROBBLE_MODE_PLAYED
-            source = self.pylast.SCROBBLE_SOURCE_PERSONALIZED_BROADCAST
-            self.worker.send(self.scrobbler.scrobble, (song.artist, song.title, int(song.start_time), source, mode, duration, song.album))
+            self.worker.send(self.network.scrobble, (song.artist, song.title, int(song.start_time), song.album, \
+                                                     None, None, int(duration)))
 
 
 class LastFmAuth(Gtk.Dialog):

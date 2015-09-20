@@ -17,6 +17,9 @@
 import sys
 import logging
 import argparse
+
+import gi
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GLib
 
 from .pithosconfig import get_ui_file, VERSION
