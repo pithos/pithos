@@ -241,6 +241,23 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.volume.set_relief(Gtk.ReliefStyle.NORMAL)  # It ignores glade...
         self.volume.set_property("value", math.pow(float(self.preferences['volume']), 1.0/3.0))
 
+        self.size_image = self.builder.get_object('size_image')
+        self.is_full = True
+
+        self.mini_style_provider = Gtk.CssProvider()
+        css = """
+          * {
+            padding: 0;
+            margin: 0;
+            font-size: 9px;
+          }
+        """
+        self.mini_style_provider.load_from_data(css.encode())
+
+        self.song_label = self.builder.get_object('songlabel')
+
+        self.station_info = self.builder.get_object('button6')
+        self.scrolled_window = self.builder.get_object('scrolledwindow1')
         self.statusbar = self.builder.get_object('statusbar1')
 
         self.song_menu = self.builder.get_object('song_menu')
@@ -472,7 +489,9 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
         self.songs_treeview.set_cursor(song_index, None, 0)
-        self.set_title("Pithos - %s by %s" % (self.current_song.title, self.current_song.artist))
+        songinfo = (self.current_song.title, self.current_song.artist)
+        self.set_title('Pithos - %s by %s' % songinfo)
+        self.song_label.set_text('%s\n%s' % songinfo)
 
         self.emit('song-changed', self.current_song)
 
@@ -534,6 +553,31 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.user_pause()
         else:
             self.user_play()
+
+    def user_minfull(self, *ignore):
+        icons=['gtk-zoom-in', 'gtk-zoom-out']
+        ui = [self.station_info, self.scrolled_window, self.statusbar]
+        self.is_full = not self.is_full
+        self.size_image.set_from_icon_name(icons[self.is_full], Gtk.IconSize.SMALL_TOOLBAR)
+        for widget in ui:
+            if self.is_full:
+                widget.show()
+            else:
+                widget.hide()
+        self.set_show_menubar(self.is_full)
+        self.set_decorated(self.is_full)
+        (w, h) = self.get_size()
+        if self.is_full:
+            Gtk.StyleContext.remove_provider_for_screen(
+                Gdk.Screen.get_default(),
+                self.mini_style_provider)
+            self.resize(w, 350)
+        else:
+            Gtk.StyleContext.add_provider_for_screen(
+                Gdk.Screen.get_default(),
+                self.mini_style_provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            self.resize(w, 1)
 
     def get_playlist(self, start = False):
         self.start_new_playlist = self.start_new_playlist or start

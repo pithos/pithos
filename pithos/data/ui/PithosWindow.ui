@@ -15,9 +15,9 @@
     <property name="default_width">500</property>
     <property name="default_height">360</property>
     <property name="icon_name">pithos</property>
+    <signal name="configure-event" handler="on_configure_event" swapped="no"/>
     <signal name="destroy" handler="on_destroy" swapped="no"/>
     <signal name="key-press-event" handler="on_kb_playpause" swapped="no"/>
-    <signal name="configure-event" handler="on_configure_event" swapped="no"/>
     <child>
       <object class="GtkBox" id="vbox1">
         <property name="visible">True</property>
@@ -37,7 +37,6 @@
                   <object class="GtkBox" id="playcontrol_box">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="homogeneous">True</property>
                     <child>
                       <object class="GtkButton" id="playpause_button">
                         <property name="visible">True</property>
@@ -55,7 +54,7 @@
                       </object>
                       <packing>
                         <property name="expand">False</property>
-                        <property name="fill">True</property>
+                        <property name="fill">False</property>
                         <property name="position">0</property>
                       </packing>
                     </child>
@@ -76,7 +75,7 @@
                       </object>
                       <packing>
                         <property name="expand">False</property>
-                        <property name="fill">True</property>
+                        <property name="fill">False</property>
                         <property name="position">1</property>
                       </packing>
                     </child>
@@ -114,8 +113,47 @@ audio-volume-medium-symbolic</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
-                        <property name="fill">True</property>
+                        <property name="fill">False</property>
                         <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="size">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="yalign">0.43000000715255737</property>
+                        <property name="always_show_image">True</property>
+                        <signal name="clicked" handler="user_minfull" swapped="no"/>
+                        <child>
+                          <object class="GtkImage" id="size_image">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="stock">gtk-zoom-out</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="songlabel">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="xalign">0.05000000074505806</property>
+                        <property name="label" translatable="yes">No Artist: No Song</property>
+                        <property name="wrap">True</property>
+                        <property name="wrap_mode">word-char</property>
+                        <property name="ellipsize">middle</property>
+                        <property name="lines">1</property>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">4</property>
                       </packing>
                     </child>
                   </object>
@@ -123,17 +161,6 @@ audio-volume-medium-symbolic</property>
                 <style>
                   <class name="linked"/>
                 </style>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">False</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSeparatorToolItem" id="toolbutton1">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="draw">False</property>
               </object>
               <packing>
                 <property name="expand">True</property>
