@@ -184,6 +184,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
             "audio_quality": default_audio_quality,
             "pandora_one": False,
             "force_client": None,
+            "sort_stations": False
         }
 
         try:

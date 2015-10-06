@@ -29,11 +29,11 @@ class StationsPopover(Gtk.Popover):
         box2 = Gtk.Box()
         self.search = Gtk.SearchEntry()
         self.sorted = False
-        sort = Gtk.ToggleButton.new()
-        sort.add(Gtk.Image.new_from_icon_name("view-sort-ascending-symbolic", Gtk.IconSize.BUTTON))
-        sort.connect("toggled", self.sort_changed)
+        self.sort = Gtk.ToggleButton.new()
+        self.sort.add(Gtk.Image.new_from_icon_name("view-sort-ascending-symbolic", Gtk.IconSize.BUTTON))
+        self.sort.connect("toggled", self.sort_changed)
         box2.pack_start(self.search, True, True, 0)
-        box2.add(sort)
+        box2.add(self.sort)
 
         self.listbox = Gtk.ListBox()
         self.listbox.connect('button-press-event', self.on_button_press)

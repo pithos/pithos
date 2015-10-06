@@ -279,6 +279,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_popover = StationsPopover()
         self.stations_popover.set_relative_to(self.stations_button)
         self.stations_popover.set_model(self.stations_model)
+        self.stations_popover.sorted = self.preferences['sort_stations']
+        self.stations_popover.sort.connect('toggled', self.sort_toggled)
+        self.stations_popover.sort.set_active(self.stations_popover.sorted)
         self.stations_popover.listbox.connect('row-activated', self.active_station_changed)
         self.stations_button.set_popover(self.stations_popover)
         self.stations_label = self.builder.get_object('stationslabel')
@@ -895,6 +898,9 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def active_station_changed(self, listbox, row):
         self.station_changed(row.station)
+
+    def sort_toggled(self, widget):
+        self.preferences['sort_stations'] = self.stations_popover.sorted
 
     def format_time(self, time_int):
         if time_int is None:
