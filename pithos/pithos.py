@@ -681,6 +681,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.get_playlist(start = True)
         self.stations_label.set_text(station.name)
         self.stations_popover.select_station(station)
+        self.stations_popover.hide() 
 
     def query_position(self):
       pos_stat = self.player.query(self._query_position)
