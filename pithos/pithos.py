@@ -255,6 +255,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.mini_style_provider.load_from_data(css.encode())
 
         self.song_label = self.builder.get_object('songlabel')
+        self.song_label.hide()
 
         self.station_info = self.builder.get_object('button6')
         self.scrolled_window = self.builder.get_object('scrolledwindow1')
@@ -568,11 +569,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.set_decorated(self.is_full)
         (w, h) = self.get_size()
         if self.is_full:
+            self.song_label.hide()
             Gtk.StyleContext.remove_provider_for_screen(
                 Gdk.Screen.get_default(),
                 self.mini_style_provider)
             self.resize(w, 350)
         else:
+            self.song_label.show()
             Gtk.StyleContext.add_provider_for_screen(
                 Gdk.Screen.get_default(),
                 self.mini_style_provider,
