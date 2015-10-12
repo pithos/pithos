@@ -177,6 +177,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
             "enable_mediakeys":True,
             "enable_screensaverpause":False,
             "enable_lastfm":False,
+            "enable_save_on_logout":False,
             "enable_mpris":True,
             "volume": 1.0,
             # If set, allow insecure permissions. Implements CVE-2011-1500
