@@ -17,10 +17,9 @@
 from gi.repository import Gtk, GdkPixbuf
 
 from .gi_composites import GtkTemplate
-from .pithosconfig import get_ui_file, get_media_file
 from .util import open_browser
 
-@GtkTemplate(ui=get_ui_file('about'))
+@GtkTemplate(ui='/io/github/Pithos/ui/AboutPithosDialog.ui')
 class AboutPithosDialog(Gtk.AboutDialog):
     __gtype_name__ = "AboutPithosDialog"
 
@@ -28,7 +27,8 @@ class AboutPithosDialog(Gtk.AboutDialog):
         super().__init__(*args, **kwargs)
         self.init_template()
 
-        self.set_logo(GdkPixbuf.Pixbuf.new_from_file_at_scale(get_media_file('icon'), -1, 96, True))
+        theme = Gtk.IconTheme.get_default()
+        self.set_logo(theme.load_icon('pithos', 96, 0))
 
     @GtkTemplate.Callback
     def activate_link_cb(self, wid, uri):

@@ -23,13 +23,12 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GLib
 
-from .pithosconfig import get_ui_file, VERSION
+from .pithosconfig import VERSION
 from .pithos import PithosWindow
 
 class PithosApplication(Gtk.Application):
     def __init__(self):
-        # Use org.gnome to avoid conflict with existing dbus interface net.kevinmehall
-        Gtk.Application.__init__(self, application_id='org.gnome.pithos',
+        Gtk.Application.__init__(self, application_id='io.github.Pithos',
                                 flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.window = None
         self.options = None
@@ -37,12 +36,6 @@ class PithosApplication(Gtk.Application):
     def do_startup(self):
         Gtk.Application.do_startup(self)
         signal.signal(signal.SIGINT, signal.SIG_DFL)
-
-        # Setup appmenu
-        builder = Gtk.Builder()
-        builder.add_from_file(get_ui_file('menu'))
-        menu = builder.get_object("app-menu")
-        self.set_app_menu(menu)
 
         action = Gio.SimpleAction.new("stations", None)
         action.connect("activate", self.stations_cb)

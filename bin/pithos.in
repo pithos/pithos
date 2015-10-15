@@ -5,20 +5,32 @@ import sys
 import locale
 import gettext
 
+from gi.repository import Gio
+
 sys.path.insert(1, '@pyexecdir@')
 sys.path.insert(1, '@pythondir@')
 
+pkgdatadir = '@pkgdatadir@'
 localedir = '@localedir@'
 srcdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if os.path.exists(os.path.join(srcdir, 'configure.ac')):
     print('Running locally...')
     sys.path.insert(1, srcdir)
+    pkgdatadir = srcdir
 
+    import gi
+    gi.require_version('Gtk', '3.0')
+    from gi.repository import Gtk
+    theme = Gtk.IconTheme.get_default()
+    theme.append_search_path(os.path.join(srcdir, 'data', 'icons'))
 
 locale.bindtextdomain('pithos', localedir)
 locale.textdomain('pithos')
 gettext.bindtextdomain('pithos', localedir)
 gettext.textdomain('pithos')
+
+resource = Gio.resource_load(os.path.join(pkgdatadir, 'pithos.gresource'))
+Gio.Resource._register(resource)
 
 if __name__ == "__main__":
     from pithos import application

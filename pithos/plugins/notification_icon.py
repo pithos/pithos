@@ -16,7 +16,6 @@
 
 import os
 from gi.repository import Gtk
-from pithos.pithosconfig import get_data_file
 from pithos.plugin import PithosPlugin
 
 # Use appindicator if on Unity and installed
@@ -35,11 +34,10 @@ class PithosNotificationIcon(PithosPlugin):
             
     def on_prepare(self):
         if indicator_capable:
-            self.ind = AppIndicator.Indicator.new_with_path("pithos-tray-icon", \
+            self.ind = AppIndicator.Indicator.new("pithos-tray-icon", \
                                   "pithos-tray-icon", \
-                                   AppIndicator.IndicatorCategory.APPLICATION_STATUS, \
-                                   get_data_file('media'))
-    
+                                   AppIndicator.IndicatorCategory.APPLICATION_STATUS)
+
     def on_enable(self):
         self.delete_callback_handle = self.window.connect("delete-event", self.toggle_visible)
         self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
@@ -48,16 +46,9 @@ class PithosNotificationIcon(PithosPlugin):
         if indicator_capable:
             self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         else:
-            icon_info = Gtk.IconTheme.lookup_icon (Gtk.IconTheme.get_default(), 'pithos-tray-icon', 48, 0)
-            if icon_info and Gtk.IconInfo.get_filename (icon_info):
-                filename = Gtk.IconInfo.get_filename (icon_info)
-            else:
-                filename = get_data_file('media', 'pithos-tray-icon.png')
-
-            self.statusicon = Gtk.StatusIcon.new ()
-            self.statusicon.set_from_file (filename)
+            self.statusicon = Gtk.StatusIcon.new_from_icon_name('pithos-tray-icon')
             self.statusicon.connect('activate', self.toggle_visible)
-        
+
         self.build_context_menu()
 
     def scroll(self, steps):

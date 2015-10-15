@@ -45,7 +45,7 @@ from .StationsPopover import StationsPopover
 from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
-from .pithosconfig import get_ui_file, get_media_file, VERSION
+from .pithosconfig import VERSION
 from .plugin import load_plugins
 from .util import parse_proxy, open_browser
 
@@ -64,7 +64,7 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
         GObject.GObject.__init__(self)
         self.icon = None
         self.pixbuf = None
-        self.rate_bg = GdkPixbuf.Pixbuf.new_from_file(get_media_file('rate'))
+        self.rate_bg = Gtk.IconTheme.get_default().load_icon('pithos-rate-bg', 32, 0)
 
     __gproperties__ = {
         'icon': (str, 'icon', 'icon', '', GObject.PARAM_READWRITE),
@@ -117,7 +117,7 @@ class PlayerStatus (object):
     self.pending_duration_query = False
 
 
-@GtkTemplate(ui=get_ui_file('main'))
+@GtkTemplate(ui='/io/github/Pithos/ui/PithosWindow.ui')
 class PithosWindow(Gtk.ApplicationWindow):
     __gtype_name__ = "PithosWindow"
     __gsignals__ = {
@@ -220,7 +220,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.worker = GObjectWorker()
         self.art_worker = GObjectWorker()
 
-        aa = GdkPixbuf.Pixbuf.new_from_file(get_media_file('album'))
+        theme = Gtk.IconTheme.get_default()
+        aa = theme.load_icon('pithos-album-default', 128, 0)
 
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
 

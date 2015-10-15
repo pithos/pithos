@@ -18,7 +18,6 @@ import logging
 import html
 from sys import platform
 from pithos.plugin import PithosPlugin
-from pithos.pithosconfig import get_data_file
 
 import gi
 gi.require_version('Notify', '0.7')

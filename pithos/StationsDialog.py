@@ -19,7 +19,6 @@ import os
 from gi.repository import Gtk
 import logging
 
-from .pithosconfig import get_ui_file
 from .util import open_browser
 from . import SearchDialog
 
@@ -201,8 +200,7 @@ def NewStationsDialog(pithos):
     
     """
 
-    builder = Gtk.Builder()
-    builder.add_from_file(get_ui_file('stations'))    
+    builder = Gtk.Builder.new_from_resource('/io/github/Pithos/ui/StationsDialog.ui')
     dialog = builder.get_object("stations_dialog")
     dialog.finish_initializing(builder, pithos)
     return dialog

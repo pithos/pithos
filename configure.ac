@@ -15,6 +15,8 @@ IT_PROG_INTLTOOL([0.50.0])
 DESKTOP_FILE
 APPSTREAM_XML
 
+AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources)
+
 AC_CONFIG_FILES([
     Makefile
     po/Makefile.in

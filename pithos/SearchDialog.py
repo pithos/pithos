@@ -21,9 +21,8 @@ from gi.repository import Gtk
 from gi.repository import GObject
 
 from .gi_composites import GtkTemplate
-from .pithosconfig import get_ui_file
 
-@GtkTemplate(ui=get_ui_file('search'))
+@GtkTemplate(ui='/io/github/Pithos/ui/SearchDialog.ui')
 class SearchDialog(Gtk.Dialog):
     __gtype_name__ = "SearchDialog"
 

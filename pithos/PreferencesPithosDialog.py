@@ -21,7 +21,6 @@ import logging
 
 from gi.repository import Gtk, GObject, GLib, Pango
 
-from .pithosconfig import get_ui_file
 from .pandora.data import *
 
 pacparser_imported = False
@@ -317,8 +316,7 @@ def NewPreferencesPithosDialog():
     creating a PreferencesPithosDialog instance directly.
     """
 
-    builder = Gtk.Builder()
-    builder.add_from_file(get_ui_file('preferences'))
+    builder = Gtk.Builder.new_from_resource('/io/github/Pithos/ui/PreferencesPithosDialog.ui')
     dialog = builder.get_object("preferences_pithos_dialog")
     dialog.finish_initializing(builder)
     return dialog
