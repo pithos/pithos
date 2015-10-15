@@ -171,7 +171,7 @@ class StationsDialog(Gtk.Dialog):
         
     def station_added(self, station):
         logging.debug("1 "+ repr(station))
-        it = self.model.insert_after(self.model.get_iter(1), (station, station.name))
+        it = self.model.insert_with_valuesv(0, (0, 1, 2), (station, station.name, 0))
         logging.debug("2 "+ repr(it))
         self.pithos.station_changed(station)
         logging.debug("3 ")
