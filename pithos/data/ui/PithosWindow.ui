@@ -237,7 +237,7 @@ audio-volume-medium-symbolic</property>
       </object>
     </child>
   </template>
-  <object class="GtkMessageDialog" id="api_update_dialog">
+  <object class="GtkMessageDialog" id="api_update_dialog_real">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="modal">True</property>
@@ -300,7 +300,7 @@ audio-volume-medium-symbolic</property>
       <action-widget response="0">button5</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkMessageDialog" id="error_dialog">
+  <object class="GtkMessageDialog" id="error_dialog_real">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="modal">True</property>
@@ -374,7 +374,7 @@ audio-volume-medium-symbolic</property>
       <action-widget response="3">button3</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkMessageDialog" id="fatal_error_dialog">
+  <object class="GtkMessageDialog" id="fatal_error_dialog_real">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="modal">True</property>
@@ -420,40 +420,6 @@ audio-volume-medium-symbolic</property>
     <action-widgets>
       <action-widget response="1">button-error-quit</action-widget>
     </action-widgets>
-  </object>
-  <object class="GtkMessageDialog" id="messagedialog1">
-    <property name="can_focus">False</property>
-    <property name="border_width">5</property>
-    <property name="modal">True</property>
-    <property name="type_hint">dialog</property>
-    <property name="transient_for">PithosWindow</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="dialog-vbox3">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="dialog-action_area3">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <placeholder/>
-            </child>
-            <child>
-              <placeholder/>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
-      </object>
-    </child>
   </object>
   <object class="GtkMenu" id="song_menu">
     <property name="visible">True</property>

@@ -140,6 +140,10 @@ class PithosWindow(Gtk.ApplicationWindow):
     stations_button = GtkTemplate.Child()
     stations_label = GtkTemplate.Child()
 
+    api_update_dialog_real = GtkTemplate.Child()
+    error_dialog_real = GtkTemplate.Child()
+    fatal_error_dialog_real = GtkTemplate.Child()
+
     def __init__(self, app, cmdopts):
         super().__init__(application=app)
         self.init_template()
@@ -611,15 +615,17 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.worker_run(self.current_station.get_playlist, (), callback, "Getting songs...")
 
     def error_dialog(self, message, retry_cb, submsg=None):
-        dialog = self.builder.get_object("error_dialog")
+        dialog = self.error_dialog_real
 
         dialog.props.text = message
         dialog.props.secondary_text = submsg
         dialog.set_default_response(3)
 
+        btn = dialog.get_widget_for_response(2)
         if retry_cb is None:
-            btn = self.builder.get_object("button2")
             btn.hide()
+        else:
+            btn.show()
 
         response = dialog.run()
         dialog.hide()
@@ -632,7 +638,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.show_preferences()
 
     def fatal_error_dialog(self, message, submsg):
-        dialog = self.builder.get_object("fatal_error_dialog")
+        dialog = self.fatal_error_dialog_real
         dialog.props.text = message
         dialog.props.secondary_text = submsg
         dialog.set_default_response(1)
@@ -643,7 +649,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.quit()
 
     def api_update_dialog(self):
-        dialog = self.builder.get_object("api_update_dialog")
+        dialog = self.api_update_dialog_real
         dialog.set_default_response(0)
         response = dialog.run()
         if response:
