@@ -23,15 +23,15 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gio, GLib
 
-from .pithosconfig import VERSION
 from .pithos import PithosWindow
 
 class PithosApplication(Gtk.Application):
-    def __init__(self):
+    def __init__(self, version=''):
         Gtk.Application.__init__(self, application_id='io.github.Pithos',
                                 flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.window = None
         self.options = None
+        self.version = version
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -82,7 +82,7 @@ class PithosApplication(Gtk.Application):
 
     def do_activate(self):
         if not self.window:
-            logging.info("Pithos %s" %VERSION)
+            logging.info("Pithos %s" %self.version)
             self.window = PithosWindow(self, self.options)
 
         self.window.present()
@@ -98,13 +98,13 @@ class PithosApplication(Gtk.Application):
         self.window.show_preferences()
 
     def about_cb(self, action, param):
-        self.window.show_about()
+        self.window.show_about(self.version)
 
     def quit_cb(self, action, param):
         self.window.destroy()
 
-def main():
-    app = PithosApplication()
+def main(version=''):
+    app = PithosApplication(version=version)
     exit_status = app.run(sys.argv)
     sys.exit(exit_status)
 

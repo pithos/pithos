@@ -14,7 +14,7 @@ plugins_PYTHON = $(wildcard pithos/plugins/*.py)
 bin_SCRIPTS = bin/pithos
 bin/pithos: bin/pithos.in
 	@$(MKDIR_P) bin
-	$(AM_V_GEN)sed                          \
+	$(AM_V_GEN)sed                              \
 		-e s!\@prefix\@!$(prefix)!          \
 		-e s!\@datadir\@!$(datadir)!        \
 		-e s!\@pkgdatadir\@!$(pkgdatadir)!  \
@@ -22,6 +22,7 @@ bin/pithos: bin/pithos.in
 		-e s!\@localedir\@!$(localedir)!    \
 		-e s!\@pythondir\@!$(pythondir)!    \
 		-e s!\@pyexecdir\@!$(pyexecdir)!    \
+		-e s!\@VERSION\@!$(VERSION)!        \
 		< $< > $@
 	@chmod a+x $@
 

@@ -10,6 +10,7 @@ from gi.repository import Gio
 sys.path.insert(1, '@pyexecdir@')
 sys.path.insert(1, '@pythondir@')
 
+VERSION = '@VERSION@'
 pkgdatadir = '@pkgdatadir@'
 localedir = '@localedir@'
 srcdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -34,4 +35,4 @@ Gio.Resource._register(resource)
 
 if __name__ == "__main__":
     from pithos import application
-    application.main()
+    application.main(version=VERSION)

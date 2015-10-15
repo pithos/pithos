@@ -45,7 +45,6 @@ from .StationsPopover import StationsPopover
 from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
-from .pithosconfig import VERSION
 from .plugin import load_plugins
 from .util import parse_proxy, open_browser
 
@@ -654,7 +653,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         dialog.set_default_response(0)
         response = dialog.run()
         if response:
-            open_browser("http://pithos.github.io/itbroke?utm_source=pithos&utm_medium=app&utm_campaign=%s"%VERSION)
+            open_browser("http://pithos.github.io/itbroke")
         self.quit()
 
     def station_changed(self, station, reconnecting=False):
@@ -1036,10 +1035,10 @@ class PithosWindow(Gtk.ApplicationWindow):
     def on_volume_change_event(self, volumebutton, value):
         self.set_player_volume(value)
 
-    def show_about(self):
+    def show_about(self, version):
         """about - display the about box for pithos """
         about = AboutPithosDialog.AboutPithosDialog(transient_for=self)
-        about.set_version(VERSION)
+        about.set_version(version)
         about.run()
         about.destroy()
 
