@@ -20,61 +20,38 @@ import html
 from gi.repository import Gtk
 from gi.repository import GObject
 
+from .gi_composites import GtkTemplate
 from .pithosconfig import get_ui_file
 
+@GtkTemplate(ui=get_ui_file('search'))
 class SearchDialog(Gtk.Dialog):
     __gtype_name__ = "SearchDialog"
 
-    def __init__(self):
-        """__init__ - This function is typically not called directly.
-        Creation of a SearchDialog requires redeading the associated ui
-        file and parsing the ui definition extrenally, 
-        and then calling SearchDialog.finish_initializing().
-    
-        Use the convenience function NewSearchDialog to create 
-        a SearchDialog object.
-    
-        """
-        pass
+    entry = GtkTemplate.Child()
+    treeview = GtkTemplate.Child()
 
-    def finish_initializing(self, builder, worker_run):
-        """finish_initalizing should be called after parsing the ui definition
-        and creating a SearchDialog object with it in order to finish
-        initializing the start of the new SearchDialog instance.
-    
-        """
-        #get a reference to the builder and set up the signals
-        self.builder = builder
-        self.builder.connect_signals(self)
-        
-        self.entry = self.builder.get_object('entry')
-        self.treeview = self.builder.get_object('treeview')
-        self.okbtn = self.builder.get_object('okbtn')
+    def __init__(self, *args, **kwargs):
+        self.worker_run = kwargs["worker"]
+        del kwargs["worker"]
+
+        super().__init__(*args, **kwargs)
+        self.init_template()
+
         self.model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
         self.treeview.set_model(self.model)
-        
-        self.worker_run = worker_run
-        
+
         self.result = None
 
-
-    def ok(self, widget, data=None):
-        """ok - The user has elected to save the changes.
-        Called before the dialog returns Gtk.RESONSE_OK from run().
-
-        """
-        
-
-    def cancel(self, widget, data=None):
-        """cancel - The user has elected cancel changes.
-        Called before the dialog returns Gtk.ResponseType.CANCEL for run()
-
-        """         
-        pass
-        
+    @GtkTemplate.Callback
     def search_clicked(self, widget):
         self.search(self.entry.get_text())
-        
+
+    @GtkTemplate.Callback
+    def get_selected(self):
+        sel = self.treeview.get_selection().get_selected()
+        if sel[1]:
+            return self.treeview.get_model().get_value(sel[1], 0)
+
     def search(self, query):
         if not query: return
         def callback(results):
@@ -87,32 +64,7 @@ class SearchDialog(Gtk.Dialog):
                 self.model.append((i, mk))
             self.treeview.show()
         self.worker_run('search', (query,), callback, "Searching...")
-        
-    def get_selected(self):
-        sel = self.treeview.get_selection().get_selected()
-        if sel[1]:
-            return self.treeview.get_model().get_value(sel[1], 0)
-            
+
     def cursor_changed(self, *ignore):
         self.result = self.get_selected()
-        self.okbtn.set_sensitive(not not self.result)
-        
-
-def NewSearchDialog(worker_run):
-    """NewSearchDialog - returns a fully instantiated
-    dialog-camel_case_nameDialog object. Use this function rather than
-    creating SearchDialog instance directly.
-    
-    """
-
-    builder = Gtk.Builder()
-    builder.add_from_file(get_ui_file('search'))    
-    dialog = builder.get_object("search_dialog")
-    dialog.finish_initializing(builder, worker_run)
-    return dialog
-
-if __name__ == "__main__":
-    dialog = NewSearchDialog()
-    dialog.show()
-    Gtk.main()
-
+        self.set_response_sensitive(Gtk.ResponseType.OK, not not self.result)

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.18.3 -->
 <interface>
-  <requires lib="gtk+" version="3.10"/>
-  <requires lib="search_dialog" version="1.0"/>
-  <object class="SearchDialog" id="search_dialog">
+  <requires lib="gtk+" version="3.14"/>
+  <template class="SearchDialog" parent="GtkDialog">
     <property name="width_request">380</property>
     <property name="height_request">350</property>
     <property name="can_focus">False</property>
@@ -12,79 +11,44 @@
     <property name="modal">True</property>
     <property name="icon_name">pithos</property>
     <property name="type_hint">dialog</property>
+    <child type="action">
+      <object class="GtkButton" id="button_cancel">
+        <property name="label">Cancel</property>
+        <property name="visible">1</property>
+      </object>
+    </child>
+    <child type="action">
+      <object class="GtkButton" id="button_ok">
+        <property name="label">Ok</property>
+        <property name="visible">1</property>
+      </object>
+    </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="visible">1</property>
         <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="dialog-action_area1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="button2">
-                <property name="label">Cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="okbtn">
-                <property name="label">OK</property>
-                <property name="visible">True</property>
-                <property name="sensitive">False</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-                <signal name="clicked" handler="ok" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
         <child>
           <object class="GtkVBox" id="vbox1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="visible">1</property>
             <property name="spacing">4</property>
             <child>
               <object class="GtkSearchEntry" id="entry">
-                <property name="visible">True</property>
-                <property name="can_focus">True</property>
+                <property name="visible">1</property>
+                <property name="can_focus">1</property>
                 <property name="invisible_char">•</property>
                 <signal name="search-changed" handler="search_clicked" swapped="no"/>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
+                <property name="expand">0</property>
               </packing>
             </child>
             <child>
               <object class="GtkScrolledWindow" id="scrolledwindow1">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="visible">1</property>
                 <child>
                   <object class="GtkTreeView" id="treeview">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="headers_visible">False</property>
+                    <property name="visible">1</property>
+                    <property name="headers_visible">0</property>
                     <signal name="cursor-changed" handler="cursor_changed" swapped="no"/>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection" id="treeview-selection1"/>
@@ -104,23 +68,21 @@
                 </child>
               </object>
               <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
+                <property name="expand">1</property>
                 <property name="position">1</property>
               </packing>
             </child>
           </object>
           <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
+            <property name="expand">1</property>
             <property name="position">1</property>
           </packing>
         </child>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="0">button2</action-widget>
-      <action-widget response="1">okbtn</action-widget>
+      <action-widget response="-6">button_cancel</action-widget>
+      <action-widget response="-5">button_ok</action-widget>
     </action-widgets>
-  </object>
+  </template>
 </interface>

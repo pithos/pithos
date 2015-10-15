@@ -153,8 +153,7 @@ class StationsDialog(Gtk.Dialog):
         if self.searchDialog:
             self.searchDialog.present()
         else:
-            self.searchDialog = SearchDialog.NewSearchDialog(self.worker_run)
-            self.searchDialog.set_transient_for(self)
+            self.searchDialog = SearchDialog.SearchDialog(worker=self.worker_run, transient_for=self)
             self.searchDialog.show_all()
             self.searchDialog.connect("response", self.add_station_cb)
             
@@ -163,7 +162,7 @@ class StationsDialog(Gtk.Dialog):
         
     def add_station_cb(self, dialog, response):
         logging.info("in add_station_cb {} {}".format(dialog.result, response))
-        if response == 1:
+        if response == Gtk.ResponseType.OK:
             self.worker_run("add_station_by_music_id", (dialog.result.musicId,), self.station_added, "Creating station...")
         dialog.hide()
         dialog.destroy()
