@@ -1031,8 +1031,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def show_about(self):
         """about - display the about box for pithos """
-        about = AboutPithosDialog.NewAboutPithosDialog()
-        about.set_transient_for(self)
+        about = AboutPithosDialog.AboutPithosDialog(transient_for=self)
         about.set_version(VERSION)
         about.run()
         about.destroy()

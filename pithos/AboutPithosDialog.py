@@ -16,57 +16,22 @@
 
 from gi.repository import Gtk, GdkPixbuf
 
+from .gi_composites import GtkTemplate
 from .pithosconfig import get_ui_file, get_media_file
 from .util import open_browser
 
+@GtkTemplate(ui=get_ui_file('about'))
 class AboutPithosDialog(Gtk.AboutDialog):
     __gtype_name__ = "AboutPithosDialog"
 
-    def __init__(self):
-        """__init__ - This function is typically not called directly.
-        Creation of a AboutPithosDialog requires redeading the associated ui
-        file and parsing the ui definition extrenally, 
-        and then calling AboutPithosDialog.finish_initializing().
-    
-        Use the convenience function NewAboutPithosDialog to create 
-        NewAboutPithosDialog objects.
-    
-        """
-        pass
-
-    def finish_initializing(self, builder):
-        """finish_initalizing should be called after parsing the ui definition
-        and creating a AboutPithosDialog object with it in order to finish
-        initializing the start of the new AboutPithosDialog instance.
-    
-        """
-        #get a reference to the builder and set up the signals
-        self.builder = builder
-        self.builder.connect_signals(self)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.init_template()
 
         self.set_logo(GdkPixbuf.Pixbuf.new_from_file_at_scale(get_media_file('icon'), -1, 96, True))
 
-        #code for other initialization actions should be added here
-
+    @GtkTemplate.Callback
     def activate_link_cb(self, wid, uri):
         open_browser(uri)
         return True
-
-def NewAboutPithosDialog():
-    """NewAboutPithosDialog - returns a fully instantiated
-    AboutPithosDialog object. Use this function rather than
-    creating a AboutPithosDialog instance directly.
-    
-    """
-
-    builder = Gtk.Builder()
-    builder.add_from_file(get_ui_file('about'))    
-    dialog = builder.get_object("about_pithos_dialog")
-    dialog.finish_initializing(builder)
-    return dialog
-
-if __name__ == "__main__":
-    dialog = NewAboutPithosDialog()
-    dialog.show()
-    Gtk.main()
 
