@@ -19,54 +19,41 @@ import os
 from gi.repository import Gtk
 import logging
 
+from .gi_composites import GtkTemplate
 from .util import open_browser
 from . import SearchDialog
 
+@GtkTemplate(ui='/io/github/Pithos/ui/StationsDialog.ui')
 class StationsDialog(Gtk.Dialog):
     __gtype_name__ = "StationsDialog"
 
-    def __init__(self):
-        """__init__ - This function is typically not called directly.
-        Creation of a StationsDialog requires redeading the associated ui
-        file and parsing the ui definition extrenally, 
-        and then calling StationsDialog.finish_initializing().
-    
-        Use the convenience function NewStationsDialog to create 
-        a StationsDialog object.
-    
-        """
-        pass
+    treeview = GtkTemplate.Child()
+    delete_confirm_dialog = GtkTemplate.Child()
+    station_menu = GtkTemplate.Child()
 
-    def finish_initializing(self, builder, pithos):
-        """finish_initalizing should be called after parsing the ui definition
-        and creating a StationsDialog object with it in order to finish
-        initializing the start of the new StationsDialog instance.
-    
-        """
-        #get a reference to the builder and set up the signals
-        self.builder = builder
-        self.builder.connect_signals(self)
-        
+    def __init__(self, pithos):
+        super().__init__()
+        self.init_template()
+
         self.pithos = pithos
         self.model = pithos.stations_model
         self.worker_run = pithos.worker_run
         self.quickmix_changed = False
         self.searchDialog = None
-        
+
         self.modelfilter = self.model.filter_new()
         self.modelfilter.set_visible_func(lambda m, i, d: m.get_value(i, 0) and not  m.get_value(i, 0).isQuickMix)
 
         self.modelsortable = Gtk.TreeModelSort.sort_new_with_model(self.modelfilter)
         """
-        @todo Leaving it as sorting by date added by default. 
+        @todo Leaving it as sorting by date added by default.
         Probably should make a radio select in the window or an option in program options for user preference
         """
 #        self.modelsortable.set_sort_column_id(1, Gtk.SortType.ASCENDING)
-        
-        self.treeview = self.builder.get_object("treeview")
+
         self.treeview.set_model(self.modelsortable)
         self.treeview.connect('button_press_event', self.on_treeview_button_press_event)
-        
+
         name_col   = Gtk.TreeViewColumn()
         name_col.set_title("Name")
         render_text = Gtk.CellRendererText()
@@ -77,7 +64,7 @@ class StationsDialog(Gtk.Dialog):
         name_col.set_expand(True)
         name_col.set_sort_column_id(1)
         self.treeview.append_column(name_col)
-        
+
         qm_col   = Gtk.TreeViewColumn()
         qm_col.set_title("In QuickMix")
         render_toggle = Gtk.CellRendererToggle()
@@ -90,24 +77,23 @@ class StationsDialog(Gtk.Dialog):
         qm_col.set_cell_data_func(render_toggle, qm_datafunc)
         render_toggle.connect("toggled", self.qm_toggled)
         self.treeview.append_column(qm_col)
-        
-        self.station_menu = builder.get_object("station_menu")
-        
+
     def qm_toggled(self, renderer, path):
         station = self.modelfilter[path][0]
         station.useQuickMix = not station.useQuickMix
         self.quickmix_changed = True
-        
+
     def station_renamed(self, cellrenderertext, path, new_text):
         station = self.modelfilter[path][0]
         self.worker_run(station.rename, (new_text,), context='net', message="Renaming Station...")
         self.model[self.modelfilter.convert_path_to_child_path(Gtk.TreePath(path))][1] = new_text
-        
+
     def selected_station(self):
         sel = self.treeview.get_selection().get_selected()
         if sel:
             return self.treeview.get_model().get_value(sel[1], 0)
-           
+
+    @GtkTemplate.Callback
     def on_treeview_button_press_event(self, treeview, event):
         if event.button == 3:
             x = int(event.x)
@@ -120,24 +106,28 @@ class StationsDialog(Gtk.Dialog):
                 treeview.set_cursor( path, col, 0)
                 self.station_menu.popup(None, None, None, None, event.button, time)
             return True
-            
+
+    @GtkTemplate.Callback
     def on_menuitem_listen(self, widget):
         station = self.selected_station()
         self.pithos.station_changed(station)
         self.hide()
-        
+
+    @GtkTemplate.Callback
     def on_menuitem_info(self, widget):
         open_browser(self.selected_station().info_url)
-        
+
+    @GtkTemplate.Callback
     def on_menuitem_rename(self, widget):
         sel = self.treeview.get_selection().get_selected()
         path = self.treeview.get_model().get_path(sel[1])
         self.treeview.set_cursor(path, self.treeview.get_column(0) ,True)
-        
+
+    @GtkTemplate.Callback
     def on_menuitem_delete(self, widget):
         station = self.selected_station()
         
-        dialog = self.builder.get_object("delete_confirm_dialog")
+        dialog = self.delete_confirm_dialog
         dialog.set_property("text", "Are you sure you want to delete the station \"%s\"?"%(station.name))
         response = dialog.run()
         dialog.hide()
@@ -147,7 +137,8 @@ class StationsDialog(Gtk.Dialog):
             del self.pithos.stations_model[self.pithos.station_index(station)]
             if self.pithos.current_station is station:
                 self.pithos.station_changed(self.model[0][0])
-                
+
+    @GtkTemplate.Callback
     def add_station(self, widget):
         if self.searchDialog:
             self.searchDialog.present()
@@ -155,10 +146,12 @@ class StationsDialog(Gtk.Dialog):
             self.searchDialog = SearchDialog.SearchDialog(worker=self.worker_run, transient_for=self)
             self.searchDialog.show_all()
             self.searchDialog.connect("response", self.add_station_cb)
-            
+
+    @GtkTemplate.Callback
     def refresh_stations(self, widget):
         self.pithos.refresh_stations(self.pithos)
-        
+
+    @GtkTemplate.Callback
     def add_station_cb(self, dialog, response):
         logging.info("in add_station_cb {} {}".format(dialog.result, response))
         if response == Gtk.ResponseType.OK:
@@ -166,7 +159,7 @@ class StationsDialog(Gtk.Dialog):
         dialog.hide()
         dialog.destroy()
         self.searchDialog = None
-        
+
     def station_added(self, station):
         logging.debug("1 "+ repr(station))
         it = self.model.insert_with_valuesv(0, (0, 1, 2), (station, station.name, 0))
@@ -177,12 +170,14 @@ class StationsDialog(Gtk.Dialog):
         logging.debug("4")
         self.treeview.set_cursor(0)
         logging.debug("5 ")
-        
+
+    @GtkTemplate.Callback
     def add_genre_station(self, widget):
         """
         This is just a stub for the non-completed buttn
         """
-        
+
+    @GtkTemplate.Callback
     def on_close(self, widget, data=None):
         self.hide()
         
@@ -192,21 +187,4 @@ class StationsDialog(Gtk.Dialog):
         
         logging.info("closed dialog")
         return True
-
-def NewStationsDialog(pithos):
-    """NewStationsDialog - returns a fully instantiated
-    Dialog object. Use this function rather than
-    creating StationsDialog instance directly.
-    
-    """
-
-    builder = Gtk.Builder.new_from_resource('/io/github/Pithos/ui/StationsDialog.ui')
-    dialog = builder.get_object("stations_dialog")
-    dialog.finish_initializing(builder, pithos)
-    return dialog
-
-if __name__ == "__main__":
-    dialog = NewStationsDialog()
-    dialog.show()
-    Gtk.main()
 

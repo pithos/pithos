@@ -1069,7 +1069,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if self.stations_dlg:
             self.stations_dlg.present()
         else:
-            self.stations_dlg = StationsDialog.NewStationsDialog(self)
+            self.stations_dlg = StationsDialog.StationsDialog(self)
             self.stations_dlg.set_transient_for(self)
             self.stations_dlg.show_all()
 

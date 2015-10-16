@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.18.3 -->
 <interface>
-  <requires lib="gtk+" version="3.10"/>
-  <requires lib="stations_dialog" version="1.0"/>
+  <requires lib="gtk+" version="3.14"/>
   <object class="GtkMenu" id="station_menu">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -42,7 +41,7 @@
       </object>
     </child>
   </object>
-  <object class="StationsDialog" id="stations_dialog">
+  <template class="StationsDialog" parent="GtkDialog">
     <property name="width_request">480</property>
     <property name="height_request">420</property>
     <property name="can_focus">False</property>
@@ -159,64 +158,29 @@
       <action-widget response="0">refresh_stations</action-widget>
       <action-widget response="-5">close</action-widget>
     </action-widgets>
-  </object>
+  </template>
   <object class="GtkMessageDialog" id="delete_confirm_dialog">
     <property name="can_focus">False</property>
-    <property name="border_width">5</property>
     <property name="modal">True</property>
     <property name="type_hint">dialog</property>
-    <property name="transient_for">stations_dialog</property>
+    <property name="transient_for">StationsDialog</property>
     <property name="message_type">warning</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="dialog-vbox3">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="dialog-action_area3">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="button2">
-                <property name="label">Cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button1">
-                <property name="label">Delete</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
+    <child type="action">
+      <object class="GtkButton" id="button_cancel">
+        <property name="label">Cancel</property>
+        <property name="visible">1</property>
+      </object>
+    </child>
+    <child type="action">
+      <object class="GtkButton" id="button_delete">
+        <property name="label">Delete</property>
+        <property name="visible">1</property>
+        <property name="can_default">1</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="0">button2</action-widget>
-      <action-widget response="1">button1</action-widget>
+      <action-widget response="0">button_cancel</action-widget>
+      <action-widget response="1" default="true">button_delete</action-widget>
     </action-widgets>
   </object>
 </interface>
