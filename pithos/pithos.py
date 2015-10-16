@@ -1065,6 +1065,12 @@ class PithosWindow(Gtk.ApplicationWindow):
     def refresh_stations(self, *ignore):
         self.worker_run(self.pandora.get_stations, (), self.process_stations, "Refreshing stations...")
 
+    def remove_station(self, station):
+        def station_index(model, s):
+            return [i[0] for i in model].index(s)
+        del self.stations_model[station_index(self.stations_model, station)]
+        self.stations_popover.remove_station(station)
+
     def set_initial_pos(self):
         """ Moves window to position stored in preferences """
         x, y = self.settings.get_value('win-pos')

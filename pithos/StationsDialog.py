@@ -133,7 +133,7 @@ class StationsDialog(Gtk.Dialog):
         
         if response:
             self.worker_run(station.delete, context='net', message="Deleting Station...")
-            del self.pithos.stations_model[self.pithos.station_index(station)]
+            self.pithos.remove_station(station)
             if self.pithos.current_station is station:
                 self.pithos.station_changed(self.model[0][0])
 

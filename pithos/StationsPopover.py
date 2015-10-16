@@ -15,9 +15,9 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from .util import open_browser
+import logging
 from gi.repository import GLib, Gio, Gtk, Gdk, Pango
-
+from .util import open_browser
 
 class StationsPopover(Gtk.Popover):
     __gtype_name__ = "StationsPopover"
@@ -119,12 +119,24 @@ class StationsPopover(Gtk.Popover):
         row.show_all()
         self.listbox.add(row)
 
+    def change_row(self, model, path, iter, data=None):
+        station, name, index = model.get(iter, 0, 1, 2)
+        for row in self.listbox.get_children():
+            if row.station == station:
+                row.name, row.index = name, index
+                self.listbox.invalidate_sort()
+                break
+        else:
+            logging.warning('Row changed on unknown station')
+
+
     def clear(self):
        for row in self.listbox.get_children():
             row.destroy()
 
     def set_model(self, model):
         model.connect('row-inserted', self.insert_row)
+        model.connect('row-changed', self.change_row)
 
     def select_station(self, station):
         for row in self.listbox.get_children():
@@ -132,22 +144,35 @@ class StationsPopover(Gtk.Popover):
                 self.listbox.select_row(row)
                 break
 
+    def remove_station(self, station):
+        for row in self.listbox.get_children():
+            if row.station == station:
+                self.listbox.remove(row)
+                break
+
 class StationListBoxRow(Gtk.ListBoxRow):
 
     def __init__(self, station, name, index):
         super().__init__()
         self.station = station
-        self.name = name
         self.index = index
 
         box = Gtk.Box()
-        label = Gtk.Label()
-        label.set_alignment(0, .5)
-        label.set_ellipsize(Pango.EllipsizeMode.END)
-        label.set_max_width_chars(15)
-        label.set_text(name)
-        box.pack_start(label, True, True, 0)
+        self.label = Gtk.Label()
+        self.label.set_alignment(0, .5)
+        self.label.set_ellipsize(Pango.EllipsizeMode.END)
+        self.label.set_max_width_chars(15)
+        self.label.set_text(name)
+        box.pack_start(self.label, True, True, 0)
 
         # TODO: Modify quickmix from here
         self.add(box)
+
+    @property
+    def name(self):
+        return self.label.get_text()
+
+    @name.setter
+    def name(self, name):
+        self.label.set_text(name)
 
