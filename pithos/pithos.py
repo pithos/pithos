@@ -154,8 +154,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.settings.connect('changed::control_proxy', self.set_proxy)
         self.settings.connect('changed::control_proxy_pac', self.set_proxy)
 
-        self.prefs_dlg = PreferencesPithosDialog.NewPreferencesPithosDialog(self.settings)
-        self.prefs_dlg.set_transient_for(self)
+        self.prefs_dlg = PreferencesPithosDialog.PreferencesPithosDialog(self.settings, transient_for=self)
         self.prefs_dlg.connect_after('response', self.on_prefs_response)
 
         self.init_core()

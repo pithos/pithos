@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.18.1 -->
 <interface>
-  <requires lib="gtk+" version="3.10"/>
-  <requires lib="preferences_pithos_dialog" version="1.0"/>
-  <object class="PreferencesPithosDialog" id="preferences_pithos_dialog">
+  <requires lib="gtk+" version="3.14"/>
+  <template class="PreferencesPithosDialog" parent="GtkDialog">
     <property name="width_request">400</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Preferences</property>
@@ -80,7 +79,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="prefs_username">
+                          <object class="GtkEntry" id="email_entry">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="hexpand">True</property>
@@ -104,7 +103,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="prefs_password">
+                          <object class="GtkEntry" id="password_entry">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="visibility">False</property>
@@ -117,7 +116,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkCheckButton" id="checkbutton_pandora_one">
+                          <object class="GtkCheckButton" id="pandora_one_checkbutton">
                             <property name="label" translatable="yes">Pandora One Subscriber</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
@@ -196,7 +195,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkComboBox" id="prefs_audio_quality">
+                          <object class="GtkComboBox" id="audio_quality_combo">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                           </object>
@@ -219,7 +218,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="prefs_proxy">
+                          <object class="GtkEntry" id="proxy_entry">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="input_purpose">url</property>
@@ -243,7 +242,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="prefs_control_proxy">
+                          <object class="GtkEntry" id="control_proxy_entry">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="input_purpose">url</property>
@@ -267,7 +266,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="prefs_control_proxy_pac">
+                          <object class="GtkEntry" id="control_proxy_pac_entry">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="input_purpose">url</property>
@@ -337,7 +336,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkToolButton" id="prefs_btn">
+                      <object class="GtkToolButton" id="preference_btn">
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
                         <property name="can_focus">False</property>
@@ -397,5 +396,5 @@
       <action-widget response="-6">button_cancel</action-widget>
       <action-widget response="-10" default="true">button_apply</action-widget>
     </action-widgets>
-  </object>
+  </template>
 </interface>

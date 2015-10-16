@@ -21,6 +21,7 @@ import logging
 
 from gi.repository import Gio, Gtk, GObject, GLib, Pango
 
+from .gi_composites import GtkTemplate
 from .util import get_account_password, set_account_password
 from .pandora.data import *
 
@@ -77,93 +78,81 @@ class PithosPluginRow(Gtk.ListBoxRow):
         elif self.plugin.prepared:
             self.get_toplevel().preference_btn.set_sensitive(self.plugin.preferences_dialog != None)
 
+
+@GtkTemplate(ui='/io/github/Pithos/ui/PreferencesPithosDialog.ui')
 class PreferencesPithosDialog(Gtk.Dialog):
     __gtype_name__ = "PreferencesPithosDialog"
 
-    def __init__(self):
-        """__init__ - This function is typically not called directly.
-        Creation of a PreferencesPithosDialog requires reading the associated ui
-        file and parsing the ui definition extrenally,
-        and then calling PreferencesPithosDialog.finish_initializing().
+    preference_btn = GtkTemplate.Child()
+    plugins_listbox = GtkTemplate.Child()
+    email_entry = GtkTemplate.Child()
+    password_entry = GtkTemplate.Child()
+    audio_quality_combo = GtkTemplate.Child()
+    proxy_entry = GtkTemplate.Child()
+    control_proxy_entry = GtkTemplate.Child()
+    control_proxy_pac_entry = GtkTemplate.Child()
+    pandora_one_checkbutton = GtkTemplate.Child()
 
-        Use the convenience function NewPreferencesPithosDialog to create
-        NewAboutPithosDialog objects.
-        """
+    def __init__(self, settings, *args, **kwargs):
+        super().__init__(*args, use_header_bar=1, **kwargs)
+        self.init_template()
 
-        pass
-
-    def finish_initializing(self, builder, settings):
-        """finish_initalizing should be called after parsing the ui definition
-        and creating a AboutPithosDialog object with it in order to finish
-        initializing the start of the new AboutPithosDialog instance.
-        """
         self.settings = settings
 
-        # get a reference to the builder and set up the signals
-        self.builder = builder
-        self.builder.connect_signals(self)
-        self.preference_btn = self.builder.get_object('prefs_btn')
-        self.listbox = self.builder.get_object('plugins_listbox')
-        self.email = self.builder.get_object('prefs_username')
-        self.password = self.builder.get_object('prefs_password')
-
         # initialize the "Audio Quality" combobox backing list
-        audio_quality_combo = self.builder.get_object('prefs_audio_quality')
         fmt_store = Gtk.ListStore(GObject.TYPE_STRING, GObject.TYPE_STRING)
         for audio_quality in valid_audio_formats:
             fmt_store.append(audio_quality)
-        audio_quality_combo.set_model(fmt_store)
+        self.audio_quality_combo.set_model(fmt_store)
         render_text = Gtk.CellRendererText()
-        audio_quality_combo.pack_start(render_text, True)
-        audio_quality_combo.add_attribute(render_text, "text", 1)
-        audio_quality_combo.set_id_column(0)
+        self.audio_quality_combo.pack_start(render_text, True)
+        self.audio_quality_combo.add_attribute(render_text, "text", 1)
+        self.audio_quality_combo.set_id_column(0)
 
         if not pacparser_imported:
-            self.builder.get_object('prefs_control_proxy_pac').set_sensitive(False)
-            self.builder.get_object('prefs_control_proxy_pac').set_tooltip_text("Please install python-pacparser")
+            self.control_proxy_pac_entry.set_sensitive(False)
+            self.control_proxy_pac_entry.set_tooltip_text("Please install python-pacparser")
 
         settings_mapping = {
-            'email': ('prefs_username', 'text'),
-            'pandora-one': ('checkbutton_pandora_one', 'active'),
-            'proxy': ('prefs_proxy', 'text'),
-            'control-proxy': ('prefs_control_proxy', 'text'),
-            'control-proxy-pac': ('prefs_control_proxy_pac', 'text'),
-            'audio-quality': ('prefs_audio_quality', 'active-id'),
+            'email': (self.email_entry, 'text'),
+            'pandora-one': (self.pandora_one_checkbutton, 'active'),
+            'proxy': (self.proxy_entry, 'text'),
+            'control-proxy': (self.control_proxy_entry, 'text'),
+            'control-proxy-pac': (self.control_proxy_pac_entry, 'text'),
+            'audio-quality': (self.audio_quality_combo, 'active-id'),
         }
 
         for key, val in settings_mapping.items():
-            settings.bind(key, self.builder.get_object(val[0]), val[1],
+            settings.bind(key, val[0], val[1],
                         Gio.SettingsBindFlags.DEFAULT|Gio.SettingsBindFlags.NO_SENSITIVITY)
 
-        self.password.set_text(get_account_password(self.settings.get_string('email')))
+        self.password_entry.set_text(get_account_password(self.settings.get_string('email')))
 
         self.on_account_changed(None)
 
     def set_plugins(self, plugins):
-        if len(self.listbox.set_header_func.get_arguments()) == 3:
-            # pygobject3 3.10
-            self.listbox.set_header_func(self.on_listbox_update_header, None)
-        else:
-            # pygobject3 3.12+
-            self.listbox.set_header_func(self.on_listbox_update_header)
+        self.plugins_listbox.set_header_func(self.on_listbox_update_header)
         for plugin in plugins.values():
             row = PithosPluginRow(plugin)
-            self.listbox.add(row)
-        self.listbox.show_all()
+            self.plugins_listbox.add(row)
+        self.plugins_listbox.show_all()
 
+    @GtkTemplate.Callback
     def on_plugins_row_selected(self, box, row):
         if row:
             self.preference_btn.set_sensitive(row.plugin.preferences_dialog != None)
 
+    @GtkTemplate.Callback
     def on_prefs_btn_clicked(self, btn):
-        dialog = self.listbox.get_selected_rows()[0].plugin.preferences_dialog
+        dialog = self.plugins_listbox.get_selected_rows()[0].plugin.preferences_dialog
         dialog.set_transient_for(self)
         dialog.set_destroy_with_parent(True)
         dialog.set_modal(True)
         dialog.show_all()
 
+    @GtkTemplate.Callback
     def on_account_changed(self, widget):
-        if not self.email.get_text() or not self.password.get_text():
+        if not self.email_entry.get_text() or not self.password_entry.get_text():
             self.set_response_sensitive(Gtk.ResponseType.APPLY, False)
         else:
             self.set_response_sensitive(Gtk.ResponseType.APPLY, True)
@@ -174,24 +163,8 @@ class PreferencesPithosDialog(Gtk.Dialog):
 
     def do_response(self, response_id):
         if response_id == Gtk.ResponseType.APPLY:
-            set_account_password(self.email.get_text(), self.password.get_text())
+            set_account_password(self.email_entry.get_text(), self.password_entry.get_text())
             self.settings.apply()
         else:
             self.settings.revert()
 
-
-def NewPreferencesPithosDialog(settings):
-    """NewPreferencesPithosDialog - returns a fully instantiated
-    PreferencesPithosDialog object. Use this function rather than
-    creating a PreferencesPithosDialog instance directly.
-    """
-
-    builder = Gtk.Builder.new_from_resource('/io/github/Pithos/ui/PreferencesPithosDialog.ui')
-    dialog = builder.get_object("preferences_pithos_dialog")
-    dialog.finish_initializing(builder, settings)
-    return dialog
-
-if __name__ == "__main__":
-    dialog = NewPreferencesPithosDialog()
-    dialog.show()
-    Gtk.main()
