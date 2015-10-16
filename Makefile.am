@@ -68,4 +68,4 @@ SUBDIRS = po
 CLEANFILES = $(pkgdata_DATA) $(bin_SCRIPTS) $(desktop_FILES) $(appstream_XML)
 EXTRA_DIST = license README.md autogen.sh requirements-osx.txt bin/pithos.in data/pithos.gresource.xml \
 	$(pithosui_DATA) $(pithosmedia_DATA) $(appstream_in_files) $(desktop_in_files) \
-	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA) $(noinst_DATA)
+	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA) $(noinst_DATA) $(gsettings_SCHEMAS)
