@@ -31,16 +31,27 @@ class MediaKeyPlugin(PithosPlugin):
             DBusGMainLoop(set_as_default=True)
         except ImportError:
             return False
+
         try:
             bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
-            mk = bus.get_object("org.gnome.SettingsDaemon","/org/gnome/SettingsDaemon/MediaKeys")
-            mk.GrabMediaPlayerKeys(APP_ID, 0, dbus_interface='org.gnome.SettingsDaemon.MediaKeys')
-            mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
-            logging.info("Bound media keys with DBUS")
-            self.method = 'dbus'
-            return True
         except dbus.DBusException:
             return False
+
+        bound = False
+        for de in ('gnome', 'mate'):
+            try:
+                mk = bus.get_object("org.%s.SettingsDaemon" %de, "/org/%s/SettingsDaemon/MediaKeys" %de)
+                mk.GrabMediaPlayerKeys(APP_ID, 0, dbus_interface='org.%s.SettingsDaemon.MediaKeys' %de)
+                mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
+                bound = True
+                logging.info("Bound media keys with DBUS (%s)" %de)
+                break
+            except dbus.DBusException as e:
+                logging.debug(e)
+
+        if bound:
+            self.method = 'dbus'
+            return True
             
     def mediakey_pressed(self, app, action):
        if app == APP_ID:
