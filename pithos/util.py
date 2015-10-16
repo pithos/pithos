@@ -14,6 +14,7 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
+import os
 import logging
 import webbrowser
 from urllib.parse import splittype, splituser, splitpasswd

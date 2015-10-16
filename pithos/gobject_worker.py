@@ -17,7 +17,7 @@
 import logging
 import threading
 import queue
-from gi.repository import GObject, GLib
+from gi.repository import GLib
 import traceback
 
 class GObjectWorker():

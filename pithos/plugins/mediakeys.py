@@ -69,7 +69,7 @@ class MediaKeyPlugin(PithosPlugin):
             import gi
             gi.require_version('Keybinder', '3.0')
             # Gdk needed for Keybinder
-            from gi.repository import Keybinder, Gdk
+            from gi.repository import Keybinder
             Keybinder.init()
         except:
             return False

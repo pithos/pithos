@@ -14,16 +14,13 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-import sys
-import os
-import stat
 import logging
 
-from gi.repository import Gio, Gtk, GObject, GLib, Pango
+from gi.repository import Gio, Gtk, GObject, Pango
 
 from .gi_composites import GtkTemplate
 from .util import get_account_password, set_account_password
-from .pandora.data import *
+from .pandora.data import valid_audio_formats
 
 pacparser_imported = False
 try:

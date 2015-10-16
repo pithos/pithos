@@ -17,7 +17,6 @@
 
 from .util import open_browser
 from gi.repository import GLib, Gio, Gtk, Gdk, Pango
-import logging
 
 
 class StationsPopover(Gtk.Popover):

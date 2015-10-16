@@ -14,7 +14,7 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from gi.repository import Gtk, GdkPixbuf
+from gi.repository import Gtk
 
 from .gi_composites import GtkTemplate
 from .util import open_browser
