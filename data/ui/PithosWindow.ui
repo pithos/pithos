@@ -239,7 +239,6 @@ audio-volume-medium-symbolic</property>
   </template>
   <object class="GtkMessageDialog" id="api_update_dialog_real">
     <property name="can_focus">False</property>
-    <property name="border_width">5</property>
     <property name="modal">True</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">PithosWindow</property>
@@ -247,178 +246,73 @@ audio-volume-medium-symbolic</property>
     <property name="text" translatable="yes">Pithos Upgrade Required</property>
     <property name="secondary_text" translatable="yes">Pithos needs to be updated for compatibility with Pandora's latest changes.</property>
     <property name="secondary_use_markup">True</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="dialog-vbox4">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="dialog-action_area4">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="button4">
-                <property name="label" translatable="yes">Get Help Online</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button5">
-                <property name="label">Quit</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="can_default">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
+    <child type="action">
+      <object class="GtkButton" id="button4">
+        <property name="label" translatable="yes">Get Help Online</property>
+        <property name="visible">1</property>
+      </object>
+    </child>
+    <child type="action">
+      <object class="GtkButton" id="button5">
+        <property name="label" translatable="yes">Quit</property>
+        <property name="visible">1</property>
+        <property name="can_default">1</property>
       </object>
     </child>
     <action-widgets>
       <action-widget response="1">button4</action-widget>
-      <action-widget response="0">button5</action-widget>
+      <action-widget response="0" default="true">button5</action-widget>
     </action-widgets>
   </object>
   <object class="GtkMessageDialog" id="error_dialog_real">
     <property name="can_focus">False</property>
-    <property name="border_width">5</property>
     <property name="modal">True</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">PithosWindow</property>
     <property name="message_type">error</property>
     <property name="text" translatable="yes">Error</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="dialog-vbox1">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="dialog-action_area1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="button1">
-                <property name="label">Cancel</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button2">
-                <property name="label" translatable="yes">Retry</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkButton" id="button3">
-                <property name="label">Preferences</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="can_default">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
+    <child type="action">
+      <object class="GtkButton" id="button1">
+        <property name="label" translatable="yes">Cancel</property>
+        <property name="visible">1</property>
+      </object>
+    </child>
+    <child type="action">
+      <object class="GtkButton" id="button2">
+        <property name="label" translatable="yes">Retry</property>
+        <property name="visible">1</property>
+      </object>
+    </child>
+    <child type="action">
+      <object class="GtkButton" id="button3">
+        <property name="label" translatable="yes">Preferences</property>
+        <property name="visible">1</property>
+        <property name="can_default">1</property>
       </object>
     </child>
     <action-widgets>
       <action-widget response="1">button1</action-widget>
       <action-widget response="2">button2</action-widget>
-      <action-widget response="3">button3</action-widget>
+      <action-widget response="3" default="true">button3</action-widget>
     </action-widgets>
   </object>
   <object class="GtkMessageDialog" id="fatal_error_dialog_real">
     <property name="can_focus">False</property>
-    <property name="border_width">5</property>
     <property name="modal">True</property>
     <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="transient_for">PithosWindow</property>
     <property name="message_type">error</property>
     <property name="text" translatable="yes">Error</property>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="messagedialog-vbox">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="spacing">2</property>
-        <child internal-child="action_area">
-          <object class="GtkButtonBox" id="messagedialog-action_area">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
-            <child>
-              <object class="GtkButton" id="button-error-quit">
-                <property name="label">Quit</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="can_default">True</property>
-                <property name="receives_default">True</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
+    <child type="action">
+      <object class="GtkButton" id="button-error-quit">
+        <property name="label" translatable="yes">Quit</property>
+        <property name="visible">1</property>
+        <property name="can_default">1</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="1">button-error-quit</action-widget>
+      <action-widget response="1" default="true">button-error-quit</action-widget>
     </action-widgets>
   </object>
   <object class="GtkMenu" id="song_menu">

@@ -619,7 +619,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         dialog.props.text = message
         dialog.props.secondary_text = submsg
-        dialog.set_default_response(3)
 
         btn = dialog.get_widget_for_response(2)
         if retry_cb is None:
@@ -641,7 +640,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         dialog = self.fatal_error_dialog_real
         dialog.props.text = message
         dialog.props.secondary_text = submsg
-        dialog.set_default_response(1)
 
         dialog.run()
         dialog.hide()
@@ -650,7 +648,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def api_update_dialog(self):
         dialog = self.api_update_dialog_real
-        dialog.set_default_response(0)
         response = dialog.run()
         if response:
             open_browser("http://pithos.github.io/itbroke")
