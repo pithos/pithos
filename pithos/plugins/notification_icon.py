@@ -78,6 +78,9 @@ class PithosNotificationIcon(PithosPlugin):
         if indicator_capable:
             # We have to add another entry for show / hide Pithos window
             self.visible_check = button("Show Pithos", self._toggle_visible, True)
+
+            # On middle-click
+            self.ind.set_secondary_activate_target(self.visible_check)
         
         self.playpausebtn = button("Pause", self.window.playpause)
         button("Skip",  self.window.next_song)
