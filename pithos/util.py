@@ -68,5 +68,5 @@ def open_browser(url):
     if isinstance(webbrowser.get(), webbrowser.BackgroundBrowser):
         try:
             os.wait() # workaround for http://bugs.python.org/issue5993
-        except:
+        except os.ChildProcessError:
             pass

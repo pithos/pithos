@@ -55,7 +55,7 @@ class FakePandora(Pandora):
     def set_authenticated(self):
         self.auth_check.set_active(True)
 
-    def json_call(self, method, args={}, https=False, blowfish=True):
+    def json_call(self, method, args=None, https=False, blowfish=True):
         time.sleep(1)
         self.maybe_fail()
 

@@ -20,7 +20,7 @@ import queue
 from gi.repository import GLib
 import traceback
 
-class GObjectWorker():
+class GObjectWorker:
     def __init__(self):
         self.thread = threading.Thread(target=self._run)
         self.thread.daemon = True

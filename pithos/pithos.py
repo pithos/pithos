@@ -45,19 +45,17 @@ from .pandora.data import *
 from .plugin import load_plugins
 from .util import parse_proxy, open_browser, get_account_password
 
-pacparser_imported = False
 try:
     import pacparser
-    pacparser_imported = True
 except ImportError:
-    pass
+    pacparser = None
 
 ALBUM_ART_SIZE = 96
 ALBUM_ART_X_PAD = 6
 
 class CellRendererAlbumArt(Gtk.CellRenderer):
     def __init__(self):
-        GObject.GObject.__init__(self)
+        super().__init__()
         self.icon = None
         self.pixbuf = None
         self.rate_bg = Gtk.IconTheme.get_default().load_icon('pithos-rate-bg', 32, 0)
@@ -94,7 +92,7 @@ def get_album_art(url, *extra):
         with urllib.request.urlopen(url) as f:
             image = f.read()
     except urllib.error.HTTPError:
-        logging.warn('Invalid image url received')
+        logging.warning('Invalid image url received')
         return (None,) + extra
 
     with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
@@ -102,7 +100,7 @@ def get_album_art(url, *extra):
         loader.write(image)
         return (loader.get_pixbuf(),) + extra
 
-class PlayerStatus (object):
+class PlayerStatus:
   def __init__(self):
     self.reset()
 
@@ -184,7 +182,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         Gst.init(None)
         self._query_duration = Gst.Query.new_duration(Gst.Format.TIME)
         self._query_position = Gst.Query.new_position(Gst.Format.TIME)
-        self.player = Gst.ElementFactory.make("playbin", "player");
+        self.player = Gst.ElementFactory.make("playbin", "player")
 
         bus = self.player.get_bus()
         bus.add_signal_watch()
@@ -353,7 +351,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             elif isinstance(e, PandoraError):
                 self.error_dialog(e.message, retry_cb, submsg=e.submsg)
             else:
-                logging.warn(e.traceback)
+                logging.warning(e.traceback)
 
         self.worker.send(fn, args, cb, eb)
 
@@ -389,16 +387,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         control_proxy = self.settings.get_string('control-proxy')
         control_proxy_pac = self.settings.get_string('control-proxy-pac')
 
-        if control_proxy:
-            control_opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
-
-        elif control_proxy_pac and pacparser_imported:
+        if not control_proxy and (control_proxy_pac and pacparser):
             pacparser.init()
             with urllib.request.urlopen(control_proxy_pac) as f:
                 pacstring = f.read().decode('utf-8')
                 try:
                     pacparser.parse_pac_string(pacstring)
-                except:
+                except pacparser._pacparser.error:
                     logging.warning('Failed to parse PAC.')
             try:
                 proxies = pacparser.find_proxy("http://pandora.com", "pandora.com").split(";")
@@ -407,11 +402,14 @@ class PithosWindow(Gtk.ApplicationWindow):
                     if match:
                         control_proxy = match.group(1)
                         break
-            except:
+            except pacparser._pacparser.error:
                 logging.warning('Failed to find proxy via PAC.')
             pacparser.cleanup()
-        elif control_proxy_pac and not pacparser_imported:
+        elif not control_proxy and (control_proxy_pac and not pacparser):
             logging.warning("Disabled proxy auto-config support because python-pacparser module was not found.")
+
+        if control_proxy:
+            control_opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
 
         self.worker_run('set_url_opener', (control_opener,))
 
@@ -431,7 +429,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         elif force_client and force_client[0] == '{':
             try:
                 client = json.loads(force_client)
-            except:
+            except json.JSONDecodeError:
                 logging.error("Could not parse force_client json")
 
 
@@ -578,7 +576,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if self.waiting_for_playlist: return
 
         if self.gstreamer_errorcount_1 >= self.playcount and self.gstreamer_errorcount_2 >=1:
-            logging.warn("Too many gstreamer errors. Not retrying")
+            logging.warning("Too many gstreamer errors. Not retrying")
             self.waiting_for_playlist = 1
             self.error_dialog(self.gstreamer_error, self.get_playlist)
             return
@@ -855,7 +853,8 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         return "%s\n<small>%s</small>" % (description, msg)
 
-    def song_icon(self, song):
+    @staticmethod
+    def song_icon(song):
         if song.tired:
             return 'go-jump'
         if song.rating == RATE_LOVE:
@@ -883,11 +882,12 @@ class PithosWindow(Gtk.ApplicationWindow):
     def active_station_changed(self, listbox, row):
         self.station_changed(row.station)
 
-    def format_time(self, time_int):
+    @staticmethod
+    def format_time(time_int):
         if time_int is None:
           return None
 
-        time_int = time_int // 1000000000
+        time_int //= 1000000000
         s = time_int % 60
         time_int //= 60
         m = time_int % 60
@@ -995,15 +995,15 @@ class PithosWindow(Gtk.ApplicationWindow):
 
             if event.button == 3:
                 rating = self.selected_song().rating
-                self.song_menu_love.set_property("visible", rating != RATE_LOVE);
-                self.song_menu_unlove.set_property("visible", rating == RATE_LOVE);
-                self.song_menu_ban.set_property("visible", rating != RATE_BAN);
-                self.song_menu_unban.set_property("visible", rating == RATE_BAN);
+                self.song_menu_love.set_property("visible", rating != RATE_LOVE)
+                self.song_menu_unlove.set_property("visible", rating == RATE_LOVE)
+                self.song_menu_ban.set_property("visible", rating != RATE_BAN)
+                self.song_menu_unban.set_property("visible", rating == RATE_BAN)
 
                 self.song_menu.popup( None, None, None, None, event.button, time)
                 return True
 
-            if event.button == 1 and event.type == Gdk.EventType._2BUTTON_PRESS:
+            if event.button == 1 and event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
                 logging.info("Double clicked on song %s", self.selected_song().index)
                 return self.start_selected_song()
 

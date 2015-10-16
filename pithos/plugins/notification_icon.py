@@ -23,7 +23,7 @@ try:
     gi.require_version('AppIndicator3', '0.1')
     from gi.repository import AppIndicator3 as AppIndicator
     indicator_capable = True
-except:
+except (ImportError, ValueError):
     indicator_capable = False
 
 class PithosNotificationIcon(PithosPlugin):    
@@ -32,9 +32,9 @@ class PithosNotificationIcon(PithosPlugin):
             
     def on_prepare(self):
         if indicator_capable:
-            self.ind = AppIndicator.Indicator.new("pithos-tray-icon", \
-                                  "pithos-tray-icon", \
-                                   AppIndicator.IndicatorCategory.APPLICATION_STATUS)
+            self.ind = AppIndicator.Indicator.new("pithos-tray-icon",
+                                                  "pithos-tray-icon",
+                                                  AppIndicator.IndicatorCategory.APPLICATION_STATUS)
 
     def on_enable(self):
         self.delete_callback_handle = self.window.connect("delete-event", self.toggle_visible)

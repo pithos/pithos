@@ -48,7 +48,7 @@ class VCryptoException(Exception):
     def __init__(self, *args):
         super(VCryptoException, self).__init__(*args)
 
-class Blowfish(object):
+class Blowfish:
     """Blowfish cipher.
 
     When initialized the object can encrypt and decrypt blocks of

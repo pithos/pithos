@@ -23,7 +23,7 @@ class StationsPopover(Gtk.Popover):
     __gtype_name__ = "StationsPopover"
 
     def __init__(self):
-        Gtk.Popover.__init__(self)
+        super().__init__()
 
         box2 = Gtk.Box()
         self.search = Gtk.SearchEntry()
@@ -135,7 +135,7 @@ class StationsPopover(Gtk.Popover):
 class StationListBoxRow(Gtk.ListBoxRow):
 
     def __init__(self, station, name, index):
-        Gtk.ListBoxRow.__init__(self)
+        super().__init__()
         self.station = station
         self.name = name
         self.index = index

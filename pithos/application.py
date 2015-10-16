@@ -28,7 +28,7 @@ from .migrate_settings import maybe_migrate_settings
 
 class PithosApplication(Gtk.Application):
     def __init__(self, version=''):
-        Gtk.Application.__init__(self, application_id='io.github.Pithos',
+        super().__init__(application_id='io.github.Pithos',
                                 flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.window = None
         self.options = None

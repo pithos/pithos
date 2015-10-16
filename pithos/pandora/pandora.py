@@ -65,7 +65,7 @@ class PandoraTimeout(PandoraNetError): pass
 def pad(s, l):
     return s + b'\0' * (l - len(s))
 
-class Pandora(object):
+class Pandora:
     """Access the Pandora API
 
     To use the Pandora class, make sure to call :py:meth:`set_audio_quality`
@@ -87,7 +87,9 @@ class Pandora(object):
     def pandora_decrypt(self, s):
         return b''.join([self.blowfish_decode.decrypt(pad(codecs.decode(s[i:i+16], 'hex_codec'), 8)) for i in range(0, len(s), 16)]).rstrip(b'\x08')
 
-    def json_call(self, method, args={}, https=False, blowfish=True):
+    def json_call(self, method, args=None, https=False, blowfish=True):
+        if not args:
+            args = {}
         url_arg_strings = []
         if self.partnerId:
             url_arg_strings.append('partner_id=%s'%self.partnerId)
@@ -263,7 +265,7 @@ class Pandora(object):
     def delete_feedback(self, stationToken, feedbackId):
         self.json_call('station.deleteFeedback', {'feedbackId': feedbackId, 'stationToken': stationToken})
 
-class Station(object):
+class Station:
     def __init__(self, pandora, d):
         self.pandora = pandora
 
@@ -315,7 +317,7 @@ class Station(object):
             self.name,
         )
 
-class Song(object):
+class Song:
     def __init__(self, pandora, d):
         self.pandora = pandora
 
@@ -340,10 +342,11 @@ class Song(object):
         self.finished = False
         self.playlist_time = time.time()
         self.feedbackId = None
+        self._title = ''
 
     @property
     def title(self):
-        if not hasattr(self, '_title'):
+        if not self._title:
             # the actual name of the track, minus any special characters (except dashes) is stored
             # as the last part of the songExplorerUrl, before the args.
             explorer_name = self.songExplorerUrl.split('?')[0].split('/')[-1]
@@ -354,7 +357,7 @@ class Song(object):
                 self._title = self.songName
             else:
                 try:
-                    xml_data = urllib.urlopen(self.songExplorerUrl)
+                    xml_data = urllib.request.urlopen(self.songExplorerUrl)
                     dom = minidom.parseString(xml_data.read())
                     attr_value = dom.getElementsByTagName('songExplorer')[0].attributes['songTitle'].value
 
@@ -372,7 +375,7 @@ class Song(object):
             logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
             return q['audioUrl']
         except KeyError:
-            logging.warn("Unable to use audio format %s. Using %s",
+            logging.warning("Unable to use audio format %s. Using %s",
                            quality, list(self.audioUrlMap.keys())[0])
             return list(self.audioUrlMap.values())[0]['audioUrl']
 
@@ -433,7 +436,7 @@ class Song(object):
         )
 
 
-class SearchResult(object):
+class SearchResult:
     def __init__(self, resultType, d):
         self.resultType = resultType
         self.score = d['score']

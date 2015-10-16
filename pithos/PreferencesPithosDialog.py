@@ -22,18 +22,17 @@ from .gi_composites import GtkTemplate
 from .util import get_account_password, set_account_password
 from .pandora.data import valid_audio_formats
 
-pacparser_imported = False
 try:
     import pacparser
-    pacparser_imported = True
 except ImportError:
+    pacparser = None
     logging.info("Could not import python-pacparser.")
 
 
 class PithosPluginRow(Gtk.ListBoxRow):
 
     def __init__(self, plugin):
-        Gtk.ListBoxRow.__init__(self)
+        super().__init__()
 
         self.plugin = plugin
 
@@ -73,7 +72,7 @@ class PithosPluginRow(Gtk.ListBoxRow):
             self.set_sensitive(False)
             self.set_tooltip_text(self.plugin.error)
         elif self.plugin.prepared:
-            self.get_toplevel().preference_btn.set_sensitive(self.plugin.preferences_dialog != None)
+            self.get_toplevel().preference_btn.set_sensitive(self.plugin.preferences_dialog is not None)
 
 
 @GtkTemplate(ui='/io/github/Pithos/ui/PreferencesPithosDialog.ui')
@@ -106,7 +105,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.audio_quality_combo.add_attribute(render_text, "text", 1)
         self.audio_quality_combo.set_id_column(0)
 
-        if not pacparser_imported:
+        if not pacparser:
             self.control_proxy_pac_entry.set_sensitive(False)
             self.control_proxy_pac_entry.set_tooltip_text("Please install python-pacparser")
 
@@ -137,7 +136,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
     @GtkTemplate.Callback
     def on_plugins_row_selected(self, box, row):
         if row:
-            self.preference_btn.set_sensitive(row.plugin.preferences_dialog != None)
+            self.preference_btn.set_sensitive(row.plugin.preferences_dialog is not None)
 
     @GtkTemplate.Callback
     def on_prefs_btn_clicked(self, btn):

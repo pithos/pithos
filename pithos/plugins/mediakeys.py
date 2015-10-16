@@ -71,7 +71,7 @@ class MediaKeyPlugin(PithosPlugin):
             # Gdk needed for Keybinder
             from gi.repository import Keybinder
             Keybinder.init()
-        except:
+        except (ValueError, ImportError):
             return False
         
         Keybinder.bind('XF86AudioPlay', self.window.playpause, None)

@@ -99,13 +99,13 @@ class LastfmPlugin(PithosPlugin):
         position = song.get_position_sec()
         if not song.is_ad and duration > 30 and (position > 240 or position > duration/2):
             logging.info("Scrobbling song")
-            self.worker.send(self.network.scrobble, (song.artist, song.title, int(song.start_time), song.album, \
+            self.worker.send(self.network.scrobble, (song.artist, song.title, int(song.start_time), song.album,
                                                      None, None, int(duration)))
 
 
 class LastFmAuth(Gtk.Dialog):
     def __init__(self, pylast, settings, key, parent):
-        Gtk.Dialog.__init__(self)
+        super().__init__()
         self.set_default_size(200, -1)
 
         self.settings = settings
