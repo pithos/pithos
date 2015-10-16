@@ -188,6 +188,9 @@ class Pandora(object):
         :param user:     The user's login email
         :param password: The user's login password
         """
+        self.android_generic_client = True
+        if client['deviceModel'] != 'android-generic':
+            self.android_generic_client = False        
         self.partnerId = self.userId = self.partnerAuthToken = None
         self.userAuthToken = self.time_offset = None
 
@@ -285,7 +288,8 @@ class Station(object):
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken}, https=True)
+        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken,
+        'additionalAudioUrl': 'HTTP_32_AACPLUS_ADTS,HTTP_64_AACPLUS_ADTS,HTTP_128_MP3'}, https=True)
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
@@ -318,10 +322,19 @@ class Station(object):
 class Song(object):
     def __init__(self, pandora, d):
         self.pandora = pandora
-
+        #If we're using the android-generic client we try to use the 128kbit/s mp3 stream instead of the 64kbit/s aacplus stream for highQuality.
+        #Otherwise we try to use the standard highQuality 192kbit/s mp3 stream from audioUrlMap for Pandora One users.
+        try: 
+            if self.pandora.android_generic_client:
+                highQuality = d['additionalAudioUrl'][2]
+            else:
+                highQuality = d['audioUrlMap']['highQuality']['audioUrl']
+            #Both free and Pandora One users get a 64kbit/s and 32kbit/s aacplus adts stream for mediumQuality and lowQuality.
+            self.audioUrlMap = {'highQuality': highQuality, 'mediumQuality': d['additionalAudioUrl'][1], 'lowQuality': d['additionalAudioUrl'][0]}
+        except:
+            self.old_audioUrlMap = d['audioUrlMap']  
         self.album = d['albumName']
         self.artist = d['artistName']
-        self.audioUrlMap = d['audioUrlMap']
         self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
         self.stationId = d['stationId']
@@ -329,8 +342,8 @@ class Song(object):
         self.songDetailURL = d['songDetailUrl']
         self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
-
         self.bitrate = None
+        self.codec = None
         self.is_ad = None  # None = we haven't checked, otherwise True/False
         self.tired=False
         self.message=''
@@ -368,13 +381,18 @@ class Song(object):
     def audioUrl(self):
         quality = self.pandora.audio_quality
         try:
-            q = self.audioUrlMap[quality]
-            logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
-            return q['audioUrl']
-        except KeyError:
-            logging.warn("Unable to use audio format %s. Using %s",
-                           quality, list(self.audioUrlMap.keys())[0])
-            return list(self.audioUrlMap.values())[0]['audioUrl']
+            #Try to use our new audioUrlMap. If it fails it should fallback to using the old quality based system.
+            return self.audioUrlMap[quality]
+        except:
+            logging.warn("'additionalAudioUrl' failed. Reverting to asking for a specific stream quality.")
+            try:
+                q = self.old_audioUrlMap[quality]
+                logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
+                return q['audioUrl']
+            except KeyError:
+                logging.warn("Unable to use audio format %s. Using %s",
+                               quality, list(self.old_audioUrlMap.keys())[0])
+                return list(self.old_audioUrlMap.values())[0]['audioUrl']
 
     @property
     def station(self):

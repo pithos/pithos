@@ -518,7 +518,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         logging.info("Starting song: index = %i"%(song_index))
         self.player_status.reset()
-
+        self.checked_for_ad = 0
         self.player.set_property("uri", self.current_song.audioUrl)
         self.player.set_state(Gst.State.PAUSED)
         self.playcount += 1
@@ -771,6 +771,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def check_if_song_is_ad(self):
         if self.current_song.is_ad is None:
+            self.checked_for_ad += 1
             if self.current_song.duration:
                 if self.current_song.get_duration_sec() < 45:  # Less than 45 seconds we assume it's an ad
                     logging.info('Ad detected!')
@@ -780,7 +781,8 @@ class PithosWindow(Gtk.ApplicationWindow):
                     logging.info('Not an Ad..')
                     self.current_song.is_ad = False
             else:
-                logging.warning('dur_stat is False. The assumption that duration is available once the audio-codec messages feeds is bad.')
+                if self.checked_for_ad > 2: 
+                    logging.warning('Ad detection failed!!!')
 
     def on_gst_tag(self, bus, message):
         tag_info = message.parse_tag()
