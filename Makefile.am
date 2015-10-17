@@ -47,7 +47,11 @@ appstream_XML = $(appstream_in_files:.xml.in=.xml)
 @APPSTREAM_XML_RULES@
 
 hicolor_scalabledir = $(datadir)/icons/hicolor/scalable/apps
-hicolor_scalable_DATA = data/icons/hicolor/scalable/apps/pithos.svg
+hicolor_scalable_DATA = data/icons/hicolor/scalable/apps/pithos.svg \
+                        data/icons/hicolor/scalable/apps/pithos-tray-icon.svg
+
+hicolordir = $(datadir)/icons/hicolor/48x48/apps
+hicolor_DATA = data/icons/hicolor/48x48/apps/pithos-tray-icon.png
 
 ubuntu_lightdir = $(datadir)/icons/ubuntu-mono-light/16x16/apps
 ubuntu_light_DATA = data/icons/ubuntu-mono-light/16x16/apps/pithos-tray-icon.svg
@@ -67,5 +71,5 @@ BUILT_SOURCES = pithos.gresource
 SUBDIRS = po
 CLEANFILES = $(pkgdata_DATA) $(bin_SCRIPTS) $(desktop_FILES) $(appstream_XML)
 EXTRA_DIST = license README.md autogen.sh requirements-osx.txt bin/pithos.in data/pithos.gresource.xml \
-	$(pithosui_DATA) $(pithosmedia_DATA) $(appstream_in_files) $(desktop_in_files) \
+	$(pithosui_DATA) $(pithosmedia_DATA) $(appstream_in_files) $(desktop_in_files)  $(hicolor_DATA) \
 	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA) $(noinst_DATA) $(gsettings_SCHEMAS)
