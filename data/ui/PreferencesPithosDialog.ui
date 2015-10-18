@@ -12,41 +12,34 @@
     <child type="action">
       <object class="GtkButton" id="button_cancel">
         <property name="label">Cancel</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="visible">1</property>
       </object>
     </child>
     <child type="action">
       <object class="GtkButton" id="button_apply">
         <property name="label">Apply</property>
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="can_default">True</property>
+        <property name="visible">1</property>
+        <property name="can_default">1</property>
       </object>
     </child>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="border_width">0</property>
+        <property name="visible">1</property>
         <child>
           <object class="GtkNotebook" id="notebook1">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
+            <property name="visible">1</property>
+            <property name="can_focus">1</property>
             <child>
               <object class="GtkGrid" id="grid2">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="visible">1</property>
                 <property name="border_width">12</property>
                 <property name="row_spacing">18</property>
                 <child>
                   <object class="GtkGrid" id="grid3">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="visible">1</property>
                     <child>
                       <object class="GtkLabel" id="label_account">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="visible">1</property>
                         <property name="halign">start</property>
                         <property name="label" translatable="yes">Account</property>
                         <attributes>
@@ -60,15 +53,13 @@
                     </child>
                     <child>
                       <object class="GtkGrid" id="grid4">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="visible">1</property>
                         <property name="margin_start">20</property>
                         <property name="row_spacing">8</property>
                         <property name="column_spacing">20</property>
                         <child>
                           <object class="GtkLabel" id="label_email">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="visible">1</property>
                             <property name="halign">start</property>
                             <property name="valign">center</property>
                             <property name="label" translatable="yes">Email</property>
@@ -80,9 +71,9 @@
                         </child>
                         <child>
                           <object class="GtkEntry" id="email_entry">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="hexpand">True</property>
+                            <property name="visible">1</property>
+                            <property name="can_focus">1</property>
+                            <property name="hexpand">1</property>
                             <property name="input_purpose">email</property>
                             <signal name="changed" handler="on_account_changed" swapped="no"/>
                           </object>
@@ -93,8 +84,7 @@
                         </child>
                         <child>
                           <object class="GtkLabel" id="label_password">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="visible">1</property>
                             <property name="label" translatable="yes">Password</property>
                           </object>
                           <packing>
@@ -104,9 +94,9 @@
                         </child>
                         <child>
                           <object class="GtkEntry" id="password_entry">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="visibility">False</property>
+                            <property name="visible">1</property>
+                            <property name="can_focus">1</property>
+                            <property name="visibility">0</property>
                             <property name="input_purpose">password</property>
                             <signal name="changed" handler="on_account_changed" swapped="no"/>
                           </object>
@@ -118,11 +108,10 @@
                         <child>
                           <object class="GtkCheckButton" id="pandora_one_checkbutton">
                             <property name="label" translatable="yes">Pandora One Subscriber</property>
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="receives_default">False</property>
+                            <property name="visible">1</property>
+                            <property name="can_focus">1</property>
                             <property name="halign">start</property>
-                            <property name="draw_indicator">True</property>
+                            <property name="draw_indicator">1</property>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -132,10 +121,10 @@
                         </child>
                         <child>
                           <object class="GtkLabel" id="label_create_account">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="label" translatable="yes">&lt;small&gt;&lt;a href='http://pandora.com'&gt;Create an account at pandora.com&lt;/a&gt;&lt;/small&gt;</property>
-                            <property name="use_markup">True</property>
+                            <property name="visible">1</property>
+                            <property name="can_focus">1</property>
+                            <property name="label" translatable="yes">&lt;small&gt;&lt;a href=&apos;http://pandora.com&apos;&gt;Create an account at pandora.com&lt;/a&gt;&lt;/small&gt;</property>
+                            <property name="use_markup">1</property>
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
@@ -157,12 +146,10 @@
                 </child>
                 <child>
                   <object class="GtkGrid" id="grid5">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="visible">1</property>
                     <child>
                       <object class="GtkLabel" id="label_advanced">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="visible">1</property>
                         <property name="halign">start</property>
                         <property name="label" translatable="yes">Advanced Settings</property>
                         <attributes>
@@ -176,16 +163,14 @@
                     </child>
                     <child>
                       <object class="GtkGrid" id="grid6">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="visible">1</property>
                         <property name="margin_start">20</property>
                         <property name="row_spacing">8</property>
                         <property name="column_spacing">20</property>
-                        <property name="row_homogeneous">True</property>
+                        <property name="row_homogeneous">1</property>
                         <child>
                           <object class="GtkLabel" id="label_audio_quality">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="visible">1</property>
                             <property name="halign">start</property>
                             <property name="label" translatable="yes">Audio Quality</property>
                           </object>
@@ -196,8 +181,7 @@
                         </child>
                         <child>
                           <object class="GtkComboBox" id="audio_quality_combo">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="visible">1</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
@@ -206,8 +190,7 @@
                         </child>
                         <child>
                           <object class="GtkLabel" id="label_proxy">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="visible">1</property>
                             <property name="tooltip_text" translatable="yes">This proxy is used for all HTTP/HTTPS traffic. If empty, http_proxy and https_proxy environment variables will be used.</property>
                             <property name="halign">start</property>
                             <property name="label" translatable="yes">Proxy URL</property>
@@ -219,8 +202,8 @@
                         </child>
                         <child>
                           <object class="GtkEntry" id="proxy_entry">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
+                            <property name="visible">1</property>
+                            <property name="can_focus">1</property>
                             <property name="input_purpose">url</property>
                           </object>
                           <packing>
@@ -230,8 +213,7 @@
                         </child>
                         <child>
                           <object class="GtkLabel" id="label_control_proxy">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="visible">1</property>
                             <property name="tooltip_text" translatable="yes">Proxy for Pandora API requests only (for those outside the US). If unset, the normal proxy is used.</property>
                             <property name="halign">start</property>
                             <property name="label" translatable="yes">Control Proxy URL</property>
@@ -243,8 +225,8 @@
                         </child>
                         <child>
                           <object class="GtkEntry" id="control_proxy_entry">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
+                            <property name="visible">1</property>
+                            <property name="can_focus">1</property>
                             <property name="input_purpose">url</property>
                           </object>
                           <packing>
@@ -254,8 +236,7 @@
                         </child>
                         <child>
                           <object class="GtkLabel" id="label_control_proxy_pac">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="visible">1</property>
                             <property name="tooltip_text" translatable="yes">Proxy auto-configuration URL. Used only if Control Proxy URL above is unset.</property>
                             <property name="halign">start</property>
                             <property name="label" translatable="yes">Control Proxy PAC</property>
@@ -267,8 +248,8 @@
                         </child>
                         <child>
                           <object class="GtkEntry" id="control_proxy_pac_entry">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
+                            <property name="visible">1</property>
+                            <property name="can_focus">1</property>
                             <property name="input_purpose">url</property>
                           </object>
                           <packing>
@@ -292,33 +273,29 @@
             </child>
             <child type="tab">
               <object class="GtkLabel" id="label1">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="visible">1</property>
                 <property name="label" translatable="yes">Pandora</property>
               </object>
               <packing>
-                <property name="tab_fill">False</property>
+                <property name="tab_fill">0</property>
               </packing>
             </child>
             <child>
               <object class="GtkBox" id="box1">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="visible">1</property>
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkScrolledWindow" id="scrolledwindow1">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
+                    <property name="visible">1</property>
+                    <property name="can_focus">1</property>
                     <property name="hscrollbar_policy">never</property>
                     <property name="shadow_type">in</property>
                     <child>
                       <object class="GtkViewport" id="viewport1">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="visible">1</property>
                         <child>
                           <object class="GtkListBox" id="plugins_listbox">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="visible">1</property>
                             <signal name="row-selected" handler="on_plugins_row_selected" swapped="no"/>
                           </object>
                         </child>
@@ -326,29 +303,25 @@
                     </child>
                   </object>
                   <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
+                    <property name="expand">1</property>
                   </packing>
                 </child>
                 <child>
                   <object class="GtkToolbar" id="toolbar1">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="visible">1</property>
                     <child>
                       <object class="GtkToolButton" id="preference_btn">
-                        <property name="visible">True</property>
-                        <property name="sensitive">False</property>
-                        <property name="can_focus">False</property>
+                        <property name="visible">1</property>
+                        <property name="sensitive">0</property>
                         <property name="tooltip_text" translatable="yes">This plugin either must be enabled or does not support preferences.</property>
                         <property name="halign">end</property>
                         <property name="label" translatable="yes">Preferences</property>
-                        <property name="use_underline">True</property>
+                        <property name="use_underline">1</property>
                         <signal name="clicked" handler="on_prefs_btn_clicked" swapped="no"/>
                       </object>
                       <packing>
-                        <property name="expand">True</property>
-                        <property name="homogeneous">True</property>
+                        <property name="expand">1</property>
+                        <property name="homogeneous">1</property>
                       </packing>
                     </child>
                     <style>
@@ -356,8 +329,6 @@
                     </style>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
@@ -368,25 +339,18 @@
             </child>
             <child type="tab">
               <object class="GtkLabel" id="label2">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="visible">1</property>
                 <property name="label" translatable="yes">Plugins</property>
               </object>
               <packing>
                 <property name="position">1</property>
-                <property name="tab_fill">False</property>
+                <property name="tab_fill">0</property>
               </packing>
             </child>
-            <child>
-              <placeholder/>
-            </child>
             <child type="tab">
-              <placeholder/>
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
             <property name="position">1</property>
           </packing>
         </child>

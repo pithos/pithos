@@ -3,40 +3,35 @@
 <interface>
   <requires lib="gtk+" version="3.14"/>
   <object class="GtkMenu" id="station_menu">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
+    <property name="visible">1</property>
     <child>
       <object class="GtkMenuItem" id="menuitem_listen">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="visible">1</property>
         <property name="label" translatable="yes">Listen Now</property>
-        <property name="use_underline">True</property>
+        <property name="use_underline">1</property>
         <signal name="activate" handler="on_menuitem_listen" swapped="no"/>
       </object>
     </child>
     <child>
       <object class="GtkMenuItem" id="menuitem_info">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="visible">1</property>
         <property name="label" translatable="yes">Info</property>
-        <property name="use_underline">True</property>
+        <property name="use_underline">1</property>
         <signal name="activate" handler="on_menuitem_info" swapped="no"/>
       </object>
     </child>
     <child>
       <object class="GtkMenuItem" id="menuitem_rename">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="visible">1</property>
         <property name="label" translatable="yes">Rename</property>
         <signal name="activate" handler="on_menuitem_rename" swapped="no"/>
       </object>
     </child>
     <child>
       <object class="GtkMenuItem" id="menuitem_delete">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="visible">1</property>
         <property name="label" translatable="yes">Delete</property>
-        <property name="use_underline">True</property>
+        <property name="use_underline">1</property>
         <signal name="activate" handler="on_menuitem_delete" swapped="no"/>
       </object>
     </child>
@@ -53,91 +48,75 @@
     <signal name="delete-event" handler="on_close" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="visible">1</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox" id="dialog-action_area1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="visible">1</property>
             <property name="layout_style">end</property>
             <child>
               <object class="GtkButton" id="add_station">
                 <property name="label" translatable="yes">Add Station</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
+                <property name="visible">1</property>
+                <property name="receives_default">1</property>
                 <signal name="clicked" handler="add_station" swapped="no"/>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-                <property name="secondary">True</property>
+                <property name="fill">0</property>
+                <property name="secondary">1</property>
               </packing>
             </child>
             <child>
               <object class="GtkButton" id="add_genre_station">
                 <property name="label" translatable="yes">Genre Stations</property>
-                <property name="sensitive">False</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
-                <property name="no_show_all">True</property>
+                <property name="sensitive">0</property>
+                <property name="receives_default">1</property>
+                <property name="no_show_all">1</property>
                 <signal name="clicked" handler="add_genre_station" swapped="no"/>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
+                <property name="fill">0</property>
                 <property name="position">1</property>
-                <property name="secondary">True</property>
+                <property name="secondary">1</property>
               </packing>
             </child>
             <child>
               <object class="GtkButton" id="refresh_stations">
                 <property name="label" translatable="yes">Refresh Stations</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
+                <property name="visible">1</property>
+                <property name="receives_default">1</property>
                 <signal name="clicked" handler="refresh_stations" swapped="no"/>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
+                <property name="fill">0</property>
                 <property name="position">2</property>
-                <property name="secondary">True</property>
+                <property name="secondary">1</property>
               </packing>
             </child>
             <child>
               <object class="GtkButton" id="close">
                 <property name="label">Close</property>
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="receives_default">True</property>
+                <property name="visible">1</property>
+                <property name="receives_default">1</property>
                 <signal name="clicked" handler="on_close" swapped="no"/>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
+                <property name="fill">0</property>
                 <property name="position">3</property>
               </packing>
             </child>
           </object>
           <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
             <property name="pack_type">end</property>
-            <property name="position">0</property>
           </packing>
         </child>
         <child>
           <object class="GtkScrolledWindow" id="scrolledwindow1">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="visible">1</property>
             <child>
               <object class="GtkTreeView" id="treeview">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="visible">1</property>
                 <child internal-child="selection">
                   <object class="GtkTreeSelection" id="treeview-selection1"/>
                 </child>
@@ -145,8 +124,7 @@
             </child>
           </object>
           <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
+            <property name="expand">1</property>
             <property name="position">1</property>
           </packing>
         </child>
@@ -160,8 +138,7 @@
     </action-widgets>
   </template>
   <object class="GtkMessageDialog" id="delete_confirm_dialog">
-    <property name="can_focus">False</property>
-    <property name="modal">True</property>
+    <property name="modal">1</property>
     <property name="type_hint">dialog</property>
     <property name="transient_for">StationsDialog</property>
     <property name="message_type">warning</property>
