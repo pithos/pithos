@@ -9,12 +9,10 @@
     <property name="page_size">10</property>
   </object>
   <template class="PithosWindow" parent="GtkApplicationWindow">
-    <property name="can_focus">False</property>
     <property name="title" translatable="yes">Pithos</property>
     <property name="default_width">500</property>
     <property name="default_height">360</property>
     <property name="icon_name">pithos</property>
-    <signal name="configure-event" handler="on_configure_event" swapped="no"/>
     <signal name="destroy" handler="on_destroy" swapped="no"/>
     <child>
       <object class="GtkBox" id="vbox1">
@@ -189,7 +187,6 @@ audio-volume-medium-symbolic</property>
   </template>
   <object class="GtkMessageDialog" id="api_update_dialog_real">
     <property name="modal">1</property>
-    <property name="type_hint">dialog</property>
     <property name="transient_for">PithosWindow</property>
     <property name="message_type">error</property>
     <property name="text" translatable="yes">Pithos Upgrade Required</property>
@@ -215,7 +212,6 @@ audio-volume-medium-symbolic</property>
   </object>
   <object class="GtkMessageDialog" id="error_dialog_real">
     <property name="modal">1</property>
-    <property name="type_hint">dialog</property>
     <property name="transient_for">PithosWindow</property>
     <property name="message_type">error</property>
     <property name="text" translatable="yes">Error</property>
@@ -246,7 +242,6 @@ audio-volume-medium-symbolic</property>
   </object>
   <object class="GtkMessageDialog" id="fatal_error_dialog_real">
     <property name="modal">1</property>
-    <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">1</property>
     <property name="transient_for">PithosWindow</property>
     <property name="message_type">error</property>

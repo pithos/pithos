@@ -30,8 +30,7 @@ class AboutPithosDialog(Gtk.AboutDialog):
         theme = Gtk.IconTheme.get_default()
         self.set_logo(theme.load_icon('pithos', 96, 0))
 
-    @GtkTemplate.Callback
-    def activate_link_cb(self, wid, uri):
+    def do_activate_link(self, uri):
         open_browser(uri)
         return True
 

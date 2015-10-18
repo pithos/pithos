@@ -5,21 +5,18 @@
   <template class="SearchDialog" parent="GtkDialog">
     <property name="width_request">380</property>
     <property name="height_request">350</property>
-    <property name="can_focus">False</property>
-    <property name="border_width">5</property>
+    <property name="border_width">2</property>
+    <property name="modal">1</property>
     <property name="title" translatable="yes">Search</property>
-    <property name="modal">True</property>
-    <property name="icon_name">pithos</property>
-    <property name="type_hint">dialog</property>
     <child type="action">
       <object class="GtkButton" id="button_cancel">
-        <property name="label">Cancel</property>
+        <property name="label" translatable="yes">Cancel</property>
         <property name="visible">1</property>
       </object>
     </child>
     <child type="action">
       <object class="GtkButton" id="button_ok">
-        <property name="label">Ok</property>
+        <property name="label" translatable="yes">Add</property>
         <property name="visible">1</property>
       </object>
     </child>
@@ -45,6 +42,7 @@
             <child>
               <object class="GtkScrolledWindow" id="scrolledwindow1">
                 <property name="visible">1</property>
+                <property name="shadow_type">in</property>
                 <child>
                   <object class="GtkTreeView" id="treeview">
                     <property name="visible">1</property>

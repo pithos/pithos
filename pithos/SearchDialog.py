@@ -30,7 +30,7 @@ class SearchDialog(Gtk.Dialog):
         self.worker_run = kwargs["worker"]
         del kwargs["worker"]
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, use_header_bar=1, **kwargs)
         self.init_template()
 
         self.model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
