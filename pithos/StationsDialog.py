@@ -30,8 +30,8 @@ class StationsDialog(Gtk.Dialog):
     delete_confirm_dialog = GtkTemplate.Child()
     station_menu = GtkTemplate.Child()
 
-    def __init__(self, pithos):
-        super().__init__()
+    def __init__(self, pithos, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.init_template()
 
         self.pithos = pithos
@@ -130,8 +130,8 @@ class StationsDialog(Gtk.Dialog):
         dialog.set_property("text", "Are you sure you want to delete the station \"%s\"?"%(station.name))
         response = dialog.run()
         dialog.hide()
-        
-        if response:
+
+        if response == Gtk.ResponseType.YES:
             self.worker_run(station.delete, context='net', message="Deleting Station...")
             self.pithos.remove_station(station)
             if self.pithos.current_station is station:
@@ -171,15 +171,9 @@ class StationsDialog(Gtk.Dialog):
         logging.debug("5 ")
 
     @GtkTemplate.Callback
-    def add_genre_station(self, widget):
-        """
-        This is just a stub for the non-completed buttn
-        """
-
-    @GtkTemplate.Callback
     def on_close(self, widget, data=None):
         self.hide()
-        
+
         if self.quickmix_changed:
             self.worker_run("save_quick_mix",  message="Saving QuickMix...")
             self.quickmix_changed = False

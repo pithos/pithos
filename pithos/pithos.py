@@ -1058,8 +1058,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if self.stations_dlg:
             self.stations_dlg.present()
         else:
-            self.stations_dlg = StationsDialog.StationsDialog(self)
-            self.stations_dlg.set_transient_for(self)
+            self.stations_dlg = StationsDialog.StationsDialog(self, transient_for=self)
             self.stations_dlg.show_all()
 
     def refresh_stations(self, *ignore):
