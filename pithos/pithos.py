@@ -138,11 +138,9 @@ class PithosWindow(Gtk.ApplicationWindow):
     error_dialog_real = GtkTemplate.Child()
     fatal_error_dialog_real = GtkTemplate.Child()
 
-    def __init__(self, app, cmdopts):
+    def __init__(self, app, test_mode):
         super().__init__(application=app)
         self.init_template()
-
-        self.cmdopts = cmdopts
 
         self.settings = Gio.Settings.new('io.github.Pithos')
         self.settings.connect('changed::audio-quality', self.set_audio_quality)
@@ -161,7 +159,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         load_plugins(self)
         self.prefs_dlg.set_plugins(self.plugins)
 
-        self.pandora = make_pandora(self.cmdopts.test)
+        self.pandora = make_pandora(test_mode)
         self.set_proxy()
         self.set_audio_quality()
 

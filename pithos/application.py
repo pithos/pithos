@@ -17,11 +17,11 @@
 import sys
 import signal
 import logging
-import argparse
+from gettext import gettext as _
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gio, Gtk
+from gi.repository import GLib, Gio, Gtk
 
 from .pithos import PithosWindow
 from .migrate_settings import maybe_migrate_settings
@@ -31,8 +31,15 @@ class PithosApplication(Gtk.Application):
         super().__init__(application_id='io.github.Pithos',
                                 flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.window = None
-        self.options = None
+        self.test_mode = False
         self.version = version
+
+        self.add_main_option('verbose', ord('v'), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
+                             _('Show info messages'), None)
+        self.add_main_option('debug', ord('d'), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
+                             _('Show debug messages'), None)
+        self.add_main_option('test', ord('t'), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
+                             _('Use a mock service instead of connecting to the real Pandora server'), None)
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -54,28 +61,24 @@ class PithosApplication(Gtk.Application):
         action.connect("activate", self.quit_cb)
         self.add_action(action)
 
-    # FIXME: do_local_command_line() segfaults?
-    def do_command_line(self, args):
-        Gtk.Application.do_command_line(self, args)
-
-        parser = argparse.ArgumentParser()
-        parser.add_argument("-v", "--verbose", action="count", default=0, dest="verbose", help="Show debug messages")
-        parser.add_argument("-t", "--test", action="store_true", dest="test", help="Use a mock web interface instead of connecting to the real Pandora server")
-        self.options = parser.parse_args(args.get_arguments()[1:])
+    def do_command_line(self, command_line):
+        options = command_line.get_options_dict()
 
         # First, get rid of existing logging handlers due to call in header as per
         # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig
         logging.root.handlers = []
 
         #set the logging level to show debug messages
-        if self.options.verbose > 1:
+        if options.contains('debug'):
             log_level = logging.DEBUG
-        elif self.options.verbose == 1:
+        elif options.contains('verbose'):
             log_level = logging.INFO
         else:
             log_level = logging.WARN
 
         logging.basicConfig(level=log_level, format='%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
+
+        self.test_mode = options.lookup_value('test')
 
         self.do_activate()
 
@@ -85,7 +88,7 @@ class PithosApplication(Gtk.Application):
         if not self.window:
             maybe_migrate_settings()
             logging.info("Pithos %s" %self.version)
-            self.window = PithosWindow(self, self.options)
+            self.window = PithosWindow(self, self.test_mode)
 
         self.window.present()
 
