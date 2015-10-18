@@ -91,8 +91,7 @@ class PithosNotificationIcon(PithosPlugin):
         # connect our new menu to the statusicon or the appindicator
         if indicator_capable:
             self.ind.set_menu(menu)
-            # Disabled because of https://bugs.launchpad.net/variety/+bug/1071598
-            #self.ind.connect('scroll-event', lambda _x, _y, steps: self.scroll(steps))
+            self.ind.connect('scroll-event', lambda _x, _y, steps: self.scroll(steps))
         else:
             self.statusicon.connect('popup-menu', self.context_menu, menu)
             self.statusicon.connect('scroll-event', lambda _, steps: self.scroll(steps))
