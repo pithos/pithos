@@ -20,6 +20,15 @@ GLIB_GSETTINGS
 
 AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources)
 
+AC_ARG_WITH(docs, AS_HELP_STRING([--with-docs], [Build documentation with Sphinx]))
+AS_IF([test "$with_docs" = "yes"], [
+    AC_PATH_PROG(SPHINX_BUILD, sphinx-build, [no])
+	AS_IF([test "$SPHINX_BUILD" = "no"], [
+		with_docs=no
+	])
+])
+AM_CONDITIONAL([WITH_DOCS], [test "$with_docs" = "yes"])
+
 AC_CONFIG_FILES([
     Makefile
     po/Makefile.in
@@ -29,5 +38,6 @@ AC_OUTPUT
 echo "
     $PACKAGE $VERSION
 
-    prefix: ${prefix}
+    prefix:         ${prefix}
+    documentation:  ${with_docs}
 "

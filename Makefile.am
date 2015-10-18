@@ -1,4 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
+DISTCHECK_CONFIGURE_FLAGS = --with-docs
 
 # ----------- pithos --------------
 
@@ -73,3 +74,31 @@ CLEANFILES = $(pkgdata_DATA) $(bin_SCRIPTS) $(desktop_FILES) $(appstream_XML)
 EXTRA_DIST = license README.md autogen.sh requirements-osx.txt bin/pithos.in data/pithos.gresource.xml \
 	$(appstream_in_files) $(desktop_in_files) $(noinst_DATA) $(gsettings_SCHEMAS) $(hicolor_DATA) \
 	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA)
+
+# -------------- docs ---------------
+
+if WITH_DOCS
+
+sphinx_verbose = $(sphinx_verbose_$(V))
+sphinx_verbose_ = $(sphinx_verbose_$(AM_DEFAULT_VERBOSITY))
+sphinx_verbose_0 = @echo "  SPHINX  " $@; $(SPHINX_BUILD) $< $@ > /dev/null;
+sphinx_verbose_1 = $(SPHINX_BUILD) $< $@;
+
+docs/html: docs docs/conf.py docs/index.rst
+	$(sphinx_verbose)
+
+all-local: docs/html
+
+install-data-local:
+	$(INSTALL) -d $(htmldir)
+	cp -r docs/html $(htmldir)
+
+uninstall-local:
+	rm -rf $(htmldir)/html
+
+clean-local:
+	rm -rf docs/html
+
+EXTRA_DIST += docs/conf.py docs/index.rst
+
+endif
