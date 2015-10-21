@@ -33,7 +33,7 @@
                     <child>
                       <object class="GtkButton" id="playpause_button">
                         <property name="visible">1</property>
-                        <property name="receives_default">1</property>
+                        <property name="can_focus">0</property>
                         <property name="action_name">win.playpause</property>
                         <child>
                           <object class="GtkImage" id="playpause_image">
@@ -47,7 +47,7 @@
                     <child>
                       <object class="GtkButton" id="button7">
                         <property name="visible">1</property>
-                        <property name="receives_default">1</property>
+                        <property name="can_focus">0</property>
                         <property name="action_name">win.skip</property>
                         <child>
                           <object class="GtkImage" id="skip_image">
@@ -64,7 +64,7 @@
                     <child>
                       <object class="GtkVolumeButton" id="volume">
                         <property name="visible">1</property>
-                        <property name="receives_default">1</property>
+                        <property name="can_focus">0</property>
                         <property name="relief">none</property>
                         <property name="focus_on_click">0</property>
                         <property name="orientation">vertical</property>
@@ -118,7 +118,7 @@ audio-volume-medium-symbolic</property>
                 <child>
                   <object class="GtkMenuButton" id="stations_button">
                     <property name="visible">1</property>
-                    <property name="receives_default">1</property>
+                    <property name="can_focus">0</property>
                     <child>
                       <object class="GtkBox" id="box2">
                         <property name="visible">1</property>
