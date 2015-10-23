@@ -1079,7 +1079,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.show()
         self.present()
 
-    def do_configure_event(self, event):
+    @GtkTemplate.Callback
+    def on_configure_event(self, widget, event, data=None):
         self.settings.set_value('win-pos', GLib.Variant.new_tuple(GLib.Variant.new_int32(event.x),
                                 GLib.Variant.new_int32(event.y)))
         return False
