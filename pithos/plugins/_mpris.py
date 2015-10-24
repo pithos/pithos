@@ -17,6 +17,8 @@
 
 import dbus
 import dbus.service
+import re
+import sys
 from xml.etree import ElementTree
 
 class PithosMprisService(dbus.service.Object):
@@ -48,7 +50,20 @@ class PithosMprisService(dbus.service.Object):
             self.signal_playing()
         else:
             self.signal_paused()
-        
+
+    def get_file_url(self, filename):
+        if sys.version_info[0] == 3:
+            string_types = str,
+        else:
+            string_types = basestring,
+        if not filename or not isinstance(filename, string_types):
+            return ''
+        if re.match(r'[a-zA-Z]+://', filename):
+            return filename
+        elif re.match(r'/', filename):
+            return 'file://' + filename
+        return 'file:///' + filename
+
     def songchange_handler(self, window, song):
         self.song_changed([song.artist], song.album, song.title, song.artFile,
                           song.rating)
@@ -56,7 +71,7 @@ class PithosMprisService(dbus.service.Object):
 
     def artchange_handler(self, window, song):
         if song is self.window.current_song:
-            self.__metadata['mpris:artUrl'] = song.artFile or ''
+            self.__metadata['mpris:artUrl'] = self.get_file_url(song.artFile)
             self.PropertiesChanged('org.mpris.MediaPlayer2.Player',
                         dbus.Dictionary({'Metadata': self.__metadata},
                         'sv',
@@ -77,7 +92,7 @@ class PithosMprisService(dbus.service.Object):
                                                variant_level=1),
                                [])
 
-    def song_changed(self, artists=None, album=None, title=None, artUrl='',
+    def song_changed(self, artists=None, album=None, title=None, artFile='',
                      rating=None):
         """song_changed - sets the info for the current song.
 
@@ -96,7 +111,7 @@ class PithosMprisService(dbus.service.Object):
             "xesam:title": title or "Title Unknown",
             "xesam:artist": artists or ["Artist Unknown"],
             "xesam:album": album or "Album Unknown",
-            "mpris:artUrl": artUrl or "",
+            "mpris:artUrl": self.get_file_url(artFile),
             "pithos:rating": rating or "",
         }, "sv", variant_level=1)
 
