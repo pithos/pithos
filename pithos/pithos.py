@@ -23,6 +23,7 @@ import os
 import re
 import sys
 import time
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -87,18 +88,27 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
             Gdk.cairo_set_source_pixbuf(ctx, pixbuf, x, y)
             ctx.paint()
 
-def get_album_art(url, *extra):
+def get_album_art(url, tmpdir, *extra):
     try:
         with urllib.request.urlopen(url) as f:
             image = f.read()
     except urllib.error.HTTPError:
         logging.warning('Invalid image url received')
-        return (None,) + extra
+        return (None, None,) + extra
+
+    file_url = None
+    if tmpdir:
+        try:
+            with tempfile.NamedTemporaryFile(prefix='art-', dir=tmpdir.name, delete=False) as f:
+                f.write(image)
+                file_url = urllib.parse.urljoin('file://', urllib.parse.quote(f.name))
+        except IOError:
+            logging.warning("Failed to write art tempfile")
 
     with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
         loader.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
         loader.write(image)
-        return (loader.get_pixbuf(),) + extra
+        return (loader.get_pixbuf(), file_url,) + extra
 
 class PlayerStatus:
   def __init__(self):
@@ -117,6 +127,7 @@ class PithosWindow(Gtk.ApplicationWindow):
     __gsignals__ = {
         "song-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "song-ended": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "song-art-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "song-rating-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "play-state-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "user-changed-play-state": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
@@ -220,6 +231,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         aa = theme.load_icon('pithos-album-default', 128, 0)
 
         self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
+
+        try:
+            self.tempdir = tempfile.TemporaryDirectory(prefix='pithos-')
+            logging.info("Created temporary directory %s" %self.tempdir.name)
+        except IOError as e:
+            self.tempdir = None
+            logging.warning('Failed to create a temporary directory')
 
     def init_ui(self):
         GLib.set_application_name("Pithos")
@@ -623,11 +641,14 @@ class PithosWindow(Gtk.ApplicationWindow):
             return
 
         def art_callback(t):
-            pixbuf, song, index = t
+            pixbuf, file_url, song, index = t
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
                 logging.info("Downloaded album art for %i"%song.index)
                 song.art_pixbuf = pixbuf
                 self.songs_model[index][3]=pixbuf
+                if file_url:
+                    song.artUrl = file_url
+                    self.emit('song-art-changed', song)
                 self.update_song_row(song)
 
         def callback(l):
@@ -638,8 +659,9 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.update_song_row(i)
 
                 i.art_pixbuf = None
+                i.artUrl = None
                 if i.artRadio:
-                    self.art_worker.send(get_album_art, (i.artRadio, i, i.index), art_callback)
+                    self.art_worker.send(get_album_art, (i.artRadio, self.tempdir, i, i.index), art_callback)
 
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if self.start_new_playlist:
