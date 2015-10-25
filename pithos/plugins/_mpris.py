@@ -50,13 +50,13 @@ class PithosMprisService(dbus.service.Object):
             self.signal_paused()
         
     def songchange_handler(self, window, song):
-        self.song_changed([song.artist], song.album, song.title, song.artFile,
+        self.song_changed([song.artist], song.album, song.title, song.artUrl,
                           song.rating)
         self.signal_playing()
 
     def artchange_handler(self, window, song):
         if song is self.window.current_song:
-            self.__metadata['mpris:artUrl'] = song.artFile or ''
+            self.__metadata['mpris:artUrl'] = song.artUrl or ''
             self.PropertiesChanged('org.mpris.MediaPlayer2.Player',
                         dbus.Dictionary({'Metadata': self.__metadata},
                         'sv',

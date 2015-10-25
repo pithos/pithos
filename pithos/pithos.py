@@ -97,12 +97,12 @@ def get_album_art(url, tmpfile, *extra):
         logging.warning('Invalid image url received')
         return (None, None,) + extra
 
-    filename = None
+    fileUrl = None
     if tmpfile and tmpfile.file:
         try:
             tmpfile.file.write(image)
             logging.info("Album art stored in %s"%tmpfile.name)
-            filename = tmpfile.name
+            fileUrl = urllib.parse.urljoin('file://', urllib.parse.quote(tmpfile.name))
         except IOError as e:
             logging.error("Error writing to file %s"%tmpfile.name)
         finally:
@@ -111,7 +111,7 @@ def get_album_art(url, tmpfile, *extra):
     with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
         loader.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
         loader.write(image)
-        return (loader.get_pixbuf(), filename,) + extra
+        return (loader.get_pixbuf(), fileUrl,) + extra
 
 class PlayerStatus:
   def __init__(self):
@@ -601,13 +601,13 @@ class PithosWindow(Gtk.ApplicationWindow):
             return
 
         def art_callback(t):
-            pixbuf, filename, song, index = t
+            pixbuf, fileUrl, song, index = t
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
                 logging.info("Downloaded album art for %i"%song.index)
                 song.art_pixbuf = pixbuf
                 self.songs_model[index][3]=pixbuf
-                if filename:
-                    song.artFile = filename
+                if fileUrl:
+                    song.artUrl = fileUrl
                     self.emit('song-art-changed', song)
                 self.update_song_row(song)
 
@@ -619,7 +619,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.update_song_row(i)
 
                 i.art_pixbuf = None
-                i.artFile = None
+                i.artUrl = None
                 if i.artRadio:
                     try:
                         tmpfile = tempfile.NamedTemporaryFile(prefix = 'art-', dir = self.tempdir, delete = False)
