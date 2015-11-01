@@ -82,6 +82,7 @@ class Pandora:
     """
     def __init__(self):
         self.opener = self.build_opener()
+        self.connected = False
 
     def pandora_encrypt(self, s):
         return b''.join([codecs.encode(self.blowfish_encode.encrypt(pad(s[i:i+8], 8)), 'hex_codec') for i in range(0, len(s), 8)])
@@ -204,6 +205,7 @@ class Pandora:
         :param user:     The user's login email
         :param password: The user's login password
         """
+        self.connected = False
         self.partnerId = self.userId = self.partnerAuthToken = None
         self.userAuthToken = self.time_offset = None
 
@@ -229,7 +231,28 @@ class Pandora:
         self.userId = user['userId']
         self.userAuthToken = user['userAuthToken']
 
+        self.connected = True
         self.get_stations(self)
+
+    @property
+    def explicit_content_filter_state(self):
+        """The User must already be authenticated before this is called.
+           returns the state of Explicit Content Filter and if the Explicit Content Filter is PIN protected
+        """
+        get_filter_state = self.json_call('user.getSettings', https=True)
+        filter_state = get_filter_state['isExplicitContentFilterEnabled']
+        pin_protected = get_filter_state['isExplicitContentFilterPINProtected']
+        logging.info('Explicit Content Filter state: %s', filter_state)
+        logging.info('PIN protected: %s', pin_protected)
+        return filter_state, pin_protected
+
+    def set_explicit_content_filter(self, state):
+        """The User must already be authenticated before this is called.
+           Does not take effect until the next playlist.
+           Valid desired states are True to enable and False to disable the Explicit Content Filter.
+        """
+        self.json_call('user.setExplicitContentFilter', {'isExplicitContentFilterEnabled': state})
+        logging.info('Explicit Content Filter set to: %s' %(state))
 
     def get_stations(self, *ignore):
         stations = self.json_call('user.getStationList')['stations']

@@ -88,6 +88,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
     control_proxy_entry = GtkTemplate.Child()
     control_proxy_pac_entry = GtkTemplate.Child()
     pandora_one_checkbutton = GtkTemplate.Child()
+    explicit_content_filter_checkbutton = GtkTemplate.Child()
 
     def __init__(self, settings, *args, **kwargs):
         super().__init__(*args, use_header_bar=1, **kwargs)
