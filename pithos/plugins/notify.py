@@ -123,7 +123,7 @@ class NotifyPlugin(PithosPlugin):
         msg = 'by {} from {}'.format(song.artist, song.album)
         if self.escape_markup:
             msg = html.escape(msg, quote=False)
-        self.notification.update(song.title, msg, 'audio-x-generic')
+        self.notification.update(song.title, msg, 'audio-x-generic' if not song.art_pixbuf else None)
         self.notification.show()
 
     def set_notification_osx(self, song, playing):
