@@ -63,10 +63,10 @@ class NotifyPlugin(PithosPlugin):
                 old_add_action(*(args + (None,)))
         Notify.Notification.add_action = new_add_action
 
-        Notify.init('Pithos')
+        Notify.init('pithos')
         self.notification = Notify.Notification()
         self.notification.set_category('x-gnome.music')
-        self.notification.set_hint_string('desktop-icon', 'pithos')
+        self.notification.set_hint('desktop-entry', GLib.Variant.new_string('pithos'))
 
         caps = Notify.get_server_caps()
         if 'actions' in caps:
