@@ -217,6 +217,31 @@ class Pandora:
 
         self.get_stations(self)
 
+    def get_explicit_content_filter_state(self):
+        """The User must already be authenticated before this is called.
+        """
+        get_explicit_fliter_state = self.json_call('user.getSettings', {'includeFacebook': False}, https=True)
+        if ('isExplicitContentFilterEnabled') in get_explicit_fliter_state:
+            is_explicit_fliter_set = get_explicit_fliter_state['isExplicitContentFilterEnabled']
+            if is_explicit_fliter_set:
+                logging.info("Explicit Content Filter State: Enabled")
+            else:
+                logging.info("Explicit Content Filter State: Disabled")
+            return is_explicit_fliter_set
+        
+
+    def enable_explicit_content_filter(self):
+        """The User must already be authenticated before this is called.
+        """
+        self.json_call('user.setExplicitContentFilter', {'isExplicitContentFilterEnabled': True})
+        self.get_explicit_content_filter_state()
+
+    def disable_explicit_content_filter(self):
+        """The User must already be authenticated before this is called.
+        """
+        self.json_call('user.setExplicitContentFilter', {'isExplicitContentFilterEnabled': False})
+        self.get_explicit_content_filter_state()
+
     def get_stations(self, *ignore):
         stations = self.json_call('user.getStationList')['stations']
         self.quickMixStationIds = None
