@@ -48,12 +48,10 @@ from .pithosconfig import get_ui_file, get_media_file, VERSION
 from .plugin import load_plugins
 from .util import parse_proxy, open_browser
 
-pacparser_imported = False
 try:
     import pacparser
-    pacparser_imported = True
 except ImportError:
-    pass
+    pacparser = None
 
 ALBUM_ART_SIZE = 96
 ALBUM_ART_X_PAD = 6
@@ -343,16 +341,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         control_proxy = self.preferences['control_proxy']
         control_proxy_pac = self.preferences['control_proxy_pac']
 
-        if control_proxy:
-            control_opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
-
-        elif control_proxy_pac and pacparser_imported:
+        if not control_proxy and (control_proxy_pac and pacparser):
             pacparser.init()
             with urllib.request.urlopen(control_proxy_pac) as f:
                 pacstring = f.read().decode('utf-8')
                 try:
                     pacparser.parse_pac_string(pacstring)
-                except:
+                except pacparser._pacparser.error:
                     logging.warning('Failed to parse PAC.')
             try:
                 proxies = pacparser.find_proxy("http://pandora.com", "pandora.com").split(";")
@@ -361,11 +356,14 @@ class PithosWindow(Gtk.ApplicationWindow):
                     if match:
                         control_proxy = match.group(1)
                         break
-            except:
+            except pacparser._pacparser.error:
                 logging.warning('Failed to find proxy via PAC.')
             pacparser.cleanup()
-        elif control_proxy_pac and not pacparser_imported:
+        elif not control_proxy and (control_proxy_pac and not pacparser):
             logging.warning("Disabled proxy auto-config support because python-pacparser module was not found.")
+
+        if control_proxy:
+            control_opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
 
         self.worker_run('set_url_opener', (control_opener,))
 
