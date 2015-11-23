@@ -354,7 +354,7 @@ class Song(object):
                 self._title = self.songName
             else:
                 try:
-                    xml_data = urllib.urlopen(self.songExplorerUrl)
+                    xml_data = urllib.request.urlopen(self.songExplorerUrl)
                     dom = minidom.parseString(xml_data.read())
                     attr_value = dom.getElementsByTagName('songExplorer')[0].attributes['songTitle'].value
 
