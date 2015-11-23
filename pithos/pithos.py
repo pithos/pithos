@@ -334,7 +334,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         global_proxy = self.preferences['proxy']
         if global_proxy:
             handlers.append(urllib.request.ProxyHandler({'http': global_proxy, 'https': global_proxy}))
-        global_opener = urllib.request.build_opener(*handlers)
+        global_opener = pandora.Pandora.build_opener(*handlers)
         urllib.request.install_opener(global_opener)
 
         control_opener = global_opener
@@ -363,7 +363,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             logging.warning("Disabled proxy auto-config support because python-pacparser module was not found.")
 
         if control_proxy:
-            control_opener = urllib.request.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
+            control_opener = pandora.Pandora.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
 
         self.worker_run('set_url_opener', (control_opener,))
 

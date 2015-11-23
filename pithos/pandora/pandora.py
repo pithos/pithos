@@ -29,6 +29,9 @@ import logging
 import time
 import urllib.request, urllib.parse, urllib.error
 import codecs
+import ssl
+
+from . import data
 
 HTTP_TIMEOUT = 30
 USER_AGENT = 'pithos'
@@ -78,8 +81,7 @@ class Pandora(object):
     - :py:meth:`json_call` call into the JSON API directly
     """
     def __init__(self):
-        self.opener = urllib.request.build_opener()
-        pass
+        self.opener = self.build_opener()
 
     def pandora_encrypt(self, s):
         return b''.join([codecs.encode(self.blowfish_encode.encrypt(pad(s[i:i+8], 8)), 'hex_codec') for i in range(0, len(s), 8)])
@@ -177,6 +179,18 @@ class Pandora(object):
         :param fmt: An audio quality format from :py:data:`pithos.pandora.data.valid_audio_formats`
         """
         self.audio_quality = fmt
+
+    @staticmethod
+    def build_opener(*handlers):
+        """Creates a new opener
+
+        Wrapper around urllib.request.build_opener() that adds
+        a custom ssl.SSLContext for use with internal-tuner.pandora.com
+        """
+        ctx = ssl.create_default_context()
+        ctx.load_verify_locations(cadata=data.internal_cert)
+        https = urllib.request.HTTPSHandler(context=ctx)
+        return urllib.request.build_opener(https, *handlers)
 
     def set_url_opener(self, opener):
         self.opener = opener
