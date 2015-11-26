@@ -7,6 +7,12 @@ import gettext
 
 from gi.repository import Gio
 
+# gst-python changes behavior if installed so just
+# avoid loading it since we don't require their additions
+# https://bugzilla.gnome.org/show_bug.cgi?id=736260
+sys.modules['gi.overrides.Gst'] = None
+sys.modules['gi.overrides.GstPbutils'] = None
+
 sys.path.insert(1, '@pyexecdir@')
 sys.path.insert(1, '@pythondir@')
 
