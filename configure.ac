@@ -6,7 +6,7 @@ AC_CONFIG_SRCDIR([pithos/__main__.py])
 
 AM_INIT_AUTOMAKE([1.11 dist-xz no-dist-gzip foreign subdir-objects -Wall -Wno-portability])
 AM_SILENT_RULES([yes])
-AM_PATH_PYTHON([3.3])
+AM_PATH_PYTHON([3.4])
 
 GETTEXT_PACKAGE=pithos
 AC_SUBST(GETTEXT_PACKAGE)
