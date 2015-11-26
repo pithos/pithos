@@ -13,5 +13,11 @@
 	<screenshots>
 		<screenshot type="default">https://i.imgur.com/1vl3Dsk.png</screenshot>
 	</screenshots>
+	<kudos>
+		<kudo>AppMenu</kudo>
+		<kudo>HiDpiIcon</kudo>
+		<kudo>ModernToolkit</kudo>
+		<kudo>Notifications</kudo>
+	</kudos>
 	<updatecontact>tingping_at_fedoraproject.org</updatecontact>
 </application>
