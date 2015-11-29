@@ -118,6 +118,20 @@
                           </packing>
                         </child>
                         <child>
+                          <object class="GtkCheckButton" id="explicit_content_filter_checkbutton">
+                            <property name="label" translatable="yes">Explicit Content Filter</property>
+                            <property name="visible">1</property>
+                            <property name="can_focus">1</property>
+                            <property name="halign">start</property>
+                            <property name="draw_indicator">1</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">3</property>
+                            <property name="width">2</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkLabel" id="label_create_account">
                             <property name="visible">1</property>
                             <property name="can_focus">1</property>
@@ -126,7 +140,7 @@
                           </object>
                           <packing>
                             <property name="left_attach">0</property>
-                            <property name="top_attach">3</property>
+                            <property name="top_attach">4</property>
                             <property name="width">2</property>
                           </packing>
                         </child>

@@ -203,6 +203,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_station = None
         self.current_station_id = self.settings.get_string('last-station-id')
 
+        self.filter_state = None
         self.auto_retrying_auth = False
         self.have_stations = False
         self.playcount = 0
@@ -366,6 +367,25 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         return None
 
+    def on_explicit_content_filter_checkbox(self, *ignore):
+        if self.pandora.connected:
+            checkbox_state = self.prefs_dlg.explicit_content_filter_checkbutton.get_active()
+
+            if self.filter_state != checkbox_state:
+                def sync_filter_to_checkbox(*ignore):
+                    self.pandora.set_explicit_content_filter(checkbox_state)
+
+                def get_new_playlist(*ignore):
+                    if checkbox_state:
+                        logging.info('Getting a new playlist.')
+                        self.waiting_for_playlist = False
+                        self.stop()
+                        self.current_song_index = None
+                        self.songs_model.clear()
+                        self.get_playlist(start = True)
+
+                self.worker_run(sync_filter_to_checkbox, (), get_new_playlist)
+
     def set_proxy(self, *ignore):
         # proxy preference is used for all Pithos HTTP traffic
         # control proxy preference is used only for Pandora traffic and
@@ -445,6 +465,28 @@ class PithosWindow(Gtk.ApplicationWindow):
                 callback()
 
         self.worker_run('connect', args, pandora_ready, message, 'login')
+
+    def sync_explicit_content_filter_setting(self, *ignore):
+        #reset checkbox to default state
+        self.prefs_dlg.explicit_content_filter_checkbutton.set_label(_('Explicit Content Filter'))
+        self.prefs_dlg.explicit_content_filter_checkbutton.set_sensitive(False)
+        self.prefs_dlg.explicit_content_filter_checkbutton.set_active(False)
+
+        if self.pandora.connected:
+            def get_filter_and_pin_protected_state(*ignore):
+                current_filter_state = self.pandora.explicit_content_filter_state
+                self.filter_state = current_filter_state[0]
+                pin_protected = current_filter_state[1]
+                return pin_protected
+
+            def sync_checkbox_to_filter(pin_protected):
+                self.prefs_dlg.explicit_content_filter_checkbutton.set_active(self.filter_state)
+                if pin_protected:
+                    self.prefs_dlg.explicit_content_filter_checkbutton.set_label(_('Explicit Content Filter - PIN Protected'))
+                else:
+                    self.prefs_dlg.explicit_content_filter_checkbutton.set_sensitive(True)
+
+            self.worker_run(get_filter_and_pin_protected_state, (), sync_checkbox_to_filter)
 
     def process_stations(self, *ignore):
         self.stations_model.clear()
@@ -1041,6 +1083,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         if response == Gtk.ResponseType.APPLY:
             if get_account_password(email) != self.last_pass:
                 self.pandora_connect()
+            else:
+                self.on_explicit_content_filter_checkbox()
         else:
             if not email or not get_account_password(email):
                 self.quit()
@@ -1048,6 +1092,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def show_preferences(self):
         """preferences - display the preferences window for pithos """
+        self.sync_explicit_content_filter_setting()
         self.last_pass = get_account_password(self.settings.get_string('email'))
         self.settings.delay() # Dialog will apply
         self.prefs_dlg.show()
