@@ -471,6 +471,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.prefs_dlg.explicit_content_filter_checkbutton.set_label(_('Explicit Content Filter'))
         self.prefs_dlg.explicit_content_filter_checkbutton.set_sensitive(False)
         self.prefs_dlg.explicit_content_filter_checkbutton.set_active(False)
+        self.prefs_dlg.explicit_content_filter_checkbutton.set_inconsistent(True)
         self.filter_state = None
 
         if self.pandora.connected:
@@ -479,6 +480,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
             def sync_checkbox(current_state):
                 self.filter_state, pin_protected = current_state[0], current_state[1]
+                self.prefs_dlg.explicit_content_filter_checkbutton.set_inconsistent(False)
                 self.prefs_dlg.explicit_content_filter_checkbutton.set_active(self.filter_state)
                 if pin_protected:
                     self.prefs_dlg.explicit_content_filter_checkbutton.set_label(_('Explicit Content Filter - PIN Protected'))
