@@ -13,7 +13,7 @@
 #You should have received a copy of the GNU General Public License along
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
-
+import os
 import sys
 import signal
 import logging
@@ -40,6 +40,10 @@ class PithosApplication(Gtk.Application):
                              _('Show debug messages'), None)
         self.add_main_option('test', ord('t'), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
                              _('Use a mock service instead of connecting to the real Pandora server'), None)
+        self.add_main_option('verbose_file', ord('f'), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
+                             _('log info messages to file'), None)
+        self.add_main_option('debug_file', ord('e'), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
+                             _('log debug messages to file'), None)
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -63,20 +67,38 @@ class PithosApplication(Gtk.Application):
 
     def do_command_line(self, command_line):
         options = command_line.get_options_dict()
-
+        log_dir = '%s/.pithos' %os.path.expanduser('~')
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        log_file = '%s/.pithos/event.log' %os.path.expanduser('~')
+        console_format = '%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s' 
+        log_format = '%(asctime)s - %(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s'
+        time_format = '%m/%d/%Y %I:%M:%S %p'
         # First, get rid of existing logging handlers due to call in header as per
         # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig
         logging.root.handlers = []
 
         #set the logging level to show debug messages
         if options.contains('debug'):
-            log_level = logging.DEBUG
+            console_log_level = logging.DEBUG
         elif options.contains('verbose'):
-            log_level = logging.INFO
+            console_log_level = logging.INFO
         else:
-            log_level = logging.WARN
+            console_log_level = logging.WARN
 
-        logging.basicConfig(level=log_level, format='%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s')
+        if options.contains('debug_file'):
+            log_file_level = logging.DEBUG
+        elif options.contains('verbose_file'):
+            log_file_level = logging.INFO
+        else:
+            log_file_level = logging.WARN 
+
+        logging.basicConfig(format=log_format, filename=log_file, datefmt=time_format, level=log_file_level)
+        console = logging.StreamHandler()
+        console.setLevel(console_log_level)
+        formatter = logging.Formatter(console_format)
+        console.setFormatter(formatter)
+        logging.getLogger('').addHandler(console)
 
         self.test_mode = options.lookup_value('test')
 
