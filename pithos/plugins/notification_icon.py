@@ -15,7 +15,7 @@
 ### END LICENSE
 
 import gi
-from gi.repository import Gtk
+from gi.repository import Gdk, Gtk
 from pithos.plugin import PithosPlugin
 
 # Use appindicator if installed
@@ -49,15 +49,10 @@ class PithosNotificationIcon(PithosPlugin):
 
         self.build_context_menu()
 
-    def scroll(self, steps):
-        if indicator_capable:
-            direction = steps.value_nick
-        else:
-            direction = steps.direction.value_nick
-
-        if direction == 'down':
+    def scroll(self, direction):
+        if direction == Gdk.ScrollDirection.DOWN:
             self.window.adjust_volume(-1)
-        elif direction == 'up':
+        elif direction == Gdk.ScrollDirection.UP:
             self.window.adjust_volume(+1)
 
     def build_context_menu(self):
@@ -91,10 +86,10 @@ class PithosNotificationIcon(PithosPlugin):
         # connect our new menu to the statusicon or the appindicator
         if indicator_capable:
             self.ind.set_menu(menu)
-            self.ind.connect('scroll-event', lambda _x, _y, steps: self.scroll(steps))
+            self.ind.connect('scroll-event', lambda wid, steps, direction: self.scroll(direction))
         else:
             self.statusicon.connect('popup-menu', self.context_menu, menu)
-            self.statusicon.connect('scroll-event', lambda _, steps: self.scroll(steps))
+            self.statusicon.connect('scroll-event', lambda wid, event: self.scroll(event.direction))
 
         self.menu = menu
 
