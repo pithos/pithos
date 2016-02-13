@@ -40,6 +40,8 @@ class PithosApplication(Gtk.Application):
                              _('Show debug messages'), None)
         self.add_main_option('test', ord('t'), GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
                              _('Use a mock service instead of connecting to the real Pandora server'), None)
+        self.add_main_option('version', 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
+                             _('Show the version'), None)
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -67,6 +69,11 @@ class PithosApplication(Gtk.Application):
         # First, get rid of existing logging handlers due to call in header as per
         # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig
         logging.root.handlers = []
+
+        # Show the version and exit if needed.
+        if options.lookup_value('version'):
+            print("Pithos", self.version)
+            sys.exit(0)
 
         #set the logging level to show debug messages
         if options.contains('debug'):
