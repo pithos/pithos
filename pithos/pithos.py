@@ -61,8 +61,8 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
         self.rate_bg = Gtk.IconTheme.get_default().load_icon('pithos-rate-bg', 32, 0)
 
     __gproperties__ = {
-        'icon': (str, 'icon', 'icon', '', GObject.PARAM_READWRITE),
-        'pixbuf': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.PARAM_READWRITE)
+        'icon': (str, 'icon', 'icon', '', GObject.ParamFlags.READWRITE),
+        'pixbuf': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.ParamFlags.READWRITE)
     }
 
     def do_set_property(self, pspec, value):
