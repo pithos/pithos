@@ -50,19 +50,19 @@ class LastfmPlugin(PithosPlugin):
         self.preferences_dialog.connect('delete-event', self.auth_closed)
 
     def on_enable(self):
-        if self.settings.get_string('data'):
+        if self.settings['data']:
             self._enable_real()
 
     def auth_closed(self, widget, event):
-        if self.settings.get_string('data'):
+        if self.settings['data']:
             self._enable_real()
         else:
-            self.settings.set_boolean('enabled', False)
+            self.settings['enabled'] = False
         widget.hide()
         return True # Don't delete window
 
     def _enable_real(self):
-        self.connect(self.settings.get_string('data'))
+        self.connect(self.settings['data'])
         self.song_ended_handle = self.window.connect('song-ended', self.song_ended)
         self.song_changed_handle = self.window.connect('song-changed', self.song_changed)
         self.is_really_enabled = True
@@ -128,13 +128,13 @@ class LastFmAuth(Gtk.Dialog):
     
     @property
     def enabled(self):
-        return self.settings.get_string(self.prefname)
+        return self.settings[self.prefname]
     
     def setkey(self, key):
         if not key:
             self.settings.reset(self.prefname)
         else:
-            self.settings.set_string(self.prefname, key)
+            self.settings[self.prefname] = key
         self.set_button_text()
         
     def set_button_text(self):

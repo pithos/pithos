@@ -95,7 +95,7 @@ def load_plugins(window):
 
         plugin.settings = Gio.Settings.new_with_path('io.github.Pithos.plugin', '/io/github/Pithos/%s/' %name)
 
-        if plugin.settings.get_boolean('enabled'):
+        if plugin.settings['enabled']:
             plugin.enable()
         else:
             plugin.disable()

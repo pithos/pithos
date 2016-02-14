@@ -163,7 +163,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.set_proxy()
         self.set_audio_quality()
 
-        email = self.settings.get_string('email')
+        email = self.settings['email']
         password = get_account_password(email)
         if not email or not password:
             self.show()
@@ -201,7 +201,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.playing = None # None is a special "Waiting to play" state
         self.current_song_index = None
         self.current_station = None
-        self.current_station_id = self.settings.get_string('last-station-id')
+        self.current_station_id = self.settings['last-station-id']
 
         self.filter_state = None
         self.auto_retrying_auth = False
@@ -357,7 +357,7 @@ class PithosWindow(Gtk.ApplicationWindow):
     def get_proxy(self):
         """ Get HTTP proxy, first trying preferences then system proxy """
 
-        proxy = self.settings.get_string('proxy')
+        proxy = self.settings['proxy']
         if proxy:
             return proxy
 
@@ -395,15 +395,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         # by default
 
         handlers = []
-        global_proxy = self.settings.get_string('proxy')
+        global_proxy = self.settings['proxy']
         if global_proxy:
             handlers.append(urllib.request.ProxyHandler({'http': global_proxy, 'https': global_proxy}))
         global_opener = pandora.Pandora.build_opener(*handlers)
         urllib.request.install_opener(global_opener)
 
         control_opener = global_opener
-        control_proxy = self.settings.get_string('control-proxy')
-        control_proxy_pac = self.settings.get_string('control-proxy-pac')
+        control_proxy = self.settings['control-proxy']
+        control_proxy_pac = self.settings['control-proxy-pac']
 
         if not control_proxy and (control_proxy_pac and pacparser):
             pacparser.init()
@@ -432,16 +432,16 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.worker_run('set_url_opener', (control_opener,))
 
     def set_audio_quality(self, *ignore):
-        self.worker_run('set_audio_quality', (self.settings.get_string('audio-quality'),))
+        self.worker_run('set_audio_quality', (self.settings['audio-quality'],))
 
     def pandora_connect(self, *ignore, message="Logging in...", callback=None):
-        if self.settings.get_boolean('pandora-one'):
+        if self.settings['pandora-one']:
             client = client_keys[default_one_client_id]
         else:
             client = client_keys[default_client_id]
 
         # Allow user to override client settings
-        force_client = self.settings.get_string('force-client')
+        force_client = self.settings['force-client']
         if force_client in client_keys:
             client = client_keys[force_client]
         elif force_client and force_client[0] == '{':
@@ -451,7 +451,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                 logging.error("Could not parse force_client json")
 
 
-        email = self.settings.get_string('email')
+        email = self.settings['email']
         args = (
             client,
             email,
@@ -1080,7 +1080,7 @@ class PithosWindow(Gtk.ApplicationWindow):
     def on_prefs_response(self, widget, response):
         self.prefs_dlg.hide()
 
-        email = self.settings.get_string('email')
+        email = self.settings['email']
         if response == Gtk.ResponseType.APPLY:
             self.on_explicit_content_filter_checkbox()
             if get_account_password(email) != self.last_pass:
@@ -1093,7 +1093,7 @@ class PithosWindow(Gtk.ApplicationWindow):
     def show_preferences(self):
         """preferences - display the preferences window for pithos """
         self.sync_explicit_content_filter_setting()
-        self.last_pass = get_account_password(self.settings.get_string('email'))
+        self.last_pass = get_account_password(self.settings['email'])
         self.settings.delay() # Dialog will apply
         self.prefs_dlg.show()
 
@@ -1115,7 +1115,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def set_initial_pos(self):
         """ Moves window to position stored in preferences """
-        x, y = self.settings.get_value('win-pos')
+        x, y = self.settings['win-pos']
         if not x is None and not y is None:
             self.move(int(x), int(y))
 
@@ -1126,8 +1126,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     @GtkTemplate.Callback
     def on_configure_event(self, widget, event, data=None):
-        self.settings.set_value('win-pos', GLib.Variant.new_tuple(GLib.Variant.new_int32(event.x),
-                                GLib.Variant.new_int32(event.y)))
+        self.settings.set_value('win-pos', GLib.Variant('(ii)', (event.x, event.y)))
         return False
 
     def quit(self, widget=None, data=None):
