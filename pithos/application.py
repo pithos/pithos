@@ -70,10 +70,11 @@ class PithosApplication(Gtk.Application):
         # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig
         logging.root.handlers = []
 
-        # Show the version and exit if needed.
+        # Show the version on local instance and exit
         if options.contains('version'):
-            print("Pithos", self.version)
-            self.quit()
+            # Broken bindings...
+            type(command_line).do_print_literal(command_line, "Pithos {}\n".format(self.version))
+            return 0
 
         #set the logging level to show debug messages
         if options.contains('debug'):
@@ -101,7 +102,8 @@ class PithosApplication(Gtk.Application):
 
     def do_shutdown(self):
         Gtk.Application.do_shutdown(self)
-        self.window.destroy()
+        if self.window:
+            self.window.destroy()
 
     def stations_cb(self, action, param):
         self.window.show_stations()
