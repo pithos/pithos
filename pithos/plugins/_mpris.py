@@ -50,7 +50,7 @@ class PithosMprisService(dbus.service.Object):
             self.signal_paused()
         
     def songchange_handler(self, window, song):
-        self.song_changed([song.artist], song.album, song.title, song.artUrl,
+        self.song_changed([song.artist], song.album, song.title, song.artUrl or song.artRadio,
                           song.rating)
         self.signal_playing()
 
