@@ -14,10 +14,13 @@
 #You should have received a copy of the GNU General Public License along 
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
-
+import logging
+import math
+import codecs
 import dbus
 import dbus.service
 from xml.etree import ElementTree
+from gi.repository import Gtk
 
 class PithosMprisService(dbus.service.Object):
     MEDIA_PLAYER2_IFACE = 'org.mpris.MediaPlayer2'
@@ -31,77 +34,107 @@ class PithosMprisService(dbus.service.Object):
         typically by calling DBusGMainLoop(set_as_default=True).
         """
 
-        bus_str = """org.mpris.MediaPlayer2.pithos"""
+        bus_str = "org.mpris.MediaPlayer2.pithos"
         bus_name = dbus.service.BusName(bus_str, bus=dbus.SessionBus())
         dbus.service.Object.__init__(self, bus_name, "/org/mpris/MediaPlayer2")
         self.window = window
+        self._volume = math.pow(self.window.player.props.volume, 1.0/3.0)
+        self._metadata = {}
+        self._playback_status = 'Stopped'
 
-        self.song_changed()
-        
-        self.window.connect("song-changed", self.songchange_handler)
-        self.window.connect("song-art-changed", self.artchange_handler)
-        self.window.connect("song-rating-changed", self.ratingchange_handler)
-        self.window.connect("play-state-changed", self.playstate_handler)
-        
-    def playstate_handler(self, window, state):
-        if state:
-            self.signal_playing()
-        else:
-            self.signal_paused()
-        
-    def songchange_handler(self, window, song):
-        self.song_changed([song.artist], song.album, song.title, song.artUrl or song.artRadio,
-                          song.rating)
-        self.signal_playing()
+        self.window.connect("metadata-changed", self._metadatachange_handler)
+        self.window.connect("play-state-changed", self._playstate_handler)
+        self.window.player.connect("notify::volume", self._volumechange_handler)
+        self.window.connect("buffering-finished", lambda window, position: self.Seeked(position // 1000))
 
-    def artchange_handler(self, window, song):
-        if song is self.window.current_song:
-            self.__metadata['mpris:artUrl'] = song.artUrl or ''
-            self.PropertiesChanged('org.mpris.MediaPlayer2.Player',
-                        dbus.Dictionary({'Metadata': self.__metadata},
-                        'sv',
-                        variant_level=1),
-                        [])
+        # Updates everything if mpris is enabled in the middle of a song
+        if self.window.current_song:
+            self._metadatachange_handler(self.window, self.window.current_song)
+            self._playstate_handler(self.window, self._current_playback_status)
 
-    def ratingchange_handler(self, window, song):
-        """Handle rating changes and update MPRIS metadata accordingly"""
-        # Pithos fires rating-changed signals for all songs, not just the
-        # currently playing one, so we need ignore signals for irrelevant songs.
-        if song is not self.window.current_song:
-            return
+    def _playstate_handler(self, window, state):
+        """Updates the playstate in the Sound Menu"""
 
-        self.__metadata["pithos:rating"] = song.rating or ""
-        self.PropertiesChanged("org.mpris.MediaPlayer2.Player",
-                               dbus.Dictionary({"Metadata": self.__metadata},
-                                               "sv",
-                                               variant_level=1),
-                               [])
+        play_state = 'Playing' if state else 'Paused'
 
-    def song_changed(self, artists=None, album=None, title=None, artUrl='',
-                     rating=None):
-        """song_changed - sets the info for the current song.
+        if self._playback_status != play_state: # stops unneeded updates
+            self._playback_status = play_state
+            d = dbus.Dictionary({"PlaybackStatus":self._playback_status},
+                                "sv",variant_level=1)
+            self.PropertiesChanged("org.mpris.MediaPlayer2.Player",d,[])
+
+    def _volumechange_handler(self, player, spec):
+        """Updates the volume in the Sound Menu"""
+        volume = math.pow(player.props.volume, 1.0/3.0)
+
+        if self._volume != volume: # stops unneeded updates
+            self._volume = volume
+            d = dbus.Dictionary({"Volume": self._volume}, "sv",variant_level=1)
+            self.PropertiesChanged("org.mpris.MediaPlayer2.Player",d,[])
+
+    def _metadatachange_handler(self, window, song):
+        """Updates the song info in the Sound Menu"""
+
+        if song is self.window.current_song: # we only care about the current song
+            self.PropertiesChanged(self.MEDIA_PLAYER2_PLAYER_IFACE, {
+                    'Metadata': dbus.Dictionary(self._update_metadata(song), signature='sv'),
+                }, [])
+
+    def _update_metadata(self, song):
+        """
+        metadata changed - sets the info for the current song.
 
         This method is not typically overriden. It should be called
         by implementations of this class when the player has changed
         songs.
-            
+
         named arguments:
             artists - a list of strings representing the artists"
             album - a string for the name of the album
             title - a string for the title of the song
 
         """
-        
-        self.__metadata = dbus.Dictionary({
-            "xesam:title": title or "Title Unknown",
-            "xesam:artist": artists or ["Artist Unknown"],
-            "xesam:album": album or "Album Unknown",
-            "mpris:artUrl": artUrl or "",
-            "pithos:rating": rating or "",
-        }, "sv", variant_level=1)
+        # Map pithos ratings to something MPRIS understands
+        if song.rating == 'love':
+            userRating = 5
+        else:
+            userRating = 0
 
-    # Properties
-    def _get_playback_status(self):
+        # Try to use the generic audio MIME type icon from the user's current theme
+        # for the cover image if we don't get one from Pandora
+        # Workaround for:
+        # https://github.com/eonpatapon/gnome-shell-extensions-mediaplayer/issues/248
+
+        if song.artUrl is not None:
+            artUrl = song.artUrl
+        else:
+            icon_sizes = Gtk.IconTheme.get_icon_sizes(Gtk.IconTheme.get_default(), 'audio-x-generic')
+            if -1 in icon_sizes: # -1 is a scalable icon(svg)
+                best_icon = -1
+            else:
+                icon_sizes = sorted(icon_sizes, key=int, reverse=True)
+                best_icon = icon_sizes[0] 
+            icon_info = Gtk.IconTheme.get_default().lookup_icon('audio-x-generic', best_icon, 0)
+            artUrl = "file://%s" %icon_info.get_filename()
+
+        # Ensure is a valid dbus path by converting to hex
+        track_id = codecs.encode(bytes(song.trackToken, 'ascii'), 'hex').decode('ascii')
+        self._metadata = {
+            "mpris:trackid": '/io/github/Pithos/TrackId/' + track_id,
+            "xesam:title": song.title or "Title Unknown",
+            "xesam:artist": [song.artist] or ["Artist Unknown"],
+            "xesam:album": song.album or "Album Unknown",
+            "xesam:userRating": userRating,
+            "mpris:artUrl": artUrl,
+            "xesam:url": song.audioUrl,
+            "mpris:length": dbus.Int64(self._current_duration),
+            "pithos:rating": song.rating or "",
+        }
+
+        return self._metadata
+
+    @property
+    def _current_playback_status(self):
         """Current status "Playing", "Paused", or "Stopped"."""
         if not self.window.current_song:
             return "Stopped"
@@ -110,18 +143,39 @@ class PithosMprisService(dbus.service.Object):
         else:
             return "Paused"
 
-    def _get_metadata(self):
+    @property
+    def _current_metadata(self):
         """The info for the current song."""
-        return self.__metadata
+        if self._metadata:
+            return self._metadata
+        else:
+            return {"mpris:trackid": '/org/mpris/MediaPlayer2/TrackList/NoTrack',
+                    # Workaround for https://github.com/eonpatapon/gnome-shell-extensions-mediaplayer/issues/247
+                    "xesam:url": "",}
+    @property
+    def _current_volume(self):
+        volume = self.window.player.get_property("volume")
+        scaled_volume = math.pow(volume, 1.0/3.0)
+        return scaled_volume
 
-    def _get_volume(self):
-        return self.window.player.get_property("volume")
+    @property
+    def _current_position(self):
+        if self.window.query_position() is not None:
+            return self.window.query_position() // 1000
+        else:
+            return 0
+
+    @property
+    def _current_duration(self):
+        # use the duration provided by Pandora
+        #if Gstreamer hasn't figured out the duration yet
+        if self.window.query_duration() is not None:
+            return self.window.query_duration() // 1000
+        else:
+            return self.window.current_song.trackLength * 1000000
 
     def _set_volume(self, new_volume):
         self.window.player.set_property('volume', new_volume)
-
-    def _get_position(self):
-        return self.window.query_position() / 1000
 
     @dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='ss', out_signature='v')
     def Get(self, interface_name, property_name):
@@ -137,7 +191,8 @@ class PithosMprisService(dbus.service.Object):
             pass
         elif interface_name == self.MEDIA_PLAYER2_PLAYER_IFACE:
             if property_name == 'Volume':
-                self._set_volume(new_value)
+                new_vol = math.pow(new_value, 3.0/1.0)
+                self._set_volume(new_vol)
         else:
             raise dbus.exceptions.DBusException(
                 'org.mpris.MediaPlayer2.pithos',
@@ -158,20 +213,26 @@ class PithosMprisService(dbus.service.Object):
             }
         elif interface_name == self.MEDIA_PLAYER2_PLAYER_IFACE:
             return {
-                'PlaybackStatus': self._get_playback_status(),
+                'PlaybackStatus': self._current_playback_status,
                 'LoopStatus': "None",
                 'Rate': dbus.Double(1.0),
                 'Shuffle': False,
-                'Metadata': dbus.Dictionary(self._get_metadata(), signature='sv'),
-                'Volume': dbus.Double(self._get_volume()),
-                'Position': dbus.Int64(self._get_position()),
+                'Metadata': dbus.Dictionary(self._current_metadata, signature='sv'),
+                'Volume': dbus.Double(self._current_volume),
+                'Position': dbus.Int64(self._current_position),
                 'MinimumRate': dbus.Double(1.0),
                 'MaximumRate': dbus.Double(1.0),
-                'CanGoNext': self.window.waiting_for_playlist is not True,
+                 # set CanGoNext, CanPlay and CanPause all to True
+                 # to avoid applets ending up in an inconsistent state
+                 # some applets only check this prop once
+                 # if we can play/pause or skip a song will be decided in the methods
+                'CanGoNext': True,
                 'CanGoPrevious': False,
-                'CanPlay': self.window.current_song is not None,
-                'CanPause': self.window.current_song is not None,
-                'CanSeek': False,
+                'CanPlay': True,
+                'CanPause': True,
+                # CanSeek has to be True for some sound applets
+                # to show the song position/duration info
+                'CanSeek': True,
                 'CanControl': True,
             }
         else:
@@ -201,45 +262,57 @@ class PithosMprisService(dbus.service.Object):
     @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def Next(self):
         """Play next song"""
-
-        self.window.next_song()
+        if not self.window.waiting_for_playlist:
+            self.window.next_song()
 
     @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def PlayPause(self):
-        self.window.playpause()
+        if self.window.current_song:
+            self.window.playpause()
 
     @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def Play(self):
-        self.window.play()
+        if self.window.current_song:
+            self.window.play()
 
     @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def Pause(self):
-        self.window.pause()
+        if self.window.current_song:
+            self.window.pause()
 
     @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE)
     def Stop(self):
         """Stop is only used internally, mapping to pause instead"""
         self.window.pause()
 
-    def signal_playing(self):
-        """signal_playing - Tell the Sound Menu that the player has
-        started playing.
+    @dbus.service.method(MEDIA_PLAYER2_PLAYER_IFACE, in_signature='ox')
+    def SetPosition(self, trackid, position):
         """
-       
-        self.__playback_status = "Playing"
-        d = dbus.Dictionary({"PlaybackStatus":self.__playback_status, "Metadata":self.__metadata},
-                                    "sv",variant_level=1)
-        self.PropertiesChanged("org.mpris.MediaPlayer2.Player",d,[])
+        We can't actually seek, we lie so gnome-shell-extensions-mediaplayer[1] will show the
+        position slider. We send a Seeked signal with the current position to make sure applets
+        update their postion.
 
-    def signal_paused(self):
-        """signal_paused - Tell the Sound Menu that the player has
-        been paused
+        Under normal circumstances SetPosition would tell the player where to seek to and any
+        seeking caused by either the MPRIS client or the player would cause a Seeked signal to
+        be fired with current track position after the seek.
+
+        (The MPRIS client tells the player that it wants to seek to a position >>>
+         the player seeks to the disired position >>>
+         the player tells the MPRIS client were it actually seeked too.)
+
+        We're skipping the middleman(Pithos) because we can't seek. Some players do not send
+        a Seeked signal and some clients workaround that[2] so this may not be necessary for
+        all clients.
+
+        [1] https://github.com/eonpatapon/gnome-shell-extensions-mediaplayer/issues/246
+        [2] https://github.com/eonpatapon/gnome-shell-extensions-mediaplayer#known-bugs
         """
 
-        self.__playback_status = "Paused"
-        d = dbus.Dictionary({"PlaybackStatus":self.__playback_status},
-                                    "sv",variant_level=1)
-        self.PropertiesChanged("org.mpris.MediaPlayer2.Player",d,[])
+        self.Seeked(self._current_position)
+
+    @dbus.service.signal(MEDIA_PLAYER2_PLAYER_IFACE, signature='x')
+    def Seeked(self, position):
+        pass
 
     @dbus.service.signal(dbus.PROPERTIES_IFACE, signature='sa{sv}as')
     def PropertiesChanged(self, interface_name, changed_properties,

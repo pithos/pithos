@@ -324,7 +324,7 @@ class Station:
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken}, https=True)
+        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken, 'includeTrackLength': True}, https=True)
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
@@ -368,6 +368,7 @@ class Song:
         self.songDetailURL = d['songDetailUrl']
         self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
+        self.trackLength = d['trackLength']
 
         self.bitrate = None
         self.is_ad = None  # None = we haven't checked, otherwise True/False
