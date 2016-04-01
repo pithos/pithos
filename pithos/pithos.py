@@ -127,10 +127,12 @@ class PithosWindow(Gtk.ApplicationWindow):
     __gsignals__ = {
         "song-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "song-ended": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
-        "song-art-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
-        "song-rating-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "play-state-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "user-changed-play-state": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
+        "metadata-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "volume-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "playlist-cleared": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
+        "sync-position": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
     }
 
     volume = GtkTemplate.Child()
@@ -400,6 +402,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                     self.current_song_index = None
                     self.songs_model.clear()
                     self.get_playlist(start = True)
+                    self.emit('playlist-cleared', True)
 
             if self.filter_state is not None and self.filter_state != current_checkbox_state:
                 self.worker_run(set_content_filter, (current_checkbox_state, ), get_new_playlist)
@@ -570,6 +573,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.set_title("Pithos - %s by %s" % (self.current_song.title, self.current_song.artist))
 
         self.emit('song-changed', self.current_song)
+        self.emit('metadata-changed', self.current_song)
 
     @GtkTemplate.Callback
     def next_song(self, *ignore):
@@ -648,7 +652,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.songs_model[index][3]=pixbuf
                 if file_url:
                     song.artUrl = file_url
-                    self.emit('song-art-changed', song)
+                    self.emit('metadata-changed', song)
                 self.update_song_row(song)
 
         def callback(l):
@@ -722,6 +726,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.stop()
             self.current_song_index = None
             self.songs_model.clear()
+            self.emit('playlist-cleared', True)
         logging.info("Selecting station %s; total = %i" % (station.id, len(self.stations_model)))
         self.current_station_id = station.id
         self.current_station = station
@@ -750,6 +755,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_song.duration = self.query_duration()
         self.current_song.duration_message = self.format_time(self.current_song.duration)
         self.check_if_song_is_ad()
+        self.emit('metadata-changed', self.current_song)
         self.player_status.pending_duration_query = False
 
     def on_gst_duration_changed(self, bus, message):
@@ -757,6 +763,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_song.duration = self.query_duration()
         self.current_song.duration_message = self.format_time(self.current_song.duration)
         self.check_if_song_is_ad()
+        self.emit('metadata-changed', self.current_song)
       else:
         self.player_status.pending_duration_query = True
 
@@ -862,6 +869,9 @@ class PithosWindow(Gtk.ApplicationWindow):
             else:
                 logging.debug("Buffer recovery. User paused")
             self.player_status.began_buffering = None
+            #Tell everyone to update their clocks after we're done buffering or 
+            #in case it takes a while after the song started signal for actual playback to begin.
+            self.emit('sync-position', self.query_position() or 0)
         self.player_status.buffer_percent = percent
         self.update_song_row()
 
@@ -870,6 +880,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         scaled_volume = math.pow(volume, 1.0/3.0)
         self.volume.handler_block_by_func(self.on_volume_change_event)
         self.volume.set_property("value", scaled_volume)
+        self.emit('volume-changed', scaled_volume)
         self.volume.handler_unblock_by_func(self.on_volume_change_event)
 
     def on_gst_volume(self, player, volumespec):
@@ -977,7 +988,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         song = song or self.current_song
         def callback(l):
             self.update_song_row(song)
-            self.emit('song-rating-changed', song)
+            self.emit('metadata-changed', song)
         self.worker_run(song.rate, (RATE_LOVE,), callback, "Loving song...")
 
 
@@ -985,7 +996,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         song = song or self.current_song
         def callback(l):
             self.update_song_row(song)
-            self.emit('song-rating-changed', song)
+            self.emit('metadata-changed', song)
         self.worker_run(song.rate, (RATE_BAN,), callback, "Banning song...")
         if song is self.current_song:
             self.next_song()
@@ -994,14 +1005,14 @@ class PithosWindow(Gtk.ApplicationWindow):
         song = song or self.current_song
         def callback(l):
             self.update_song_row(song)
-            self.emit('song-rating-changed', song)
+            self.emit('metadata-changed', song)
         self.worker_run(song.rate, (RATE_NONE,), callback, "Removing song rating...")
 
     def tired_song(self, *ignore, song=None):
         song = song or self.current_song
         def callback(l):
             self.update_song_row(song)
-            self.emit('song-rating-changed', song)
+            self.emit('metadata-changed', song)
         self.worker_run(song.set_tired, (), callback, "Putting song on shelf...")
         if song is self.current_song:
             self.next_song()
