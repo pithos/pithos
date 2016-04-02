@@ -251,25 +251,16 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         title_col   = Gtk.TreeViewColumn()
 
-        def bgcolor_data_func(column, cell, model, iter, data=None):
-            if model.get_value(iter, 0) is self.current_song:
-                bgcolor = column.get_tree_view().get_style_context().get_background_color(Gtk.StateFlags.ACTIVE)
-            else:
-                bgcolor = column.get_tree_view().get_style_context().get_background_color(Gtk.StateFlags.NORMAL)
-            cell.set_property("cell-background-rgba", bgcolor)
-
         render_icon = CellRendererAlbumArt()
         title_col.pack_start(render_icon, False)
         title_col.add_attribute(render_icon, "icon", 2)
         title_col.add_attribute(render_icon, "pixbuf", 3)
-        title_col.set_cell_data_func(render_icon, bgcolor_data_func)
 
         render_text = Gtk.CellRendererText()
         render_text.props.ellipsize = Pango.EllipsizeMode.END
         title_col.pack_start(render_text, True)
         title_col.set_sizing(Gtk.TreeViewColumnSizing.FIXED)
         title_col.add_attribute(render_text, "markup", 1)
-        title_col.set_cell_data_func(render_text, bgcolor_data_func)
 
         self.songs_treeview.append_column(title_col)
 
