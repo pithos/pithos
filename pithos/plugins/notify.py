@@ -115,15 +115,14 @@ class NotifyPlugin(PithosPlugin):
         if self.supports_actions:
             self.set_actions(playing)
 
-        if song.art_pixbuf:
-            self.notification.set_image_from_pixbuf(song.art_pixbuf)
-        else:
-            self.notification.set_hint('image-data', None)
-
         msg = 'by {} from {}'.format(song.artist, song.album)
         if self.escape_markup:
             msg = html.escape(msg, quote=False)
-        self.notification.update(song.title, msg, 'audio-x-generic' if not song.art_pixbuf else None)
+        if song.art_pixbuf:
+            self.notification.set_image_from_pixbuf(song.art_pixbuf)
+            self.notification.update(song.title, msg)
+        else:
+            self.notification.update(song.title, msg, 'audio-x-generic')
         self.notification.show()
 
     def set_notification_osx(self, song, playing):
