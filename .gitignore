@@ -13,6 +13,7 @@ aclocal.m4
 install-sh
 data/pithos.appdata.xml
 data/pithos.desktop
+data/gschemas.compiled
 *.valid
 *.pot
 *.gresource

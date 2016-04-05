@@ -27,10 +27,17 @@ bin/pithos: bin/pithos.in
 		< $< > $@
 	@chmod a+x $@
 
+run: $(BUILT_SOURCES) data/gschemas.compiled
+	env GSETTINGS_SCHEMA_DIR=$(srcdir)/data $(srcdir)/bin/pithos
+
 # ------------ data ----------------
 
 gsettings_SCHEMAS = data/pithos.gschema.xml
 @GSETTINGS_RULES@
+
+# This is just for running locally and not normally built
+data/gschemas.compiled: $(gsettings_SCHEMAS)
+	$(AM_V_GEN) $(GLIB_COMPILE_SCHEMAS) data
 
 pkgdata_DATA = pithos.gresource
 noinst_DATA = $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=data --generate-dependencies data/pithos.gresource.xml)
@@ -70,7 +77,7 @@ uninstall-hook:
 
 BUILT_SOURCES = pithos.gresource
 SUBDIRS = po
-CLEANFILES = $(pkgdata_DATA) $(bin_SCRIPTS) $(desktop_FILES) $(appstream_XML)
+CLEANFILES = $(pkgdata_DATA) $(bin_SCRIPTS) $(desktop_FILES) $(appstream_XML) data/gschemas.compiled
 EXTRA_DIST = license README.md autogen.sh requirements-osx.txt bin/pithos.in data/pithos.gresource.xml \
 	$(appstream_in_files) $(desktop_in_files) $(noinst_DATA) $(gsettings_SCHEMAS) $(hicolor_DATA) \
 	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA)
