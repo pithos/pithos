@@ -27,7 +27,7 @@ bin/pithos: bin/pithos.in
 		< $< > $@
 	@chmod a+x $@
 
-run: $(BUILT_SOURCES) data/gschemas.compiled
+run: $(BUILT_SOURCES) data/gschemas.compiled bin/pithos
 	env GSETTINGS_SCHEMA_DIR=$(srcdir)/data $(srcdir)/bin/pithos
 
 # ------------ data ----------------
