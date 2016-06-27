@@ -32,7 +32,7 @@ run: $(BUILT_SOURCES) data/gschemas.compiled bin/pithos
 
 # ------------ data ----------------
 
-gsettings_SCHEMAS = data/pithos.gschema.xml
+gsettings_SCHEMAS = data/io.github.Pithos.gschema.xml
 @GSETTINGS_RULES@
 
 # This is just for running locally and not normally built
@@ -40,16 +40,16 @@ data/gschemas.compiled: $(gsettings_SCHEMAS)
 	$(AM_V_GEN) $(GLIB_COMPILE_SCHEMAS) data
 
 pkgdata_DATA = pithos.gresource
-noinst_DATA = $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=data --generate-dependencies data/pithos.gresource.xml)
-pithos.gresource: data/pithos.gresource.xml $(noinst_DATA)
+noinst_DATA = $(shell $(GLIB_COMPILE_RESOURCES) --sourcedir=data --generate-dependencies data/io.github.Pithos.gresource.xml)
+pithos.gresource: data/io.github.Pithos.gresource.xml $(noinst_DATA)
 	$(AM_V_GEN) $(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(top_srcdir)/data --generate $<
 
-desktop_in_files = data/pithos.desktop.in
+desktop_in_files = data/io.github.Pithos.desktop.in
 desktop_FILES = $(desktop_in_files:.desktop.in=.desktop)
 @INTLTOOL_DESKTOP_RULE@
 @DESKTOP_FILE_RULES@
 
-appstream_in_files = data/pithos.appdata.xml.in
+appstream_in_files = data/io.github.Pithos.appdata.xml.in
 appstream_XML = $(appstream_in_files:.xml.in=.xml)
 @INTLTOOL_XML_RULE@
 @APPSTREAM_XML_RULES@
@@ -78,7 +78,7 @@ uninstall-hook:
 BUILT_SOURCES = pithos.gresource
 SUBDIRS = po
 CLEANFILES = $(pkgdata_DATA) $(bin_SCRIPTS) $(desktop_FILES) $(appstream_XML) data/gschemas.compiled
-EXTRA_DIST = license README.md autogen.sh requirements-osx.txt bin/pithos.in data/pithos.gresource.xml \
+EXTRA_DIST = license README.md autogen.sh requirements-osx.txt bin/pithos.in data/io.github.Pithos.gresource.xml \
 	$(appstream_in_files) $(desktop_in_files) $(noinst_DATA) $(gsettings_SCHEMAS) $(hicolor_DATA) \
 	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA)
 
