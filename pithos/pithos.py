@@ -113,10 +113,8 @@ class PlayerStatus:
     self.reset()
 
   def reset(self):
-    self.async_done = False
     self.began_buffering = None
     self.buffer_percent = 0
-    self.pending_duration_query = False
 
 
 @GtkTemplate(ui='/io/github/Pithos/ui/PithosWindow.ui')
@@ -152,7 +150,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.init_template()
 
         self.settings = Gio.Settings.new('io.github.Pithos')
-        self.settings.connect('changed::audio-quality', self.set_audio_quality)
         self.settings.connect('changed::proxy', self.set_proxy)
         self.settings.connect('changed::control_proxy', self.set_proxy)
         self.settings.connect('changed::control_proxy_pac', self.set_proxy)
@@ -206,6 +203,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.player_status = PlayerStatus()
 
         self.stations_dlg = None
+
+        self.seek_time = 0
+        self.pending_seek = False
 
         self.playing = None # None is a special "Waiting to play" state
         self.current_song_index = None
@@ -439,7 +439,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.worker_run('set_url_opener', (control_opener,))
 
     def set_audio_quality(self, *ignore):
-        self.worker_run('set_audio_quality', (self.settings['audio-quality'],))
+        def reload_url(*ignore):
+            if self.current_song is not None:
+                self.pending_seek = True
+                self.player.set_state(Gst.State.PAUSED)
+                self.seek_time = self.query_position() or 0
+                self.player.set_state(Gst.State.NULL)
+                self.player.set_property("uri", self.current_song.audioUrl)
+                self.player.set_state(Gst.State.PAUSED)
+        self.worker_run('set_audio_quality', (self.settings['audio-quality'],), reload_url)
 
     def pandora_connect(self, *ignore, message="Logging in...", callback=None):
         if self.settings['pandora-one']:
@@ -599,6 +607,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.emit("song-ended", prev)
 
         self.playing = None
+        self.pending_seek = False
         self.destroy_ui_loop()
         self.player.set_state(Gst.State.NULL)
         self.emit('play-state-changed', False)
@@ -734,23 +743,27 @@ class PithosWindow(Gtk.ApplicationWindow):
         return duration
 
     def on_gst_async_done(self, bus, message):
-      logging.debug("on_gst_async_done")
-      self.player_status.async_done = True
-      if self.player_status.pending_duration_query:
-        self.current_song.duration = self.query_duration()
-        self.current_song.duration_message = self.format_time(self.current_song.duration)
-        self.check_if_song_is_ad()
-        self.emit('metadata-changed', self.current_song)
-        self.player_status.pending_duration_query = False
+        logging.debug("on_gst_async_done")
+        if self.pending_seek:
+            self.pending_seek = False
+            self.player.seek_simple(Gst.Format.TIME,
+                                    Gst.SeekFlags.FLUSH | Gst.SeekFlags.SKIP,
+                                    self.seek_time)
+            self.emit('buffering-finished', self.query_position() or self.seek_time)
+        if self.query_duration() is not None:
+            self.current_song.duration = self.query_duration()
+            self.current_song.duration_message = self.format_time(self.current_song.duration)
+            self.check_if_song_is_ad()
+            self.emit('metadata-changed', self.current_song)
+            self.emit('buffering-finished', self.query_position() or 0)
 
     def on_gst_duration_changed(self, bus, message):
-      if self.player_status.async_done:
-        self.current_song.duration = self.query_duration()
-        self.current_song.duration_message = self.format_time(self.current_song.duration)
-        self.check_if_song_is_ad()
-        self.emit('metadata-changed', self.current_song)
-      else:
-        self.player_status.pending_duration_query = True
+        if self.query_duration() is not None:
+            self.current_song.duration = self.query_duration()
+            self.current_song.duration_message = self.format_time(self.current_song.duration)
+            self.check_if_song_is_ad()
+            self.emit('metadata-changed', self.current_song)
+            self.emit('buffering-finished', self.query_position() or 0)
 
     def on_gst_eos(self, bus, message):
         logging.info("EOS")
@@ -1096,13 +1109,16 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def on_prefs_response(self, widget, response):
         self.prefs_dlg.hide()
-
+        new_audio_quality = self.settings['audio-quality']
         email = self.settings['email']
         if response == Gtk.ResponseType.APPLY:
+            if new_audio_quality != self.prev_audio_quality:
+                self.set_audio_quality()
             self.on_explicit_content_filter_checkbox()
             if get_account_password(email) != self.last_pass:
                 self.pandora_connect()
         else:
+            self.settings['audio-quality'] = self.prev_audio_quality
             if not email or not get_account_password(email):
                 self.quit()
         self.last_pass = ''
@@ -1111,6 +1127,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         """preferences - display the preferences window for pithos """
         self.sync_explicit_content_filter_setting()
         self.last_pass = get_account_password(self.settings['email'])
+        self.prev_audio_quality = self.settings['audio-quality']
         self.settings.delay() # Dialog will apply
         self.prefs_dlg.show()
 
