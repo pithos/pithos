@@ -52,11 +52,11 @@ except ImportError:
     pacparser = None
 
 ALBUM_ART_SIZE = 96
-ALBUM_ART_X_PAD = 6
+TEXT_X_PADDING = 12
 
 class CellRendererAlbumArt(Gtk.CellRenderer):
     def __init__(self):
-        super().__init__()
+        super().__init__(height=ALBUM_ART_SIZE, width=ALBUM_ART_SIZE)
         self.icon = None
         self.pixbuf = None
         self.rate_bg = Gtk.IconTheme.get_default().load_icon('pithos-rate-bg', 32, 0)
@@ -70,21 +70,19 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
         setattr(self, pspec.name, value)
     def do_get_property(self, pspec):
         return getattr(self, pspec.name)
-    def do_get_size(self, widget, cell_area):
-        return (0, 0, ALBUM_ART_SIZE + ALBUM_ART_X_PAD, ALBUM_ART_SIZE)
     def do_render(self, ctx, widget, background_area, cell_area, flags):
         if self.pixbuf:
             Gdk.cairo_set_source_pixbuf(ctx, self.pixbuf, cell_area.x, cell_area.y)
             ctx.paint()
         if self.icon:
-            x = cell_area.x+(cell_area.width-self.rate_bg.get_width()) - ALBUM_ART_X_PAD # right
-            y = cell_area.y+(cell_area.height-self.rate_bg.get_height()) # bottom
+            x = cell_area.x + (cell_area.width - self.rate_bg.get_width()) # right
+            y = cell_area.y + (cell_area.height - self.rate_bg.get_height()) # bottom
             Gdk.cairo_set_source_pixbuf(ctx, self.rate_bg, x, y)
             ctx.paint()
 
             pixbuf = Gtk.IconTheme.get_default().load_icon(self.icon, Gtk.IconSize.MENU, 0)
-            x = cell_area.x+(cell_area.width-pixbuf.get_width())-5 - ALBUM_ART_X_PAD # right
-            y = cell_area.y+(cell_area.height-pixbuf.get_height())-5 # bottom
+            x = cell_area.x + (cell_area.width - pixbuf.get_width()) - 5 # right
+            y = cell_area.y + (cell_area.height - pixbuf.get_height()) - 5 # bottom
             Gdk.cairo_set_source_pixbuf(ctx, pixbuf, x, y)
             ctx.paint()
 
@@ -256,7 +254,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         title_col.add_attribute(render_icon, "icon", 2)
         title_col.add_attribute(render_icon, "pixbuf", 3)
 
-        render_text = Gtk.CellRendererText()
+        render_text = Gtk.CellRendererText(xpad=TEXT_X_PADDING)
         render_text.props.ellipsize = Pango.EllipsizeMode.END
         title_col.pack_start(render_text, True)
         title_col.set_sizing(Gtk.TreeViewColumnSizing.FIXED)
