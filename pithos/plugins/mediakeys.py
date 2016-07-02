@@ -18,7 +18,9 @@ from pithos.plugin import PithosPlugin
 import sys
 import logging
 
-APP_ID = 'Pithos'
+from gi.repository import GLib, Gdk
+
+APP_ID = 'io.github.Pithos'
 
 class MediaKeyPlugin(PithosPlugin):
     preference = 'enable_mediakeys'
@@ -32,24 +34,37 @@ class MediaKeyPlugin(PithosPlugin):
         except ImportError:
             return False
 
-        try:
-            bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
-        except dbus.DBusException:
-            return False
-
-        bound = False
-        for de in ('gnome', 'mate'):
+        bound = hasattr(self, 'method') and self.method == 'dbus' # We may have bound it earlier
+        if not bound:
             try:
-                mk = bus.get_object("org.%s.SettingsDaemon" %de, "/org/%s/SettingsDaemon/MediaKeys" %de)
-                mk.GrabMediaPlayerKeys(APP_ID, 0, dbus_interface='org.%s.SettingsDaemon.MediaKeys' %de)
-                mk.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
-                bound = True
-                logging.info("Bound media keys with DBUS (%s)" %de)
-                break
-            except dbus.DBusException as e:
-                logging.debug(e)
+                bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
+            except dbus.DBusException:
+                return False
+            for de in ('gnome', 'mate'):
+                try:
+                    self.dbus_interface = 'org.%s.SettingsDaemon.MediaKeys' %de
+                    self.mediakeys = bus.get_object("org.%s.SettingsDaemon" %de, "/org/%s/SettingsDaemon/MediaKeys" %de)
+                    self.mediakeys.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
+
+                    bound = True
+                    break
+                except dbus.DBusException as e:
+                    logging.debug(e)
 
         if bound:
+            def update_focus_time(widget, event, userdata=None):
+                if event.changed_mask & Gdk.WindowState.FOCUSED and event.new_window_state & Gdk.WindowState.FOCUSED:
+                    self.mediakeys.GrabMediaPlayerKeys(APP_ID, 0, dbus_interface=self.dbus_interface)
+                return False
+
+            try:
+                self.mediakeys.GrabMediaPlayerKeys(APP_ID, 0, dbus_interface=self.dbus_interface)
+                self.focus_hook = self.window.connect('window-state-event', update_focus_time)
+                logging.info("Bound media keys with DBUS (%s)" %self.dbus_interface)
+            except dbus.DBusException as e:
+                logging.debug(e)
+                return False
+
             self.method = 'dbus'
             return True
             
@@ -138,4 +153,10 @@ class MediaKeyPlugin(PithosPlugin):
             logging.error("Could not bind media keys")
         
     def on_disable(self):
-        logging.error("Not implemented: Can't disable media keys")
+        if self.method == 'dbus':
+            self.mediakeys.ReleaseMediaPlayerKeys(APP_ID, dbus_interface=self.dbus_interface)
+            self.window.disconnect((self.focus_hook))
+            self.focus_hook = 0
+            logging.info("Disabled dbus mediakey bindings")
+        else:
+            logging.error("Not implemented: Can't disable media keys bound with %s", self.method)
