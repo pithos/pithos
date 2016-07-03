@@ -113,10 +113,8 @@ class PlayerStatus:
     self.reset()
 
   def reset(self):
-    self.async_done = False
     self.began_buffering = None
     self.buffer_percent = 0
-    self.pending_duration_query = False
 
 
 @GtkTemplate(ui='/io/github/Pithos/ui/PithosWindow.ui')
@@ -193,13 +191,11 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         bus = self.player.get_bus()
         bus.add_signal_watch()
-        bus.connect("message::async-done", self.on_gst_async_done)
-        bus.connect("message::duration-changed", self.on_gst_duration_changed)
+        bus.connect("message::stream-start", self.on_gst_stream_start)
         bus.connect("message::eos", self.on_gst_eos)
         bus.connect("message::buffering", self.on_gst_buffering)
         bus.connect("message::error", self.on_gst_error)
         bus.connect("message::element", self.on_gst_element)
-        bus.connect("message::tag", self.on_gst_tag)
         self.player.connect("notify::volume", self.on_gst_volume)
         self.player.connect("notify::source", self.on_gst_source)
 
@@ -733,24 +729,11 @@ class PithosWindow(Gtk.ApplicationWindow):
         _, duration = self._query_duration.parse_duration()
         return duration
 
-    def on_gst_async_done(self, bus, message):
-      logging.debug("on_gst_async_done")
-      self.player_status.async_done = True
-      if self.player_status.pending_duration_query:
+    def on_gst_stream_start(self, bus, message):
         self.current_song.duration = self.query_duration()
         self.current_song.duration_message = self.format_time(self.current_song.duration)
         self.check_if_song_is_ad()
         self.emit('metadata-changed', self.current_song)
-        self.player_status.pending_duration_query = False
-
-    def on_gst_duration_changed(self, bus, message):
-      if self.player_status.async_done:
-        self.current_song.duration = self.query_duration()
-        self.current_song.duration_message = self.format_time(self.current_song.duration)
-        self.check_if_song_is_ad()
-        self.emit('metadata-changed', self.current_song)
-      else:
-        self.player_status.pending_duration_query = True
 
     def on_gst_eos(self, bus, message):
         logging.info("EOS")
@@ -785,29 +768,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         if not GstPbutils.install_plugins_installation_in_progress():
             self.next_song()
 
-    def gst_tag_handler(self, tag_info):
-        def handler(_x, tag, _y):
-            # An exhaustive list of tags is available at
-            # https://developer.gnome.org/gstreamer/stable/gstreamer-GstTagList.html
-            # but Pandora seems to only use those
-            if tag == 'datetime':
-                _, datetime = tag_info.get_date_time(tag)
-                value = datetime.to_iso8601_string()
-            elif tag in ('container-format', 'audio-codec'):
-                _, value = tag_info.get_string(tag)
-            elif tag in ('bitrate', 'maximum-bitrate', 'minimum-bitrate'):
-                _, value = tag_info.get_uint(tag)
-            else:
-                value = 'Don\'t know the type of this'
-
-            logging.debug('Found tag "%s" in stream: "%s" (type: %s)' % (tag, value, type(value)))
-
-            if tag == 'bitrate':
-                self.current_song.bitrate = value / 1000
-                self.update_song_row()
-
-        return handler
-
     def check_if_song_is_ad(self):
         if self.current_song.is_ad is None:
             if self.current_song.duration:
@@ -819,12 +779,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                     logging.info('Not an Ad..')
                     self.current_song.is_ad = False
             else:
-                logging.warning('dur_stat is False. The assumption that duration is available once the audio-codec messages feeds is bad.')
-
-    def on_gst_tag(self, bus, message):
-        tag_info = message.parse_tag()
-        tag_handler = self.gst_tag_handler(tag_info)
-        tag_info.foreach(tag_handler, None)
+                logging.warning('dur_stat is False. The assumption that duration is available once the stream-start messages feeds is bad.')
 
     def on_gst_buffering(self, bus, message):
         # per GST documentation:
@@ -889,7 +844,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song is self.current_song:
             song.position = self.query_position()
             if not song.bitrate is None:
-                msg.append("%0dkbit/s" % (song.bitrate))
+                msg.append("%skbit/s" % (song.bitrate))
 
             if song.position is not None and song.duration is not None:
                 pos_str = self.format_time(song.position)
