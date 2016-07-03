@@ -324,7 +324,11 @@ class Station:
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
-        playlist = self.pandora.json_call('station.getPlaylist', {'stationToken': self.idToken, 'includeTrackLength': True}, https=True)
+        playlist = self.pandora.json_call(
+        'station.getPlaylist', {'stationToken': self.idToken,
+                                'includeTrackLength': True, 
+                                'additionalAudioUrl': 'HTTP_32_AACPLUS,HTTP_128_MP3'
+                               }, https=True)
         songs = []
         for i in playlist['items']:
             if 'songName' in i: # check for ads
@@ -360,7 +364,6 @@ class Song:
 
         self.album = d['albumName']
         self.artist = d['artistName']
-        self.audioUrlMap = d['audioUrlMap']
         self.trackToken = d['trackToken']
         self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
         self.stationId = d['stationId']
@@ -381,6 +384,25 @@ class Song:
         self.playlist_time = time.time()
         self.feedbackId = None
         self._title = ''
+
+        self.audioUrlMap = d['audioUrlMap']
+
+        if len(d.get('additionalAudioUrl', [])) == 2:           
+            if int(self.audioUrlMap['highQuality']['bitrate']) < 128:
+
+                _64_aacplus = self.audioUrlMap['highQuality']
+                self.audioUrlMap['highQuality'] = {
+                    'encoding': 'mp3',
+                    'bitrate': '128',
+                    'audioUrl': d['additionalAudioUrl'][1],
+                }
+                self.audioUrlMap['mediumQuality'] = _64_aacplus
+            else:
+                self.audioUrlMap['lowQuality'] = {
+                    'encoding': 'aacplus',
+                    'bitrate': '32',
+                    'audioUrl': d['additionalAudioUrl'][0],
+                }
 
     @property
     def title(self):
