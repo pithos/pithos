@@ -18,7 +18,7 @@ from pithos.plugin import PithosPlugin
 import sys
 import logging
 
-from gi.repository import GLib, Gdk
+from gi.repository import GLib, Gio, Gdk
 
 APP_ID = 'io.github.Pithos'
 
@@ -27,58 +27,70 @@ class MediaKeyPlugin(PithosPlugin):
     description = 'Control playback with media keys'
 
     def bind_dbus(self):
-        try:
-            import dbus
-            from dbus.mainloop.glib import DBusGMainLoop
-            DBusGMainLoop(set_as_default=True)
-        except ImportError:
-            return False
+        # FIXME: Make all dbus usage async
+        def grab_media_keys():
+            try:
+                self.mediakeys.call_sync('GrabMediaPlayerKeys', GLib.Variant('(su)', (APP_ID, 0)),
+                                    Gio.DBusCallFlags.NONE, -1, None)
+                return True
+            except GLib.Error as e:
+                logging.debug(e)
+                return False
 
         bound = hasattr(self, 'method') and self.method == 'dbus' # We may have bound it earlier
         if not bound:
             try:
-                bus = dbus.Bus(dbus.Bus.TYPE_SESSION)
-            except dbus.DBusException:
+                bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+                logging.info('Got session bus')
+            except GLib.Error as e:
+                logging.warning(e)
                 return False
+
             for de in ('gnome', 'mate'):
                 try:
-                    self.dbus_interface = 'org.%s.SettingsDaemon.MediaKeys' %de
-                    self.mediakeys = bus.get_object("org.%s.SettingsDaemon" %de, "/org/%s/SettingsDaemon/MediaKeys" %de)
-                    self.mediakeys.connect_to_signal("MediaPlayerKeyPressed", self.mediakey_pressed)
-
-                    bound = True
-                    break
-                except dbus.DBusException as e:
-                    logging.debug(e)
-
-        if bound:
-            def update_focus_time(widget, event, userdata=None):
-                if event.changed_mask & Gdk.WindowState.FOCUSED and event.new_window_state & Gdk.WindowState.FOCUSED:
-                    self.mediakeys.GrabMediaPlayerKeys(APP_ID, 0, dbus_interface=self.dbus_interface)
+                    self.mediakeys = Gio.DBusProxy.new_sync(bus, Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES, None,
+                                                        'org.%s.SettingsDaemon' %de,
+                                                        '/org/%s/SettingsDaemon/MediaKeys' %de,
+                                                        'org.%s.SettingsDaemon.MediaKeys' %de,
+                                                        None)
+                    if grab_media_keys():
+                        bound = True
+                        break;
+                except GLib.Error as e:
+                    logging.warning(e)
+                    return False
+            else:
                 return False
 
-            try:
-                self.mediakeys.GrabMediaPlayerKeys(APP_ID, 0, dbus_interface=self.dbus_interface)
-                self.focus_hook = self.window.connect('window-state-event', update_focus_time)
-                logging.info("Bound media keys with DBUS (%s)" %self.dbus_interface)
-            except dbus.DBusException as e:
-                logging.debug(e)
-                return False
+        def update_focus_time(widget, event, userdata=None):
+            if event.changed_mask & Gdk.WindowState.FOCUSED and event.new_window_state & Gdk.WindowState.FOCUSED:
+                grab_media_keys()
+            return False
 
-            self.method = 'dbus'
-            return True
-            
-    def mediakey_pressed(self, app, action):
-       if app == APP_ID:
-            if action == 'Play':
-                self.window.playpause_notify()
-            elif action == 'Next':
-                self.window.next_song()
-            elif action == 'Stop':
-                self.window.user_pause()
-            elif action == 'Previous':
-                self.window.bring_to_top()
-            
+        def mediakey_signal(proxy, sender, signal, param, userdata=None):
+            if signal != 'MediaPlayerKeyPressed':
+                return
+
+            app, action = param.unpack()
+            if app == APP_ID:
+                if action == 'Play':
+                    self.window.playpause_notify()
+                elif action == 'Next':
+                    self.window.next_song()
+                elif action == 'Stop':
+                    self.window.user_pause()
+                elif action == 'Previous':
+                    self.window.bring_to_top()
+
+        self.focus_hook = self.window.connect('window-state-event', update_focus_time)
+        if not getattr(self, 'mediakey_hook', 0):
+            self.mediakey_hook = self.mediakeys.connect('g-signal', mediakey_signal)
+        else:
+            grab_media_keys() # Was disabled previously
+        logging.info("Bound media keys with DBUS (%s)" %self.mediakeys.props.g_interface_name)
+        self.method = 'dbus'
+        return True
+
     def bind_keybinder(self):
         try:
             import gi
@@ -154,8 +166,9 @@ class MediaKeyPlugin(PithosPlugin):
         
     def on_disable(self):
         if self.method == 'dbus':
-            self.mediakeys.ReleaseMediaPlayerKeys(APP_ID, dbus_interface=self.dbus_interface)
-            self.window.disconnect((self.focus_hook))
+            self.mediakeys.call_sync('ReleaseMediaPlayerKeys', GLib.Variant('(s)', (APP_ID,)),
+                                     Gio.DBusCallFlags.NONE, -1, None)
+            self.window.disconnect(self.focus_hook)
             self.focus_hook = 0
             logging.info("Disabled dbus mediakey bindings")
         else:
