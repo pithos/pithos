@@ -14,86 +14,86 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-from pithos.plugin import PithosPlugin
 import logging
+from gi.repository import (GLib, Gio)
+from pithos.plugin import PithosPlugin
 
-dbus = None
+SCREENSAVERS = (
+    # interface, path
+    ('org.gnome.ScreenSaver', '/org/gnome/ScreenSaver'),
+    ('org.cinnamon.ScreenSaver', '/org/cinnamon/ScreenSaver'),
+    ('org.freedesktop.ScreenSaver', '/org/freedesktop/ScreenSaver'),
+)
+
 class ScreenSaverPausePlugin(PithosPlugin):
     preference = 'enable_screensaverpause'
     description = 'Pause playback when screensaver starts'
 
-    session_bus = None
-
-    def bind_session_bus(self):
-        global dbus
-        try:
-            import dbus
-            from dbus.mainloop.glib import DBusGMainLoop
-            DBusGMainLoop(set_as_default=True)
-        except ImportError:
-            return False
-
-        try:
-            self.session_bus = dbus.SessionBus()
-            return True
-        except dbus.DBusException:
-            return False
+    bus = None
+    cancel = None
+    locked = 0
+    wasplaying = False
+    subs = []
 
     def on_enable(self):
-        if not self.bind_session_bus():
-            logging.error("Could not bind session bus")
-            return
-        self.connect_events() or logging.error("Could not connect events")
+        def on_got_bus(obj, result, userdata=None):
+            self.cancel = None
+            try:
+                self.bus = Gio.bus_get_finish(result)
+                logging.info('Got session bus')
+            except Glib.Error as e:
+                logging.warning(e)
+                return
 
-        self.locked = 0
-        self.wasplaying = False
+            self._connect_events()
+
+        self.cancel = Gio.Cancellable()
+        Gio.bus_get(Gio.BusType.SESSION, self.cancel, on_got_bus)
+
+        # Since this async always succeed.
+        return True
 
     def on_disable(self):
-        if self.session_bus:
-            self.disconnect_events()
+        if self.cancel:
+            self.cancel.cancel()
 
-        self.session_bus = None
+        for sub in self.subs:
+            self.bus.signal_unsubscribe(sub)
 
-    def connect_events(self):
-        try:
-            self.receivers = [
-                self.session_bus.add_signal_receiver(*args)
-                for args in ((self.playPause, 'ActiveChanged', 'org.gnome.ScreenSaver'),
-                             (self.playPause, 'ActiveChanged', 'org.cinnamon.ScreenSaver'),
-                             (self.playPause, 'ActiveChanged', 'org.freedesktop.ScreenSaver'),
-                             (self.pause, 'Locked', 'com.canonical.Unity.Session'),
-                             (self.play, 'Unlocked', 'com.canonical.Unity.Session'),
-                            )
-                ]
+        self.subs = []
+        self.bus = None
+        self.cancel = None
 
-            return True
-        except dbus.DBusException:
-            logging.info("Enable failed")
-            return False
+    def _connect_events(self):
+        def on_screensaver_active_changed(conn, sender, path,
+                                   interface, sig, param, userdata=None):
+            self._pause() if param[0] else self._play()
 
-    def disconnect_events(self):
-        try:
-            for r in self.receivers:
-                r.remove()
-            return True
-        except dbus.DBusException:
-            return False
+        def on_unity_session_changed(conn, sender, path,
+                                   interface, sig, param, userdata=None):
+            self._pause() if sig == 'Locked' else self._play()
 
-    def play(self):
+        for ss in SCREENSAVERS:
+            self.subs.append(self.bus.signal_subscribe (None, ss[0], 'ActiveChanged', ss[1],
+                                       None, Gio.DBusSignalFlags.NONE,
+                                       on_screensaver_active_changed, None))
+
+        for sig in ('Locked', 'Unlocked'):
+            self.subs.append(self.bus.signal_subscribe (None, 'com.canonical.Unity.Session',
+                                        sig, '/com/canonical/Unity/Session',
+                                        None, Gio.DBusSignalFlags.NONE,
+                                        on_unity_session_changed, None))
+
+    def _play(self):
         self.locked -= 1
         if self.locked < 0:
             self.locked = 0
         if not self.locked and self.wasplaying:
             self.window.user_play()
 
-    def pause(self):
+    def _pause(self):
         if not self.locked:
             self.wasplaying = self.window.playing
             self.window.pause()
         self.locked += 1
 
-    def playPause(self, screensaver_on):
-        if screensaver_on:
-            self.pause()
-        else:
-            self.play()
