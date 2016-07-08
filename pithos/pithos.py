@@ -86,28 +86,6 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
             Gdk.cairo_set_source_pixbuf(ctx, pixbuf, x, y)
             ctx.paint()
 
-def get_album_art(url, tmpdir, *extra):
-    try:
-        with urllib.request.urlopen(url) as f:
-            image = f.read()
-    except urllib.error.HTTPError:
-        logging.warning('Invalid image url received')
-        return (None, None,) + extra
-
-    file_url = None
-    if tmpdir:
-        try:
-            with tempfile.NamedTemporaryFile(prefix='art-', dir=tmpdir.name, delete=False) as f:
-                f.write(image)
-                file_url = urllib.parse.urljoin('file://', urllib.parse.quote(f.name))
-        except IOError:
-            logging.warning("Failed to write art tempfile")
-
-    with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
-        loader.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
-        loader.write(image)
-        return (loader.get_pixbuf(), file_url,) + extra
-
 class PlayerStatus:
   def __init__(self):
     self.reset()
@@ -625,6 +603,28 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.waiting_for_playlist = 1
             self.error_dialog(self.gstreamer_error, self.get_playlist)
             return
+
+        def get_album_art(url, tmpdir, *extra):
+            try:
+                with urllib.request.urlopen(url) as f:
+                    image = f.read()
+            except urllib.error.HTTPError:
+                logging.warning('Invalid image url received')
+                return (None, None,) + extra
+
+            file_url = None
+            if tmpdir:
+                try:
+                    with tempfile.NamedTemporaryFile(prefix='art-', dir=tmpdir.name, delete=False) as f:
+                        f.write(image)
+                        file_url = urllib.parse.urljoin('file://', urllib.parse.quote(f.name))
+                except IOError:
+                    logging.warning("Failed to write art tempfile")
+
+            with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
+                loader.set_size(ALBUM_ART_SIZE, ALBUM_ART_SIZE)
+                loader.write(image)
+            return (loader.get_pixbuf(), file_url,) + extra
 
         def art_callback(t):
             pixbuf, file_url, song, index = t
