@@ -113,15 +113,22 @@ class FakePandora(Pandora):
             'artistName':"ArtistName",
             'audioUrlMap': {
                 'highQuality': {
+                    'encoding': 'aac',
+                    'bitrate': '32',
                     'audioUrl': audio_url
                 },
                 'mediumQuality': {
+                    'encoding': 'aac',
+                    'bitrate': '32',
                     'audioUrl': audio_url
                 },
                 'lowQuality': {
+                    'encoding': 'aac',
+                    'bitrate': '32',
                     'audioUrl': audio_url
                 },
             },
+            'trackLength':121,
             'trackGain':0,
             'trackToken':'5908540384',
             'songRating': 1 if c%3 == 0 else 0,
