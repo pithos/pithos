@@ -14,69 +14,79 @@
 #with this program.  If not, see <http://www.gnu.org/licenses/>.
 ### END LICENSE
 
-import dbus.service
+import logging
+from gi.repository import GLib, Gio
+from .dbus_util.DBusServiceObject import *
 
 DBUS_BUS = "net.kevinmehall.Pithos"
+DBUS_INTERFACE = "net.kevinmehall.Pithos"
 DBUS_OBJECT_PATH = "/net/kevinmehall/Pithos"
 
-def song_to_dict(song):
-    d = {}
-    if song:
-        for i in ['artist', 'title', 'album', 'songDetailURL']:
-            d[i] = getattr(song, i)
-    return d
-  
-class PithosDBusProxy(dbus.service.Object):
-    def __init__(self, window):
-        self.bus = dbus.SessionBus()
-        bus_name = dbus.service.BusName(DBUS_BUS, bus=self.bus)
-        dbus.service.Object.__init__(self, bus_name, DBUS_OBJECT_PATH)
+class PithosDBusProxy(DBusServiceObject):
+    def __init__(self, window, **kwargs):
+        super().__init__(object_path=DBUS_OBJECT_PATH, **kwargs)
         self.window = window
-        self.window.connect("song-changed", self.songchange_handler)
-        self.window.connect("play-state-changed", self.playstate_handler)
-        
-    def playstate_handler(self, window, state):
-        self.PlayStateChanged(state)
-        
-    def songchange_handler(self, window, song):
-        self.SongChanged(song_to_dict(song))
-    
-    @dbus.service.method(DBUS_BUS)
+        self.window.connect("song-changed",
+                            lambda window, song: self.SongChanged(self.song_to_variant(song)))
+        self.window.connect("play-state-changed",
+                            lambda window, state: self.PlayStateChanged(state))
+
+    def connect(self):
+        def on_name_acquired(connection, name):
+            logging.info('Got bus name: %s' %name)
+
+        self.bus_id = Gio.bus_own_name_on_connection(self.connection, DBUS_BUS,
+                            Gio.BusNameOwnerFlags.NONE, on_name_acquired, None)
+
+    def disconnect(self):
+        if self.bus_id:
+            Gio.bus_unown_name(self.bus_id)
+            self.bus_id = 0
+
+    @staticmethod
+    def song_to_variant(song):
+        d = {}
+        if song:
+            for i in ['artist', 'title', 'album', 'songDetailURL']:
+                d[i] = GLib.Variant('s', getattr(song, i))
+        return d
+
+    @dbus_method(interface=DBUS_INTERFACE)
     def PlayPause(self):
         self.window.playpause_notify()
-    
-    @dbus.service.method(DBUS_BUS)
+
+    @dbus_method(interface=DBUS_INTERFACE)
     def SkipSong(self):
         self.window.next_song()
-    
-    @dbus.service.method(DBUS_BUS)
+
+    @dbus_method(interface=DBUS_INTERFACE)
     def LoveCurrentSong(self):
         self.window.love_song()
-    
-    @dbus.service.method(DBUS_BUS)
+
+    @dbus_method(interface=DBUS_INTERFACE)
     def BanCurrentSong(self):
         self.window.ban_song()
-    
-    @dbus.service.method(DBUS_BUS)
+
+    @dbus_method(interface=DBUS_INTERFACE)
     def TiredCurrentSong(self):
         self.window.tired_song()
-        
-    @dbus.service.method(DBUS_BUS)
+
+    @dbus_method(interface=DBUS_INTERFACE)
     def Present(self):
         self.window.bring_to_top()
-        
-    @dbus.service.method(DBUS_BUS, out_signature='a{sv}')
+
+    @dbus_method(interface=DBUS_INTERFACE, out_signature='a{sv}')
     def GetCurrentSong(self):
-        return song_to_dict(self.window.current_song)
-        
-    @dbus.service.method(DBUS_BUS, out_signature='b')
+        return GLib.Variant('a{sv}', self.song_to_dict(self.window.current_song))
+
+    @dbus_method(interface=DBUS_INTERFACE, out_signature='b')
     def IsPlaying(self):
         return self.window.playing
-        
-    @dbus.service.signal(DBUS_BUS, signature='b')
+
+    @dbus_signal(interface=DBUS_INTERFACE, signature='b')
     def PlayStateChanged(self, state):
         pass
-        
-    @dbus.service.signal(DBUS_BUS, signature='a{sv}')
+
+    @dbus_signal(interface=DBUS_INTERFACE, signature='a{sv}')
     def SongChanged(self, songinfo):
         pass

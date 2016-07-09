@@ -16,6 +16,7 @@
 ### END LICENSE
 
 import logging
+from gi.repository import Gio
 from pithos.plugin import PithosPlugin
 
 class MprisPlugin(PithosPlugin):
@@ -23,23 +24,27 @@ class MprisPlugin(PithosPlugin):
     description = 'Allows control with external programs'
 
     def on_prepare(self):
-        try:
-            from dbus.mainloop.glib import DBusGMainLoop
-            DBusGMainLoop(set_as_default=True)
-            from . import _mpris
-            from . import _dbus_service
-        except ImportError:
-            return "python-dbus not found"
-
+        from . import _dbus_service
+        from . import _mpris
         self.PithosMprisService = _mpris.PithosMprisService
         self.PithosDBusProxy = _dbus_service.PithosDBusProxy
-        self.was_enabled = False
+        self.service = None
+        self.mpris = None
+        try:
+            self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        except GLib.Error as e:
+            logging.warning('Failed to connect to session bus: {}'.format(e))
+            return 'Failed to connect to DBus'
 
     def on_enable(self):
-        if not self.was_enabled:
-            self.mpris = self.PithosMprisService(self.window)
-            self.service = self.PithosDBusProxy(self.window)
-            self.was_enabled = True
+        if not self.service:
+            self.service = self.PithosDBusProxy(self.window, connection=self.bus)
+        self.service.connect()
+
+        if not self.mpris:
+            self.mpris = self.PithosMprisService(self.window, connection=self.bus)
+        self.mpris.connect()
 
     def on_disable(self):
-        logging.error("Not implemented: Can't disable mpris")
+        self.service.disconnect()
+        self.mpris.disconnect()
