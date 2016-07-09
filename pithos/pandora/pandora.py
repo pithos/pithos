@@ -433,13 +433,16 @@ class Song:
         try:
             q = self.audioUrlMap[quality]
             self.bitrate = q['bitrate']
+            self.codec = q['encoding']
             logging.info("Using audio quality %s: %s %s", quality, q['bitrate'], q['encoding'])
             return q['audioUrl']
         except KeyError:
+            first_available_quality = list(self.audioUrlMap.keys())[0]
             logging.warning("Unable to use audio format %s. Using %s",
-                           quality, list(self.audioUrlMap.keys())[0])
-            self.bitrate = list(self.audioUrlMap.values())[0]['bitrate']
-            return list(self.audioUrlMap.values())[0]['audioUrl']
+                           quality, first_available_quality)
+            self.bitrate = first_available_quality['bitrate']
+            self.codec = first_available_quality['encoding']
+            return first_available_quality['audioUrl']
 
     @property
     def station(self):

@@ -842,10 +842,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         album = html.escape(song.album)
         msg = []
         if song is self.current_song:
+            msg.append("%s<small>kbit/s</small> %s" % (song.bitrate, song.codec))
             song.position = self.query_position()
-            if not song.bitrate is None:
-                msg.append("%skbit/s" % (song.bitrate))
-
             if song.position is not None and song.duration is not None:
                 pos_str = self.format_time(song.position)
                 msg.append("%s / %s" % (pos_str, song.duration_message))
@@ -862,7 +860,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song.is_ad:
             description = "<b><big>Commercial Advertisement</big></b>\n<b>Pandora</b>"
         else:
-            description = "<b><big>%s</big></b>\nby <b>%s</b>\n<small>from <i>%s</i></small>" % (title, artist, album)
+            description = "<b><big>%s</big></b>\n<small>by</small> <b>%s</b>\n<small><small>from</small> <i>%s</i></small>" % (title, artist, album)
 
         return "%s\n<small>%s</small>" % (description, msg)
 
