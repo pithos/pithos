@@ -530,7 +530,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_song.start_time = time.time()
         self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
         self.songs_treeview.set_cursor(song_index, None, 0)
-        self.set_title("Pithos - %s by %s" % (self.current_song.title, self.current_song.artist))
+        self.set_title("%s by %s - Pithos" % (self.current_song.title, self.current_song.artist))
 
         self.emit('song-changed', self.current_song)
         self.emit('metadata-changed', self.current_song)
@@ -775,6 +775,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                     logging.info('Ad detected!')
                     self.current_song.is_ad = True
                     self.update_song_row()
+                    self.set_title("Commercial Advertisement - Pithos")
                 else:
                     logging.info('Not an Ad..')
                     self.current_song.is_ad = False
