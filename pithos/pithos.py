@@ -135,6 +135,8 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.prefs_dlg = PreferencesPithosDialog.PreferencesPithosDialog(self.settings, transient_for=self)
         self.prefs_dlg.connect_after('response', self.on_prefs_response)
+        self.prefs_dlg.email_entry.connect('notify::text', self.on_email_or_password_change)
+        self.prefs_dlg.password_entry.connect('notify::text', self.on_email_or_password_change)
 
         self.init_core()
         self.init_ui()
@@ -448,7 +450,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.worker_run('connect', args, pandora_ready, message, 'login')
 
     def sync_explicit_content_filter_setting(self, *ignore):
-        #reset checkbox to default state
+        # Reset checkbox to default state
         self.prefs_dlg.explicit_content_filter_checkbutton.set_label(_('Explicit Content Filter'))
         self.prefs_dlg.explicit_content_filter_checkbutton.set_sensitive(False)
         self.prefs_dlg.explicit_content_filter_checkbutton.set_active(False)
@@ -1051,23 +1053,73 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def on_prefs_response(self, widget, response):
         self.prefs_dlg.hide()
+        new_email = self.prefs_dlg.email_entry.get_text()
+        new_password = self.prefs_dlg.password_entry.get_text()
+        new_proxy = self.prefs_dlg.proxy_entry.get_text()
+        new_control_proxy = self.prefs_dlg.control_proxy_entry.get_text()
+        new_control_proxy_pac = self.prefs_dlg.control_proxy_pac_entry.get_text()
+        new_one_checkbox = self.prefs_dlg.pandora_one_checkbutton.get_active()
 
-        email = self.settings['email']
         if response == Gtk.ResponseType.APPLY:
-            self.on_explicit_content_filter_checkbox()
-            if get_account_password(email) != self.last_pass:
+            if self.last_password != new_password or self.last_email != new_email:
+                # Full stop, reset and reconnect on password and/or email change.
+                self.stop()
+                self.waiting_for_playlist = False
+                self.current_song_index = None
+                self.start_new_playlist = False
+                self.current_station = None
+                self.current_station_id = None
+                self.have_stations = False
+                self.playcount = 0
+                self.songs_model.clear()
                 self.pandora_connect()
-        else:
-            if not email or not get_account_password(email):
-                self.quit()
-        self.last_pass = ''
+
+            elif (self.last_proxy != new_proxy
+                  or self.last_control_proxy != new_control_proxy
+                  or self.last_control_proxy_pac != new_control_proxy_pac
+                  or self.last_one_checkbox != new_one_checkbox):
+                # Just a reconnect on proxy or pandora_one change.
+                self.pandora_connect()
+            self.on_explicit_content_filter_checkbox()
+
+        if response == Gtk.ResponseType.CANCEL:
+            # Password doesn't properly revert on cancel.
+            self.prefs_dlg.password_entry.set_text(self.last_password)
+            # Volume should not revert on cancel.
+            self.settings.set_value('volume', self.last_volume)             
+            if not self.prefs_dlg.email_entry.get_text() or not self.prefs_dlg.password_entry.get_text():
+                # Error dialog if password and email are left blank on prefs cancel. Should only ever happen on 1st run.
+                self.error_dialog(_("Pandora Account Credentials Required"), None,
+                                  submsg=_("Please enter your email and password."))
 
     def show_preferences(self):
         """preferences - display the preferences window for pithos """
         self.sync_explicit_content_filter_setting()
-        self.last_pass = get_account_password(self.settings['email'])
+
+        self.last_email = self.prefs_dlg.email_entry.get_text()
+        self.last_password = self.prefs_dlg.password_entry.get_text()
+        self.last_proxy = self.prefs_dlg.proxy_entry.get_text()
+        self.last_control_proxy = self.prefs_dlg.control_proxy_entry.get_text()
+        self.last_control_proxy_pac = self.prefs_dlg.control_proxy_pac_entry.get_text()
+        self.last_one_checkbox = self.prefs_dlg.pandora_one_checkbutton.get_active()
+        self.last_volume = self.settings.get_value('volume')
+
         self.settings.delay() # Dialog will apply
         self.prefs_dlg.show()
+
+    def on_email_or_password_change(self, *ignore):
+        # Change state of explicit_content_filter_checkbutton
+        # dependant on password and email.
+        if self.pandora.connected:
+            new_email = self.prefs_dlg.email_entry.get_text()
+            new_password = self.prefs_dlg.password_entry.get_text()
+
+            if self.last_email != new_email or self.last_password != new_password: 
+                self.prefs_dlg.explicit_content_filter_checkbutton.set_label(_('Explicit Content Filter'))
+                self.prefs_dlg.explicit_content_filter_checkbutton.set_inconsistent(True)
+                self.prefs_dlg.explicit_content_filter_checkbutton.set_sensitive(False)
+            else:
+                self.sync_explicit_content_filter_setting()
 
     def show_stations(self):
         if self.stations_dlg:
