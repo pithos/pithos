@@ -63,6 +63,14 @@ class PithosApplication(Gtk.Application):
         action.connect("activate", self.quit_cb)
         self.add_action(action)
 
+        if Gtk.get_major_version() > 3 or Gtk.get_minor_version() >= 20:
+            menu = self.get_app_menu()
+            it = menu.iterate_item_links(menu.get_n_items() - 1)
+            assert(it.next())
+            last_section = it.get_value()
+            shortcuts_item = Gio.MenuItem.new(_('Keyboard Shortcuts'), 'win.show-help-overlay')
+            last_section.prepend_item(shortcuts_item)
+
     def do_command_line(self, command_line):
         options = command_line.get_options_dict()
 
