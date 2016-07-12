@@ -15,9 +15,7 @@
 ### END LICENSE
 
 from gi.repository import Gtk
-
 from .gi_composites import GtkTemplate
-from .util import open_browser
 
 @GtkTemplate(ui='/io/github/Pithos/ui/AboutPithosDialog.ui')
 class AboutPithosDialog(Gtk.AboutDialog):
@@ -29,8 +27,4 @@ class AboutPithosDialog(Gtk.AboutDialog):
 
         theme = Gtk.IconTheme.get_default()
         self.set_logo(theme.load_icon('pithos', 96, 0))
-
-    def do_activate_link(self, uri):
-        open_browser(uri)
-        return True
 

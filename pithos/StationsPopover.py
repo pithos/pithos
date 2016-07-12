@@ -60,7 +60,8 @@ class StationsPopover(Gtk.Popover):
 
     def on_button_press(self, widget, event):
         def open_info(item, station):
-            open_browser(station.info_url)
+            open_browser(station.info_url, parent=self.get_toplevel(),
+                         timestmap=event.time)
 
         if event.button != Gdk.BUTTON_SECONDARY:
             return False

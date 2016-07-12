@@ -114,7 +114,7 @@ class StationsDialog(Gtk.Dialog):
 
     @GtkTemplate.Callback
     def on_menuitem_info(self, widget):
-        open_browser(self.selected_station().info_url)
+        open_browser(self.selected_station().info_url, parent=self)
 
     @GtkTemplate.Callback
     def on_menuitem_rename(self, widget):

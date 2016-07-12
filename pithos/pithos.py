@@ -698,7 +698,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         dialog = self.api_update_dialog_real
         response = dialog.run()
         if response:
-            open_browser("http://pithos.github.io/itbroke")
+            open_browser("http://pithos.github.io/itbroke", self)
         self.quit()
 
     def station_changed(self, station, reconnecting=False):
