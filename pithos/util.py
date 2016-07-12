@@ -20,6 +20,7 @@ from urllib.parse import splittype, splituser, splitpasswd
 import gi
 gi.require_version('Secret', '1')
 from gi.repository import (
+    GLib,
     Secret,
     Gtk
 )
@@ -67,10 +68,13 @@ def open_browser(url, parent=None, timestamp=0):
     logging.info("Opening URL {}".format(url))
     if not timestamp:
         timestamp = Gtk.get_current_event_time()
-    if hasattr(Gtk, 'show_uri_on_window'):
-        Gtk.show_uri_on_window(parent, url, timestamp)
-    else: # Gtk <= 3.20
-        screen = None
-        if parent:
-            screen = parent.get_screen()
-        Gtk.show_uri(screen, url, timestamp)
+    try:
+        if hasattr(Gtk, 'show_uri_on_window'):
+            Gtk.show_uri_on_window(parent, url, timestamp)
+        else: # Gtk <= 3.20
+            screen = None
+            if parent:
+                screen = parent.get_screen()
+            Gtk.show_uri(screen, url, timestamp)
+    except GLib.Error as e:
+        logging.warning('Failed to open URL: {}'.format(e.message))
