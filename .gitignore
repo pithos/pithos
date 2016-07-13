@@ -9,8 +9,8 @@ configure
 config.*
 /autom4te.cache/
 aclocal.m4
-data/pithos.appdata.xml
-data/pithos.desktop
+data/io.github.Pithos.appdata.xml
+data/io.github.Pithos.desktop
 data/gschemas.compiled
 *.valid
 *.pot

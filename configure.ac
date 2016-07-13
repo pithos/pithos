@@ -13,6 +13,7 @@ GETTEXT_PACKAGE=pithos
 AC_SUBST(GETTEXT_PACKAGE)
 
 m4_ifndef([GLIB_GSETTINGS], [AC_MSG_ERROR([gsettings.m4 not found])])
+m4_ifndef([APPSTREAM_XML], [AC_MSG_ERROR([appstream-xml.m4 not found])])
 
 IT_PROG_INTLTOOL([0.50.0])
 DESKTOP_FILE

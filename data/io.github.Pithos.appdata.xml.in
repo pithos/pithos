@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <application>
 	<id type="desktop">io.github.Pithos.desktop</id>
+	<translation type="gettext">pithos</translation>
 	<name>Pithos</name>
 	<summary>Pandora radio client</summary>
 	<metadata_license>CC0</metadata_license>
