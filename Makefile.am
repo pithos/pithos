@@ -12,6 +12,9 @@ pandora_PYTHON = $(wildcard pithos/pandora/*.py)
 pluginsdir = $(pithosdir)/plugins
 plugins_PYTHON = $(wildcard pithos/plugins/*.py)
 
+pluginsdbusdir = $(pithosdir)/plugins/dbus_util
+pluginsdbus_PYTHON = $(wildcard pithos/plugins/dbus_util/*.py)
+
 bin_SCRIPTS = bin/pithos
 bin/pithos: bin/pithos.in
 	@$(MKDIR_P) bin
