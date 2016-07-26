@@ -378,6 +378,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         handlers = []
         global_proxy = self.settings['proxy']
         if global_proxy:
+            # TODO: Handle socks here too
             handlers.append(urllib.request.ProxyHandler({'http': global_proxy, 'https': global_proxy}))
         global_opener = pandora.Pandora.build_opener(*handlers)
         urllib.request.install_opener(global_opener)
@@ -408,7 +409,21 @@ class PithosWindow(Gtk.ApplicationWindow):
             logging.warning("Disabled proxy auto-config support because python-pacparser module was not found.")
 
         if control_proxy:
-            control_opener = pandora.Pandora.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
+            proxy_handler = None
+            scheme, user, password, hostport = parse_proxy(control_proxy)
+            if scheme == 'socks5': # TODO socks 4
+                try:
+                    import socks
+                    from sockshandler import SocksiPyHandler
+                    host, port = hostport.split(':', 1)
+                    proxy_handler = SocksiPyHandler(socks.PROXY_TYPE_SOCKS5, host, int(port),
+                                                    username=user, password=password)
+                except ImportError:
+                    logging.warning('Failed to import PySocks')
+            else:
+                proxy_handler = urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy})
+
+            control_opener = pandora.Pandora.build_opener(proxy_handler)
 
         self.worker_run('set_url_opener', (control_opener,))
 
