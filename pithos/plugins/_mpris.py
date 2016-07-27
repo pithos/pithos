@@ -147,8 +147,9 @@ class PithosMprisService(DBusServiceObject):
     def _duration(self):
         # use the duration provided by Pandora
         # if Gstreamer hasn't figured out the duration yet
-        if self.window.query_duration() is not None:
-            return self.window.query_duration() // 1000
+        duration = self.window.query_duration()
+        if duration is not None:
+            return duration // 1000
         else:
             return self.window.current_song.trackLength * 1000000
 
