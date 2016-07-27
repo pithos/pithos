@@ -130,10 +130,12 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.settings = Gio.Settings.new('io.github.Pithos')
         self.settings.connect('changed::audio-quality', self.set_audio_quality)
         self.settings.connect('changed::proxy', self.set_proxy)
-        self.settings.connect('changed::control_proxy', self.set_proxy)
-        self.settings.connect('changed::control_proxy_pac', self.set_proxy)
+        self.settings.connect('changed::control-proxy', self.set_proxy)
+        self.settings.connect('changed::control-proxy-pac', self.set_proxy)
+        self.settings.connect('changed::pandora-one', self.pandora_reconnect)
+        self.settings.connect('changed::email', self.pandora_reconnect)
 
-        self.prefs_dlg = PreferencesPithosDialog.PreferencesPithosDialog(self.settings, transient_for=self)
+        self.prefs_dlg = PreferencesPithosDialog.PreferencesPithosDialog(transient_for=self)
         self.prefs_dlg.connect_after('response', self.on_prefs_response)
 
         self.init_core()
@@ -410,7 +412,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if control_proxy:
             control_opener = pandora.Pandora.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
 
-        self.worker_run('set_url_opener', (control_opener,))
+        self.worker_run('set_url_opener', (control_opener,), self.pandora_connect)
 
     def set_audio_quality(self, *ignore):
         self.worker_run('set_audio_quality', (self.settings['audio-quality'],))
@@ -446,6 +448,19 @@ class PithosWindow(Gtk.ApplicationWindow):
                 callback()
 
         self.worker_run('connect', args, pandora_ready, message, 'login')
+
+    def pandora_reconnect(self, *ignore):
+        ''' Stop everything and reconnect '''
+        self.stop()
+        self.waiting_for_playlist = False
+        self.current_song_index = None
+        self.start_new_playlist = False
+        self.current_station = None
+        self.current_station_id = None
+        self.have_stations = False
+        self.playcount = 0
+        self.songs_model.clear()
+        self.pandora_connect()
 
     def sync_explicit_content_filter_setting(self, *ignore):
         #reset checkbox to default state
@@ -1067,7 +1082,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         """preferences - display the preferences window for pithos """
         self.sync_explicit_content_filter_setting()
         self.last_pass = get_account_password(self.settings['email'])
-        self.settings.delay() # Dialog will apply
         self.prefs_dlg.show()
 
     def show_stations(self):

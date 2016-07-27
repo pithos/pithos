@@ -90,11 +90,11 @@ class PreferencesPithosDialog(Gtk.Dialog):
     pandora_one_checkbutton = GtkTemplate.Child()
     explicit_content_filter_checkbutton = GtkTemplate.Child()
 
-    def __init__(self, settings, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, use_header_bar=1, **kwargs)
         self.init_template()
 
-        self.settings = settings
+        self.settings = Gio.Settings.new('io.github.Pithos')
 
         # initialize the "Audio Quality" combobox backing list
         fmt_store = Gtk.ListStore(GObject.TYPE_STRING, GObject.TYPE_STRING)
@@ -120,7 +120,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         }
 
         for key, val in settings_mapping.items():
-            settings.bind(key, val[0], val[1],
+            self.settings.bind(key, val[0], val[1],
                         Gio.SettingsBindFlags.DEFAULT|Gio.SettingsBindFlags.NO_SENSITIVITY)
 
         self.password_entry.set_text(get_account_password(self.settings.get_string('email')))
@@ -157,6 +157,10 @@ class PreferencesPithosDialog(Gtk.Dialog):
     def on_listbox_update_header(self, row, before, junk = None):
         if before and not row.get_header():
             row.set_header(Gtk.Separator.new(Gtk.Orientation.HORIZONTAL))
+
+    @GtkTemplate.Callback
+    def on_show(self, widget):
+        self.settings.delay()
 
     def do_response(self, response_id):
         if response_id == Gtk.ResponseType.APPLY:
