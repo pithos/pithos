@@ -147,7 +147,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.prefs_dlg.set_plugins(self.plugins)
 
         self.pandora = make_pandora(test_mode)
-        self.set_proxy()
+        self.set_proxy(reconnect=False)
         self.set_audio_quality()
 
         email = self.settings['email']
@@ -369,7 +369,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             if self.filter_state is not None and self.filter_state != current_checkbox_state:
                 self.worker_run(set_content_filter, (current_checkbox_state, ), get_new_playlist)
 
-    def set_proxy(self, *ignore):
+    def set_proxy(self, *ignore, reconnect=True):
         # proxy preference is used for all Pithos HTTP traffic
         # control proxy preference is used only for Pandora traffic and
         # overrides proxy
@@ -412,7 +412,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if control_proxy:
             control_opener = pandora.Pandora.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
 
-        self.worker_run('set_url_opener', (control_opener,), self.pandora_connect)
+        self.worker_run('set_url_opener', (control_opener,), self.pandora_connect if reconnect else None)
 
     def set_audio_quality(self, *ignore):
         self.worker_run('set_audio_quality', (self.settings['audio-quality'],))
