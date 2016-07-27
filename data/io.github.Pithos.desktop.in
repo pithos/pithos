@@ -4,6 +4,6 @@ _Comment=Play music from Pandora Radio
 _Keywords=Music;
 Categories=GNOME;AudioVideo;Player;
 Exec=pithos
-Icon=pithos
+Icon=io.github.Pithos
 Terminal=false
 Type=Application

@@ -26,5 +26,5 @@ class AboutPithosDialog(Gtk.AboutDialog):
         self.init_template()
 
         theme = Gtk.IconTheme.get_default()
-        self.set_logo(theme.load_icon('pithos', 96, 0))
+        self.set_logo(theme.load_icon('io.github.Pithos', 96, 0))
 

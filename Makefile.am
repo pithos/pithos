@@ -58,7 +58,7 @@ appstream_XML = $(appstream_in_files:.xml.in=.xml)
 @APPSTREAM_XML_RULES@
 
 hicolor_scalabledir = $(datadir)/icons/hicolor/scalable/apps
-hicolor_scalable_DATA = data/icons/hicolor/scalable/apps/pithos.svg \
+hicolor_scalable_DATA = data/icons/hicolor/scalable/apps/io.github.Pithos.svg \
                         data/icons/hicolor/scalable/apps/pithos-tray-icon.svg
 
 hicolordir = $(datadir)/icons/hicolor/48x48/apps
