@@ -77,7 +77,7 @@ class PithosDBusProxy(DBusServiceObject):
 
     @dbus_method(interface=DBUS_INTERFACE, out_signature='a{sv}')
     def GetCurrentSong(self):
-        return GLib.Variant('a{sv}', self.song_to_dict(self.window.current_song))
+        return self.song_to_variant(self.window.current_song)
 
     @dbus_method(interface=DBUS_INTERFACE, out_signature='b')
     def IsPlaying(self):
