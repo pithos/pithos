@@ -499,10 +499,14 @@ class PithosWindow(Gtk.ApplicationWindow):
             if s.id == self.current_station_id:
                 logging.info("Restoring saved station: id = %s"%(s.id))
                 selected = s
-        if not selected:
+        if not selected and len(self.stations_model):
             selected=self.stations_model[0][0]
-        self.station_changed(selected, reconnecting = self.have_stations)
-        self.have_stations = True
+        if selected:
+            self.station_changed(selected, reconnecting = self.have_stations)
+            self.have_stations = True
+        else:
+            # User has no stations, open dialog
+            self.show_stations()
 
     @property
     def current_song(self):
