@@ -278,9 +278,8 @@ class Pandora:
 
         l =  [SearchResult('artist', i) for i in results['artists']]
         l += [SearchResult('song',   i) for i in results['songs']]
-        l.sort(key=lambda i: i.score, reverse=True)
 
-        return l
+        return sorted(l, key=lambda i: i.score, reverse=True)
 
     def add_station_by_music_id(self, musicid):
         d = self.json_call('station.createStation', {'musicToken': musicid})
