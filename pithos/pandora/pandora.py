@@ -123,8 +123,8 @@ class Pandora:
 
         try:
             req = urllib.request.Request(url, data, {'User-agent': USER_AGENT, 'Content-type': 'text/plain'})
-            response = self.opener.open(req, timeout=HTTP_TIMEOUT)
-            text = response.read().decode('utf-8')
+            with self.opener.open(req, timeout=HTTP_TIMEOUT) as response:
+                text = response.read().decode('utf-8')
         except urllib.error.HTTPError as e:
             logging.error("HTTP error: %s", e)
             raise PandoraNetError(str(e))
