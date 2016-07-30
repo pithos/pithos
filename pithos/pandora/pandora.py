@@ -328,12 +328,8 @@ class Station:
                         'stationToken': self.idToken,
                         'includeTrackLength': True,
                         'additionalAudioUrl': 'HTTP_32_AACPLUS,HTTP_128_MP3',
-                    }, https=True)
-        songs = []
-        for i in playlist['items']:
-            if 'songName' in i: # check for ads
-                songs.append(Song(self.pandora, i))
-        return songs
+                    }, https=True)['items']
+        return (Song(self.pandora, i) for i in playlist if 'songName' in i)
 
     @property
     def info_url(self):
