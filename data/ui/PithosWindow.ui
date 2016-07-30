@@ -12,7 +12,7 @@
     <property name="title" translatable="yes">Pithos</property>
     <property name="default_width">500</property>
     <property name="default_height">360</property>
-    <property name="icon_name">pithos</property>
+    <property name="icon_name">io.github.Pithos</property>
     <signal name="configure-event" handler="on_configure_event" swapped="no"/>
     <signal name="destroy" handler="on_destroy" swapped="no"/>
     <child>
