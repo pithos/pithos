@@ -563,7 +563,8 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     @GtkTemplate.Callback
     def next_song(self, *ignore):
-        self.start_song(self.current_song_index + 1)
+        if self.current_song_index is not None:
+            self.start_song(self.current_song_index + 1)
 
     def user_play(self, *ignore):
         self.play()
