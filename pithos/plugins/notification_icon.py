@@ -15,7 +15,7 @@
 ### END LICENSE
 
 import gi
-from gi.repository import Gdk, Gtk
+from gi.repository import GObject, Gdk, Gtk
 from pithos.plugin import PithosPlugin
 
 # Use appindicator if installed
@@ -37,7 +37,7 @@ class PithosNotificationIcon(PithosPlugin):
                                                   AppIndicator.IndicatorCategory.APPLICATION_STATUS)
 
     def on_enable(self):
-        self.delete_callback_handle = self.window.connect("delete-event", self.toggle_visible)
+        self.delete_callback_handle = self.window.connect("delete-event", self._toggle_visible)
         self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
         self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
         
@@ -45,7 +45,7 @@ class PithosNotificationIcon(PithosPlugin):
             self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         else:
             self.statusicon = Gtk.StatusIcon.new_from_icon_name('pithos-tray-icon')
-            self.statusicon.connect('activate', self.toggle_visible)
+            self.statusicon.connect('activate', self._toggle_visible)
 
         self.build_context_menu()
 
@@ -64,19 +64,28 @@ class PithosNotificationIcon(PithosPlugin):
                 item.set_active(True)
             else:
                 item = Gtk.MenuItem(text)
-            item.connect('activate', action) 
+            handler = item.connect('activate', action)
             item.show()
             menu.append(item)
-            return item
+            return item, handler
         
         if indicator_capable:
             # We have to add another entry for show / hide Pithos window
-            self.visible_check = button("Show Pithos", self._toggle_visible, True)
+            self.visible_check, handler = button("Show Pithos", self._toggle_visible, True)
+
+            def set_active(active):
+                GObject.signal_handler_block(self.visible_check, handler)
+                self.visible_check.set_active(active)
+                GObject.signal_handler_unblock(self.visible_check, handler)
+
+            # Ensure it is kept in sync
+            self.window.connect("hide", lambda w: set_active(False))
+            self.window.connect("show", lambda w: set_active(True))
 
             # On middle-click
             self.ind.set_secondary_activate_target(self.visible_check)
         
-        self.playpausebtn = button("Pause", self.window.playpause)
+        self.playpausebtn = button("Pause", self.window.playpause)[0]
         button("Skip",  self.window.next_song)
         button("Love",  (lambda *i: self.window.love_song()))
         button("Ban",   (lambda *i: self.window.ban_song()))
@@ -115,13 +124,7 @@ class PithosNotificationIcon(PithosPlugin):
 
         if self.window.get_visible(): # Ensure it's on top
             self.window.bring_to_top()
-        
-    def toggle_visible(self, *args):
-        if hasattr(self, 'visible_check'):
-            self.visible_check.set_active(not self.window.get_visible())
-        else:
-            self._toggle_visible()
-        
+
         return True
 
     def context_menu(self, widget, button, time, data=None): 
