@@ -116,10 +116,12 @@ audio-volume-medium-symbolic</property>
             <child>
               <object class="GtkToolItem" id="toolbutton2">
                 <property name="visible">1</property>
+                <property name="width-request">300</property>
                 <child>
                   <object class="GtkMenuButton" id="stations_button">
                     <property name="visible">1</property>
                     <property name="can_focus">0</property>
+                    <property name="halign">end</property>
                     <child>
                       <object class="GtkBox" id="box2">
                         <property name="visible">1</property>
@@ -128,7 +130,7 @@ audio-volume-medium-symbolic</property>
                           <object class="GtkLabel" id="stations_label">
                             <property name="visible">1</property>
                             <property name="single_line_mode">1</property>
-                            <property name="max_width_chars">40</property>
+                            <property name="ellipsize">end</property>
                           </object>
                         </child>
                         <child>
