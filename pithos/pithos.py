@@ -133,10 +133,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.settings.connect('changed::control-proxy', self.set_proxy)
         self.settings.connect('changed::control-proxy-pac', self.set_proxy)
         self.settings.connect('changed::pandora-one', self.pandora_reconnect)
-        self.settings.connect('changed::email', self.pandora_reconnect)
 
         self.prefs_dlg = PreferencesPithosDialog.PreferencesPithosDialog(transient_for=self)
         self.prefs_dlg.connect_after('response', self.on_prefs_response)
+        self.prefs_dlg.connect('login-changed', self.pandora_reconnect)
 
         self.init_core()
         self.init_ui()
@@ -435,10 +435,17 @@ class PithosWindow(Gtk.ApplicationWindow):
 
 
         email = self.settings['email']
+        password = get_account_password(email)
+        if not email or not password:
+            # You probably shouldn't be able to reach here
+            # with no credentials set
+            logging.error('No email or no password set!')
+            self.quit()
+
         args = (
             client,
             email,
-            get_account_password(email),
+            password,
         )
 
         def pandora_ready(*ignore):
@@ -1072,20 +1079,15 @@ class PithosWindow(Gtk.ApplicationWindow):
     def on_prefs_response(self, widget, response):
         self.prefs_dlg.hide()
 
-        email = self.settings['email']
         if response == Gtk.ResponseType.APPLY:
             self.on_explicit_content_filter_checkbox()
-            if get_account_password(email) != self.last_pass:
-                self.pandora_connect()
         else:
-            if not email or not get_account_password(email):
+            if not self.settings['email']:
                 self.quit()
-        self.last_pass = ''
 
     def show_preferences(self):
         """preferences - display the preferences window for pithos """
         self.sync_explicit_content_filter_setting()
-        self.last_pass = get_account_password(self.settings['email'])
         self.prefs_dlg.show()
 
     def show_stations(self):

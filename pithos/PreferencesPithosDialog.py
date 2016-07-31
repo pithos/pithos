@@ -79,6 +79,10 @@ class PithosPluginRow(Gtk.ListBoxRow):
 class PreferencesPithosDialog(Gtk.Dialog):
     __gtype_name__ = "PreferencesPithosDialog"
 
+    __gsignals__ = {
+        'login-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+    }
+
     preference_btn = GtkTemplate.Child()
     plugins_listbox = GtkTemplate.Child()
     email_entry = GtkTemplate.Child()
@@ -123,10 +127,6 @@ class PreferencesPithosDialog(Gtk.Dialog):
             self.settings.bind(key, val[0], val[1],
                         Gio.SettingsBindFlags.DEFAULT|Gio.SettingsBindFlags.NO_SENSITIVITY)
 
-        self.password_entry.set_text(get_account_password(self.settings.get_string('email')))
-
-        self.on_account_changed(None)
-
     def set_plugins(self, plugins):
         self.plugins_listbox.set_header_func(self.on_listbox_update_header)
         for plugin in plugins.values():
@@ -162,10 +162,16 @@ class PreferencesPithosDialog(Gtk.Dialog):
     def on_show(self, widget):
         self.settings.delay()
 
+        self.last_email = self.settings['email']
+        self.password_entry.set_text(get_account_password(self.settings['email']))
+        self.on_account_changed(None)
+
     def do_response(self, response_id):
         if response_id == Gtk.ResponseType.APPLY:
-            set_account_password(self.email_entry.get_text(), self.password_entry.get_text())
             self.settings.apply()
+            if set_account_password(self.settings['email'], self.password_entry.get_text(),
+                                    self.last_email):
+                self.emit('login-changed')
         else:
             self.settings.revert()
 

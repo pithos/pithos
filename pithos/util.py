@@ -32,13 +32,25 @@ _ACCOUNT_SCHEMA = Secret.Schema.new('io.github.Pithos.Account', Secret.SchemaFla
 def get_account_password(email):
     return Secret.password_lookup_sync(_ACCOUNT_SCHEMA, {"email": email}, None) or ''
 
-def set_account_password(email, password):
+def _clear_account_password(email):
+    return Secret.password_clear_sync(_ACCOUNT_SCHEMA, {"email": email}, None)
+
+def set_account_password(email, password, previous_email=None):
+    if previous_email and previous_email != email:
+        if not _clear_account_password(previous_email):
+            logging.warning('Failed to clear previous account')
+
+    if not password:
+        return _clear_account_password(email)
+
     attrs = {"email": email}
-    if password:
-        Secret.password_store_sync(_ACCOUNT_SCHEMA, attrs, Secret.COLLECTION_DEFAULT,
-                                    "Pandora Account", password, None)
-    else:
-        Secret.password_clear_sync(_ACCOUNT_SCHEMA, attrs, None)
+    if password == get_account_password(email):
+        logging.debug('Password unchanged')
+        return False
+
+    Secret.password_store_sync(_ACCOUNT_SCHEMA, attrs, Secret.COLLECTION_DEFAULT,
+                                "Pandora Account", password, None)
+    return True
 
 def parse_proxy(proxy):
     """ _parse_proxy from urllib """
