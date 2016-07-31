@@ -151,12 +151,17 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.set_audio_quality()
 
         email = self.settings['email']
-        password = get_account_password(email)
-        if not email or not password:
-            self.show()
-            self.show_preferences()
+        try:
+            password = get_account_password(email)
+        except GLib.Error as e:
+            if e.code == 2:
+                self.fatal_error_dialog(e.message, _('You need to install a service such as gnome-keyring.'))
         else:
-            self.pandora_connect()
+            if not email or not password:
+                self.show()
+                self.show_preferences()
+            else:
+                self.pandora_connect()
 
     def init_core(self):
         #                                Song object            display text  icon  album art
@@ -1125,7 +1130,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
-        self.destroy()
+        Gio.Application.get_default().quit()
 
     @GtkTemplate.Callback
     def on_destroy(self, widget, data=None):
