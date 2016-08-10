@@ -1,24 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<application>
-	<id type="desktop">io.github.Pithos.desktop</id>
-	<translation type="gettext">pithos</translation>
-	<name>Pithos</name>
-	<summary>Pandora radio client</summary>
-	<metadata_license>CC0</metadata_license>
-	<project_license>GPL-3.0+</project_license>
-	<description>
-		<_p>Pithos is a easy to use native Pandora Radio client that is more lightweight than the pandora.com web client and integrates with the desktop.</_p>
-		<_p>It supports most functionality of pandora.com such as rating songs, creating/managing stations, quickmix, etc. On top of that it has features such as last.fm scrobbling, media keys, notifications, proxies, and mpris support.</_p>
-	</description>
-	<url type="homepage">https://pithos.github.io</url>
-	<screenshots>
-		<screenshot type="default">https://i.imgur.com/1vl3Dsk.png</screenshot>
-	</screenshots>
-	<kudos>
-		<kudo>AppMenu</kudo>
-		<kudo>HiDpiIcon</kudo>
-		<kudo>ModernToolkit</kudo>
-		<kudo>Notifications</kudo>
-	</kudos>
-	<updatecontact>tingping_at_fedoraproject.org</updatecontact>
-</application>
+<component type="desktop">
+  <id>io.github.Pithos.desktop</id>
+  <translation type="gettext">pithos</translation>
+  <name>Pithos</name>
+  <developer_name>Pithos</developer_name>
+  <summary>Pandora radio client</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <description>
+    <_p>Pithos is a easy to use native Pandora Radio client that is more lightweight than the pandora.com web client and integrates with the desktop.</_p>
+    <_p>It supports most functionality of pandora.com such as rating songs, creating/managing stations, quickmix, etc. On top of that it has features such as last.fm scrobbling, media keys, notifications, proxies, and mpris support.</_p>
+  </description>
+  <url type="homepage">https://pithos.github.io</url>
+  <url type="bugtracker">https://github.com/pithos/pithos/issues</url>
+  <url type="translate">https://github.com/pithos/pithos/wiki/Contributing</url>
+  <url type="donation">https://goo.gl/StrKkg</url>
+  <url type="help">https://github.com/pithos/pithos/wiki</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>http://i.imgur.com/2U2ce8v.png</image>
+      <_caption>Main Window</_caption>
+    </screenshot>
+  </screenshots>
+  <kudos>
+    <kudo>AppMenu</kudo>
+    <kudo>HiDpiIcon</kudo>
+    <kudo>ModernToolkit</kudo>
+    <kudo>Notifications</kudo>
+  </kudos>
+  <update_contact>tingping_at_fedoraproject.org</update_contact>
+</component>
