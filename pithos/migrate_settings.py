@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
 ### BEGIN LICENSE
 # Copyright (C) 2015 Patrick Griffis <tingping@tingping.se>
