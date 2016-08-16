@@ -20,8 +20,7 @@ VERSION = '@VERSION@'
 pkgdatadir = '@pkgdatadir@'
 localedir = '@localedir@'
 srcdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-if os.path.exists(os.path.join(srcdir, 'configure.ac')):
-    print('Running locally...')
+if os.path.exists(os.path.join(srcdir, 'Makefile')):
     sys.path.insert(1, srcdir)
     pkgdatadir = srcdir
 

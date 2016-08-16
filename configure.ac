@@ -31,6 +31,9 @@ AS_IF([test "$with_docs" = "yes"], [
 ])
 AM_CONDITIONAL([WITH_DOCS], [test "$with_docs" = "yes"])
 
+AC_PATH_PROG([HELP2MAN], [help2man], [no])
+AM_CONDITIONAL([HAVE_HELP2MAN], [test "$HELP2MAN" != "no"])
+
 AC_CONFIG_FILES([
     Makefile
     po/Makefile.in

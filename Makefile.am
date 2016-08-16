@@ -36,6 +36,17 @@ run: $(BUILT_SOURCES) data/gschemas.compiled bin/pithos
 
 # ------------ data ----------------
 
+if HAVE_HELP2MAN
+
+# This is generally only ran by maintainers and the result kept in tree
+data/pithos.1: bin/pithos pithos/application.py
+	@$(MKDIR_P) data
+	$(AM_V_GEN)$(HELP2MAN) $< --no-info -o $@
+
+endif
+
+man1_MANS = data/pithos.1
+
 gsettings_SCHEMAS = data/io.github.Pithos.gschema.xml
 @GSETTINGS_RULES@
 
@@ -82,9 +93,10 @@ uninstall-hook:
 BUILT_SOURCES = pithos.gresource
 SUBDIRS = po
 CLEANFILES = $(pkgdata_DATA) $(bin_SCRIPTS) $(desktop_FILES) $(appstream_XML) data/gschemas.compiled
+DISTCLEANFILES = $(man1_MANS)
 EXTRA_DIST = license README.md autogen.sh requirements-osx.txt bin/pithos.in data/io.github.Pithos.gresource.xml \
 	$(appstream_in_files) $(desktop_in_files) $(noinst_DATA) $(gsettings_SCHEMAS) $(hicolor_DATA) \
-	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA)
+	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA) $(man1_MANS)
 
 # -------------- docs ---------------
 
@@ -110,6 +122,6 @@ uninstall-local:
 clean-local:
 	rm -rf docs/html
 
-EXTRA_DIST += docs/conf.py docs/index.rst
-
 endif
+
+EXTRA_DIST += docs/conf.py docs/index.rst
