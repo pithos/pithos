@@ -27,6 +27,7 @@ bin/pithos: bin/pithos.in
 		-e s!\@pythondir\@!$(pythondir)!    \
 		-e s!\@pyexecdir\@!$(pyexecdir)!    \
 		-e s!\@VERSION\@!$(VERSION)!        \
+		-e s!\@PYTHON\@!$(PYTHON)!          \
 		< $< > $@
 	@chmod a+x $@
 
