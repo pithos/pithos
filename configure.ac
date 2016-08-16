@@ -19,7 +19,7 @@ IT_PROG_INTLTOOL([0.50.0])
 DESKTOP_FILE
 APPSTREAM_XML
 GLIB_GSETTINGS
-
+AC_PROG_SED
 AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources)
 
 AC_ARG_WITH(docs, AS_HELP_STRING([--with-docs], [Build documentation with Sphinx]))
