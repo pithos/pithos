@@ -22,7 +22,8 @@ GLIB_GSETTINGS
 AC_PROG_SED
 AC_PATH_PROG(GLIB_COMPILE_RESOURCES, glib-compile-resources)
 
-AC_ARG_WITH(docs, AS_HELP_STRING([--with-docs], [Build documentation with Sphinx]))
+AC_ARG_WITH(docs, AS_HELP_STRING([--with-docs], [Build documentation with Sphinx]),
+            [with_docs=$withval], [with_docs=no])
 AS_IF([test "$with_docs" = "yes"], [
     AC_PATH_PROG(SPHINX_BUILD, sphinx-build, [no])
 	AS_IF([test "$SPHINX_BUILD" = "no"], [
