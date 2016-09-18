@@ -143,8 +143,6 @@ class PreferencesPithosDialog(Gtk.Dialog):
     def on_prefs_btn_clicked(self, btn):
         dialog = self.plugins_listbox.get_selected_rows()[0].plugin.preferences_dialog
         dialog.set_transient_for(self)
-        dialog.set_destroy_with_parent(True)
-        dialog.set_modal(True)
         dialog.show_all()
 
     @GtkTemplate.Callback
