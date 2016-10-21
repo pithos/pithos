@@ -50,7 +50,7 @@ API_ERROR_LISTENER_NOT_AUTHORIZED = 1003
 API_ERROR_PARTNER_NOT_AUTHORIZED = 1010
 API_ERROR_PLAYLIST_EXCEEDED = 1039
 
-PLAYLIST_VALIDITY_TIME = 60*60*3
+PLAYLIST_VALIDITY_TIME = 60*60
 
 NAME_COMPARE_REGEX = re.compile(r'[^A-Za-z0-9]')
 
@@ -485,7 +485,9 @@ class Song:
         return self.rating
 
     def is_still_valid(self):
-        return (time.time() - self.playlist_time) < PLAYLIST_VALIDITY_TIME
+        # Playlists are valid for 1 hour. A song is considered valid if there is enough time for
+        # the song to play in it's entirety before the playlist has expired.
+        return ((time.time() + self.trackLength) - self.playlist_time) < PLAYLIST_VALIDITY_TIME
 
     def __repr__(self):
         return '<{}.{} {} "{}" by "{}" from "{}">'.format(
