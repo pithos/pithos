@@ -102,7 +102,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         "song-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "song-ended": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "play-state-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
-        "user-changed-play-state": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "metadata-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "buffering-finished": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
     }
@@ -573,7 +572,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def user_play(self, *ignore):
         self.play()
-        self.emit('user-changed-play-state', True)
 
     def play(self):
         if not self.playing:
@@ -586,7 +584,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def user_pause(self, *ignore):
         self.pause()
-        self.emit('user-changed-play-state', False)
 
     def pause(self):
         self.playing = False
