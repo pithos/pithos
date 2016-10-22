@@ -91,35 +91,43 @@ class MediaKeyPlugin(PithosPlugin):
         return True
 
     def bind_keybinder(self):
-        try:
-            import gi
-            gi.require_version('Keybinder', '3.0')
-            # Gdk needed for Keybinder
-            from gi.repository import Keybinder
-            Keybinder.init()
-        except (ValueError, ImportError):
-            return False
+        if not hasattr(self, 'keybinder'):
+            try:
+                import gi
+                gi.require_version('Keybinder', '3.0')
+                # Gdk needed for Keybinder
+                from gi.repository import Keybinder
+                self.keybinder = Keybinder
+                self.keybinder.init()
+            except (ValueError, ImportError):
+                return False
         
-        Keybinder.bind('XF86AudioPlay', self.window.playpause, None)
-        Keybinder.bind('XF86AudioStop', self.window.user_pause, None)
-        Keybinder.bind('XF86AudioNext', self.window.next_song, None)
-        Keybinder.bind('XF86AudioPrev', self.window.bring_to_top, None)
+        self.keybinder.bind('XF86AudioPlay', self.window.playpause, None)
+        self.keybinder.bind('XF86AudioStop', self.window.user_pause, None)
+        self.keybinder.bind('XF86AudioNext', self.window.next_song, None)
+        self.keybinder.bind('XF86AudioPrev', self.window.bring_to_top, None)
         
         logging.info("Bound media keys with keybinder")
         self.method = 'keybinder'
         return True
         
     def on_enable(self):
-        loaded = self.bind_dbus() or self.bind_keybinder()
-        if not loaded:
+        self.loaded = self.bind_dbus() or self.bind_keybinder()
+        if not self.loaded:
             logging.error("Could not bind media keys")
         
     def on_disable(self):
+        if not self.loaded:
+            return
         if self.method == 'dbus':
             self.mediakeys.call_sync('ReleaseMediaPlayerKeys', GLib.Variant('(s)', (APP_ID,)),
                                      Gio.DBusCallFlags.NONE, -1, None)
             self.window.disconnect(self.focus_hook)
             self.focus_hook = 0
             logging.info("Disabled dbus mediakey bindings")
-        else:
-            logging.error("Not implemented: Can't disable media keys bound with %s", self.method)
+        elif self.method == 'keybinder':
+            self.keybinder.unbind('XF86AudioPlay')
+            self.keybinder.unbind('XF86AudioStop')
+            self.keybinder.unbind('XF86AudioNext')
+            self.keybinder.unbind('XF86AudioPrev')
+            logging.info("Disabled keybinder mediakey bindings")
