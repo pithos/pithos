@@ -324,16 +324,17 @@ class Station:
 
     def get_playlist(self):
         logging.info("pandora: Get Playlist")
+        # Set the playlist time to the time we requested a playlist.
+        # It is better that a playlist be considered invalid a fraction
+        # of a sec early than be considered valid any longer than it actually is.
+        playlist_time = time.time()
         playlist = self.pandora.json_call('station.getPlaylist', {
                         'stationToken': self.idToken,
                         'includeTrackLength': True,
                         'additionalAudioUrl': 'HTTP_32_AACPLUS,HTTP_128_MP3',
-                    }, https=True)
-        songs = []
-        for i in playlist['items']:
-            if 'songName' in i: # check for ads
-                songs.append(Song(self.pandora, i))
-        return songs
+                    }, https=True)['items']
+
+        return [Song(self.pandora, i, playlist_time) for i in playlist if 'songName' in i] 
 
     @property
     def info_url(self):
@@ -359,8 +360,9 @@ class Station:
         )
 
 class Song:
-    def __init__(self, pandora, d):
+    def __init__(self, pandora, d, playlist_time):
         self.pandora = pandora
+        self.playlist_time = playlist_time
 
         self.album = d['albumName']
         self.artist = d['artistName']
@@ -400,8 +402,8 @@ class Song:
         self.position = None
         self.start_time = None
         self.finished = False
-        self.playlist_time = time.time()
         self.feedbackId = None
+        self.bitrate = None
         self._title = ''
 
     @property
@@ -448,10 +450,14 @@ class Song:
     def get_duration_sec (self):
       if self.duration is not None:
         return self.duration / 1000000000
+      else:
+        return self.trackLength
 
     def get_position_sec (self):
       if self.position is not None:
         return self.position / 1000000000
+      else:
+        return 0
 
     def rate(self, rating):
         if self.rating != rating:
@@ -485,9 +491,9 @@ class Song:
         return self.rating
 
     def is_still_valid(self):
-        # Playlists are valid for 1 hour. A song is considered valid if there is enough time for
-        # the song to play in it's entirety before the playlist has expired.
-        return ((time.time() + self.trackLength) - self.playlist_time) < PLAYLIST_VALIDITY_TIME
+        # Playlists are valid for 1 hour. A song is considered valid if there is enough time
+        # to play the remaining duration of the song before the playlist expires.
+        return ((time.time() + (self.get_duration_sec() - self.get_position_sec())) - self.playlist_time) < PLAYLIST_VALIDITY_TIME
 
     def __repr__(self):
         return '<{}.{} {} "{}" by "{}" from "{}">'.format(
