@@ -15,7 +15,6 @@
 ### END LICENSE
 
 from pithos.plugin import PithosPlugin
-import sys
 import logging
 
 from gi.repository import GLib, Gio, Gdk
@@ -109,58 +108,9 @@ class MediaKeyPlugin(PithosPlugin):
         logging.info("Bound media keys with keybinder")
         self.method = 'keybinder'
         return True
-
-    def kbevent(self, event):
-        if event.KeyID == 179 or event.Key == 'Media_Play_Pause':
-            self.window.playpause_notify()
-        if event.KeyID == 176 or event.Key == 'Media_Next_Track':
-            self.window.next_song()
-        return True
-
-    def bind_win32(self):
-        try:
-            import pyHook
-        except ImportError:
-            logging.warning('Please install PyHook: http://www.lfd.uci.edu/~gohlke/pythonlibs/#pyhook')
-            return False
-        self.hookman = pyHook.HookManager()
-        self.hookman.KeyDown = self.kbevent
-        self.hookman.HookKeyboard()
-        return True
-
-    def osx_playpause_handler(self):
-        self.window.playpause_notify()
-        return False # Don't let others get event
-
-    def osx_skip_handler(self):
-        self.window.next_song()
-        return False
-
-    def bind_osx(self):
-        try:
-            import osxmmkeys
-        except ImportError:
-            logging.warning('Please install osxmmkeys: https://github.com/pushrax/osxmmkeys')
-            return False
-        except RuntimeError as e:
-            logging.warning('osxmmkeys failed to import: {}'.format(e))
-            return False
-
-        tap = osxmmkeys.Tap()
-        tap.on('play_pause', self.osx_playpause_handler)
-        tap.on('next_track', self.osx_skip_handler)
-        tap.start()
-
-        return True
         
     def on_enable(self):
-        if sys.platform == 'win32':
-            loaded = self.bind_win32()
-        elif sys.platform == 'darwin':
-            loaded = self.bind_osx()
-        else:
-            loaded = self.bind_dbus() or self.bind_keybinder()
-
+        loaded = self.bind_dbus() or self.bind_keybinder()
         if not loaded:
             logging.error("Could not bind media keys")
         
