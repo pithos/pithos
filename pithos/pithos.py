@@ -543,7 +543,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.update_song_row(prev)
 
         if not self.current_song.is_still_valid():
-            self.current_song.message = "Playlist expired"
+            self.current_song.message = 'Song expired'
             self.update_song_row()
             return self.next_song()
 
@@ -575,6 +575,11 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.emit('user-changed-play-state', True)
 
     def play(self):
+        if not self.current_song.is_still_valid():
+            self.current_song.message = 'Song expired'
+            self.update_song_row()
+            return self.next_song()
+ 
         if not self.playing:
             self.playing = True
             self.create_ui_loop()
