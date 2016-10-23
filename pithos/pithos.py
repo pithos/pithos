@@ -762,7 +762,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         return duration
 
     def on_gst_stream_start(self, bus, message):
-        self.current_song.duration = self.query_duration()
+        # Fallback to using song.trackLength which is in seconds and converted to nanoseconds
+        self.current_song.duration = self.query_duration() or self.current_song.trackLength * Gst.SECOND
         self.current_song.duration_message = self.format_time(self.current_song.duration)
         self.check_if_song_is_ad()
         self.emit('metadata-changed', self.current_song)
