@@ -98,10 +98,15 @@ class StationsPopover(Gtk.Popover):
 
     def listbox_filter(self, row, entry):
         search_text = entry.get_text().lower()
-        if not search_text or search_text in row.station.name.lower():
+        if search_text == '':
             return True
-        else:
-            return False
+        station_name = row.station.name.lower()
+        if station_name.startswith(search_text):
+            return True
+        for word in station_name.split():
+            if word.startswith(search_text):
+                return True
+        return False
 
     def listbox_sort(self, row1, row2):
         if row1.station.isQuickMix: # Always first
