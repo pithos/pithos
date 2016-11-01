@@ -105,6 +105,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         "user-changed-play-state": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "metadata-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "buffering-finished": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "no-art-url": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
     }
 
     volume = GtkTemplate.Child()
@@ -126,6 +127,7 @@ class PithosWindow(Gtk.ApplicationWindow):
     def __init__(self, app, test_mode):
         super().__init__(application=app)
         self.init_template()
+        self.version = app.version
 
         self.settings = Gio.Settings.new('io.github.Pithos')
         self.settings.connect('changed::audio-quality', self.set_audio_quality)
@@ -680,6 +682,9 @@ class PithosWindow(Gtk.ApplicationWindow):
                 i.artUrl = None
                 if i.artRadio:
                     self.art_worker.send(get_album_art, (i.artRadio, self.tempdir, i, i.index), art_callback)
+                else:
+                    logging.info("No art url provided by Pandora for %i"%i.index)
+                    self.emit('no-art-url', (get_album_art, i, art_callback))
 
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if self.start_new_playlist:
