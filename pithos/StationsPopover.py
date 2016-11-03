@@ -27,10 +27,11 @@ class StationsPopover(Gtk.Popover):
         super().__init__()
 
         box2 = Gtk.Box()
-        self.search = Gtk.SearchEntry(can_default=True, has_default=True,
+        self.search = Gtk.SearchEntry(can_default=True,
                                       placeholder_text=_('Search stations…'))
         self.sorted = False
         self.sort = Gtk.ToggleButton.new()
+        self.sort.get_accessible().props.accessible_description = _('sort button')
         self.sort.add(Gtk.Image.new_from_icon_name("view-sort-ascending-symbolic", Gtk.IconSize.BUTTON))
         self.sort.connect("toggled", self.sort_changed)
         box2.pack_start(self.search, True, True, 0)
