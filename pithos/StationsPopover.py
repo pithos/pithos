@@ -16,6 +16,7 @@
 ### END LICENSE
 
 import logging
+from gettext import gettext as _
 from gi.repository import GLib, Gio, Gtk, Gdk, Pango
 from .util import open_browser
 
@@ -26,7 +27,8 @@ class StationsPopover(Gtk.Popover):
         super().__init__()
 
         box2 = Gtk.Box()
-        self.search = Gtk.SearchEntry()
+        self.search = Gtk.SearchEntry(can_default=True, has_default=True,
+                                      placeholder_text=_('Search stations…'))
         self.sorted = False
         self.sort = Gtk.ToggleButton.new()
         self.sort.add(Gtk.Image.new_from_icon_name("view-sort-ascending-symbolic", Gtk.IconSize.BUTTON))

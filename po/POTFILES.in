@@ -6,6 +6,7 @@ data/io.github.Pithos.desktop.in
 [type: gettext/glade]data/ui/PreferencesPithosDialog.ui
 [type: gettext/glade]data/ui/SearchDialog.ui
 [type: gettext/glade]data/ui/StationsDialog.ui
+[type: gettext/glade]data/ui/StationsPopover.ui
 [type: gettext/glade]data/gtk/menus.ui
 [type: gettext/glade]data/gtk/help-overlay.ui
 pithos/application.py
