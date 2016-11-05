@@ -15,52 +15,59 @@
 ### END LICENSE
 
 import html
-from gi.repository import GObject, Gtk
+from gi.repository import GObject, Gtk, Gdk
 
 from .gi_composites import GtkTemplate
 
 @GtkTemplate(ui='/io/github/Pithos/ui/SearchDialog.ui')
 class SearchDialog(Gtk.Dialog):
     __gtype_name__ = "SearchDialog"
+    __gsignals__ = {
+        "add-station": (GObject.SignalFlags.RUN_FIRST, None, (str,)),
+    }
 
     entry = GtkTemplate.Child()
-    treeview = GtkTemplate.Child()
+    search_results_model = GtkTemplate.Child()
 
-    def __init__(self, *args, **kwargs):
-        self.worker_run = kwargs["worker"]
-        del kwargs["worker"]
-
-        super().__init__(*args, use_header_bar=1, **kwargs)
+    def __init__(self, worker_run):
+        super().__init__()
         self.init_template()
-
-        self.model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
-        self.treeview.set_model(self.model)
-
-        self.result = None
+        self.worker_run = worker_run
+        self.query = ''
 
     @GtkTemplate.Callback
-    def search_clicked(self, widget):
-        self.search(self.entry.get_text())
+    def on_delete_event(self, *ignore):
+        self.query = ''
+        self.hide()
+        # Reset everything.
+        text_in_search_entry = self.entry.get_text()
+        if text_in_search_entry:
+            self.entry.set_text('')
+        self.search_results_model.clear()
+        return True
 
     @GtkTemplate.Callback
-    def get_selected(self):
-        sel = self.treeview.get_selection().get_selected()
-        if sel[1]:
-            return self.treeview.get_model().get_value(sel[1], 0)
-
-    def search(self, query):
-        if not query: return
+    def on_entry_search_changed(self, entry, model):
+        self.query = entry.get_text()
+        if not self.query: return
         def callback(results):
-            self.model.clear()
+            model.clear()
+            # If there is no current query(the searchbox is empty)
+            # we don't want to populate the model with irrelevant results.
+            if not self.query: return
             for i in results:
                 if i.resultType is 'song':
                     mk = "<b>%s</b> by %s"%(html.escape(i.title), html.escape(i.artist))
                 elif i.resultType is 'artist':
                     mk = "<b>%s</b> (artist)"%(html.escape(i.name))
-                self.model.append((i, mk))
-            self.treeview.show()
-        self.worker_run('search', (query,), callback, "Searching...")
+                model.append((i.musicId, mk))
+        self.worker_run('search', (self.query,), callback, "Searching...")
 
-    def cursor_changed(self, *ignore):
-        self.result = self.get_selected()
-        self.set_response_sensitive(Gtk.ResponseType.OK, not not self.result)
+    @GtkTemplate.Callback
+    def on_treeview_button_press_event(self, treeview, event):
+        if event.button == 1 and event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
+            selected = treeview.get_selection().get_selected()[1]
+            if selected:
+                musicId = treeview.get_model().get_value(selected, 0)
+                self.hide()
+                self.emit("add-station", musicId)
