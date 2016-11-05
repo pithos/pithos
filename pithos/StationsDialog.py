@@ -38,7 +38,9 @@ class StationsDialog(Gtk.Dialog):
         self.model = pithos.stations_model
         self.worker_run = pithos.worker_run
         self.quickmix_changed = False
-        self.searchDialog = None
+        self.searchDialog = SearchDialog.SearchDialog(self.worker_run)
+        self.searchDialog.set_transient_for(self)
+        self.searchDialog.connect('add_station', self.add_station_cb)
 
         self.modelfilter = self.model.filter_new()
         self.modelfilter.set_visible_func(lambda m, i, d: m.get_value(i, 0) and not  m.get_value(i, 0).isQuickMix)
@@ -139,25 +141,18 @@ class StationsDialog(Gtk.Dialog):
 
     @GtkTemplate.Callback
     def add_station(self, widget):
-        if self.searchDialog:
-            self.searchDialog.present()
-        else:
-            self.searchDialog = SearchDialog.SearchDialog(worker=self.worker_run, transient_for=self)
-            self.searchDialog.show_all()
-            self.searchDialog.connect("response", self.add_station_cb)
+        self.searchDialog.show_all()
+        self.searchDialog.present()
+        
 
     @GtkTemplate.Callback
     def refresh_stations(self, widget):
         self.pithos.refresh_stations(self.pithos)
 
     @GtkTemplate.Callback
-    def add_station_cb(self, dialog, response):
-        logging.info("in add_station_cb {} {}".format(dialog.result, response))
-        if response == Gtk.ResponseType.OK:
-            self.worker_run("add_station_by_music_id", (dialog.result.musicId,), self.station_added, "Creating station...")
-        dialog.hide()
-        dialog.destroy()
-        self.searchDialog = None
+    def add_station_cb(self, widget, musicId):
+        logging.info("in add_station_cb: musicId: {}".format(musicId))
+        self.worker_run("add_station_by_music_id", (musicId,), self.station_added, "Creating station...")
 
     def station_added(self, station):
         logging.debug("1 "+ repr(station))
