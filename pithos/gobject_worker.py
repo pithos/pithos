@@ -16,20 +16,16 @@
 
 import logging
 import threading
-import queue
 from gi.repository import GLib
 import traceback
 
 class GObjectWorker:
     def __init__(self):
-        self.thread = threading.Thread(target=self._run)
-        self.thread.daemon = True
-        self.queue = queue.Queue()
-        self.thread.start()
-        
-    def _run(self):
-        while True:
-            command, args, callback, errorback = self.queue.get()
+        pass
+
+    def send(self, command, args=(), callback=None, errorback=None):
+        def run(data):
+            command, args, callback, errorback = data
             try:
                 result = command(*args)
                 if callback:
@@ -38,11 +34,12 @@ class GObjectWorker:
                 e.traceback = traceback.format_exc()
                 if errorback:
                     GLib.idle_add(errorback, e)
-                
-    def send(self, command, args=(), callback=None, errorback=None):
         if errorback is None: errorback = self._default_errorback
-        self.queue.put((command, args, callback, errorback))
-        
+        data = command, args, callback, errorback
+        thread = threading.Thread(target=run, args=(data,))
+        thread.daemon = True
+        thread.start()
+
     def _default_errorback(self, error):
         logging.error("Unhandled exception in worker thread:\n{}".format(error.traceback))
         
