@@ -35,7 +35,7 @@ class SearchDialog(Gtk.Dialog):
 
         self.model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
         self.treeview.set_model(self.model)
-
+        self.query = ''
         self.result = None
 
     @GtkTemplate.Callback
@@ -49,9 +49,12 @@ class SearchDialog(Gtk.Dialog):
             return self.treeview.get_model().get_value(sel[1], 0)
 
     def search(self, query):
-        if not query: return
+        self.query = query
+        self.model.clear()
+        if not self.query: return
         def callback(results):
             self.model.clear()
+            if not self.query: return
             for i in results:
                 if i.resultType is 'song':
                     mk = "<b>%s</b> by %s"%(html.escape(i.title), html.escape(i.artist))
@@ -59,7 +62,7 @@ class SearchDialog(Gtk.Dialog):
                     mk = "<b>%s</b> (artist)"%(html.escape(i.name))
                 self.model.append((i, mk))
             self.treeview.show()
-        self.worker_run('search', (query,), callback, "Searching...")
+        self.worker_run('search', (self.query,), callback, "Searching...")
 
     def cursor_changed(self, *ignore):
         self.result = self.get_selected()
