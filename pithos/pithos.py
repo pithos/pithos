@@ -204,7 +204,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.start_new_playlist = False
         self.ui_loop_timer_id = 0
         self.worker = GObjectWorker()
-        self.art_worker = GObjectWorker()
 
         theme = Gtk.IconTheme.get_default()
         aa = theme.load_icon('pithos-album-default', 128, 0)
@@ -679,7 +678,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                 i.art_pixbuf = None
                 i.artUrl = None
                 if i.artRadio:
-                    self.art_worker.send(get_album_art, (i.artRadio, self.tempdir, i, i.index), art_callback)
+                    self.worker_run(get_album_art, (i.artRadio, self.tempdir, i, i.index), art_callback)
 
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if self.start_new_playlist:
