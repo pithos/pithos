@@ -18,109 +18,86 @@ import logging
 import html
 
 from pithos.plugin import PithosPlugin
+from .dbus_util.GioNotify import GioNotify
 
-import gi
-gi.require_version('Notify', '0.7')
 from gi.repository import (GLib, Gtk)
 
 class NotifyPlugin(PithosPlugin):
     preference = 'notify'
     description = 'Shows notifications on song change'
 
-    has_notifications = False
-    supports_actions = False
-    escape_markup = False
-
     def on_prepare(self):
         try:
-            from gi.repository import Notify
-        except ImportError:
-            logging.warning ("libnotify not found.")
-            return "libnotify not found"
+            self.notification = GioNotify.sync_init('Pithos')
+        except Exception as e:
+            self.notification = None
+            logging.warning('Notification server not found: {}'.format(e))
+            return 'Notification server not found'
 
-        # Work-around Ubuntu's incompatible workaround for Gnome's API breaking mistake.
-        # https://bugzilla.gnome.org/show_bug.cgi?id=702390
-        old_add_action = Notify.Notification.add_action
-        def new_add_action(*args):
-            try:
-                old_add_action(*args)
-            except TypeError:
-                old_add_action(*(args + (None,)))
-        Notify.Notification.add_action = new_add_action
+        caps = self.notification.capabilities
+        server_info = self.notification.server_information
 
-        Notify.init('pithos')
-        self.notification = Notify.Notification()
-        self.notification.set_category('x-gnome.music')
-        self.notification.set_hint('desktop-entry', GLib.Variant.new_string('pithos'))
+        self.supports_actions = 'actions' in caps
+        self.escape_markup = 'body-markup' in caps
 
-        caps = Notify.get_server_caps()
-        if 'actions' in caps:
-            logging.info('Notify supports actions')
-            self.supports_actions = True
-
-        if 'body-markup' in caps:
-            self.escape_markup = True
-
+        self.notification.set_hint('desktop-entry', GLib.Variant('s', 'io.github.Pithos'))
+        self.notification.set_hint('category', GLib.Variant('s', 'x-gnome.music'))
         if 'action-icons' in caps:
-            self.notification.set_hint('action-icons', GLib.Variant.new_boolean(True))
+            self.notification.set_hint('action-icons', GLib.Variant('b', True))
 
-        # TODO: On gnome this can replace the tray icon, just need to add love/hate buttons
-        #if 'persistence' in caps:
-        #    self.notification.set_hint('resident', GLib.Variant.new_boolean(True))
+        server_info = '\n'.join(('{}: {}'.format(k, v) for k, v in server_info.items()))
+        logging.debug('\nNotification Server Information:\n{}'.format(server_info))
+
+        caps = '\n'.join((cap for cap in caps))
+        logging.debug('\nNotification Server Capabilities:\n{}'.format(caps))
 
     def on_enable(self):
-        self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
-        self.state_changed_handle = self.window.connect("user-changed-play-state", self.playstate_changed)
+        self.song_change_handler = self.window.connect('song-changed', self.send_notification)
+        self.state_change_handler = self.window.connect('user-changed-play-state', self.send_notification)
+        self.closed_handler = self.notification.connect('closed', self.on_notification_closed)
+        self.action_invoked_handler = self.notification.connect('action-invoked', self.on_notification_action_invoked)
+
+    def on_notification_closed(self, notification, closed_reason):
+        logging.debug(closed_reason.explanation)
+
+    def on_notification_action_invoked(self, notification, action_id):
+        logging.debug('Notification action invoked: {}'.format(action_id))
 
     def set_actions(self, playing):
-        self.notification.clear_actions()
-
         pause_action = 'media-playback-pause'
         play_action = 'media-playback-start'
         skip_action = 'media-skip-forward'
-
         if Gtk.Widget.get_default_direction() == Gtk.TextDirection.RTL:
             play_action += '-rtl'
             skip_action += '-rtl'
-
         if playing:
             self.notification.add_action(pause_action, 'Pause',
-                                         self.notification_playpause_cb, None)
+                                         self.window.playpause_notify)
         else:
             self.notification.add_action(play_action, 'Play',
-                                         self.notification_playpause_cb, None)
+                                         self.window.playpause_notify)
 
         self.notification.add_action(skip_action, 'Skip',
-                                     self.notification_skip_cb, None)
+                                     self.window.next_song)
 
-    def set_notification(self, song, playing=True):
+    def send_notification(self, window, *ignore):
+        if window.is_active():
+            return
         if self.supports_actions:
-            self.set_actions(playing)
-
-        msg = 'by {} from {}'.format(song.artist, song.album)
+            self.notification.clear_actions() 
+            self.set_actions(window.playing != False)
+        song = window.current_song
+        summary = song.title
+        body = 'by {} from {}'.format(song.artist, song.album)
         if self.escape_markup:
-            msg = html.escape(msg, quote=False)
-        if song.art_pixbuf:
-            self.notification.set_image_from_pixbuf(song.art_pixbuf)
-            self.notification.update(song.title, msg)
-        else:
-            self.notification.update(song.title, msg, 'audio-x-generic')
-        self.notification.show()
-
-    def notification_playpause_cb(self, notification, action, data, ignore=None):
-        self.window.playpause_notify()
-
-    def notification_skip_cb(self, notification, action, data, ignore=None):
-        self.window.next_song()
-
-    def song_changed(self, window,  song):
-        if not self.window.is_active():
-            GLib.idle_add(self.set_notification, song)
-
-    def playstate_changed(self, window, state):
-        if not self.window.is_active():
-            GLib.idle_add(self.set_notification, window.current_song, state)
+            body = html.escape(body, quote=False)
+        icon = song.artUrl or 'audio-x-generic'
+        self.notification.show_new(summary, body, icon)
 
     def on_disable(self):
-        self.window.disconnect(self.song_callback_handle)
-        self.window.disconnect(self.state_changed_handle)
+        if self.notification is None:
+            return
+        self.window.disconnect(self.song_change_handler)
+        self.window.disconnect(self.state_change_handler)
+        self.notification.disconnect(self.closed_handler)
+        self.notification.disconnect(self.action_invoked_handler)
