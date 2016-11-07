@@ -16,7 +16,7 @@
 
 import logging
 import html
-from sys import platform
+
 from pithos.plugin import PithosPlugin
 
 import gi
@@ -32,25 +32,8 @@ class NotifyPlugin(PithosPlugin):
     escape_markup = False
 
     def on_prepare(self):
-        if platform == 'darwin':
-            return self.prepare_osx()
-        else:
-            return self.prepare_notify()
-
-    def prepare_osx(self):
-        try:
-            from pync import Notifier
-            self.has_notifications = True
-        except ImportError:
-            logging.warning("pync not found.")
-            return "pync not found"
-
-        self.notifier = Notifier
-
-    def prepare_notify(self):
         try:
             from gi.repository import Notify
-            self.has_notifications = True
         except ImportError:
             logging.warning ("libnotify not found.")
             return "libnotify not found"
@@ -86,11 +69,10 @@ class NotifyPlugin(PithosPlugin):
         #    self.notification.set_hint('resident', GLib.Variant.new_boolean(True))
 
     def on_enable(self):
-        if self.has_notifications:
-            self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
-            self.state_changed_handle = self.window.connect("user-changed-play-state", self.playstate_changed)
+        self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
+        self.state_changed_handle = self.window.connect("user-changed-play-state", self.playstate_changed)
 
-    def set_actions(self, playing=True):
+    def set_actions(self, playing):
         self.notification.clear_actions()
 
         pause_action = 'media-playback-pause'
@@ -111,7 +93,7 @@ class NotifyPlugin(PithosPlugin):
         self.notification.add_action(skip_action, 'Skip',
                                      self.notification_skip_cb, None)
 
-    def set_notification_notify(self, song, playing):
+    def set_notification(self, song, playing=True):
         if self.supports_actions:
             self.set_actions(playing)
 
@@ -125,18 +107,6 @@ class NotifyPlugin(PithosPlugin):
             self.notification.update(song.title, msg, 'audio-x-generic')
         self.notification.show()
 
-    def set_notification_osx(self, song, playing):
-        # TODO: Icons (buttons not possible?)
-        if playing:
-            self.notifier.notify('by {} from {}'.format(song.artist, song.album),
-                                title=song.title)
-
-    def set_notification(self, song, playing=True):
-        if platform == 'darwin':
-            self.set_notification_osx(song, playing)
-        else:
-            self.set_notification_notify(song, playing)
-
     def notification_playpause_cb(self, notification, action, data, ignore=None):
         self.window.playpause_notify()
 
@@ -145,13 +115,12 @@ class NotifyPlugin(PithosPlugin):
 
     def song_changed(self, window,  song):
         if not self.window.is_active():
-            GLib.idle_add(self.set_notification, window.current_song)
+            GLib.idle_add(self.set_notification, song)
 
     def playstate_changed(self, window, state):
         if not self.window.is_active():
             GLib.idle_add(self.set_notification, window.current_song, state)
 
     def on_disable(self):
-        if self.has_notifications:
-            self.window.disconnect(self.song_callback_handle)
-            self.window.disconnect(self.state_changed_handle)
+        self.window.disconnect(self.song_callback_handle)
+        self.window.disconnect(self.state_changed_handle)
