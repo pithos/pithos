@@ -47,6 +47,16 @@
       <summary>Position of window</summary>
     </key>
 
+    <key type="(ii)" name="win-size">
+      <default>(500,360)</default>
+      <summary>Size of window</summary>
+    </key>
+
+    <key type="b" name="win-max">
+      <default>false</default>
+      <summary>If window is maximized</summary>
+    </key>
+
     <key type="d" name="volume">
       <default>0.7</default>
       <range min="0.0" max="1.0"/>

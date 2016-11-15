@@ -1117,6 +1117,12 @@ class PithosWindow(Gtk.ApplicationWindow):
         x, y = self.settings['win-pos']
         if not x is None and not y is None:
             self.move(int(x), int(y))
+        width, height = self.settings['win-size']
+        if not width is None and not height is None:
+            self.resize(int(width), int(height))
+        maximized = self.settings['win-max']
+        if maximized:
+            self.maximize()
 
     def bring_to_top(self, *ignore):
         self.set_initial_pos()
@@ -1127,6 +1133,18 @@ class PithosWindow(Gtk.ApplicationWindow):
     def on_configure_event(self, widget, event, data=None):
         self.settings.set_value('win-pos', GLib.Variant('(ii)', (event.x, event.y)))
         return False
+
+    @GtkTemplate.Callback
+    def on_window_resize(self, container, data=None):
+        maximized = container.get_window().get_state() & Gdk.WindowState.MAXIMIZED == Gdk.WindowState.MAXIMIZED
+        if not maximized:
+            width, height = container.get_size()
+            self.settings.set_value('win-size', GLib.Variant('(ii)', (width, height)))
+
+    @GtkTemplate.Callback
+    def on_window_state_event(self, widget, event, data=None):
+        maximized = widget.get_window().get_state() & Gdk.WindowState.MAXIMIZED == Gdk.WindowState.MAXIMIZED
+        self.settings.set_value("win-max", GLib.Variant('b', maximized))
 
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
