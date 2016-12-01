@@ -22,6 +22,20 @@
       <_caption>Main Window</_caption>
     </screenshot>
   </screenshots>
+  <releases>
+    <release date="2016-07-31" version="1.2.1">
+      <description>
+        <p>This is a minor bug fix release just cleaning up a few issues:</p>
+        <ul>
+          <li>Show a useful error dialog if no secret service found</li>
+          <li>Improvements to handling login credential changes</li>
+          <li>Fix icon name for main window</li>
+          <li>In plugin notification_icon: Fix visible toggle with AppIndicator going out of sync</li>
+          <li>In plugin mpris: Fix GetCurrentSong() in legacy interface</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
   <kudos>
     <kudo>AppMenu</kudo>
     <kudo>HiDpiIcon</kudo>
