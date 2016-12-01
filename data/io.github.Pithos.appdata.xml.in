@@ -17,7 +17,7 @@
   <url type="donation">https://goo.gl/StrKkg</url>
   <url type="help">https://github.com/pithos/pithos/wiki</url>
   <screenshots>
-    <screenshot type="default">
+    <screenshot type="default" width="624" height="351">
       <image>http://i.imgur.com/2U2ce8v.png</image>
       <_caption>Main Window</_caption>
     </screenshot>
