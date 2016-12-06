@@ -88,7 +88,7 @@ class NotifyPlugin(PithosPlugin):
     def on_enable(self):
         if self.has_notifications:
             self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
-            self.state_changed_handle = self.window.connect("user-changed-play-state", self.playstate_changed)
+            self.state_changed_handle = self.window.connect("play-state-changed", self.playstate_changed)
 
     def set_actions(self, playing=True):
         self.notification.clear_actions()
