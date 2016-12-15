@@ -398,6 +398,7 @@ class Song:
         self.message=''
         self.duration = None
         self.position = None
+        self.bitrate = None
         self.start_time = None
         self.finished = False
         self.playlist_time = time.time()
