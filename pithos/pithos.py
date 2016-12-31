@@ -588,6 +588,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.songs_treeview.set_cursor(song_index, None, 0)
         self.set_title("%s by %s - Pithos" % (self.current_song.title, self.current_song.artist))
 
+        self.current_song.duration = self.current_song.trackLength * Gst.SECOND
+        self.current_song.duration_message = self.format_time(self.current_song.duration)
         self.update_song_row()
 
         self.emit('song-changed', self.current_song)
@@ -808,12 +810,17 @@ class PithosWindow(Gtk.ApplicationWindow):
             return True
 
     def on_gst_stream_start(self, bus, message):
-        # Fallback to using song.trackLength which is in seconds and converted to nanoseconds
-        self.current_song.duration = self.query_duration() or self.current_song.trackLength * Gst.SECOND
-        self.current_song.duration_message = self.format_time(self.current_song.duration)
-        self.update_song_row()
+        actual_duration = self.query_duration()
+        if actual_duration:
+            self.current_song.duration = actual_duration
+            maybe_new_duration_message = self.format_time(self.current_song.duration)
+            # We only need to update the duration_message and emit a metadata-changed signal
+            # if what we calculate the duration to be is different than what Pandora reports.
+            if self.current_song.duration_message != maybe_new_duration_message:
+                self.current_song.duration_message = maybe_new_duration_message
+                self.update_song_row()
+                self.emit('metadata-changed', self.current_song)
         self.check_if_song_is_ad()
-        self.emit('metadata-changed', self.current_song)
 
     def on_gst_eos(self, bus, message):
         logging.info("EOS")
@@ -923,15 +930,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         album = html.escape(song.album)
         msg = []
         if song is self.current_song:
-            song.position = self.query_position()
             if not song.bitrate is None:
                 msg.append("%skbit/s" % (song.bitrate))
-
-            if song.position is not None and song.duration is not None:
-                pos_str = self.format_time(song.position)
+            if song.duration is not None:
+                pos_str = self.format_time(self.query_position() or 0)
                 msg.append("%s / %s" % (pos_str, song.duration_message))
-                if self.playing == False:
-                    msg.append("Paused")
+            if self.playing is False:
+                msg.append("Paused")
             if self._current_state is PseudoGst.BUFFERING:
                 msg.append("Buffering…")
         if song.message:
