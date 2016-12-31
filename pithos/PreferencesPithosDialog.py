@@ -92,6 +92,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
     control_proxy_entry = GtkTemplate.Child()
     control_proxy_pac_entry = GtkTemplate.Child()
     pandora_one_checkbutton = GtkTemplate.Child()
+    downloadbuffering_checkbutton = GtkTemplate.Child()
     explicit_content_filter_checkbutton = GtkTemplate.Child()
 
     def __init__(self, *args, **kwargs):
@@ -121,6 +122,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
             'control-proxy': (self.control_proxy_entry, 'text'),
             'control-proxy-pac': (self.control_proxy_pac_entry, 'text'),
             'audio-quality': (self.audio_quality_combo, 'active-id'),
+            'downloadbuffering': (self.downloadbuffering_checkbutton, 'active'),
         }
 
         for key, val in settings_mapping.items():

@@ -188,6 +188,11 @@ class PithosWindow(Gtk.ApplicationWindow):
         self._query_buffer = Gst.Query.new_buffering(Gst.Format.PERCENT)
 
         self.player = Gst.ElementFactory.make("playbin", "player")
+        # Render the audio stream | Use software volume
+        self.default_player_flags = (1 << 1 | 1 << 4)
+        # Render the audio stream | Use software volume | Attempt progressive download buffering
+        self.downloadbuffer_player_flags = (1 << 1 | 1 << 4 | 1 << 7)
+        self.player.props.flags = self.default_player_flags
 
         bus = self.player.get_bus()
         bus.add_signal_watch()
@@ -595,6 +600,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.emit('song-changed', self.current_song)
         self.emit('metadata-changed', self.current_song)
 
+    def set_player_flags(self):
+        current_player_flags = self.player.props.flags
+        if self.settings['downloadbuffering']:
+            desired_flags = self.downloadbuffer_player_flags
+        else:
+            desired_flags = self.default_player_flags
+        if current_player_flags != desired_flags:
+            self.player.props.flags = desired_flags
+
     @GtkTemplate.Callback
     def next_song(self, *ignore):
         if self.current_song_index is not None:
@@ -647,8 +661,11 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.emit("song-ended", prev)
 
         self.destroy_ui_loop()
-        self._set_player_state(PseudoGst.STOPPED)
-        self.emit('play-state-changed', False)
+        if self._set_player_state(PseudoGst.STOPPED, change_gst_state=True):
+            # Probably best to only change the flags when the pipeline
+            # is in a NULL state.
+            self.set_player_flags()
+            self.emit('play-state-changed', False)
 
     @GtkTemplate.Callback
     def user_playpause(self, *ignore):
@@ -835,6 +852,8 @@ class PithosWindow(Gtk.ApplicationWindow):
                         submsg=_("The required codec failed to install. Either manually install it or try another quality setting."))
 
     def on_gst_element(self, bus, message):
+        if message.has_name('GstCacheDownloadComplete'):
+            logging.debug('Download buffering complete')
         if GstPbutils.is_missing_plugin_message(message):
             if GstPbutils.install_plugins_supported():
                 details = GstPbutils.missing_plugin_message_get_installer_detail(message)

@@ -12,6 +12,11 @@
       <summary>If account has subscribed to Pandora One</summary>
     </key>
 
+    <key type="b" name="downloadbuffering">
+      <default>false</default>
+      <summary>Attempt progressive download buffering</summary>
+    </key>
+
     <key type="b" name="sort-stations">
       <default>false</default>
       <summary>Sort the stations list in the popup is sorted alphabetically</summary>
