@@ -845,6 +845,8 @@ class PithosWindow(Gtk.ApplicationWindow):
             # in case it takes a while after the song-changed signal for actual playback to begin.
             self.emit('buffering-finished', self.query_position() or 0)
             self.player_status.began_buffering = None
+        if percent == 0 or percent == self.player_status.buffer_percent:
+            return
         self.player_status.buffer_percent = percent
         self.update_song_row()
 
