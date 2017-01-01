@@ -17,6 +17,7 @@ import logging
 from gi.repository import GLib, Gio, Gtk, Gdk, Pango
 from .util import open_browser
 
+
 class StationsPopover(Gtk.Popover):
     __gtype_name__ = "StationsPopover"
 
@@ -56,7 +57,7 @@ class StationsPopover(Gtk.Popover):
         settings.bind('sort-stations', self.sort, 'active', Gio.SettingsBindFlags.DEFAULT)
 
         box.show_all()
-        self.add (box)
+        self.add(box)
 
     def on_button_press(self, widget, event):
         def open_info(item, station):
@@ -135,9 +136,8 @@ class StationsPopover(Gtk.Popover):
         else:
             logging.warning('Row changed on unknown station')
 
-
     def clear(self):
-       for row in self.listbox.get_children():
+        for row in self.listbox.get_children():
             row.destroy()
 
     def set_model(self, model):
@@ -155,6 +155,7 @@ class StationsPopover(Gtk.Popover):
             if row.station == station:
                 self.listbox.remove(row)
                 break
+
 
 class StationListBoxRow(Gtk.ListBoxRow):
 
@@ -181,4 +182,3 @@ class StationListBoxRow(Gtk.ListBoxRow):
     @name.setter
     def name(self, name):
         self.label.set_text(name)
-

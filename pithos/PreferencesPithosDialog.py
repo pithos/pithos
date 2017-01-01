@@ -124,7 +124,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
 
         for key, val in settings_mapping.items():
             self.settings.bind(key, val[0], val[1],
-                        Gio.SettingsBindFlags.DEFAULT|Gio.SettingsBindFlags.NO_SENSITIVITY)
+                               Gio.SettingsBindFlags.DEFAULT|Gio.SettingsBindFlags.NO_SENSITIVITY)
 
     def set_plugins(self, plugins):
         self.plugins_listbox.set_header_func(self.on_listbox_update_header)
@@ -153,7 +153,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         else:
             self.set_response_sensitive(Gtk.ResponseType.APPLY, True)
 
-    def on_listbox_update_header(self, row, before, junk = None):
+    def on_listbox_update_header(self, row, before, junk=None):
         if before and not row.get_header():
             row.set_header(Gtk.Separator.new(Gtk.Orientation.HORIZONTAL))
 
@@ -173,4 +173,3 @@ class PreferencesPithosDialog(Gtk.Dialog):
                 self.emit('login-changed')
         else:
             self.settings.revert()
-

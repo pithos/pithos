@@ -12,7 +12,6 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import logging
 
 from gi.repository import Gtk
@@ -20,6 +19,7 @@ from gi.repository import Gtk
 from .gi_composites import GtkTemplate
 from .util import open_browser
 from . import SearchDialog
+
 
 @GtkTemplate(ui='/io/github/Pithos/ui/StationsDialog.ui')
 class StationsDialog(Gtk.Dialog):
@@ -40,7 +40,7 @@ class StationsDialog(Gtk.Dialog):
         self.searchDialog = None
 
         self.modelfilter = self.model.filter_new()
-        self.modelfilter.set_visible_func(lambda m, i, d: m.get_value(i, 0) and not  m.get_value(i, 0).isQuickMix)
+        self.modelfilter.set_visible_func(lambda m, i, d: m.get_value(i, 0) and not m.get_value(i, 0).isQuickMix)
 
         self.modelsortable = Gtk.TreeModelSort.sort_new_with_model(self.modelfilter)
         """
@@ -52,7 +52,7 @@ class StationsDialog(Gtk.Dialog):
         self.treeview.set_model(self.modelsortable)
         self.treeview.connect('button_press_event', self.on_treeview_button_press_event)
 
-        name_col   = Gtk.TreeViewColumn()
+        name_col = Gtk.TreeViewColumn()
         name_col.set_title("Name")
         render_text = Gtk.CellRendererText()
         render_text.set_property('editable', True)
@@ -63,15 +63,17 @@ class StationsDialog(Gtk.Dialog):
         name_col.set_sort_column_id(1)
         self.treeview.append_column(name_col)
 
-        qm_col   = Gtk.TreeViewColumn()
+        qm_col = Gtk.TreeViewColumn()
         qm_col.set_title("In QuickMix")
         render_toggle = Gtk.CellRendererToggle()
         qm_col.pack_start(render_toggle, True)
-        def qm_datafunc(column, cell, model, iter, data=None):
-            if model.get_value(iter,0).useQuickMix:
+
+        def qm_datafunc(column, cell, model, _iter, data=None):
+            if model.get_value(_iter, 0).useQuickMix:
                 cell.set_active(True)
             else:
                 cell.set_active(False)
+
         qm_col.set_cell_data_func(render_toggle, qm_datafunc)
         render_toggle.connect("toggled", self.qm_toggled)
         self.treeview.append_column(qm_col)
@@ -101,7 +103,7 @@ class StationsDialog(Gtk.Dialog):
             if pthinfo is not None:
                 path, col, cellx, celly = pthinfo
                 treeview.grab_focus()
-                treeview.set_cursor( path, col, 0)
+                treeview.set_cursor(path, col, 0)
                 self.station_menu.popup(None, None, None, None, event.button, time)
             return True
 
@@ -119,14 +121,14 @@ class StationsDialog(Gtk.Dialog):
     def on_menuitem_rename(self, widget):
         sel = self.treeview.get_selection().get_selected()
         path = self.treeview.get_model().get_path(sel[1])
-        self.treeview.set_cursor(path, self.treeview.get_column(0) ,True)
+        self.treeview.set_cursor(path, self.treeview.get_column(0), True)
 
     @GtkTemplate.Callback
     def on_menuitem_delete(self, widget):
         station = self.selected_station()
-        
+
         dialog = self.delete_confirm_dialog
-        dialog.set_property("text", "Are you sure you want to delete the station \"%s\"?"%(station.name))
+        dialog.set_property('text', 'Are you sure you want to delete the station "{}"?'.format(station.name))
         response = dialog.run()
         dialog.hide()
 
@@ -153,15 +155,16 @@ class StationsDialog(Gtk.Dialog):
     def add_station_cb(self, dialog, response):
         logging.info("in add_station_cb {} {}".format(dialog.result, response))
         if response == Gtk.ResponseType.OK:
-            self.worker_run("add_station_by_music_id", (dialog.result.musicId,), self.station_added, "Creating station...")
+            self.worker_run("add_station_by_music_id", (dialog.result.musicId,),
+                            self.station_added, "Creating station...")
         dialog.hide()
         dialog.destroy()
         self.searchDialog = None
 
     def station_added(self, station):
-        logging.debug("1 "+ repr(station))
+        logging.debug("1 " + repr(station))
         it = self.model.insert_with_valuesv(0, (0, 1, 2), (station, station.name, 0))
-        logging.debug("2 "+ repr(it))
+        logging.debug("2 " + repr(it))
         self.pithos.station_changed(station)
         logging.debug("3 ")
         self.modelfilter.refilter()
@@ -174,9 +177,8 @@ class StationsDialog(Gtk.Dialog):
         self.hide()
 
         if self.quickmix_changed:
-            self.worker_run("save_quick_mix",  message="Saving QuickMix...")
+            self.worker_run("save_quick_mix", message="Saving QuickMix...")
             self.quickmix_changed = False
-        
+
         logging.info("closed dialog")
         return True
-

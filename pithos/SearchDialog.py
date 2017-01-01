@@ -12,11 +12,11 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import html
 from gi.repository import GObject, Gtk
 
 from .gi_composites import GtkTemplate
+
 
 @GtkTemplate(ui='/io/github/Pithos/ui/SearchDialog.ui')
 class SearchDialog(Gtk.Dialog):
@@ -50,15 +50,21 @@ class SearchDialog(Gtk.Dialog):
     def search(self, query):
         self.query = query
         self.model.clear()
-        if not self.query: return
+
+        if not self.query:
+            return
+
         def callback(results):
             self.model.clear()
-            if not self.query: return
+
+            if not self.query:
+                return
+
             for i in results:
                 if i.resultType is 'song':
-                    mk = "<b>%s</b> by %s"%(html.escape(i.title), html.escape(i.artist))
+                    mk = '<b>{}</b> by {}'.format(html.escape(i.title), html.escape(i.artist))
                 elif i.resultType is 'artist':
-                    mk = "<b>%s</b> (artist)"%(html.escape(i.name))
+                    mk = '<b>{}</b> (artist)'.format(html.escape(i.name))
                 self.model.append((i, mk))
             self.treeview.show()
         self.worker_run('search', (self.query,), callback, "Searching...")

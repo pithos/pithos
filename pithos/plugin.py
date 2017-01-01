@@ -18,6 +18,7 @@ import glob
 import os
 from gi.repository import Gio
 
+
 class PithosPlugin:
     _PITHOS_PLUGIN = True # used to find the plugin class in a module
     preference = None
@@ -29,47 +30,49 @@ class PithosPlugin:
         self.preferences_dialog = None
         self.prepared = False
         self.enabled = False
-        
+
     def enable(self):
         if not self.prepared:
             self.error = self.on_prepare()
             self.prepared = True
         if not self.error and not self.enabled:
-            logging.info("Enabling module %s"%(self.name))
+            logging.info('Enabling module {}'.format(self.name))
             self.on_enable()
             self.enabled = True
-            
+
     def disable(self):
         if self.enabled:
-            logging.info("Disabling module %s"%(self.name))
+            logging.info('Disabling module {}'.format(self.name))
             self.on_disable()
             self.enabled = False
-        
+
     def on_prepare(self):
         pass
-        
+
     def on_enable(self):
         pass
-        
+
     def on_disable(self):
         pass
 
+
 class ErrorPlugin(PithosPlugin):
     def __init__(self, name, error):
-        logging.error("Error loading plugin %s: %s"%(name, error))
+        logging.error('Error loading plugin {}: {}'.format(name, error))
         self.prepared = True
         self.error = error
         self.name = name
         self.enabled = False
-        
+
+
 def load_plugin(name, window):
     try:
-        module = __import__('pithos.plugins.'+name)
+        module = __import__('pithos.plugins.' + name)
         module = getattr(module.plugins, name)
-        
+
     except ImportError as e:
         return ErrorPlugin(name, e.msg)
-        
+
     # find the class object for the actual plugin
     for key, item in module.__dict__.items():
         if hasattr(item, '_PITHOS_PLUGIN') and key != "PithosPlugin":
@@ -77,25 +80,25 @@ def load_plugin(name, window):
             break
     else:
         return ErrorPlugin(name, "Could not find module class")
-        
+
     return plugin_class(name, window)
+
 
 def load_plugins(window):
     plugins = window.plugins
-    
+
     plugins_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
-    discovered_plugins = [ fname.replace(".py", "") for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("_") ]
-    
+    discovered_plugins = (fname[:-3] for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("_"))
+
     for name in discovered_plugins:
-        if not name in plugins:
+        if name not in plugins:
             plugin = plugins[name] = load_plugin(name, window)
         else:
             plugin = plugins[name]
 
-        plugin.settings = Gio.Settings.new_with_path('io.github.Pithos.plugin', '/io/github/Pithos/%s/' %name)
+        plugin.settings = Gio.Settings.new_with_path('io.github.Pithos.plugin', '/io/github/Pithos/{}/'.format(name))
 
         if plugin.settings['enabled']:
             plugin.enable()
         else:
             plugin.disable()
-        

@@ -24,15 +24,18 @@ from gi.repository import (
     Gtk
 )
 
-_ACCOUNT_SCHEMA = Secret.Schema.new('io.github.Pithos.Account', Secret.SchemaFlags.NONE, 
+_ACCOUNT_SCHEMA = Secret.Schema.new('io.github.Pithos.Account', Secret.SchemaFlags.NONE,
                                     {"email": Secret.SchemaAttributeType.STRING})
+
 
 # TODO: Async
 def get_account_password(email):
     return Secret.password_lookup_sync(_ACCOUNT_SCHEMA, {"email": email}, None) or ''
 
+
 def _clear_account_password(email):
     return Secret.password_clear_sync(_ACCOUNT_SCHEMA, {"email": email}, None)
+
 
 def set_account_password(email, password, previous_email=None):
     if previous_email and previous_email != email:
@@ -48,8 +51,9 @@ def set_account_password(email, password, previous_email=None):
         return False
 
     Secret.password_store_sync(_ACCOUNT_SCHEMA, attrs, Secret.COLLECTION_DEFAULT,
-                                "Pandora Account", password, None)
+                               "Pandora Account", password, None)
     return True
+
 
 def parse_proxy(proxy):
     """ _parse_proxy from urllib """
@@ -74,6 +78,7 @@ def parse_proxy(proxy):
     else:
         user = password = None
     return scheme, user, password, hostport
+
 
 def open_browser(url, parent=None, timestamp=0):
     logging.info("Opening URL {}".format(url))

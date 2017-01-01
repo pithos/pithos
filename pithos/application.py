@@ -24,12 +24,13 @@ from gi.repository import GLib, Gio, Gtk
 from .pithos import PithosWindow
 from .migrate_settings import maybe_migrate_settings
 
+
 class PithosApplication(Gtk.Application):
     __gtype_name__ = 'PithosApplication'
 
     def __init__(self, version=''):
         super().__init__(application_id='io.github.Pithos',
-                                flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+                         flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.window = None
         self.test_mode = False
         self.version = version
@@ -123,7 +124,7 @@ class PithosApplication(Gtk.Application):
     def do_activate(self):
         if not self.window:
             maybe_migrate_settings()
-            logging.info("Pithos %s" %self.version)
+            logging.info('Pithos {}'.format(self.version))
             self.window = PithosWindow(self, self.test_mode)
 
         self.window.present()
@@ -145,10 +146,12 @@ class PithosApplication(Gtk.Application):
     def quit_cb(self, action, param):
         self.window.destroy()
 
+
 def main(version=''):
     app = PithosApplication(version=version)
     exit_status = app.run(sys.argv)
     sys.exit(exit_status)
+
 
 if __name__ == '__main__':
     main()

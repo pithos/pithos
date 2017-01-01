@@ -16,6 +16,7 @@
 from gi.repository import Gtk
 from .gi_composites import GtkTemplate
 
+
 @GtkTemplate(ui='/io/github/Pithos/ui/AboutPithosDialog.ui')
 class AboutPithosDialog(Gtk.AboutDialog):
     __gtype_name__ = "AboutPithosDialog"
@@ -26,4 +27,3 @@ class AboutPithosDialog(Gtk.AboutDialog):
 
         theme = Gtk.IconTheme.get_default()
         self.set_logo(theme.load_icon('io.github.Pithos', 96, 0))
-
