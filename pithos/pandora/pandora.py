@@ -420,9 +420,8 @@ class Song:
                 self._title = self.songName
             else:
                 try:
-                    with urllib.request.urlopen(self.songExplorerUrl) as xml_data:
-                        dom = minidom.parseString(xml_data.read())
-                    attr_value = dom.getElementsByTagName('songExplorer')[0].attributes['songTitle'].value
+                    with urllib.request.urlopen(self.songExplorerUrl) as x, minidom.parseString(x.read()) as dom:
+                        attr_value = dom.getElementsByTagName('songExplorer')[0].attributes['songTitle'].value
 
                     # Pandora stores their titles for film scores and the like as 'Score name: song name'
                     self._title = attr_value.replace('{0}: '.format(self.songName), '', 1)
