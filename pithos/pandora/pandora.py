@@ -30,6 +30,7 @@ import time
 import urllib.request, urllib.parse, urllib.error
 import codecs
 import ssl
+from enum import IntEnum
 
 from . import data
 
@@ -40,15 +41,16 @@ RATE_BAN = 'ban'
 RATE_LOVE = 'love'
 RATE_NONE = None
 
-API_ERROR_API_VERSION_NOT_SUPPORTED = 11
-API_ERROR_COUNTRY_NOT_SUPPORTED = 12
-API_ERROR_INSUFFICIENT_CONNECTIVITY = 13
-API_ERROR_READ_ONLY_MODE = 1000
-API_ERROR_INVALID_AUTH_TOKEN = 1001
-API_ERROR_INVALID_LOGIN = 1002
-API_ERROR_LISTENER_NOT_AUTHORIZED = 1003
-API_ERROR_PARTNER_NOT_AUTHORIZED = 1010
-API_ERROR_PLAYLIST_EXCEEDED = 1039
+class ApiError(IntEnum):
+    API_VERSION_NOT_SUPPORTED = 11
+    COUNTRY_NOT_SUPPORTED = 12
+    INSUFFICIENT_CONNECTIVITY = 13
+    READ_ONLY_MODE = 1000
+    INVALID_AUTH_TOKEN = 1001
+    INVALID_LOGIN = 1002
+    LISTENER_NOT_AUTHORIZED = 1003
+    PARTNER_NOT_AUTHORIZED = 1010
+    PLAYLIST_EXCEEDED = 1039
 
 PLAYLIST_VALIDITY_TIME = 60*60
 
@@ -144,28 +146,28 @@ class Pandora:
             msg = tree['message']
             logging.error('fault code: ' + str(code) + ' message: ' + msg)
 
-            if code == API_ERROR_INVALID_AUTH_TOKEN:
+            if code == ApiError.INVALID_AUTH_TOKEN:
                 raise PandoraAuthTokenInvalid(msg)
-            elif code == API_ERROR_COUNTRY_NOT_SUPPORTED:
+            elif code == ApiError.COUNTRY_NOT_SUPPORTED:
                  raise PandoraError("Pandora not available", code,
                     submsg="Pandora is not available in your country.")
-            elif code == API_ERROR_API_VERSION_NOT_SUPPORTED:
+            elif code == ApiError.API_VERSION_NOT_SUPPORTED:
                 raise PandoraAPIVersionError(msg)
-            elif code == API_ERROR_INSUFFICIENT_CONNECTIVITY:
+            elif code == ApiError.INSUFFICIENT_CONNECTIVITY:
                 raise PandoraError("Out of sync", code,
                     submsg="Correct your system's clock. If the problem persists, a Pithos update may be required")
-            elif code == API_ERROR_READ_ONLY_MODE:
+            elif code == ApiError.READ_ONLY_MODE:
                 raise PandoraError("Pandora maintenance", code,
                     submsg="Pandora is in read-only mode as it is performing maintenance. Try again later.")
-            elif code == API_ERROR_INVALID_LOGIN:
+            elif code == ApiError.INVALID_LOGIN:
                 raise PandoraError("Login Error", code, submsg="Invalid username or password")
-            elif code == API_ERROR_LISTENER_NOT_AUTHORIZED:
+            elif code == ApiError.LISTENER_NOT_AUTHORIZED:
                 raise PandoraError("Pandora Error", code,
                     submsg="A Pandora One account is required to access this feature. Uncheck 'Pandora One' in Settings.")
-            elif code == API_ERROR_PARTNER_NOT_AUTHORIZED:
+            elif code == ApiError.PARTNER_NOT_AUTHORIZED:
                 raise PandoraError("Login Error", code,
                     submsg="Invalid Pandora partner keys. A Pithos update may be required.")
-            elif code == API_ERROR_PLAYLIST_EXCEEDED:
+            elif code == ApiError.PLAYLIST_EXCEEDED:
                 raise PandoraError("Playlist Error", code,
                     submsg="You have requested too many playlists. Try again later.")
             else:
