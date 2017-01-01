@@ -1,5 +1,4 @@
 # -*- coding: utf-8; tab-width: 4; indent-tabs-mode: nil; -*-
-### BEGIN LICENSE
 # Copyright (C) 2015 Patrick Griffis <tingping@tingping.se>
 #
 # This program is free software: you can redistribute it and/or modify it
@@ -13,7 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
-### END LICENSE
 
 import logging
 from gettext import gettext as _
