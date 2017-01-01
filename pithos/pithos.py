@@ -28,6 +28,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from gettext import gettext as _
+from enum import Enum
 
 import gi
 gi.require_version('Gst', '1.0')
@@ -86,13 +87,25 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
             Gdk.cairo_set_source_pixbuf(ctx, pixbuf, x, y)
             ctx.paint()
 
-class PlayerStatus:
-  def __init__(self):
-    self.reset()
 
-  def reset(self):
-    self.began_buffering = None
-    self.buffer_percent = 0
+class PseudoGst(Enum):
+    """Create aliases to Gst.State so that we can add our own BUFFERING Pseudo state"""
+    PLAYING = 1
+    PAUSED = 2
+    BUFFERING = 3
+    STOPPED = 4
+
+    @property
+    def State(self):
+        value = self.value
+        if value == 1:
+            return Gst.State.PLAYING
+        elif value == 2:
+            return Gst.State.PAUSED
+        elif value == 3:
+            return Gst.State.PAUSED
+        elif value == 4:
+            return Gst.State.NULL
 
 
 @GtkTemplate(ui='/io/github/Pithos/ui/PithosWindow.ui')
@@ -172,7 +185,14 @@ class PithosWindow(Gtk.ApplicationWindow):
         Gst.init(None)
         self._query_duration = Gst.Query.new_duration(Gst.Format.TIME)
         self._query_position = Gst.Query.new_position(Gst.Format.TIME)
+        self._query_buffer = Gst.Query.new_buffering(Gst.Format.PERCENT)
+
         self.player = Gst.ElementFactory.make("playbin", "player")
+        # Render the audio stream | Use software volume
+        self.default_player_flags = (1 << 1 | 1 << 4)
+        # Render the audio stream | Use software volume | Attempt progressive download buffering
+        self.downloadbuffer_player_flags = (1 << 1 | 1 << 4 | 1 << 7)
+        self.player.props.flags = self.default_player_flags
 
         bus = self.player.get_bus()
         bus.add_signal_watch()
@@ -184,11 +204,11 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.player.connect("notify::volume", self.on_gst_volume)
         self.player.connect("notify::source", self.on_gst_source)
 
-        self.player_status = PlayerStatus()
-
         self.stations_dlg = None
 
-        self.playing = None # None is a special "Waiting to play" state
+        self._current_state = PseudoGst.STOPPED
+        self._buffer_recovery_state = PseudoGst.STOPPED
+
         self.current_song_index = None
         self.current_station = None
         self.current_station_id = self.settings['last-station-id']
@@ -216,6 +236,18 @@ class PithosWindow(Gtk.ApplicationWindow):
         except IOError as e:
             self.tempdir = None
             logging.warning('Failed to create a temporary directory')
+
+    @property
+    def playing(self):
+        # Recreate the old "playing" attribute as a property.
+        # Track self._buffer_recovery_state because that's the state
+        # we wish we were in.
+        if self._buffer_recovery_state is PseudoGst.PLAYING:
+            return True
+        elif self._buffer_recovery_state is PseudoGst.PAUSED:
+            return False
+        else:
+            return None
 
     def init_ui(self):
         GLib.set_application_name("Pithos")
@@ -551,10 +583,9 @@ class PithosWindow(Gtk.ApplicationWindow):
             return self.next_song()
 
         logging.info("Starting song: index = %i"%(song_index))
-        self.player_status.reset()
 
         self.player.set_property("uri", self.current_song.audioUrl)
-        self.player.set_state(Gst.State.PAUSED)
+        self._set_player_state(PseudoGst.BUFFERING)
         self.playcount += 1
 
         self.current_song.start_time = time.time()
@@ -562,38 +593,64 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.songs_treeview.set_cursor(song_index, None, 0)
         self.set_title("%s by %s - Pithos" % (self.current_song.title, self.current_song.artist))
 
+        self.current_song.duration = self.current_song.trackLength * Gst.SECOND
+        self.current_song.duration_message = self.format_time(self.current_song.duration)
+        self.update_song_row()
+
         self.emit('song-changed', self.current_song)
         self.emit('metadata-changed', self.current_song)
+
+    def set_player_flags(self):
+        current_player_flags = self.player.props.flags
+        if self.settings['downloadbuffering']:
+            desired_flags = self.downloadbuffer_player_flags
+        else:
+            desired_flags = self.default_player_flags
+        if current_player_flags != desired_flags:
+            self.player.props.flags = desired_flags
 
     @GtkTemplate.Callback
     def next_song(self, *ignore):
         if self.current_song_index is not None:
             self.start_song(self.current_song_index + 1)
 
+    def _set_player_state(self, target, change_gst_state=False):
+        # Go through all the motions but only actually change the Gst state
+        # During buffering if called in the buffering signal handler.
+        change_gst_state = change_gst_state or self._current_state is not PseudoGst.BUFFERING
+        if change_gst_state:
+            ret = self.player.set_state(target.State)
+            if ret == Gst.StateChangeReturn.FAILURE:
+                current_state = self.player.state_get_name(self._current_state.State)
+                target_state = self.player.state_get_name(target.State)
+                logging.warning('Error changing player state from: {} to: {}'.format(current_state, target_state))
+                return False
+            self._current_state = target
+        if target is not PseudoGst.BUFFERING:
+            self._buffer_recovery_state = target
+        return True
+
     def user_play(self, *ignore):
         self.play()
         self.emit('user-changed-play-state', True)
 
-    def play(self):
-        if not self.playing:
-            self.playing = True
+    def play(self, change_gst_state=False):
+        if self._set_player_state(PseudoGst.PLAYING, change_gst_state=change_gst_state):
             self.create_ui_loop()
-        self.player.set_state(Gst.State.PLAYING)
-        self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
-        self.update_song_row()
-        self.emit('play-state-changed', True)
+            self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+            self.update_song_row()
+            self.emit('play-state-changed', True)
 
     def user_pause(self, *ignore):
         self.pause()
         self.emit('user-changed-play-state', False)
 
     def pause(self):
-        self.playing = False
-        self.destroy_ui_loop()
-        self.player.set_state(Gst.State.PAUSED)
-        self.playpause_image.set_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
-        self.update_song_row()
-        self.emit('play-state-changed', False)
+        if self._set_player_state(PseudoGst.PAUSED):
+            self.destroy_ui_loop()
+            self.playpause_image.set_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+            self.update_song_row()
+            self.emit('play-state-changed', False)
 
 
     def stop(self):
@@ -603,10 +660,12 @@ class PithosWindow(Gtk.ApplicationWindow):
             prev.position = self.query_position()
             self.emit("song-ended", prev)
 
-        self.playing = None
         self.destroy_ui_loop()
-        self.player.set_state(Gst.State.NULL)
-        self.emit('play-state-changed', False)
+        if self._set_player_state(PseudoGst.STOPPED, change_gst_state=True):
+            # Probably best to only change the flags when the pipeline
+            # is in a NULL state.
+            self.set_player_flags()
+            self.emit('play-state-changed', False)
 
     @GtkTemplate.Callback
     def user_playpause(self, *ignore):
@@ -760,12 +819,25 @@ class PithosWindow(Gtk.ApplicationWindow):
         _, duration = self._query_duration.parse_duration()
         return duration
 
+    def query_buffer(self):
+        buffer_stat = self.player.query(self._query_buffer)
+        if buffer_stat:
+            return self._query_buffer.parse_buffering_percent()[0]
+        else:
+            return True
+
     def on_gst_stream_start(self, bus, message):
-        # Fallback to using song.trackLength which is in seconds and converted to nanoseconds
-        self.current_song.duration = self.query_duration() or self.current_song.trackLength * Gst.SECOND
-        self.current_song.duration_message = self.format_time(self.current_song.duration)
+        actual_duration = self.query_duration()
+        if actual_duration:
+            self.current_song.duration = actual_duration
+            maybe_new_duration_message = self.format_time(self.current_song.duration)
+            # We only need to update the duration_message and emit a metadata-changed signal
+            # if what we calculate the duration to be is different than what Pandora reports.
+            if self.current_song.duration_message != maybe_new_duration_message:
+                self.current_song.duration_message = maybe_new_duration_message
+                self.update_song_row()
+                self.emit('metadata-changed', self.current_song)
         self.check_if_song_is_ad()
-        self.emit('metadata-changed', self.current_song)
 
     def on_gst_eos(self, bus, message):
         logging.info("EOS")
@@ -780,6 +852,13 @@ class PithosWindow(Gtk.ApplicationWindow):
                         submsg=_("The required codec failed to install. Either manually install it or try another quality setting."))
 
     def on_gst_element(self, bus, message):
+        if message.has_name('GstCacheDownloadComplete'):
+            logging.debug('Download buffering complete')
+            # In case we miss a buffering message.
+            # (known to happen with download buffering)
+            # when download buffering has completed
+            # it's safe to assume we're done buffering.
+            self.respond_to_buffering(False)
         if GstPbutils.is_missing_plugin_message(message):
             if GstPbutils.install_plugins_supported():
                 details = GstPbutils.missing_plugin_message_get_installer_detail(message)
@@ -819,34 +898,32 @@ class PithosWindow(Gtk.ApplicationWindow):
         # Note that applications should keep/set the pipeline in the PAUSED state when a BUFFERING
         # message is received with a buffer percent value < 100 and set the pipeline back to PLAYING
         # state when a BUFFERING message with a value of 100 percent is received.
+        self.respond_to_buffering(self.query_buffer())
 
-        # 100% doesn't mean the entire song is downloaded, but it does mean that it's safe to play.
-        # trying to play before 100% will cause stuttering.
-        percent = message.parse_buffering()
-        logging.debug("Buffering (%i%%)", percent)
-
-        if percent < 100:
-            # If our previous buffer was at 100, but now it's < 100,
-            # then we should pause until the buffer is full.
-            if self.player_status.buffer_percent == 100:
-                logging.debug("Buffer underrun. Pausing pipeline")
-                self.player.set_state(Gst.State.PAUSED)
-                self.player_status.began_buffering = time.time()
+    def respond_to_buffering(self, is_buffering):
+        if is_buffering:
+            if self._current_state is not PseudoGst.BUFFERING:
+                logging.debug("Buffer underrun")
+                if self._set_player_state(PseudoGst.BUFFERING, change_gst_state=True):
+                    logging.debug("Pausing pipeline")
+                    self.update_song_row()
         else:
-            if self.playing is None: # Not playing but waiting to
-                logging.debug("Buffer 100%. Song starting")
-                self.play()
-            elif self.playing:
-                logging.debug("Buffer recovery. Restarting pipeline")
-                self.player.set_state(Gst.State.PLAYING)
-            else:
-                logging.debug("Buffer recovery. User paused")
-            # Tell everyone to update their clocks after we're done buffering or
-            # in case it takes a while after the song-changed signal for actual playback to begin.
-            self.emit('buffering-finished', self.query_position() or 0)
-            self.player_status.began_buffering = None
-        self.player_status.buffer_percent = percent
-        self.update_song_row()
+            if self._current_state is PseudoGst.BUFFERING:
+                logging.debug("Buffer overrun")
+                if self._buffer_recovery_state is PseudoGst.STOPPED:
+                    self.play(change_gst_state=True)
+                    logging.debug("Song starting")
+                elif self._buffer_recovery_state is PseudoGst.PLAYING:
+                    if self._set_player_state(PseudoGst.PLAYING, change_gst_state=True):
+                        self.update_song_row()
+                        logging.debug("Restarting pipeline")
+                elif self._buffer_recovery_state is PseudoGst.PAUSED:
+                    if self._set_player_state(PseudoGst.PAUSED, change_gst_state=True):
+                        self.update_song_row()
+                        logging.debug("User paused")
+                # Tell everyone to update their clocks after we're done buffering or
+                # in case it takes a while after the song-changed signal for actual playback to begin.
+                self.emit('buffering-finished', self.query_position() or 0)
 
     def set_volume_cb(self, volume):
         # Convert to the cubic scale that the volume slider uses
@@ -862,12 +939,14 @@ class PithosWindow(Gtk.ApplicationWindow):
     def on_gst_source(self, player, params):
         """ Setup httpsoupsrc to match Pithos proxy settings """
         soup = player.props.source.props
-        proxy = self.get_proxy()
-        if proxy and hasattr(soup, 'proxy'):
-            scheme, user, password, hostport = parse_proxy(proxy)
-            soup.proxy = hostport
-            soup.proxy_id = user
-            soup.proxy_pw = password
+        if hasattr(soup, 'proxy'):
+            soup.timeout = 600
+            proxy = self.get_proxy()
+            if proxy:
+                scheme, user, password, hostport = parse_proxy(proxy)
+                soup.proxy = hostport
+                soup.proxy_id = user
+                soup.proxy_pw = password
 
     def song_text(self, song):
         title = html.escape(song.title)
@@ -875,17 +954,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         album = html.escape(song.album)
         msg = []
         if song is self.current_song:
-            song.position = self.query_position()
             if not song.bitrate is None:
                 msg.append("%skbit/s" % (song.bitrate))
-
-            if song.position is not None and song.duration is not None:
-                pos_str = self.format_time(song.position)
+            if song.duration is not None:
+                pos_str = self.format_time(self.query_position() or 0)
                 msg.append("%s / %s" % (pos_str, song.duration_message))
-                if self.playing == False:
-                    msg.append("Paused")
-            if self.player_status.buffer_percent < 100:
-                msg.append("Buffering (%i%%)" % self.player_status.buffer_percent)
+            if self.playing is False:
+                msg.append("Paused")
+            if self._current_state is PseudoGst.BUFFERING:
+                msg.append("Buffering…")
         if song.message:
             msg.append(song.message)
         msg = " - ".join(msg)
