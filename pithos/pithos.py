@@ -26,7 +26,6 @@ import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
-from gettext import gettext as _
 
 import gi
 gi.require_version('Gst', '1.0')

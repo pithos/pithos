@@ -16,7 +16,6 @@
 import sys
 import signal
 import logging
-from gettext import gettext as _
 
 import gi
 gi.require_version('Gtk', '3.0')
