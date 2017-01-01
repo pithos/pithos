@@ -854,6 +854,11 @@ class PithosWindow(Gtk.ApplicationWindow):
     def on_gst_element(self, bus, message):
         if message.has_name('GstCacheDownloadComplete'):
             logging.debug('Download buffering complete')
+            # In case we miss a buffering message.
+            # (known to happen with download buffering)
+            # when download buffering has completed
+            # it's safe to assume we're done buffering.
+            self.respond_to_buffering(False)
         if GstPbutils.is_missing_plugin_message(message):
             if GstPbutils.install_plugins_supported():
                 details = GstPbutils.missing_plugin_message_get_installer_detail(message)
@@ -893,9 +898,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         # Note that applications should keep/set the pipeline in the PAUSED state when a BUFFERING
         # message is received with a buffer percent value < 100 and set the pipeline back to PLAYING
         # state when a BUFFERING message with a value of 100 percent is received.
+        self.respond_to_buffering(self.query_buffer())
 
-        is_buffering = self.query_buffer()
-
+    def respond_to_buffering(self, is_buffering):
         if is_buffering:
             if self._current_state is not PseudoGst.BUFFERING:
                 logging.debug("Buffer underrun")
