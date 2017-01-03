@@ -20,7 +20,8 @@ from xml.etree import ElementTree
 from gi.repository import (
     GLib,
     Gio,
-    Gtk
+    Gtk,
+    GdkPixbuf
 )
 from .dbus_util.DBusServiceObject import *
 
@@ -109,23 +110,6 @@ class PithosMprisService(DBusServiceObject):
         else:
             userRating = 0
 
-        # Try to use the generic audio MIME type icon from the user's current theme
-        # for the cover image if we don't get one from Pandora
-        # Workaround for:
-        # https://github.com/eonpatapon/gnome-shell-extensions-mediaplayer/issues/248
-
-        if song.artUrl is not None:
-            artUrl = song.artUrl
-        else:
-            icon_sizes = Gtk.IconTheme.get_icon_sizes(Gtk.IconTheme.get_default(), 'audio-x-generic')
-            if -1 in icon_sizes: # -1 is a scalable icon(svg)
-                best_icon = -1
-            else:
-                icon_sizes = sorted(icon_sizes, key=int, reverse=True)
-                best_icon = icon_sizes[0] 
-            icon_info = Gtk.IconTheme.get_default().lookup_icon('audio-x-generic', best_icon, 0)
-            artUrl = "file://%s" %icon_info.get_filename()
-
         # Ensure is a valid dbus path by converting to hex
         track_id = codecs.encode(bytes(song.trackToken, 'ascii'), 'hex').decode('ascii')
         self._metadata = {
@@ -134,13 +118,47 @@ class PithosMprisService(DBusServiceObject):
             "xesam:artist": GLib.Variant('as', [song.artist] or ["Artist Unknown"]),
             "xesam:album": GLib.Variant('s', song.album or "Album Unknown"),
             "xesam:userRating": GLib.Variant('i', userRating),
-            "mpris:artUrl": GLib.Variant('s', artUrl),
+            "mpris:artUrl": GLib.Variant('s', song.artUrl or self._default_cover_url),
             "xesam:url": GLib.Variant('s', song.audioUrl),
             "mpris:length": GLib.Variant('x', self._duration),
             "pithos:rating": GLib.Variant('s', song.rating or ""),
         }
 
         return self._metadata
+
+    @property
+    def _default_cover_url(self):
+        """
+        Many MPRIS widgets/applets have trouble with svg icons. They load them at their resolution
+        and then scale them leading to blurry default covers in the widget/applet.
+        Also some icon themes are not scalable and contain no svg icons so
+        Gtk.IconTheme.get_default().lookup_icon('audio-x-generic',-1, 0) does not return an svg but a low res png.
+        This will load, scale and cache a default cover as best as we can to avoid poor quality default covers.
+        """ 
+        def lookup(current_theme):
+            common_icon_sizes = [512, 256, 128, 96, 64, 48, 24, 16, -1]
+            for i in common_icon_sizes:
+                icon_lookup = current_theme.lookup_icon('audio-x-generic', i, 0)
+                if icon_lookup is not None:
+                    break
+            return icon_lookup.get_filename()
+        try:
+            if self.window.tempdir is not None:
+                current_icon_theme_name = Gtk.Settings.get_default().props.gtk_icon_theme_name
+                generic_cover_path = self.window.tempdir.name + '/default-cover-' + current_icon_theme_name
+                generic_cover = Gio.file_new_for_path(generic_cover_path)
+                if not generic_cover.query_exists():
+                    icon_path = lookup(Gtk.IconTheme.get_default())
+                    icon_pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(icon_path, 500, -1, True)
+                    icon_pixbuf.savev(generic_cover_path, 'png', [], [])
+                artUrl = 'file://' + generic_cover_path
+            else:
+                artUrl = 'file://' + lookup(Gtk.IconTheme.get_default())
+        except Exception as e:
+            artUrl = ''
+            logging.warning("%s: %s\nUnable to load a default cover", e.__class__.__name__, e)
+        return artUrl
+
 
     @property
     def _duration(self):
