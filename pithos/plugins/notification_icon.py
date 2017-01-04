@@ -13,7 +13,9 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import gi
+
 from gi.repository import GObject, Gdk, Gtk
+
 from pithos.plugin import PithosPlugin
 
 # Use appindicator if installed
@@ -24,10 +26,11 @@ try:
 except (ImportError, ValueError):
     indicator_capable = False
 
-class PithosNotificationIcon(PithosPlugin):    
+
+class PithosNotificationIcon(PithosPlugin):
     preference = 'show_icon'
     description = 'Adds pithos icon to system tray'
-            
+
     def on_prepare(self):
         if indicator_capable:
             self.ind = AppIndicator.Indicator.new("pithos-tray-icon",
@@ -38,7 +41,7 @@ class PithosNotificationIcon(PithosPlugin):
         self.delete_callback_handle = self.window.connect("delete-event", self._toggle_visible)
         self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
         self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
-        
+
         if indicator_capable:
             self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         else:
@@ -55,7 +58,7 @@ class PithosNotificationIcon(PithosPlugin):
 
     def build_context_menu(self):
         menu = Gtk.Menu()
-        
+
         def button(text, action, checked=False):
             if checked:
                 item = Gtk.CheckMenuItem(text)
@@ -66,7 +69,7 @@ class PithosNotificationIcon(PithosPlugin):
             item.show()
             menu.append(item)
             return item, handler
-        
+
         if indicator_capable:
             # We have to add another entry for show / hide Pithos window
             self.visible_check, handler = button("Show Pithos", self._toggle_visible, True)
@@ -82,13 +85,13 @@ class PithosNotificationIcon(PithosPlugin):
 
             # On middle-click
             self.ind.set_secondary_activate_target(self.visible_check)
-        
+
         self.playpausebtn = button("Pause", self.window.playpause)[0]
-        button("Skip",  self.window.next_song)
-        button("Love",  (lambda *i: self.window.love_song()))
-        button("Ban",   (lambda *i: self.window.ban_song()))
+        button("Skip", self.window.next_song)
+        button("Love", (lambda *i: self.window.love_song()))
+        button("Ban", (lambda *i: self.window.ban_song()))
         button("Tired", (lambda *i: self.window.tired_song()))
-        button("Quit",  self.window.quit)
+        button("Quit", self.window.quit)
 
         # connect our new menu to the statusicon or the appindicator
         if indicator_capable:
@@ -100,23 +103,22 @@ class PithosNotificationIcon(PithosPlugin):
 
         self.menu = menu
 
-
     def play_state_changed(self, window, playing):
         """ play or pause and rotate the text """
-        
+
         button = self.playpausebtn
         if not playing:
             button.set_label("Play")
         else:
             button.set_label("Pause")
-            
+
         if indicator_capable: # menu needs to be reset to get updated icon
             self.ind.set_menu(self.menu)
 
     def song_changed(self, window, song):
         if not indicator_capable:
-            self.statusicon.set_tooltip_text("%s by %s"%(song.title, song.artist))
-        
+            self.statusicon.set_tooltip_text("{} by {}".format(song.title, song.artist))
+
     def _toggle_visible(self, *args):
         self.window.set_visible(not self.window.get_visible())
 
@@ -125,22 +127,21 @@ class PithosNotificationIcon(PithosPlugin):
 
         return True
 
-    def context_menu(self, widget, button, time, data=None): 
-       if button == 3: 
-           if data: 
-               data.show_all() 
-               data.popup(None, None, None, None, 3, time)
-    
+    def context_menu(self, widget, button, time, data=None):
+        if button == 3:
+            if data:
+                data.show_all()
+                data.popup(None, None, None, None, 3, time)
+
     def on_disable(self):
         if indicator_capable:
             self.ind.set_status(AppIndicator.IndicatorStatus.PASSIVE)
         else:
             self.statusicon.set_visible(False)
-            
+
         self.window.disconnect(self.delete_callback_handle)
         self.window.disconnect(self.state_callback_handle)
         self.window.disconnect(self.song_callback_handle)
-        
-        # Pithos window needs to be reconnected to on_destro()
-        self.window.connect('delete-event',self.window.on_destroy)
 
+        # Pithos window needs to be reconnected to on_destro()
+        self.window.connect('delete-event', self.window.on_destroy)

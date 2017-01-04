@@ -12,12 +12,14 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from pithos.plugin import PithosPlugin
 import logging
 
-from gi.repository import GLib, Gio, Gdk
+from gi.repository import GLib, Gdk, Gio
+
+from pithos.plugin import PithosPlugin
 
 APP_ID = 'io.github.Pithos'
+
 
 class MediaKeyPlugin(PithosPlugin):
     preference = 'enable_mediakeys'
@@ -27,8 +29,12 @@ class MediaKeyPlugin(PithosPlugin):
         # FIXME: Make all dbus usage async
         def grab_media_keys():
             try:
-                self.mediakeys.call_sync('GrabMediaPlayerKeys', GLib.Variant('(su)', (APP_ID, 0)),
-                                    Gio.DBusCallFlags.NONE, -1, None)
+                self.mediakeys.call_sync(
+                    'GrabMediaPlayerKeys',
+                    GLib.Variant('(su)', (APP_ID, 0)),
+                    Gio.DBusCallFlags.NONE, -1, None,
+                )
+
                 return True
             except GLib.Error as e:
                 logging.debug(e)
@@ -45,14 +51,19 @@ class MediaKeyPlugin(PithosPlugin):
 
             for de in ('gnome', 'mate'):
                 try:
-                    self.mediakeys = Gio.DBusProxy.new_sync(bus, Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES, None,
-                                                        'org.%s.SettingsDaemon' %de,
-                                                        '/org/%s/SettingsDaemon/MediaKeys' %de,
-                                                        'org.%s.SettingsDaemon.MediaKeys' %de,
-                                                        None)
+                    self.mediakeys = Gio.DBusProxy.new_sync(
+                        bus,
+                        Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES,
+                        None,
+                        'org.{}.SettingsDaemon'.format(de),
+                        '/org/{}/SettingsDaemon/MediaKeys'.format(de),
+                        'org.{}.SettingsDaemon.MediaKeys'.format(de),
+                        None,
+                    )
+
                     if grab_media_keys():
                         bound = True
-                        break;
+                        break
                 except GLib.Error as e:
                     logging.warning(e)
                     return False
@@ -84,7 +95,7 @@ class MediaKeyPlugin(PithosPlugin):
             self.mediakey_hook = self.mediakeys.connect('g-signal', mediakey_signal)
         else:
             grab_media_keys() # Was disabled previously
-        logging.info("Bound media keys with DBUS (%s)" %self.mediakeys.props.g_interface_name)
+        logging.info("Bound media keys with DBUS {}".format(self.mediakeys.props.g_interface_name))
         self.method = 'dbus'
         return True
 
@@ -99,21 +110,21 @@ class MediaKeyPlugin(PithosPlugin):
                 self.keybinder.init()
             except (ValueError, ImportError):
                 return False
-        
+
         self.keybinder.bind('XF86AudioPlay', self.window.playpause, None)
         self.keybinder.bind('XF86AudioStop', self.window.user_pause, None)
         self.keybinder.bind('XF86AudioNext', self.window.next_song, None)
         self.keybinder.bind('XF86AudioPrev', self.window.bring_to_top, None)
-        
+
         logging.info("Bound media keys with keybinder")
         self.method = 'keybinder'
         return True
-        
+
     def on_enable(self):
         self.loaded = self.bind_dbus() or self.bind_keybinder()
         if not self.loaded:
             logging.error("Could not bind media keys")
-        
+
     def on_disable(self):
         if not self.loaded:
             return

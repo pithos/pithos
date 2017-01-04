@@ -13,16 +13,17 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import codecs
 import logging
 import math
-import codecs
-from xml.etree import ElementTree
+
 from gi.repository import (
     GLib,
     Gio,
     Gtk
 )
 from .dbus_util.DBusServiceObject import *
+
 
 class PithosMprisService(DBusServiceObject):
     MEDIA_PLAYER2_IFACE = 'org.mpris.MediaPlayer2'
@@ -34,7 +35,7 @@ class PithosMprisService(DBusServiceObject):
         """
         super().__init__(object_path='/org/mpris/MediaPlayer2', **kwargs)
         self.window = window
-        self._volume = math.pow(self.window.player.props.volume, 1.0/3.0)
+        self._volume = math.pow(self.window.player.props.volume, 1.0 / 3.0)
         self._metadata = {}
         self._playback_status = 'Stopped'
 
@@ -50,10 +51,15 @@ class PithosMprisService(DBusServiceObject):
 
     def connect(self):
         def on_name_acquired(connection, name):
-            logging.info('Got bus name: %s' %name)
+            logging.info('Got bus name: {}'.format(name))
 
-        self.bus_id = Gio.bus_own_name_on_connection(self.connection, 'org.mpris.MediaPlayer2.pithos',
-                            Gio.BusNameOwnerFlags.NONE, on_name_acquired, None)
+        self.bus_id = Gio.bus_own_name_on_connection(
+            self.connection,
+            'org.mpris.MediaPlayer2.pithos',
+            Gio.BusNameOwnerFlags.NONE,
+            on_name_acquired,
+            None,
+        )
 
     def disconnect(self):
         if self.bus_id:
@@ -67,27 +73,33 @@ class PithosMprisService(DBusServiceObject):
 
         if self._playback_status != play_state: # stops unneeded updates
             self._playback_status = play_state
-            self.PropertiesChanged(self.MEDIA_PLAYER2_PLAYER_IFACE, {
-                    "PlaybackStatus": GLib.Variant('s', self._playback_status)
-                }, [])
+            self.PropertiesChanged(
+                self.MEDIA_PLAYER2_PLAYER_IFACE,
+                {"PlaybackStatus": GLib.Variant('s', self._playback_status)},
+                [],
+            )
 
     def _volumechange_handler(self, player, spec):
         """Updates the volume in the Sound Menu"""
-        volume = math.pow(player.props.volume, 1.0/3.0)
+        volume = math.pow(player.props.volume, 1.0 / 3.0)
 
         if self._volume != volume: # stops unneeded updates
             self._volume = volume
-            self.PropertiesChanged(self.MEDIA_PLAYER2_PLAYER_IFACE, {
-                    "Volume": GLib.Variant('d', self._volume)
-                }, [])
+            self.PropertiesChanged(
+                self.MEDIA_PLAYER2_PLAYER_IFACE,
+                {"Volume": GLib.Variant('d', self._volume)},
+                [],
+            )
 
     def _metadatachange_handler(self, window, song):
         """Updates the song info in the Sound Menu"""
 
         if song is self.window.current_song: # we only care about the current song
-            self.PropertiesChanged(self.MEDIA_PLAYER2_PLAYER_IFACE, {
-                    'Metadata': GLib.Variant('a{sv}', self._update_metadata(song)),
-                }, [])
+            self.PropertiesChanged(
+                self.MEDIA_PLAYER2_PLAYER_IFACE,
+                {'Metadata': GLib.Variant('a{sv}', self._update_metadata(song))},
+                [],
+            )
 
     def _update_metadata(self, song):
         """
@@ -122,9 +134,9 @@ class PithosMprisService(DBusServiceObject):
                 best_icon = -1
             else:
                 icon_sizes = sorted(icon_sizes, key=int, reverse=True)
-                best_icon = icon_sizes[0] 
+                best_icon = icon_sizes[0]
             icon_info = Gtk.IconTheme.get_default().lookup_icon('audio-x-generic', best_icon, 0)
-            artUrl = "file://%s" %icon_info.get_filename()
+            artUrl = "file://{}".format(icon_info.get_filename())
 
         # Ensure is a valid dbus path by converting to hex
         track_id = codecs.encode(bytes(song.trackToken, 'ascii'), 'hex').decode('ascii')
@@ -174,11 +186,11 @@ class PithosMprisService(DBusServiceObject):
 
     @dbus_property(MEDIA_PLAYER2_IFACE, signature='as')
     def SupportedUriScheme(self):
-        return ['',]
+        return ['', ]
 
     @dbus_property(MEDIA_PLAYER2_IFACE, signature='as')
     def SupportedMimeTypes(self):
-        return ['',]
+        return ['', ]
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='s')
     def PlaybackStatus(self):
@@ -215,12 +227,12 @@ class PithosMprisService(DBusServiceObject):
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='d')
     def Volume(self):
         volume = self.window.player.get_property("volume")
-        scaled_volume = math.pow(volume, 1.0/3.0)
+        scaled_volume = math.pow(volume, 1.0 / 3.0)
         return scaled_volume
 
     @Volume.setter
     def Volume(self, new_volume):
-        scaled_vol = math.pow(new_volume, 3.0/1.0)
+        scaled_vol = math.pow(new_volume, 3.0 / 1.0)
         self.window.player.set_property('volume', scaled_vol)
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='x')
