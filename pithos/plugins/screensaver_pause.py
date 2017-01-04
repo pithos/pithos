@@ -13,7 +13,9 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+
 from gi.repository import (GLib, Gio)
+
 from pithos.plugin import PithosPlugin
 
 SCREENSAVERS = (
@@ -22,6 +24,7 @@ SCREENSAVERS = (
     ('org.cinnamon.ScreenSaver', '/org/cinnamon/ScreenSaver'),
     ('org.freedesktop.ScreenSaver', '/org/freedesktop/ScreenSaver'),
 )
+
 
 class ScreenSaverPausePlugin(PithosPlugin):
     preference = 'enable_screensaverpause'
@@ -63,24 +66,24 @@ class ScreenSaverPausePlugin(PithosPlugin):
         self.cancel = None
 
     def _connect_events(self):
-        def on_screensaver_active_changed(conn, sender, path,
-                                   interface, sig, param, userdata=None):
+        def on_screensaver_active_changed(conn, sender, path, interface, sig, param, userdata=None):
             self._pause() if param[0] else self._play()
 
-        def on_unity_session_changed(conn, sender, path,
-                                   interface, sig, param, userdata=None):
+        def on_unity_session_changed(conn, sender, path, interface, sig, param, userdata=None):
             self._pause() if sig == 'Locked' else self._play()
 
         for ss in SCREENSAVERS:
-            self.subs.append(self.bus.signal_subscribe (None, ss[0], 'ActiveChanged', ss[1],
-                                       None, Gio.DBusSignalFlags.NONE,
-                                       on_screensaver_active_changed, None))
+            self.subs.append(self.bus.signal_subscribe(
+                None, ss[0], 'ActiveChanged', ss[1],
+                None, Gio.DBusSignalFlags.NONE,
+                on_screensaver_active_changed, None))
 
         for sig in ('Locked', 'Unlocked'):
-            self.subs.append(self.bus.signal_subscribe (None, 'com.canonical.Unity.Session',
-                                        sig, '/com/canonical/Unity/Session',
-                                        None, Gio.DBusSignalFlags.NONE,
-                                        on_unity_session_changed, None))
+            self.subs.append(self.bus.signal_subscribe(
+                None, 'com.canonical.Unity.Session',
+                sig, '/com/canonical/Unity/Session',
+                None, Gio.DBusSignalFlags.NONE,
+                on_unity_session_changed, None))
 
     def _play(self):
         self.locked -= 1
@@ -94,4 +97,3 @@ class ScreenSaverPausePlugin(PithosPlugin):
             self.wasplaying = self.window.playing
             self.window.pause()
         self.locked += 1
-

@@ -12,13 +12,15 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 import html
-
-from pithos.plugin import PithosPlugin
-from .dbus_util.GioNotify import GioNotify
+import logging
 
 from gi.repository import (GLib, Gtk)
+
+from pithos.plugin import PithosPlugin
+
+from .dbus_util.GioNotify import GioNotify
+
 
 class NotifyPlugin(PithosPlugin):
     preference = 'notify'
@@ -82,8 +84,8 @@ class NotifyPlugin(PithosPlugin):
         if window.is_active():
             return
         if self.supports_actions:
-            self.notification.clear_actions() 
-            self.set_actions(window.playing != False)
+            self.notification.clear_actions()
+            self.set_actions(window.playing is not False)
         song = window.current_song
         summary = song.title
         body = 'by {} from {}'.format(song.artist, song.album)

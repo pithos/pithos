@@ -12,14 +12,16 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import logging
+
 from gi.repository import GLib, Gio
+
 from .dbus_util.DBusServiceObject import *
 
 DBUS_BUS = "net.kevinmehall.Pithos"
 DBUS_INTERFACE = "net.kevinmehall.Pithos"
 DBUS_OBJECT_PATH = "/net/kevinmehall/Pithos"
+
 
 class PithosDBusProxy(DBusServiceObject):
     def __init__(self, window, **kwargs):
@@ -32,10 +34,14 @@ class PithosDBusProxy(DBusServiceObject):
 
     def connect(self):
         def on_name_acquired(connection, name):
-            logging.info('Got bus name: %s' %name)
+            logging.info('Got bus name: {}'.format(name))
 
-        self.bus_id = Gio.bus_own_name_on_connection(self.connection, DBUS_BUS,
-                            Gio.BusNameOwnerFlags.NONE, on_name_acquired, None)
+        self.bus_id = Gio.bus_own_name_on_connection(
+            self.connection, DBUS_BUS,
+            Gio.BusNameOwnerFlags.NONE,
+            on_name_acquired,
+            None,
+        )
 
     def disconnect(self):
         if self.bus_id:

@@ -14,8 +14,11 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+
 from gi.repository import Gio
+
 from pithos.plugin import PithosPlugin
+
 
 class MprisPlugin(PithosPlugin):
     preference = 'enable_mpris'
