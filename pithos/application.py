@@ -12,7 +12,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+import os
 import sys
 import signal
 import logging
@@ -31,6 +31,12 @@ class PithosApplication(Gtk.Application):
     def __init__(self, version=''):
         super().__init__(application_id='io.github.Pithos',
                          flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
+
+        os.environ['PULSE_PROP_application.name'] = 'Pithos'
+        os.environ['PULSE_PROP_application.version'] = version
+        os.environ['PULSE_PROP_application.icon_name'] = 'io.github.Pithos'
+        os.environ['PULSE_PROP_media.role'] = 'music'
+
         self.window = None
         self.test_mode = False
         self.version = version

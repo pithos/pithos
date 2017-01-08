@@ -18,7 +18,6 @@ import html
 import json
 import logging
 import math
-import os
 import re
 import sys
 import time
@@ -218,7 +217,6 @@ class PithosWindow(Gtk.ApplicationWindow):
     def init_ui(self):
         GLib.set_application_name("Pithos")
         Gtk.Window.set_default_icon_name('pithos')
-        os.environ['PULSE_PROP_media.role'] = 'music'
 
         self.volume.set_relief(Gtk.ReliefStyle.NORMAL)  # It ignores glade...
         self.settings.bind('volume', self.volume, 'value', Gio.SettingsBindFlags.DEFAULT)
