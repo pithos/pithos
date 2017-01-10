@@ -161,7 +161,7 @@ class Pandora:
                 raise PandoraError("Login Error", code, submsg="Invalid username or password")
             elif code == ApiError.LISTENER_NOT_AUTHORIZED:
                 raise PandoraError("Pandora Error", code,
-                    submsg="A Pandora One account is required to access this feature. Uncheck 'Pandora One' in Settings.")
+                    submsg="A Pandora Plus account is required to access this feature. Uncheck 'Pandora Plus' in Settings.")
             elif code == ApiError.PARTNER_NOT_AUTHORIZED:
                 raise PandoraError("Login Error", code,
                     submsg="Invalid Pandora partner keys. A Pithos update may be required.")
