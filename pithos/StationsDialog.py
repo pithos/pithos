@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import html
 import logging
 
 from gi.repository import Gtk
@@ -38,6 +39,7 @@ class StationsDialog(Gtk.Dialog):
         self.worker_run = pithos.worker_run
         self.quickmix_changed = False
         self.searchDialog = None
+        self.result = None
 
         self.modelfilter = self.model.filter_new()
         self.modelfilter.set_visible_func(lambda m, i, d: m.get_value(i, 0) and not m.get_value(i, 0).isQuickMix)
@@ -152,15 +154,62 @@ class StationsDialog(Gtk.Dialog):
 
     @GtkTemplate.Callback
     def add_station_cb(self, dialog, response):
-        logging.info("in add_station_cb {} {}".format(dialog.result, response))
+        self.result = dialog.result
+        logging.info("in add_station_cb {} {}".format(self.result, response))
         if response == Gtk.ResponseType.OK:
-            self.worker_run("add_station_by_music_id", (dialog.result.musicId,),
+            self.worker_run("add_station_by_music_id", (self.result.musicId,),
                             self.station_added, "Creating station...")
         dialog.hide()
         dialog.destroy()
         self.searchDialog = None
 
+    def station_already_exists(self, station):
+        def on_response(dialog, response):
+            if response == Gtk.ResponseType.YES:
+                self.pithos.station_changed(station)
+            dialog.destroy()
+
+        sub_title = 'Pandora does not permit multiple stations with the same seed.\n'
+
+        if self.result.resultType is 'song':
+            seed = 'Song Seed: {} by {}'.format(html.escape(self.result.title), html.escape(self.result.artist))
+        else:
+            seed = 'Artist Seed: {}'.format(html.escape(self.result.name))
+
+        self.result = None
+
+        if station is self.pithos.current_station:
+            button_type = Gtk.ButtonsType.OK
+            message = (
+                '{}"{}", the Station you are currently listening '
+                'to already contains the {}.'.format(sub_title, station.name, seed)
+            )
+
+        else:
+            button_type = Gtk.ButtonsType.YES_NO
+            message = (
+                '{}Your Station "{}" already contains the {}.\n'
+                'Would you like to listen to it now?'.format(sub_title, station.name, seed)
+            )
+
+        dialog = Gtk.MessageDialog(
+            parent=self,
+            flags=Gtk.DialogFlags.MODAL,
+            type=Gtk.MessageType.WARNING,
+            buttons=button_type,
+            text='A New Station could not be created',
+            secondary_text=message,
+        )
+
+        dialog.connect('response', on_response)
+        dialog.show()
+
     def station_added(self, station):
+        for existing_station in self.model:
+            if existing_station[0].id == station.id:
+                self.station_already_exists(existing_station[0])
+                return
+        self.result = None
         logging.debug("1 " + repr(station))
         it = self.model.insert_with_valuesv(0, (0, 1, 2), (station, station.name, 0))
         logging.debug("2 " + repr(it))
