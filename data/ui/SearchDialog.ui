@@ -5,6 +5,7 @@
   <template class="SearchDialog" parent="GtkDialog">
     <property name="width_request">380</property>
     <property name="height_request">350</property>
+    <property name="resizable">0</property>
     <property name="border_width">2</property>
     <property name="modal">1</property>
     <property name="title" translatable="yes">Search</property>
