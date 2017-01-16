@@ -279,8 +279,8 @@ class Pandora:
             {'includeGenreStations': True, 'includeNearMatches': True, 'searchText': query},
         )
 
-        l =  [SearchResult('artist', i) for i in results['artists']]
-        l += [SearchResult('song',   i) for i in results['songs']]
+        l = [SearchResult('artist', i) for i in results['artists'] if i['score'] >= 80]
+        l += [SearchResult('song', i) for i in results['songs'] if i['score'] >= 80]
         l += [SearchResult('genre', i) for i in results['genreStations']]
         l.sort(key=lambda i: i.score, reverse=True)
 
