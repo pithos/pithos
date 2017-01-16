@@ -274,10 +274,14 @@ class Pandora:
         self.json_call('user.setQuickMix', {'quickMixStationIds': stationIds})
 
     def search(self, query):
-        results = self.json_call('music.search', {'searchText': query})
+        results = self.json_call(
+            'music.search',
+            {'includeGenreStations': True, 'includeNearMatches': True, 'searchText': query},
+        )
 
         l =  [SearchResult('artist', i) for i in results['artists']]
         l += [SearchResult('song',   i) for i in results['songs']]
+        l += [SearchResult('genre', i) for i in results['genreStations']]
         l.sort(key=lambda i: i.score, reverse=True)
 
         return l
@@ -517,4 +521,6 @@ class SearchResult:
             self.artist = d['artistName']
         elif resultType == 'artist':
             self.name = d['artistName']
+        elif resultType == 'genre':
+            self.stationName = d['stationName']
 

@@ -65,6 +65,8 @@ class SearchDialog(Gtk.Dialog):
                     mk = '<b>{}</b> by {}'.format(html.escape(i.title), html.escape(i.artist))
                 elif i.resultType is 'artist':
                     mk = '<b>{}</b> (artist)'.format(html.escape(i.name))
+                elif i.resultType is 'genre':
+                    mk = '<b>{}</b> (genre)'.format(html.escape(i.stationName))
                 self.model.append((i, mk))
             self.treeview.show()
         self.worker_run('search', (self.query,), callback, "Searching...")
