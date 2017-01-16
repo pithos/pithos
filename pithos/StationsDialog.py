@@ -17,7 +17,7 @@ import logging
 from gi.repository import Gtk
 
 from .gi_composites import GtkTemplate
-from .util import open_browser
+from .util import open_browser, popup_at_pointer
 from . import SearchDialog
 
 
@@ -98,13 +98,12 @@ class StationsDialog(Gtk.Dialog):
         if event.button == 3:
             x = int(event.x)
             y = int(event.y)
-            time = event.time
             pthinfo = treeview.get_path_at_pos(x, y)
             if pthinfo is not None:
                 path, col, cellx, celly = pthinfo
                 treeview.grab_focus()
                 treeview.set_cursor(path, col, 0)
-                self.station_menu.popup(None, None, None, None, event.button, time)
+                popup_at_pointer(self.station_menu, event)
             return True
 
     @GtkTemplate.Callback

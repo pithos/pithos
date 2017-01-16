@@ -15,7 +15,7 @@
 
 import logging
 from gi.repository import GLib, Gio, Gtk, Gdk, Pango
-from .util import open_browser
+from .util import open_browser, popup_at_pointer
 
 
 class StationsPopover(Gtk.Popover):
@@ -77,7 +77,7 @@ class StationsPopover(Gtk.Popover):
         menu = Gtk.Menu.new()
         menu.append(item)
         menu.attach_to_widget(widget)
-        menu.popup(None, None, None, None, event.button, event.time)
+        popup_at_pointer(menu, event)
         return True
 
     def on_row_activated(self, listbox, row):

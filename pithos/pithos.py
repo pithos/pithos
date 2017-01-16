@@ -42,7 +42,7 @@ from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
 from .plugin import load_plugins
-from .util import parse_proxy, open_browser, get_account_password
+from .util import parse_proxy, open_browser, get_account_password, popup_at_pointer
 
 try:
     import pacparser
@@ -1078,7 +1078,6 @@ class PithosWindow(Gtk.ApplicationWindow):
     def on_treeview_button_press_event(self, treeview, event):
         x = int(event.x)
         y = int(event.y)
-        time = event.time
         pthinfo = treeview.get_path_at_pos(x, y)
         if pthinfo is not None:
             path, col, cellx, celly = pthinfo
@@ -1092,7 +1091,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.song_menu_ban.set_property("visible", rating != RATE_BAN)
                 self.song_menu_unban.set_property("visible", rating == RATE_BAN)
 
-                self.song_menu.popup( None, None, None, None, event.button, time)
+                popup_at_pointer(self.song_menu, event)
                 return True
 
             if event.button == 1 and event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
