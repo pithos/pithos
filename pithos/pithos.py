@@ -215,6 +215,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.gstreamer_error = ''
         self.waiting_for_playlist = False
         self.start_new_playlist = False
+        self.buffering_timer_id = 0
         self.ui_loop_timer_id = 0
         self.worker = GObjectWorker()
 
@@ -861,12 +862,29 @@ class PithosWindow(Gtk.ApplicationWindow):
                 logging.warning('dur_stat is False. The assumption that duration is available once the stream-start messages feeds is bad.')
 
     def on_gst_buffering(self, bus, message):
+        # React to the buffer message immediately and also fire a short repeating timeout
+        # to check the buffering state that cancels only if we're not buffering or there's a pending timeout.
+        # This will insure we don't get stuck in a buffering state if we're really not buffering.
+
+        self.react_to_buffering_mesage(False)
+
+        if self.buffering_timer_id:
+            GLib.source_remove(self.buffering_timer_id)
+            self.buffering_timer_id = 0
+        self.buffering_timer_id = GLib.timeout_add(200, self.react_to_buffering_mesage, True)
+
+    def react_to_buffering_mesage(self, from_timeout):
         # If the pipeline signals that it is buffering set the player to PseudoGst.BUFFERING
         # (which is an alias to Gst.State.PAUSED). During buffering if the user goes to Pause
         # or Play(an/or back again) go though all the motions but don't actaully change the
         # player's state to the desired state until buffering has completed. The player only
         # cares about the actual state, the rest of Pithos only cares about our buffer_recovery
         # state, the state we *wish* we were in.
+
+        # Reset the timer_id only if called from the timeout
+        # to avoid GLib.source_remove warnings.
+        if from_timeout:
+            self.buffering_timer_id = 0
         buffering = self.query_buffer()
 
         if buffering and self._current_state is not PseudoGst.BUFFERING:
@@ -887,6 +905,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             # Tell everyone to update their clocks after we're done buffering or
             # in case it takes a while after the song-changed signal for actual playback to begin.
             self.emit('buffering-finished', self.query_position() or 0)
+        return buffering
 
     def set_volume_cb(self, volume):
         # Convert to the cubic scale that the volume slider uses
