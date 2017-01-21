@@ -106,7 +106,7 @@
                         </child>
                         <child>
                           <object class="GtkCheckButton" id="pandora_one_checkbutton">
-                            <property name="label" translatable="yes">Pandora One Subscriber</property>
+                            <property name="label" translatable="yes">Pandora Plus Subscriber</property>
                             <property name="visible">1</property>
                             <property name="can_focus">1</property>
                             <property name="halign">start</property>
