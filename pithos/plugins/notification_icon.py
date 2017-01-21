@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 import gi
 
 from gi.repository import GObject, Gdk, Gtk
@@ -27,6 +28,13 @@ except (ImportError, ValueError):
     indicator_capable = False
 
 
+def backend_is_supported(window):
+    if sys.platform in ('win32', 'darwin'):
+        return True
+    display = window.props.screen.get_display()
+    return type(display).__name__.endswith('X11Display')
+
+
 class PithosNotificationIcon(PithosPlugin):
     preference = 'show_icon'
     description = 'Adds pithos icon to system tray'
@@ -36,6 +44,9 @@ class PithosNotificationIcon(PithosPlugin):
             self.ind = AppIndicator.Indicator.new("pithos-tray-icon",
                                                   "pithos-tray-icon",
                                                   AppIndicator.IndicatorCategory.APPLICATION_STATUS)
+            # FIXME: AppIndicator might be falling back to XEmbed
+        elif not backend_is_supported(self.window):
+            return 'Notification icon requires X11 or AppIndicator'
 
     def on_enable(self):
         self.delete_callback_handle = self.window.connect("delete-event", self._toggle_visible)
