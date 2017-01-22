@@ -40,15 +40,54 @@ RATE_LOVE = 'love'
 RATE_NONE = None
 
 class ApiError(IntEnum):
+    INTERNAL_ERROR = 0
+    MAINTENANCE_MODE = 1
+    URL_PARAM_MISSING_METHOD = 2
+    URL_PARAM_MISSING_AUTH_TOKEN = 3
+    URL_PARAM_MISSING_PARTNER_ID = 4
+    URL_PARAM_MISSING_USER_ID = 5
+    SECURE_PROTOCOL_REQUIRED = 6
+    CERTIFICATE_REQUIRED = 7
+    PARAMETER_TYPE_MISMATCH = 8
+    PARAMETER_MISSING = 9
+    PARAMETER_VALUE_INVALID = 10
     API_VERSION_NOT_SUPPORTED = 11
     COUNTRY_NOT_SUPPORTED = 12
     INSUFFICIENT_CONNECTIVITY = 13
+    UNKNOWN_METHOD_NAME = 14
+    WRONG_PROTOCOL = 15
     READ_ONLY_MODE = 1000
     INVALID_AUTH_TOKEN = 1001
     INVALID_LOGIN = 1002
     LISTENER_NOT_AUTHORIZED = 1003
+    USER_NOT_AUTHORIZED = 1004
+    MAX_STATIONS_REACHED = 1005
+    STATION_DOES_NOT_EXIST = 1006
+    COMPLIMENTARY_PERIOD_ALREADY_IN_USE = 1007
+    CALL_NOT_ALLOWED = 1008
+    DEVICE_NOT_FOUND = 1009
     PARTNER_NOT_AUTHORIZED = 1010
+    INVALID_USERNAME = 1011
+    INVALID_PASSWORD = 1012
+    USERNAME_ALREADY_EXISTS = 1013
+    DEVICE_ALREADY_ASSOCIATED_TO_ACCOUNT = 1014
+    UPGRADE_DEVICE_MODEL_INVALID = 1015
+    EXPLICIT_PIN_INCORRECT = 1018
+    EXPLICIT_PIN_MALFORMED = 1020
+    DEVICE_MODEL_INVALID = 1023
+    ZIP_CODE_INVALID = 1024
+    BIRTH_YEAR_INVALID = 1025
+    BIRTH_YEAR_TOO_YOUNG = 1026
+    # FIXME: They can't both be 1027?
+    # INVALID_COUNTRY_CODE = 1027
+    # INVALID_GENDER = 1027
+    DEVICE_DISABLED = 1034
+    DAILY_TRIAL_LIMIT_REACHED = 1035
+    INVALID_SPONSOR = 1036
+    USER_ALREADY_USED_TRIAL = 1037
     PLAYLIST_EXCEEDED = 1039
+    # Catch all for undocumented error codes
+    UNKNOWN_ERROR = 100000
 
 PLAYLIST_VALIDITY_TIME = 60*60
 
@@ -138,34 +177,39 @@ class Pandora:
         logging.debug(text)
 
         tree = json.loads(text)
-
         if tree['stat'] == 'fail':
             code = tree['code']
             msg = tree['message']
-            logging.error('fault code: ' + str(code) + ' message: ' + msg)
 
-            if code == ApiError.INVALID_AUTH_TOKEN:
+            try:
+                error_enum = ApiError(code)
+            except ValueError:
+                error_enum = ApiError.UNKNOWN_ERROR
+
+            logging.error('fault code: {} {} message: {}'.format(code, error_enum.name, msg))
+
+            if error_enum is ApiError.INVALID_AUTH_TOKEN:
                 raise PandoraAuthTokenInvalid(msg)
-            elif code == ApiError.COUNTRY_NOT_SUPPORTED:
+            elif error_enum is ApiError.COUNTRY_NOT_SUPPORTED:
                  raise PandoraError("Pandora not available", code,
                     submsg="Pandora is not available in your country.")
-            elif code == ApiError.API_VERSION_NOT_SUPPORTED:
+            elif error_enum is ApiError.API_VERSION_NOT_SUPPORTED:
                 raise PandoraAPIVersionError(msg)
-            elif code == ApiError.INSUFFICIENT_CONNECTIVITY:
+            elif error_enum is ApiError.INSUFFICIENT_CONNECTIVITY:
                 raise PandoraError("Out of sync", code,
                     submsg="Correct your system's clock. If the problem persists, a Pithos update may be required")
-            elif code == ApiError.READ_ONLY_MODE:
+            elif error_enum is ApiError.READ_ONLY_MODE:
                 raise PandoraError("Pandora maintenance", code,
                     submsg="Pandora is in read-only mode as it is performing maintenance. Try again later.")
-            elif code == ApiError.INVALID_LOGIN:
+            elif error_enum is ApiError.INVALID_LOGIN:
                 raise PandoraError("Login Error", code, submsg="Invalid username or password")
-            elif code == ApiError.LISTENER_NOT_AUTHORIZED:
+            elif error_enum is ApiError.LISTENER_NOT_AUTHORIZED:
                 raise PandoraError("Pandora Error", code,
                     submsg="A Pandora One account is required to access this feature. Uncheck 'Pandora One' in Settings.")
-            elif code == ApiError.PARTNER_NOT_AUTHORIZED:
+            elif error_enum is ApiError.PARTNER_NOT_AUTHORIZED:
                 raise PandoraError("Login Error", code,
                     submsg="Invalid Pandora partner keys. A Pithos update may be required.")
-            elif code == ApiError.PLAYLIST_EXCEEDED:
+            elif error_enum is ApiError.PLAYLIST_EXCEEDED:
                 raise PandoraError("Playlist Error", code,
                     submsg="You have requested too many playlists. Try again later.")
             else:
