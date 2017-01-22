@@ -89,6 +89,40 @@ class ApiError(IntEnum):
     # Catch all for undocumented error codes
     UNKNOWN_ERROR = 100000
 
+    @property
+    def title(self):
+        # Turns RANDOM_ERROR into Pandora Error: Random Error
+        return 'Pandora Error: {}'.format(self.name.replace('_', ' ').title())
+
+    @property
+    def sub_message(self):
+        value = self.value
+        if value == 1:
+            return 'Pandora is performing maintenance.\nTry again later.'
+        elif value == 12:
+            return 'Pandora is not available in your country.\n'
+            'If you wish to use Pandora you must configure your system or Pithos proxy accordingly.'
+        elif value == 13:
+            return 'Out of sync. Correct your system\'s clock.\n'
+            'If the problem persists, a Pithos update may be required.'
+        if value == 1000:
+            return 'Pandora is in read-only mode.\nTry again later.'
+        elif value == 1002:
+            return 'Invalid username or password.'
+        elif value == 1003:
+            return 'A Pandora One account is required to access this feature.\nUncheck "Pandora One" in Settings.'
+        elif value == 1005:
+            return 'You have reached the maximum number of stations.\n'
+            'To add a new station you must first delete an existing station.'
+        elif value == 1010:
+            return 'Invalid Pandora partner keys.\nA Pithos update may be required.'
+        elif value == 1023:
+            return 'Invalid Pandora device model.\nA Pithos update may be required.'
+        elif value == 1039:
+            return 'You have requested too many playlists.\nTry again later.'
+        else:
+            return None
+
 PLAYLIST_VALIDITY_TIME = 60*60
 
 NAME_COMPARE_REGEX = re.compile(r'[^A-Za-z0-9]')
@@ -190,30 +224,14 @@ class Pandora:
 
             if error_enum is ApiError.INVALID_AUTH_TOKEN:
                 raise PandoraAuthTokenInvalid(msg)
-            elif error_enum is ApiError.COUNTRY_NOT_SUPPORTED:
-                 raise PandoraError("Pandora not available", code,
-                    submsg="Pandora is not available in your country.")
             elif error_enum is ApiError.API_VERSION_NOT_SUPPORTED:
                 raise PandoraAPIVersionError(msg)
-            elif error_enum is ApiError.INSUFFICIENT_CONNECTIVITY:
-                raise PandoraError("Out of sync", code,
-                    submsg="Correct your system's clock. If the problem persists, a Pithos update may be required")
-            elif error_enum is ApiError.READ_ONLY_MODE:
-                raise PandoraError("Pandora maintenance", code,
-                    submsg="Pandora is in read-only mode as it is performing maintenance. Try again later.")
-            elif error_enum is ApiError.INVALID_LOGIN:
-                raise PandoraError("Login Error", code, submsg="Invalid username or password")
-            elif error_enum is ApiError.LISTENER_NOT_AUTHORIZED:
-                raise PandoraError("Pandora Error", code,
-                    submsg="A Pandora One account is required to access this feature. Uncheck 'Pandora One' in Settings.")
-            elif error_enum is ApiError.PARTNER_NOT_AUTHORIZED:
-                raise PandoraError("Login Error", code,
-                    submsg="Invalid Pandora partner keys. A Pithos update may be required.")
-            elif error_enum is ApiError.PLAYLIST_EXCEEDED:
-                raise PandoraError("Playlist Error", code,
-                    submsg="You have requested too many playlists. Try again later.")
+            elif error_enum is ApiError.UNKNOWN_ERROR:
+                submsg = 'Undocumented Error Code: {}\n{}'.format(code, msg)
+                raise PandoraError(error_enum.title, code, submsg)
             else:
-                raise PandoraError("Pandora returned an error", code, "%s (code %d)"%(msg, code))
+                submsg = error_enum.sub_message or 'Error Code: {}\n{}'.format(code, msg)
+                raise PandoraError(error_enum.title, code, submsg)
 
         if 'result' in tree:
             return tree['result']
