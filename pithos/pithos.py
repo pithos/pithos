@@ -42,7 +42,7 @@ from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
 from .plugin import load_plugins
-from .util import parse_proxy, open_browser, get_account_password, popup_at_pointer
+from .util import parse_proxy, open_browser, get_account_password, popup_at_pointer, unlock_keyring
 
 try:
     import pacparser
@@ -161,18 +161,23 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.set_proxy(reconnect=False)
         self.set_audio_quality()
 
-        email = self.settings['email']
         try:
+            unlock_keyring()
+            email = self.settings['email']
             password = get_account_password(email)
         except GLib.Error as e:
             if e.code == 2:
-                self.fatal_error_dialog(e.message, _('You need to install a service such as gnome-keyring.'))
+                logging.error('You need to install a service such as gnome-keyring. Error: {}'.format(e))
+                self.fatal_error_dialog(
+                    e.message,
+                    _('You need to install a service such as gnome-keyring.'),
+                )
+
+        if not email or not password:
+            self.show()
+            self.show_preferences()
         else:
-            if not email or not password:
-                self.show()
-                self.show_preferences()
-            else:
-                self.pandora_connect()
+            self.pandora_connect()
 
     def init_core(self):
         #                                Song object            display text  icon  album art
