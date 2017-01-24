@@ -27,8 +27,38 @@ from gi.repository import (
 _ACCOUNT_SCHEMA = Secret.Schema.new('io.github.Pithos.Account', Secret.SchemaFlags.NONE,
                                     {"email": Secret.SchemaAttributeType.STRING})
 
+_current_collection = Secret.COLLECTION_DEFAULT
+
 
 # TODO: Async
+def unlock_keyring():
+    service = Secret.Service.get_sync(
+        Secret.ServiceFlags.NONE,
+        None,
+    )
+
+    default_collection = Secret.Collection.for_alias_sync(
+        service,
+        Secret.COLLECTION_DEFAULT,
+        Secret.CollectionFlags.NONE,
+        None,
+    )
+
+    if not default_collection.get_locked():
+        logging.debug('The default keyring is unlocked.')
+    else:
+        num_items, unlocked = service.unlock_sync(
+            [default_collection],
+            None,
+        )
+
+        if not num_items or default_collection not in unlocked:
+            global _current_collection
+            _current_collection = Secret.COLLECTION_SESSION
+            logging.debug('The default keyring is locked. Using session collection.')
+        else:
+            logging.debug('The default keyring was unlocked.')
+
 def get_account_password(email):
     return Secret.password_lookup_sync(_ACCOUNT_SCHEMA, {"email": email}, None) or ''
 
@@ -50,7 +80,7 @@ def set_account_password(email, password, previous_email=None):
         logging.debug('Password unchanged')
         return False
 
-    Secret.password_store_sync(_ACCOUNT_SCHEMA, attrs, Secret.COLLECTION_DEFAULT,
+    Secret.password_store_sync(_ACCOUNT_SCHEMA, attrs, _current_collection,
                                "Pandora Account", password, None)
     return True
 
