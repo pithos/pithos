@@ -350,7 +350,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             if isinstance(e, PandoraAuthTokenInvalid) and not self.auto_retrying_auth:
                 self.auto_retrying_auth = True
                 logging.info("Automatic reconnect after invalid auth token")
-                self.pandora_connect("Reconnecting...", retry_cb)
+                self.pandora_connect(message="Reconnecting...", callback=retry_cb)
             elif isinstance(e, PandoraAPIVersionError):
                 self.api_update_dialog()
             elif isinstance(e, PandoraError):
