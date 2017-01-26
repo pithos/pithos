@@ -900,20 +900,14 @@ class PithosWindow(Gtk.ApplicationWindow):
         GLib.idle_add(self.set_volume_cb, vol)
 
     def on_gst_source(self, player, params):
-        """ Setup httpsoupsrc to match Pithos proxy settings
-            and give the user time to reconnect in case of a
-            network disconnect.
-        """
+        """ Setup httpsoupsrc to match Pithos proxy settings """
         soup = player.props.source.props
-        if hasattr(soup, 'timeout'):
-            soup.timeout = 600
-        if hasattr(soup, 'proxy'):
-            proxy = self.get_proxy()
-            if proxy:
-                scheme, user, password, hostport = parse_proxy(proxy)
-                soup.proxy = hostport
-                soup.proxy_id = user
-                soup.proxy_pw = password
+        proxy = self.get_proxy()
+        if proxy and hasattr(soup, 'proxy'):
+            scheme, user, password, hostport = parse_proxy(proxy)
+            soup.proxy = hostport
+            soup.proxy_id = user
+            soup.proxy_pw = password
 
     def song_text(self, song):
         title = html.escape(song.title)
