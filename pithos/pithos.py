@@ -211,6 +211,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         "user-changed-play-state": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "metadata-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "buffering-finished": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "station-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "stations-processed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "stations-dlg-ready": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
     }
 
     volume = GtkTemplate.Child()
@@ -646,6 +649,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if selected:
             self.station_changed(selected, reconnecting = self.have_stations)
             self.have_stations = True
+            self.emit('stations-processed', self.pandora.stations)
         else:
             # User has no stations, open dialog
             self.show_stations()
@@ -896,6 +900,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.get_playlist(start = True)
         self.stations_label.set_text(station.name)
         self.stations_popover.select_station(station)
+        self.emit('station-changed', station)
 
     def query_position(self):
       pos_stat = self.player.query(self._query_position)
@@ -1272,6 +1277,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         else:
             self.stations_dlg = StationsDialog.StationsDialog(self, transient_for=self)
             self.stations_dlg.show_all()
+            self.emit('stations-dlg-ready', True)
 
     def refresh_stations(self, *ignore):
         self.worker_run(self.pandora.get_stations, (), self.process_stations, "Refreshing stations...")
