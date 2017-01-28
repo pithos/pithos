@@ -14,7 +14,7 @@
 
 import logging
 
-from gi.repository import Gtk
+from gi.repository import Gtk, GObject
 
 from .gi_composites import GtkTemplate
 from .util import open_browser, popup_at_pointer
@@ -24,6 +24,11 @@ from . import SearchDialog
 @GtkTemplate(ui='/io/github/Pithos/ui/StationsDialog.ui')
 class StationsDialog(Gtk.Dialog):
     __gtype_name__ = "StationsDialog"
+    __gsignals__ = {
+        "station-renamed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "station-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "station-removed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+    }
 
     treeview = GtkTemplate.Child()
     delete_confirm_dialog = GtkTemplate.Child()
@@ -87,6 +92,7 @@ class StationsDialog(Gtk.Dialog):
         station = self.modelfilter[path][0]
         self.worker_run(station.rename, (new_text,), context='net', message="Renaming Station...")
         self.model[self.modelfilter.convert_path_to_child_path(Gtk.TreePath(path))][1] = new_text
+        self.emit('station-renamed', (station.id, new_text))
 
     def selected_station(self):
         sel = self.treeview.get_selection().get_selected()
@@ -136,6 +142,7 @@ class StationsDialog(Gtk.Dialog):
             self.pithos.remove_station(station)
             if self.pithos.current_station is station:
                 self.pithos.station_changed(self.model[0][0])
+            self.emit('station-removed', station)
 
     @GtkTemplate.Callback
     def add_station(self, widget):
@@ -170,6 +177,7 @@ class StationsDialog(Gtk.Dialog):
         logging.debug("4")
         self.treeview.set_cursor(0)
         logging.debug("5 ")
+        self.emit('station-added', station)
 
     @GtkTemplate.Callback
     def on_close(self, widget, data=None):

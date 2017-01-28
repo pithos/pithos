@@ -28,6 +28,10 @@ from .dbus_util.DBusServiceObject import *
 class PithosMprisService(DBusServiceObject):
     MEDIA_PLAYER2_IFACE = 'org.mpris.MediaPlayer2'
     MEDIA_PLAYER2_PLAYER_IFACE = 'org.mpris.MediaPlayer2.Player'
+    MEDIA_PLAYER2_PLAYLISTS_IFACE = 'org.mpris.MediaPlayer2.Playlists'
+
+    TRACK_OBJ_PATH = '/io/github/Pithos/TrackId/'
+    PLAYLIST_OBJ_PATH = '/io/github/Pithos/PlaylistId/'
 
     def __init__(self, window, **kwargs):
         """
@@ -36,22 +40,25 @@ class PithosMprisService(DBusServiceObject):
         super().__init__(object_path='/org/mpris/MediaPlayer2', **kwargs)
         self.window = window
         self._volume = math.pow(self.window.player.props.volume, 1.0 / 3.0)
-        self._metadata = {}
+        self._metadata = {
+            "mpris:trackid": GLib.Variant('o', '/org/mpris/MediaPlayer2/TrackList/NoTrack'),
+        }
+
         self._playback_status = 'Stopped'
-
-        self.window.connect("metadata-changed", self._metadatachange_handler)
-        self.window.connect("play-state-changed", self._playstate_handler)
-        self.window.player.connect("notify::volume", self._volumechange_handler)
-        self.window.connect("buffering-finished", lambda window, position: self.Seeked(position // 1000))
-
-        # Updates everything if mpris is enabled in the middle of a song
-        if self.window.current_song:
-            self._metadatachange_handler(self.window, self.window.current_song)
-            self._playstate_handler(self.window, self.window.playing)
+        self._playlists = [('/', '', '')]
+        self._current_playlist = False, ('/', '', '')
+        self._orderings = ['CreationDate']
+        self._stations_dlg_handlers = []
+        self._window_handlers = []
+        self._stations_dlg_handlers = []
+        self._volumechange_handler_id = None
+        self._sort_order_handler_id = None
 
     def connect(self):
         def on_name_acquired(connection, name):
             logging.info('Got bus name: {}'.format(name))
+            self._update_handlers()
+            self._connect_handlers()
 
         self.bus_id = Gio.bus_own_name_on_connection(
             self.connection,
@@ -62,13 +69,202 @@ class PithosMprisService(DBusServiceObject):
         )
 
     def disconnect(self):
+        self._disconnect_handlers()
         if self.bus_id:
             Gio.bus_unown_name(self.bus_id)
             self.bus_id = 0
 
+    def _update_handlers(self):
+        # Update some of our dynamic props if mpris
+        # was enabled after a song has already started.
+        window = self.window
+        station = self.window.current_station
+        song = self.window.current_song
+
+        if station:
+            self._current_playlist_handler(
+                window,
+                station,
+            )
+
+            self._update_playlists_handler(
+                window,
+                window.pandora.stations,
+            )
+
+        if song:
+            self._metadatachange_handler(
+                window,
+                song,
+            )
+
+            self._playstate_handler(
+                window,
+                window.playing,
+            )
+
+        self._sort_order_handler()
+
+    def _connect_handlers(self):
+        window = self.window
+        self._window_handlers = [
+            window.connect(
+                "metadata-changed",
+                self._metadatachange_handler,
+            ),
+
+            window.connect(
+                "play-state-changed",
+                self._playstate_handler,
+            ),
+
+            window.connect(
+                "buffering-finished",
+                lambda window, position: self.Seeked(position // 1000),
+            ),
+
+            window.connect(
+                "station-changed",
+                self._current_playlist_handler,
+            ),
+
+            window.connect(
+                "stations-processed",
+                self._update_playlists_handler,
+            ),
+
+            window.connect(
+                "stations-dlg-ready",
+                self._stations_dlg_ready_handler,
+            ),
+        ]
+
+        if window.stations_dlg:
+            # If stations_dlg exsists already
+            # we missed the ready signal and
+            # we should connect our handlers.
+            self._stations_dlg_ready_handler()
+
+        self._volumechange_handler_id = window.player.connect(
+            "notify::volume",
+            self._volumechange_handler,
+        )
+
+        self._sort_order_handler_id = window.settings.connect(
+            "changed::sort-stations",
+            self._sort_order_handler,
+        )
+
+    def _disconnect_handlers(self):
+        window = self.window
+        stations_dlg = self.window.stations_dlg
+
+        if self._window_handlers:
+            for handler in self._window_handlers:
+                window.disconnect(handler)
+            self._window_handlers = []
+
+        if stations_dlg and self._stations_dlg_handlers:
+            for handler in self._stations_dlg_handlers:
+                stations_dlg.disconnect(handler)
+            self._stations_dlg_handlers = []
+
+        if self._volumechange_handler_id:
+            window.player.disconnect(self._volumechange_handler_id)
+            self._volumechange_handler_id = None
+
+        if self._sort_order_handler_id:
+            window.settings.disconnect(self._sort_order_handler_id)
+            self._sort_order_handler_id = None
+
+    def _stations_dlg_ready_handler(self, *ignore):
+        stations_dlg = self.window.stations_dlg
+        self._stations_dlg_handlers = [
+            stations_dlg.connect(
+                'station-renamed',
+                self._rename_playlist_handler,
+            ),
+
+            stations_dlg.connect(
+                'station-added',
+                self._add_playlist_handler,
+            ),
+
+            stations_dlg.connect(
+                'station-removed',
+                self._remove_playlist_handler,
+            ),
+        ]
+
+    def _sort_order_handler(self, *ignore):
+        if self.window.settings['sort-stations']:
+            new_orderings = ['Alphabetical']
+        else:
+            new_orderings = ['CreationDate']
+        if self._orderings != new_orderings:
+            self._orderings = new_orderings
+            self.PropertiesChanged(
+                self.MEDIA_PLAYER2_PLAYLISTS_IFACE,
+                {"Orderings": GLib.Variant('as', self._orderings)},
+                [],
+            )
+
+    def _update_playlists_handler(self, window, stations):
+        self._playlists = [(self.PLAYLIST_OBJ_PATH + station.id, station.name, '') for station in stations]
+        self.PropertiesChanged(
+            self.MEDIA_PLAYER2_PLAYLISTS_IFACE,
+            {"PlaylistCount": GLib.Variant('u', len(self._playlists))},
+            [],
+        )
+
+    def _remove_playlist_handler(self, window, station):
+        for index, playlist in enumerate(self._playlists[:]):
+            if playlist[0].strip(self.PLAYLIST_OBJ_PATH) == station.id:
+                del self._playlists[index]
+                self.PropertiesChanged(
+                    self.MEDIA_PLAYER2_PLAYLISTS_IFACE,
+                    {"PlaylistCount": GLib.Variant('u', len(self._playlists))},
+                    [],
+                )
+                break
+
+    def _rename_playlist_handler(self, stations_dlg, data):
+        station_id, new_name = data
+        for index, playlist in enumerate(self._playlists):
+            if playlist[0].strip(self.PLAYLIST_OBJ_PATH) == station_id:
+                self._playlists[index] = (self.PLAYLIST_OBJ_PATH + station_id, new_name, '')
+                self.PlaylistChanged(self._playlists[index])
+                # PlaylistChanged *should* be enough to tell applets a playlist name has changed.
+                # But just in case, force applets to update the playlists list.
+                self.PropertiesChanged(
+                    self.MEDIA_PLAYER2_PLAYLISTS_IFACE,
+                    {"PlaylistCount": GLib.Variant('u', len(self._playlists))},
+                    [],
+                )
+                break
+
+    def _add_playlist_handler(self, window, station):
+        new_playlist = (self.PLAYLIST_OBJ_PATH + station.id, station.name, '')
+        if new_playlist not in self._playlists:
+            self._playlists.append(new_playlist)
+            self.PropertiesChanged(
+                self.MEDIA_PLAYER2_PLAYLISTS_IFACE,
+                {"PlaylistCount": GLib.Variant('u', len(self._playlists))},
+                [],
+            )
+
+    def _current_playlist_handler(self, window, station):
+        new_current_playlist = (self.PLAYLIST_OBJ_PATH + station.id, station.name, '')
+        if self._current_playlist != (True, new_current_playlist):
+            self._current_playlist = (True, new_current_playlist)
+            self.PropertiesChanged(
+                self.MEDIA_PLAYER2_PLAYLISTS_IFACE,
+                {"ActivePlaylist": GLib.Variant('(b(oss))', self._current_playlist)},
+                [],
+            )
+
     def _playstate_handler(self, window, state):
         """Updates the playstate in the Sound Menu"""
-
         play_state = 'Playing' if state else 'Paused'
 
         if self._playback_status != play_state: # stops unneeded updates
@@ -93,7 +289,6 @@ class PithosMprisService(DBusServiceObject):
 
     def _metadatachange_handler(self, window, song):
         """Updates the song info in the Sound Menu"""
-
         if song is self.window.current_song: # we only care about the current song
             self.PropertiesChanged(
                 self.MEDIA_PLAYER2_PLAYER_IFACE,
@@ -117,40 +312,28 @@ class PithosMprisService(DBusServiceObject):
         """
         # Map pithos ratings to something MPRIS understands
         if song.rating == 'love':
-            userRating = 5
+            userRating = 1.0
         else:
-            userRating = 0
-
-        # Try to use the generic audio MIME type icon from the user's current theme
-        # for the cover image if we don't get one from Pandora
-        # Workaround for:
-        # https://github.com/eonpatapon/gnome-shell-extensions-mediaplayer/issues/248
-
-        if song.artUrl is not None:
-            artUrl = song.artUrl
-        else:
-            icon_sizes = Gtk.IconTheme.get_icon_sizes(Gtk.IconTheme.get_default(), 'audio-x-generic')
-            if -1 in icon_sizes: # -1 is a scalable icon(svg)
-                best_icon = -1
-            else:
-                icon_sizes = sorted(icon_sizes, key=int, reverse=True)
-                best_icon = icon_sizes[0]
-            icon_info = Gtk.IconTheme.get_default().lookup_icon('audio-x-generic', best_icon, 0)
-            artUrl = "file://{}".format(icon_info.get_filename())
+            userRating = 0.0
 
         # Ensure is a valid dbus path by converting to hex
         track_id = codecs.encode(bytes(song.trackToken, 'ascii'), 'hex').decode('ascii')
         self._metadata = {
-            "mpris:trackid": GLib.Variant('o', '/io/github/Pithos/TrackId/' + track_id),
+            "mpris:trackid": GLib.Variant('o', self.TRACK_OBJ_PATH + track_id),
             "xesam:title": GLib.Variant('s', song.title or "Title Unknown"),
             "xesam:artist": GLib.Variant('as', [song.artist] or ["Artist Unknown"]),
             "xesam:album": GLib.Variant('s', song.album or "Album Unknown"),
-            "xesam:userRating": GLib.Variant('i', userRating),
-            "mpris:artUrl": GLib.Variant('s', artUrl),
+            "xesam:userRating": GLib.Variant('d', userRating),
             "xesam:url": GLib.Variant('s', song.audioUrl),
             "mpris:length": GLib.Variant('x', self._duration),
             "pithos:rating": GLib.Variant('s', song.rating or ""),
         }
+
+        # If we don't have an artUrl the best thing we can
+        # do is not even have "mpris:artUrl" in the metadata,
+        # and let the applet decide what to do.
+        if song.artUrl is not None:
+            self._metadata["mpris:artUrl"] = GLib.Variant('s', song.artUrl)
 
         return self._metadata
 
@@ -195,12 +378,7 @@ class PithosMprisService(DBusServiceObject):
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='s')
     def PlaybackStatus(self):
         """Current status "Playing", "Paused", or "Stopped"."""
-        if not self.window.current_song:
-            return "Stopped"
-        if self.window.playing:
-            return "Playing"
-        else:
-            return "Paused"
+        return self._playback_status
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='s')
     def LoopStatus(self):
@@ -217,12 +395,7 @@ class PithosMprisService(DBusServiceObject):
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='a{sv}')
     def Metadata(self):
         """The info for the current song."""
-        if self._metadata:
-            return self._metadata
-        else:
-            return {"mpris:trackid": GLib.Variant('o', '/org/mpris/MediaPlayer2/TrackList/NoTrack'),
-                    # Workaround for https://github.com/eonpatapon/gnome-shell-extensions-mediaplayer/issues/247
-                    "xesam:url": GLib.Variant('s', '')}
+        return self._metadata
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='d')
     def Volume(self):
@@ -275,6 +448,18 @@ class PithosMprisService(DBusServiceObject):
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='b')
     def CanControl(self):
         return True
+
+    @dbus_property(MEDIA_PLAYER2_PLAYLISTS_IFACE, signature='(b(oss))')
+    def ActivePlaylist(self):
+        return self._current_playlist
+
+    @dbus_property(MEDIA_PLAYER2_PLAYLISTS_IFACE, signature='u')
+    def PlaylistCount(self):
+        return len(self._playlists)
+
+    @dbus_property(MEDIA_PLAYER2_PLAYLISTS_IFACE, signature='as')
+    def Orderings(self):
+        return self._orderings
 
     @dbus_method(MEDIA_PLAYER2_IFACE)
     def Raise(self):
@@ -343,9 +528,35 @@ class PithosMprisService(DBusServiceObject):
 
         self.Seeked(self.Position)
 
+    @dbus_method(MEDIA_PLAYER2_PLAYLISTS_IFACE, in_signature='uusb', out_signature='a(oss)')
+    def GetPlaylists(self, Index, MaxCount, Order, ReverseOrder):
+        playlists = self._playlists[:]
+        quick_mix = playlists.pop(0)
+
+        if Order not in ('CreationDate', 'Alphabetical') or Order == 'Alphabetical':
+            playlists = sorted(playlists, key=lambda playlists: playlists[1])
+        if ReverseOrder:
+            playlists.reverse()
+        playlists = playlists[Index:MaxCount - 1]
+        playlists.insert(0, quick_mix)
+        return playlists
+
+    @dbus_method(MEDIA_PLAYER2_PLAYLISTS_IFACE, in_signature='o')
+    def ActivatePlaylist(self, PlaylistId):
+        stations = self.window.pandora.stations
+        station_id = PlaylistId.strip(self.PLAYLIST_OBJ_PATH)
+        for station in stations:
+            if station.id == station_id:
+                self.window.station_changed(station)
+                break
+
     @dbus_signal(MEDIA_PLAYER2_PLAYER_IFACE, signature='x')
     def Seeked(self, position):
         '''Unsupported but some applets depend on this'''
+        pass
+
+    @dbus_signal(MEDIA_PLAYER2_PLAYLISTS_IFACE, signature='(oss)')
+    def PlaylistChanged(self, playlist):
         pass
 
     def PropertiesChanged(self, interface, changed, invalidated):
