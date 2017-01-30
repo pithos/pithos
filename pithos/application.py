@@ -91,6 +91,14 @@ class PithosApplication(Gtk.Application):
             type(command_line).do_print_literal(command_line, "Pithos {}\n".format(self.version))
             return 0
 
+        # Set the logging level to show debug messages
+        if options.contains('debug'):
+            log_level = logging.DEBUG
+        elif options.contains('verbose'):
+            log_level = logging.INFO
+        else:
+            log_level = logging.WARN
+
         handlers = []
         try:
             from systemd.journal import JournalHandler
@@ -99,20 +107,12 @@ class PithosApplication(Gtk.Application):
 
             # We can be more verbose with the journal and filter it later
             # and don't need fancy formatting as its part of the structure
-            journal.setLevel(logging.INFO)
+            journal.setLevel(log_level)
             journal.setFormatter(logging.Formatter())
 
             handlers.append(journal)
         except ImportError:
             pass
-
-        # Set the logging level to show debug messages
-        if options.contains('debug'):
-            log_level = logging.DEBUG
-        elif options.contains('verbose'):
-            log_level = logging.INFO
-        else:
-            log_level = logging.WARN
 
         stream = logging.StreamHandler()
         stream.setLevel(log_level)
