@@ -116,6 +116,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         "user-changed-play-state": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "metadata-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "buffering-finished": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "end-of-stream": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
     }
 
     volume = GtkTemplate.Child()
@@ -814,6 +815,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def on_gst_eos(self, bus, message):
         logging.info("EOS")
+        self.emit('end-of-stream', self.current_song)
         self.next_song()
 
     def on_gst_plugin_installed(self, result, userdata):
