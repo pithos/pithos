@@ -50,12 +50,23 @@ class PithosPluginRow(Gtk.ListBoxRow):
         self.switch.connect('notify::active', self.on_activated)
         self.switch.set_valign(Gtk.Align.CENTER)
         box.pack_end(self.switch, False, False, 2)
+        self.connect('grab-focus', self.on_grab_focus)
 
         if plugin.prepared and plugin.error:
             self.set_sensitive(False)
             self.set_tooltip_text(plugin.error)
 
         self.add(box)
+
+    def set_prefs_btn(self):
+        if self.plugin.enabled:
+            sensitive = self.plugin.preferences_dialog is not None
+        else:
+            sensitive = False
+        self.get_toplevel().preference_btn.set_sensitive(sensitive)
+
+    def on_grab_focus(self, *ignore):
+        self.set_prefs_btn()
 
     def on_activated(self, obj, params):
         if not self.is_selected():
@@ -71,7 +82,7 @@ class PithosPluginRow(Gtk.ListBoxRow):
             self.set_sensitive(False)
             self.set_tooltip_text(self.plugin.error)
         elif self.plugin.prepared:
-            self.get_toplevel().preference_btn.set_sensitive(self.plugin.preferences_dialog is not None)
+            self.set_prefs_btn()
 
 
 @GtkTemplate(ui='/io/github/Pithos/ui/PreferencesPithosDialog.ui')

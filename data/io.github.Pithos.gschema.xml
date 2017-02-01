@@ -66,6 +66,7 @@
     <child name="mediakeys" schema="io.github.Pithos.plugin-enabled"/>
     <child name="screensaver-pause" schema="io.github.Pithos.plugin-enabled"/>
     <child name="mpris" schema="io.github.Pithos.plugin-enabled"/>
+    <child name="journald-logging" schema="io.github.Pithos.plugin-enabled"/>
     <child name="notify" schema="io.github.Pithos.plugin"/>
     <child name="lastfm" schema="io.github.Pithos.plugin"/>
     <child name="notification-icon" schema="io.github.Pithos.plugin"/>
