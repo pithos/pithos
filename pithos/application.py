@@ -49,6 +49,8 @@ class PithosApplication(Gtk.Application):
                              _('Use a mock service instead of connecting to the real Pandora server'), None)
         self.add_main_option('version', 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
                              _('Show the version'), None)
+        self.add_main_option('last-logs', 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE,
+                             _('Show the logs for Pithos since the last reboot'), None)
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -85,26 +87,55 @@ class PithosApplication(Gtk.Application):
         # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig
         logging.root.handlers = []
 
+        # Show the Pithos log since last reboot and exit
+        if options.contains('last-logs'):
+            try:
+                from systemd import journal
+                from os.path import basename
+            except ImportError:
+                self._print(command_line, _('Systemd Python module not found'))
+                return 1
+
+            # We want the version also since the logging plugin misses
+            # logging messages before it's enabled.
+            self._print(command_line, 'Pithos {}'.format(self.version))
+
+            reader = journal.Reader()
+            reader.this_boot()
+            reader.add_match(SYSLOG_IDENTIFIER='io.github.Pithos')
+
+            _PRIORITY_TO_LEVEL = {
+                journal.LOG_DEBUG: 'DEBUG',
+                journal.LOG_INFO: 'INFO',
+                journal.LOG_WARNING: 'WARNING',
+                journal.LOG_ERR: 'ERROR',
+                journal.LOG_CRIT: 'CRTICIAL',
+                journal.LOG_ALERT: 'ALERT',
+            }
+
+            got_logs = False            
+
+            for entry in reader:
+                got_logs = True
+                level = _PRIORITY_TO_LEVEL[entry['PRIORITY']]
+                line = entry['CODE_LINE']
+                function = entry['CODE_FUNC']
+                module = basename(entry['CODE_FILE'])[:-3]
+                message = entry['MESSAGE']
+                log_line = '{} - {}:{}:{} - {}'.format(level, module, function, line, message)
+                self._print(command_line, log_line)
+
+            if not got_logs:
+                self._print(command_line, _('No logs for Pithos present for this boot.'))
+
+            return 0
+
         # Show the version on local instance and exit
         if options.contains('version'):
-            # Broken bindings...
-            type(command_line).do_print_literal(command_line, "Pithos {}\n".format(self.version))
+            self._print(command_line, 'Pithos {}'.format(self.version))
             return 0
 
         handlers = []
-        try:
-            from systemd.journal import JournalHandler
-
-            journal = JournalHandler(SYSLOG_IDENTIFIER=self.props.application_id)
-
-            # We can be more verbose with the journal and filter it later
-            # and don't need fancy formatting as its part of the structure
-            journal.setLevel(logging.INFO)
-            journal.setFormatter(logging.Formatter())
-
-            handlers.append(journal)
-        except ImportError:
-            pass
 
         # Set the logging level to show debug messages
         if options.contains('debug'):
@@ -126,6 +157,11 @@ class PithosApplication(Gtk.Application):
         self.do_activate()
 
         return 0
+
+    @staticmethod
+    def _print(command_line, string):
+        # Workaround broken pygobject bindings
+        type(command_line).do_print_literal(command_line, string + '\n')
 
     def do_activate(self):
         if not self.window:
