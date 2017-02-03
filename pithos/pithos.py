@@ -952,8 +952,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         if song is None:
             song = self.current_song
         if song:
-            self.songs_model[song.index][1] = self.song_text(song)
-            self.songs_model[song.index][2] = self.song_icon(song) or ""
+            if self.songs_model[song.index][1] != self.song_text(song):
+                self.songs_model[song.index][1] = self.song_text(song)
+            if self.songs_model[song.index][2] != self.song_icon(song):
+                self.songs_model[song.index][2] = self.song_icon(song) or ""
         return True
 
     def create_ui_loop(self):
