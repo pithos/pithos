@@ -52,6 +52,20 @@ except ImportError:
 ALBUM_ART_SIZE = 96
 TEXT_X_PADDING = 12
 
+FALLBACK_BLACK = Gdk.RGBA(red=0.0, green=0.0, blue=0.0, alpha=1.0)
+FALLBACK_WHITE = Gdk.RGBA(red=1.0, green=1.0, blue=1.0, alpha=1.0)
+
+RATING_BG_SVG = '''
+<svg height="20" width="20">
+<g transform="translate(0,-1032.3622)">
+<path d="m 12,1032.3622 a 12,12 0 0 0 -12,12 12,12 0 0 0 3.0742188,
+8 l 16.9257812,0 0,-16.9277 a 12,12 0 0 0 -8,-3.0723 z"
+style="fill:{bg}" /></g></svg>
+'''
+
+BACKGROUND_SVG = '''
+<svg><rect y="0" x="0" height="{px}" width="{px}" style="fill:{fg}" /></svg>
+'''
 
 class PseudoGst(Enum):
     """Create aliases to Gst.State so that we can add our own BUFFERING Pseudo state"""
@@ -78,7 +92,12 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
         super().__init__(height=ALBUM_ART_SIZE, width=ALBUM_ART_SIZE)
         self.icon = None
         self.pixbuf = None
-        self.rate_bg = Gtk.IconTheme.get_default().load_icon('pithos-rate-bg', 32, 0)
+        self.love_icon = None
+        self.ban_icon = None
+        self.tired_icon = None
+        self.generic_audio_icon = None
+        self.background = None
+        self.rate_bg = None
 
     __gproperties__ = {
         'icon': (str, 'icon', 'icon', '', GObject.ParamFlags.READWRITE),
@@ -90,21 +109,97 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
     def do_get_property(self, pspec):
         return getattr(self, pspec.name)
     def do_render(self, ctx, widget, background_area, cell_area, flags):
-        if self.pixbuf:
+        if self.pixbuf is not None:
             Gdk.cairo_set_source_pixbuf(ctx, self.pixbuf, cell_area.x, cell_area.y)
             ctx.paint()
-        if self.icon:
+        else:
+            Gdk.cairo_set_source_pixbuf(ctx, self.background, cell_area.x, cell_area.y)
+            ctx.paint()
+            x = cell_area.x + (ALBUM_ART_SIZE - self.generic_audio_icon.get_width()) // 2
+            y = cell_area.y + (ALBUM_ART_SIZE - self.generic_audio_icon.get_height()) // 2
+            Gdk.cairo_set_source_pixbuf(ctx, self.generic_audio_icon, x, y)
+            ctx.paint()
+
+        if self.icon is not None:
             x = cell_area.x + (cell_area.width - self.rate_bg.get_width()) # right
             y = cell_area.y + (cell_area.height - self.rate_bg.get_height()) # bottom
             Gdk.cairo_set_source_pixbuf(ctx, self.rate_bg, x, y)
             ctx.paint()
 
-            pixbuf = Gtk.IconTheme.get_default().load_icon(self.icon, Gtk.IconSize.MENU, 0)
-            x = cell_area.x + (cell_area.width - pixbuf.get_width()) - 5 # right
-            y = cell_area.y + (cell_area.height - pixbuf.get_height()) - 5 # bottom
-            Gdk.cairo_set_source_pixbuf(ctx, pixbuf, x, y)
+            if self.icon == 'love':
+                rating_icon = self.love_icon
+            elif self.icon == 'tired':
+                rating_icon = self.tired_icon
+            elif self.icon == 'ban':
+                rating_icon = self.ban_icon
+
+            x = x + (rating_icon.get_width() // 2)
+            y = y + (rating_icon.get_height() // 2)
+
+            Gdk.cairo_set_source_pixbuf(ctx, rating_icon, x, y)
             ctx.paint()
 
+    def update_icons(self, style_context):
+        # Dynamically change the color of backgrounds and icons
+        # to match the current theme at theme changes.
+        # Attempt to look up the background and foreground colors
+        # in the theme's CSS file. Otherwise if they aren't found
+        # fallback to black and white. *Most* new themes use 'theme_bg_color' and 'theme_fg_color'.
+        # Some(older) themes use 'bg_color' and 'fg_color'.(like Ubuntu light themes)
+        for key in ('theme_bg_color', 'bg_color'):
+            bg_bool, bg_color = style_context.lookup_color(key)
+            if bg_bool:
+                break
+        if not bg_bool:
+            bg_color = FALLBACK_BLACK
+            logging.debug("Could not find theme's background color falling back to black.")
+
+        for key in ('theme_fg_color', 'fg_color'):
+            fg_bool, fg_color = style_context.lookup_color(key)
+            if fg_bool:
+                break
+        if not fg_bool:
+            fg_color = FALLBACK_WHITE
+            logging.debug("Could not find theme's foreground color falling back to white.")
+
+        fg_rgb = fg_color.to_string()
+        bg_rgb = bg_color.to_string()
+
+        # Use our color values to create strings representing valid SVG's
+        # for backgound and rate_bg, then load them with PixbufLoader.
+        background = BACKGROUND_SVG.format(px=ALBUM_ART_SIZE, fg=fg_rgb).encode()
+        rating_bg = RATING_BG_SVG.format(bg=bg_rgb).encode()
+
+        with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
+            loader.write(background)
+        self.background = loader.get_pixbuf()
+
+        with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
+            loader.write(rating_bg)
+        self.rate_bg = loader.get_pixbuf()
+
+        current_theme = Gtk.IconTheme.get_default()
+
+        # Pithos requires an icon theme with symbolic icons.
+
+        # Manually color audio-x-generic-symbolic 48px icon to be used as part of the "default cover".
+        info = current_theme.lookup_icon('audio-x-generic-symbolic', 48, 0)
+        self.generic_audio_icon, was_symbolic = info.load_symbolic(bg_color, bg_color, bg_color, bg_color)
+
+        # We request 24px icons because what we really want is 12px icons,
+        # and they doesn't exist in many(or any?) icon themes. We then manually color
+        # and scale them down to 12px.
+        info = current_theme.lookup_icon('emblem-favorite-symbolic', 24, 0)
+        icon, was_symbolic = info.load_symbolic(fg_color, fg_color, fg_color, fg_color)
+        self.love_icon = icon.scale_simple(12, 12, GdkPixbuf.InterpType.BILINEAR)
+
+        info = current_theme.lookup_icon('dialog-error-symbolic', 24, 0)
+        icon, was_symbolic = info.load_symbolic(fg_color, fg_color, fg_color, fg_color)
+        self.ban_icon = icon.scale_simple(12, 12, GdkPixbuf.InterpType.BILINEAR)
+
+        info = current_theme.lookup_icon('go-jump-symbolic', 24, 0)
+        icon, was_symbolic = info.load_symbolic(fg_color, fg_color, fg_color, fg_color)
+        self.tired_icon = icon.scale_simple(12, 12, GdkPixbuf.InterpType.BILINEAR)
 
 @GtkTemplate(ui='/io/github/Pithos/ui/PithosWindow.ui')
 class PithosWindow(Gtk.ApplicationWindow):
@@ -219,11 +314,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.ui_loop_timer_id = 0
         self.worker = GObjectWorker()
 
-        theme = Gtk.IconTheme.get_default()
-        aa = theme.load_icon('pithos-album-default', 128, 0)
-
-        self.default_album_art = aa.scale_simple(ALBUM_ART_SIZE, ALBUM_ART_SIZE, GdkPixbuf.InterpType.BILINEAR)
-
         try:
             self.tempdir = tempfile.TemporaryDirectory(prefix='pithos-')
             logging.info("Created temporary directory %s" %self.tempdir.name)
@@ -241,6 +331,10 @@ class PithosWindow(Gtk.ApplicationWindow):
     def init_ui(self):
         GLib.set_application_name("Pithos")
         Gtk.Window.set_default_icon_name('pithos')
+        self.current_window_theme_name = None
+        self.current_icon_theme_name = None
+
+        self.treeview_style_context = self.songs_treeview.get_style_context()
 
         self.volume.set_relief(Gtk.ReliefStyle.NORMAL)  # It ignores glade...
         self.settings.bind('volume', self.volume, 'value', Gio.SettingsBindFlags.DEFAULT)
@@ -249,10 +343,11 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         title_col   = Gtk.TreeViewColumn()
 
-        render_icon = CellRendererAlbumArt()
-        title_col.pack_start(render_icon, False)
-        title_col.add_attribute(render_icon, "icon", 2)
-        title_col.add_attribute(render_icon, "pixbuf", 3)
+        self.render_cover_art = CellRendererAlbumArt()
+        self.treeview_style_context.connect('changed', self.style_context_change_handler)
+        title_col.pack_start(self.render_cover_art, False)
+        title_col.add_attribute(self.render_cover_art, "icon", 2)
+        title_col.add_attribute(self.render_cover_art, "pixbuf", 3)
 
         render_text = Gtk.CellRendererText(xpad=TEXT_X_PADDING)
         render_text.props.ellipsize = Pango.EllipsizeMode.END
@@ -327,6 +422,17 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.add_action(action)
         app.add_accelerator('<Primary>d', 'win.bookmark', None)
         action.connect('activate', self.bookmark_song)
+
+    def style_context_change_handler(self, style_context):
+        # We only care if the window or icon theme has changed.
+        current_theme = Gtk.Settings.get_default()
+        window_theme_changed = self.current_window_theme_name != current_theme.props.gtk_theme_name
+        icon_theme_chanced = self.current_icon_theme_name != current_theme.props.gtk_icon_theme_name
+        if window_theme_changed or icon_theme_chanced:
+            self.current_window_theme_name = current_theme.props.gtk_theme_name
+            self.current_icon_theme_name = current_theme.props.gtk_icon_theme_name
+            # Update rating icons and background, and generic cover icon and background.
+            self.render_cover_art.update_icons(style_context)
 
     def worker_run(self, fn, args=(), callback=None, message=None, context='net'):
         if context and message:
@@ -710,7 +816,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             start_index = len(self.songs_model)
             for i in l:
                 i.index = len(self.songs_model)
-                self.songs_model.append((i, '', '', self.default_album_art))
+                self.songs_model.append((i, '', None, None))
                 self.update_song_row(i)
 
                 i.art_pixbuf = None
@@ -961,18 +1067,19 @@ class PithosWindow(Gtk.ApplicationWindow):
     @staticmethod
     def song_icon(song):
         if song.tired:
-            return 'go-jump'
+            return 'tired'
         if song.rating == RATE_LOVE:
-            return 'emblem-favorite'
+            return 'love'
         if song.rating == RATE_BAN:
-            return 'dialog-error'
+            return 'ban'
+        return None
 
     def update_song_row(self, song = None):
         if song is None:
             song = self.current_song
         if song:
             self.songs_model[song.index][1] = self.song_text(song)
-            self.songs_model[song.index][2] = self.song_icon(song) or ""
+            self.songs_model[song.index][2] = self.song_icon(song)
         return True
 
     def create_ui_loop(self):
