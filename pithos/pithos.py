@@ -19,6 +19,7 @@ import json
 import logging
 import math
 import re
+import os
 import sys
 import time
 import tempfile
@@ -686,20 +687,25 @@ class PithosWindow(Gtk.ApplicationWindow):
             return self.next_song()
 
         logging.info("Starting song: index = %i"%(song_index))
-
-        self.player.set_property("uri", self.current_song.audioUrl)
+        song = self.current_song
+        audioUrl = song.audioUrl
+        os.environ['PULSE_PROP_media.title'] = song.title
+        os.environ['PULSE_PROP_media.artist'] = song.artist
+        os.environ['PULSE_PROP_media.name'] = '{}: {}'.format(song.artist, song.title)
+        os.environ['PULSE_PROP_media.filename'] = audioUrl
+        self.player.set_property("uri", audioUrl)
         self._set_player_state(PseudoGst.BUFFERING)
         self.playcount += 1
 
         self.current_song.start_time = time.time()
         self.songs_treeview.scroll_to_cell(song_index, use_align=True, row_align = 1.0)
         self.songs_treeview.set_cursor(song_index, None, 0)
-        self.set_title("%s by %s - Pithos" % (self.current_song.title, self.current_song.artist))
+        self.set_title("%s by %s - Pithos" % (song.title, song.artist))
 
         self.update_song_row()
 
-        self.emit('song-changed', self.current_song)
-        self.emit('metadata-changed', self.current_song)
+        self.emit('song-changed', song)
+        self.emit('metadata-changed', song)
 
     @GtkTemplate.Callback
     def next_song(self, *ignore):
