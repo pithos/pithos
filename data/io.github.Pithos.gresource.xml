@@ -9,8 +9,5 @@
     <file preprocess="xml-stripblanks">ui/PreferencesPithosDialog.ui</file>
     <file preprocess="xml-stripblanks">ui/SearchDialog.ui</file>
     <file preprocess="xml-stripblanks">ui/StationsDialog.ui</file>
-
-    <file preprocess="to-pixdata">icons/128x128/apps/pithos-album-default.png</file>
-    <file preprocess="to-pixdata">icons/32x32/emblems/pithos-rate-bg.png</file>
   </gresource>
 </gresources>
