@@ -75,6 +75,7 @@ class LoggingPluginPrefsDialog(Gtk.Dialog):
             use_header_bar=1,
             **kwargs,
         )
+        self.set_default_size(300, -1)
         self.pithos_window = parent
         self.settings = settings
         self.set_resizable(False)
