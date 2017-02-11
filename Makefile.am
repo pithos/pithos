@@ -76,6 +76,9 @@ hicolor_scalable_DATA = data/icons/hicolor/scalable/apps/io.github.Pithos.svg \
 hicolordir = $(datadir)/icons/hicolor/48x48/apps
 hicolor_DATA = data/icons/hicolor/48x48/apps/pithos-tray-icon.png
 
+symbolicdir = $(datadir)/icons/hicolor/symbolic/apps
+symbolic_DATA = data/icons/hicolor/symbolic/apps/io.github.Pithos-symbolic.svg
+
 ubuntu_lightdir = $(datadir)/icons/ubuntu-mono-light/16x16/apps
 ubuntu_light_DATA = data/icons/ubuntu-mono-light/16x16/apps/pithos-tray-icon.svg
 
@@ -96,7 +99,7 @@ CLEANFILES = $(pkgdata_DATA) $(bin_SCRIPTS) $(desktop_FILES) $(appstream_XML) da
 DISTCLEANFILES = $(man1_MANS)
 EXTRA_DIST = license README.md autogen.sh requirements-osx.txt bin/pithos.in data/io.github.Pithos.gresource.xml \
 	$(appstream_in_files) $(desktop_in_files) $(noinst_DATA) $(gsettings_SCHEMAS) $(hicolor_DATA) \
-	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA) $(man1_MANS)
+	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA) $(symbolic_DATA) $(man1_MANS)
 
 # -------------- docs ---------------
 
