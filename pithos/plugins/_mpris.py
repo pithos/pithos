@@ -410,8 +410,9 @@ class PithosMprisService(DBusServiceObject):
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='x')
     def Position(self):
-        if self.window.query_position() is not None:
-            return self.window.query_position() // 1000
+        position = self.window.query_position()
+        if position is not None:
+            return position // 1000
         else:
             return 0
 
