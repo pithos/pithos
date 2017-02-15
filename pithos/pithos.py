@@ -215,6 +215,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         "station-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "stations-processed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "stations-dlg-ready": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
+        "songs-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
     }
 
     volume = GtkTemplate.Child()
@@ -833,12 +834,11 @@ class PithosWindow(Gtk.ApplicationWindow):
                 i.index = len(self.songs_model)
                 self.songs_model.append((i, '', None, None))
                 self.update_song_row(i)
-
                 i.art_pixbuf = None
-                i.artUrl = None
                 if i.artRadio:
                     self.worker_run(get_album_art, (i.artRadio, self.tempdir, i, i.index), art_callback)
 
+            self.emit('songs-added', l)
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if self.start_new_playlist:
                 self.start_song(start_index)
