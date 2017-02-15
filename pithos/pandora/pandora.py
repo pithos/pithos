@@ -471,6 +471,7 @@ class Song:
         self.finished = False
         self.feedbackId = None
         self.bitrate = None
+        self.artUrl = None
         self._title = ''
 
     @property
