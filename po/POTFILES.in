@@ -11,5 +11,6 @@ data/io.github.Pithos.desktop.in
 pithos/application.py
 pithos/pithos.py
 pithos/StationsPopover.py
+pithos/PreferencesPithosDialog.py
 pithos/plugins/journald_logging.py
 
