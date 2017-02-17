@@ -34,10 +34,11 @@ class PithosPluginRow(Gtk.ListBoxRow):
         super().__init__()
 
         self.plugin = plugin
+        self._friendly_name = plugin.name.title().replace('_', ' ')
 
         box = Gtk.Box()
         label = Gtk.Label()
-        label.set_markup('<b>{}</b>\n{}'.format(plugin.name.title().replace('_', ' '), plugin.description))
+        label.set_markup('<b>{}</b>\n{}'.format(self._friendly_name, plugin.description))
         label.set_halign(Gtk.Align.START)
         label.set_ellipsize(Pango.EllipsizeMode.END)
         label.set_max_width_chars(30)
@@ -59,11 +60,17 @@ class PithosPluginRow(Gtk.ListBoxRow):
         self.add(box)
 
     def set_prefs_btn(self):
+        prefs_btn = self.get_toplevel().preference_btn
         if self.plugin.enabled:
             sensitive = self.plugin.preferences_dialog is not None
         else:
             sensitive = False
-        self.get_toplevel().preference_btn.set_sensitive(sensitive)
+        prefs_btn.set_sensitive(sensitive)
+        if sensitive:
+            tooltip = _('Click to change the {} plugin\'s settings.'.format(self._friendly_name))
+        else:
+            tooltip = _('This plugin either must be enabled or does not support preferences.')
+        prefs_btn.set_tooltip_text(tooltip)
 
     def on_grab_focus(self, *ignore):
         self.set_prefs_btn()
