@@ -65,15 +65,13 @@ class LoggingPluginPrefsDialog(Gtk.Dialog):
         'logging-changed': (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_STRING,)),
     }
 
-    def __init__(self, parent, settings, *args, **kwargs):
+    def __init__(self, parent, settings):
         super().__init__(
             _('Logging Level'),
             parent,
             0,
             ('_Cancel', Gtk.ResponseType.CANCEL, '_Apply', Gtk.ResponseType.APPLY),
-            *args,
             use_header_bar=1,
-            **kwargs,
         )
         self.set_default_size(300, -1)
         self.pithos_window = parent
