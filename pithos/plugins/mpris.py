@@ -15,7 +15,7 @@
 
 import logging
 
-from gi.repository import Gio
+from gi.repository import Gio, GLib
 
 from pithos.plugin import PithosPlugin
 
@@ -37,13 +37,15 @@ class MprisPlugin(PithosPlugin):
             logging.warning('Failed to connect to session bus: {}'.format(e))
             return 'Failed to connect to DBus'
 
-    def on_enable(self):
-        if not self.service:
+        try:
             self.service = self.PithosDBusProxy(self.window, connection=self.bus)
-        self.service.connect()
-
-        if not self.mpris:
             self.mpris = self.PithosMprisService(self.window, connection=self.bus)
+        except Exception as e:
+            logging.warning('Failed to create DBus services: {}'.format(e))
+            return 'Failed to create DBus services'
+
+    def on_enable(self):
+        self.service.connect()
         self.mpris.connect()
 
     def on_disable(self):
