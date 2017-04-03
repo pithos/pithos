@@ -25,11 +25,8 @@ class MprisPlugin(PithosPlugin):
     description = 'Allows control with external programs'
 
     def on_prepare(self):
-        from . import _dbus_service
         from . import _mpris
         self.PithosMprisService = _mpris.PithosMprisService
-        self.PithosDBusProxy = _dbus_service.PithosDBusProxy
-        self.service = None
         self.mpris = None
         try:
             self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
@@ -38,16 +35,13 @@ class MprisPlugin(PithosPlugin):
             return 'Failed to connect to DBus'
 
         try:
-            self.service = self.PithosDBusProxy(self.window, connection=self.bus)
             self.mpris = self.PithosMprisService(self.window, connection=self.bus)
         except Exception as e:
             logging.warning('Failed to create DBus services: {}'.format(e))
             return 'Failed to create DBus services'
 
     def on_enable(self):
-        self.service.connect()
         self.mpris.connect()
 
     def on_disable(self):
-        self.service.disconnect()
         self.mpris.disconnect()
