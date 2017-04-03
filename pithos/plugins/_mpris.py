@@ -23,8 +23,7 @@ import math
 
 from gi.repository import (
     GLib,
-    Gio,
-    Gtk
+    Gio
 )
 from .dbus_util.DBusServiceObject import (
     DBusServiceObject,
@@ -39,6 +38,12 @@ class PithosMprisService(DBusServiceObject):
     MEDIA_PLAYER2_PLAYER_IFACE = 'org.mpris.MediaPlayer2.Player'
     MEDIA_PLAYER2_PLAYLISTS_IFACE = 'org.mpris.MediaPlayer2.Playlists'
     MEDIA_PLAYER2_TRACKLIST_IFACE = 'org.mpris.MediaPlayer2.TrackList'
+
+    # As per https://lists.freedesktop.org/archives/mpris/2012q4/000054.html
+    # Secondary mpris interfaces to allow for options not allowed within the
+    # confines of the mrpis spec are a completely valid use case.
+    # This interface allows clients to love, ban, set tired and unrate songs.
+    MEDIA_PLAYER2_RATINGS_IFACE = 'org.mpris.MediaPlayer2.ExtensionPithosRatings'
 
     TRACK_OBJ_PATH = '/io/github/Pithos/TrackId/'
     NO_TRACK_OBJ_PATH = '/org/mpris/MediaPlayer2/TrackList/NoTrack'
@@ -576,6 +581,17 @@ class PithosMprisService(DBusServiceObject):
         '''b Read only Interface MediaPlayer2.TrackList'''
         return False
 
+    @dbus_property(MEDIA_PLAYER2_RATINGS_IFACE, signature='b')
+    def CanRate(self):
+        '''b Read only Interface MediaPlayer2.ExtensionPithosRatings'''
+        # This property exists so that applets can check it to make sure
+        # the MediaPlayer2.ExtensionPithosRatings interface actually exists.
+        # It's much more convenient for them then wrapping all their
+        # ratings code in the equivalent of a try except block.
+        # Not all versions of Pithos will have this interface.
+        # It serves a similar function as HasTrackList.
+        return True
+
     @dbus_method(MEDIA_PLAYER2_IFACE)
     def Raise(self):
         '''() -> nothing Interface MediaPlayer2'''
@@ -701,6 +717,34 @@ class PithosMprisService(DBusServiceObject):
         song = self._song_from_track_id(TrackId)
         if song and song.index > self.window.current_song_index:
             self.window.start_song(song.index)
+
+    @dbus_method(MEDIA_PLAYER2_RATINGS_IFACE, in_signature='o')
+    def LoveSong(self, TrackId):
+        '''(o) -> nothing Interface MediaPlayer2.ExtensionPithosRatings'''
+        song = self._song_from_track_id(TrackId)
+        if song:
+            self.window.love_song(song=song)
+
+    @dbus_method(MEDIA_PLAYER2_RATINGS_IFACE, in_signature='o')
+    def BanSong(self, TrackId):
+        '''(o) -> nothing Interface MediaPlayer2.ExtensionPithosRatings'''
+        song = self._song_from_track_id(TrackId)
+        if song:
+            self.window.ban_song(song=song)
+
+    @dbus_method(MEDIA_PLAYER2_RATINGS_IFACE, in_signature='o')
+    def TiredSong(self, TrackId):
+        '''(o) -> nothing Interface MediaPlayer2.ExtensionPithosRatings'''
+        song = self._song_from_track_id(TrackId)
+        if song:
+            self.window.tired_song(song=song)
+
+    @dbus_method(MEDIA_PLAYER2_RATINGS_IFACE, in_signature='o')
+    def UnRateSong(self, TrackId):
+        '''(o) -> nothing Interface MediaPlayer2.ExtensionPithosRatings'''
+        song = self._song_from_track_id(TrackId)
+        if song:
+            self.window.unrate_song(song=song)
 
     @dbus_signal(MEDIA_PLAYER2_PLAYER_IFACE, signature='x')
     def Seeked(self, Position):
