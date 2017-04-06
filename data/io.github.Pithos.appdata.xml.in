@@ -23,6 +23,30 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release date="2017-04-06" version="1.3.0">
+      <description>
+        <p>This is a new major release with numerous improvements:</p>
+        <ul>
+          <li>Add support for MPRIS TrackList and PlayList interface</li>
+          <li>Add dynamic rating and cover icons based upon theme colors</li>
+          <li>Add plugin for logging to systemd journal</li>
+          <li>Add symbolic application icon</li>
+          <li>Add man page for pithos</li>
+          <li>Improve handling playlist expiration</li>
+          <li>Improve search in stations list</li>
+          <li>Improve accessibility of UI</li>
+          <li>Improve buffering behavior</li>
+          <li>Improve libsecret support</li>
+          <li>Remove dependency on libnotify</li>
+          <li>Fix disabling keybindings plugin when using keybinder</li>
+          <li>Fix notification icon trying to load on Wayland</li>
+          <li>Fix failure to reconnect on login expiration</li>
+          <li>Fix some plugins not being enabled by default</li>
+          <li>Fix handling error on MPRIS plugin failure</li>
+          <li>Fix migrating configs from &lt; 0.3.18</li>
+        </ul>
+      </description>
+    </release>
     <release date="2016-07-31" version="1.2.1">
       <description>
         <p>This is a minor bug fix release just cleaning up a few issues:</p>
