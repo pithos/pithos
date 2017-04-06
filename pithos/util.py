@@ -44,6 +44,16 @@ def unlock_keyring():
         None,
     )
 
+    if default_collection is None:
+        logging.warning(
+            'Could not get the default Secret Collection.\n'
+            'Attempting to use the session Collection.'
+        )
+
+        global _current_collection
+        _current_collection = Secret.COLLECTION_SESSION
+        return
+
     if not default_collection.get_locked():
         logging.debug('The default keyring is unlocked.')
     else:
