@@ -97,7 +97,7 @@ BUILT_SOURCES = pithos.gresource
 SUBDIRS = po
 CLEANFILES = $(pkgdata_DATA) $(bin_SCRIPTS) $(desktop_FILES) $(appstream_XML) data/gschemas.compiled
 DISTCLEANFILES = $(man1_MANS)
-EXTRA_DIST = license README.md autogen.sh requirements-osx.txt bin/pithos.in data/io.github.Pithos.gresource.xml \
+EXTRA_DIST = license README.md autogen.sh bin/pithos.in data/io.github.Pithos.gresource.xml \
 	$(appstream_in_files) $(desktop_in_files) $(noinst_DATA) $(gsettings_SCHEMAS) $(hicolor_DATA) \
 	$(hicolor_scalable_DATA) $(ubuntu_light_DATA) $(ubuntu_dark_DATA) $(symbolic_DATA) $(man1_MANS)
 
