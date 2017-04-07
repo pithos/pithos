@@ -575,7 +575,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
 
         email = self.settings['email']
-        password = get_account_password(email)
+        password = get_account_password(email) or self.prefs_dlg.password_entry.get_text()
         if not email or not password:
             # You probably shouldn't be able to reach here
             # with no credentials set
