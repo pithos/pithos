@@ -32,6 +32,8 @@ _current_collection = Secret.COLLECTION_DEFAULT
 
 # TODO: Async
 def unlock_keyring():
+    global _current_collection
+
     service = Secret.Service.get_sync(
         Secret.ServiceFlags.NONE,
         None,
@@ -49,8 +51,6 @@ def unlock_keyring():
             'Could not get the default Secret Collection.\n'
             'Attempting to use the session Collection.'
         )
-
-        global _current_collection
         _current_collection = Secret.COLLECTION_SESSION
         return
 
@@ -63,11 +63,11 @@ def unlock_keyring():
         )
 
         if not num_items or default_collection not in unlocked:
-            global _current_collection
             _current_collection = Secret.COLLECTION_SESSION
             logging.debug('The default keyring is locked. Using session collection.')
         else:
             logging.debug('The default keyring was unlocked.')
+
 
 def get_account_password(email):
     return Secret.password_lookup_sync(_ACCOUNT_SCHEMA, {"email": email}, None) or ''
@@ -139,4 +139,3 @@ if hasattr(Gtk.Menu, 'popup_at_pointer'):
     popup_at_pointer = Gtk.Menu.popup_at_pointer
 else:
     popup_at_pointer = lambda menu, event: menu.popup(None, None, None, None, event.button, event.time)
-
