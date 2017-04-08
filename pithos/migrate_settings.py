@@ -16,7 +16,7 @@
 import os
 import logging
 from gi.repository import GLib, Gio
-from .util import set_account_password
+from .util import SecretService
 
 
 def _get_plugin_settings(name):
@@ -81,7 +81,7 @@ def maybe_migrate_settings():
             s.set_boolean('enabled', val)
         elif key == 'password':
             if 'username' in prefs:
-                set_account_password(prefs['username'], val)
+                SecretService.set_account_password(prefs['username'], val)
         elif key == 'volume':
             settings.set_double(key, float(val))
         else:

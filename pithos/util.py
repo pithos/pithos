@@ -24,76 +24,101 @@ from gi.repository import (
     Gtk
 )
 
-_ACCOUNT_SCHEMA = Secret.Schema.new('io.github.Pithos.Account', Secret.SchemaFlags.NONE,
-                                    {"email": Secret.SchemaAttributeType.STRING})
 
-_current_collection = Secret.COLLECTION_DEFAULT
-
-
-# TODO: Async
-def unlock_keyring():
-    global _current_collection
-
-    service = Secret.Service.get_sync(
-        Secret.ServiceFlags.NONE,
-        None,
+class _SecretService:
+    _cached_password = ''
+    _current_collection = Secret.COLLECTION_DEFAULT
+    _account_schema = Secret.Schema.new(
+        'io.github.Pithos.Account',
+        Secret.SchemaFlags.NONE,
+        {'email': Secret.SchemaAttributeType.STRING},
     )
 
-    default_collection = Secret.Collection.for_alias_sync(
-        service,
-        Secret.COLLECTION_DEFAULT,
-        Secret.CollectionFlags.NONE,
-        None,
-    )
-
-    if default_collection is None:
-        logging.warning(
-            'Could not get the default Secret Collection.\n'
-            'Attempting to use the session Collection.'
-        )
-        _current_collection = Secret.COLLECTION_SESSION
-        return
-
-    if not default_collection.get_locked():
-        logging.debug('The default keyring is unlocked.')
-    else:
-        num_items, unlocked = service.unlock_sync(
-            [default_collection],
+    def unlock_keyring(self):
+        service = Secret.Service.get_sync(
+            Secret.ServiceFlags.NONE,
             None,
         )
 
-        if not num_items or default_collection not in unlocked:
-            _current_collection = Secret.COLLECTION_SESSION
-            logging.debug('The default keyring is locked. Using session collection.')
+        default_collection = Secret.Collection.for_alias_sync(
+            service,
+            Secret.COLLECTION_DEFAULT,
+            Secret.CollectionFlags.NONE,
+            None,
+        )
+
+        if default_collection is None:
+            logging.warning(
+                'Could not get the default Secret Collection.\n'
+                'Attempting to use the session Collection.'
+            )
+
+            self._current_collection = Secret.COLLECTION_SESSION
+            return
+
+        if not default_collection.get_locked():
+            logging.debug('The default keyring is unlocked.')
         else:
-            logging.debug('The default keyring was unlocked.')
+            num_items, unlocked = service.unlock_sync(
+                [default_collection],
+                None,
+            )
+
+            if not num_items or default_collection not in unlocked:
+                self._current_collection = Secret.COLLECTION_SESSION
+                logging.debug('The default keyring is locked. Using session collection.')
+            else:
+                logging.debug('The default keyring was unlocked.')
+
+    def get_account_password(self, email):
+        if not self._cached_password:
+            self._cached_password = Secret.password_lookup_sync(
+                self._account_schema,
+                {"email": email},
+                None,
+            ) or ''
+
+        return self._cached_password
+
+    def _clear_account_password(self, email):
+        self._cached_password = ''
+        return Secret.password_clear_sync(
+            self._account_schema,
+            {"email": email},
+            None,
+        )
+
+    def set_account_password(self, email, password, previous_email=None):
+        if previous_email and previous_email != email:
+            if not self._clear_account_password(previous_email):
+                logging.warning('Failed to clear previous account')
+
+        if not password:
+            return self._clear_account_password(email)
+
+        if password == self.get_account_password(email):
+            logging.debug('Password unchanged')
+            return False
+
+        password_store_successful = Secret.password_store_sync(
+            self._account_schema,
+            {'email': email},
+            self._current_collection,
+            'Pandora Account',
+            password,
+            None,
+        )
+
+        if password_store_successful:
+            self._cached_password = password
+        else:
+            self._cached_password = ''
+            logging.warning('Failed to store password')
+
+        return password_store_successful
 
 
-def get_account_password(email):
-    return Secret.password_lookup_sync(_ACCOUNT_SCHEMA, {"email": email}, None) or ''
-
-
-def _clear_account_password(email):
-    return Secret.password_clear_sync(_ACCOUNT_SCHEMA, {"email": email}, None)
-
-
-def set_account_password(email, password, previous_email=None):
-    if previous_email and previous_email != email:
-        if not _clear_account_password(previous_email):
-            logging.warning('Failed to clear previous account')
-
-    if not password:
-        return _clear_account_password(email)
-
-    attrs = {"email": email}
-    if password == get_account_password(email):
-        logging.debug('Password unchanged')
-        return False
-
-    Secret.password_store_sync(_ACCOUNT_SCHEMA, attrs, _current_collection,
-                               "Pandora Account", password, None)
-    return True
-
+SecretService = _SecretService()
 
 def parse_proxy(proxy):
     """ _parse_proxy from urllib """
