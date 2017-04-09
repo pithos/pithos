@@ -44,6 +44,7 @@ class LastfmPlugin(PithosPlugin):
         self.worker = GObjectWorker()
         self.preferences_dialog = LastFmAuth(self.pylast, self.settings)
         self.preferences_dialog.connect('lastfm-authorized', self.on_lastfm_authorized)
+        self.window.prefs_dlg.connect('login-changed', self._show_dialog)
 
     def on_enable(self):
         if self.settings['data']:
@@ -56,13 +57,89 @@ class LastfmPlugin(PithosPlugin):
             dialog.set_modal(True)
             dialog.show_all()
 
-
     def on_lastfm_authorized(self, prefs_dialog, auth_state):
         if auth_state is prefs_dialog.AuthState.AUTHORIZED:
             self._enable_real()
 
         elif auth_state is prefs_dialog.AuthState.NOT_AUTHORIZED:
             self.on_disable()
+
+    def _show_dialog(self, *ignore):
+        if not self.network or not self.settings['data']:
+            return
+
+        def err(e):
+            logging.error('Could not get Last.fm username. Error: {}'.format(e))
+            return None
+
+        def get_username():
+            username = self.network.get_authenticated_user().get_name()
+            logging.debug('Got Last.fm username: {}'.format(username))
+            return username
+
+        self.worker.send(get_username, (), self._dialog, err)
+
+    def _dialog(self, username):
+        if not username:
+            return
+
+        def on_response(dialog, response):
+            if self.enabled:
+                disable_response = Gtk.ResponseType.NO
+            else:
+                disable_response = Gtk.ResponseType.YES
+
+            if response == disable_response:
+                self.preferences_dialog.auth_state = self.preferences_dialog.AuthState.NOT_AUTHORIZED
+                self.settings.reset('enabled')
+                self.settings.reset('data')
+                self.preferences_dialog.button.set_sensitive(True)
+                self.preferences_dialog.set_widget_text()
+                if self.enabled:
+                    self.on_disable()
+
+            dialog.destroy()
+
+        if self.enabled:
+            text = _('The Last.fm Plugin is Enabled')
+            secondary_text = _('Would you like to continue Scrobbling to this Last.fm account?')
+            trinary_text = _(
+                'You will need to re-enable the Last.fm Plugin if you wish to Scrobble to a different account.'
+            )
+        else:
+            text = _('The Last.fm Plugin is Disabled')
+            secondary_text = _('But Pithos is still authorized with this Last.fm account:')
+            trinary_text = _('Would you like to deauthorize it?')
+
+        if self.window.prefs_dlg.get_visible():
+            parent = self.window.prefs_dlg
+        else:
+            parent = self.window
+
+        dialog = Gtk.MessageDialog(
+            parent=parent,
+            flags=Gtk.DialogFlags.MODAL,
+            type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text=text,
+            secondary_text=secondary_text,
+        )
+
+        dialog.connect('response', on_response)
+
+        link_label = Gtk.Label.new(None)
+        link_label.set_halign(Gtk.Align.CENTER)
+        link = 'https://www.last.fm/user/{}'.format(username)
+        link_label.set_markup('<a href="{}">{}</a>'.format(link, username))
+        trinary_label = Gtk.Label.new(trinary_text)
+        trinary_label.set_halign(Gtk.Align.CENTER)
+
+        message_area = dialog.get_message_area()
+        message_area.add(link_label)
+        message_area.add(trinary_label)
+
+        message_area.show_all()
+        dialog.show()
 
     def _enable_real(self):
         self._connect(self.settings['data'])
@@ -75,11 +152,14 @@ class LastfmPlugin(PithosPlugin):
             self.window.connect('song-changed', self._on_song_changed),
         ]
         logging.debug('Last.fm plugin fully enabled')
-        
+
     def on_disable(self):
         if self.is_really_enabled:
-            for handler in self._handlers:
-                self.window.disconnect(handler)
+            if self._handlers:
+                for handler in self._handlers:
+                    self.window.disconnect(handler)
+            if self.preferences_dialog.auth_state is self.preferences_dialog.AuthState.AUTHORIZED:
+                self._show_dialog()
         self.is_really_enabled = False
         self._handlers = []
 
@@ -154,7 +234,7 @@ class LastFmAuth(Gtk.Dialog):
         else:
             self.auth_state = self.AuthState.NOT_AUTHORIZED
 
-        self.label = Gtk.Label.new('')
+        self.label = Gtk.Label.new(None)
         self.label.set_halign(Gtk.Align.CENTER)
         self.button = Gtk.Button()
         self.button.set_halign(Gtk.Align.CENTER)
@@ -189,7 +269,7 @@ class LastFmAuth(Gtk.Dialog):
         elif self.auth_state is self.AuthState.BEGAN_AUTHORIZATION:
             self.button.set_label(_('Finish'))
             self.label.set_text(_('Click Finish when Authorized with Last.fm'))
-    
+
     def setkey(self, key):
         if not key:
             self.auth_state = self.AuthState.NOT_AUTHORIZED
@@ -209,7 +289,7 @@ class LastFmAuth(Gtk.Dialog):
         def err(e):
             logging.error('Failed to begin Last.fm authorization. Error: {}'.format(e))
             self.setkey('')
-            
+
         def callback(url):
             self.auth_url = url
             logging.debug('Opening Last.fm Auth url: {}'.format(self.auth_url))
@@ -225,7 +305,7 @@ class LastFmAuth(Gtk.Dialog):
         self.sg = self.pylast.SessionKeyGenerator(get_network(api_key=API_KEY, api_secret=API_SECRET))
 
         self.set_widget_text()
-        self.button.set_sensitive(False)           
+        self.button.set_sensitive(False)
         self.worker.send(self.sg.get_web_auth_url, (), callback, err)
 
     def finish_authorization(self):
@@ -235,7 +315,7 @@ class LastFmAuth(Gtk.Dialog):
 
         self.button.set_sensitive(False)
         self.worker.send(self.sg.get_web_auth_session_key, (self.auth_url,), self.setkey, err)
-            
+
     def on_clicked(self, *ignore):
         if self.auth_state is self.AuthState.NOT_AUTHORIZED:
             self.begin_authorization()
