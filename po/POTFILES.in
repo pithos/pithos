@@ -13,4 +13,4 @@ pithos/pithos.py
 pithos/StationsPopover.py
 pithos/PreferencesPithosDialog.py
 pithos/plugins/journald_logging.py
-
+pithos/plugins/lastfm.py
