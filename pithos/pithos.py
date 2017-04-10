@@ -226,6 +226,9 @@ class PithosWindow(Gtk.ApplicationWindow):
     song_menu_unlove = GtkTemplate.Child()
     song_menu_ban = GtkTemplate.Child()
     song_menu_unban = GtkTemplate.Child()
+    song_menu_create_station = GtkTemplate.Child()
+    song_menu_create_song_station = GtkTemplate.Child()
+    song_menu_create_artist_station = GtkTemplate.Child()
     songs_treeview = GtkTemplate.Child()
     stations_button = GtkTemplate.Child()
     stations_label = GtkTemplate.Child()
@@ -1200,6 +1203,26 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.tired_song(song=self.selected_song())
 
     @GtkTemplate.Callback
+    def on_menuitem_create_artist_station(self, widget):
+        #For film scores, so the station is named after the artist as presented in Pithos. 
+        if self.selected_song().title != self.selected_song().songName:
+            new_name = "%s Radio" %self.selected_song().artist
+        else:
+            new_name = None
+
+        self.worker_run(self.pandora.add_station_by_track_token, (self.selected_song().trackToken, 'artist', new_name), self.refresh_stations)
+
+    @GtkTemplate.Callback
+    def on_menuitem_create_song_station(self, widget):
+        #For film scores, so the station is named after the song as presented in Pithos.
+        if self.selected_song().title != self.selected_song().songName:
+            new_name = "%s Radio" %self.selected_song().title
+        else:
+            new_name = None
+
+        self.worker_run(self.pandora.add_station_by_track_token, (self.selected_song().trackToken, 'song', new_name), self.refresh_stations)
+
+    @GtkTemplate.Callback
     def on_menuitem_info(self, widget):
         self.info_song(song=self.selected_song())
 
@@ -1210,6 +1233,49 @@ class PithosWindow(Gtk.ApplicationWindow):
     @GtkTemplate.Callback
     def on_menuitem_bookmark_artist(self, widget):
         self.bookmark_song_artist(self.selected_song())
+
+    def prepare_create_station_menu(self):
+        #Pandora won't create duplicate stations.
+        #If a station already exists with the same seed
+        #don't show the corresponding menu item.
+        #If both already exsist, don't show the menu at all.
+        #The exception is film scores.
+        #Film scores do not have a predictable naming scheme
+        #for comparing the song seeds to the song info.
+        #Some follow the same scheme as regular songs, 
+        #others use the album title as the artistName and so on.
+        #Worst case the menu items don't hide and we try to add a station that already exists.
+        artist = self.selected_song().artist
+        songName = self.selected_song().songName
+        artist_song = " ".join((artist, songName))
+        artist_seed_descriptions = []
+        song_seed_descriptions = []
+
+        for i in range(len(self.stations_model)):
+            seedInfo = self.stations_model[i][0].seedInfo
+            if seedInfo is not None:#The QuickMix has no seedInfo
+                for x in seedInfo:
+                    if x['type'] == 'artist':
+                        artist_seed_descriptions.append(x['artistName'])
+                    elif x['type'] == 'song':
+                        song_seed_descriptions.append(" ".join((x['artistName'], x['songName'])))
+
+        create_song_station_visible = artist_song not in song_seed_descriptions
+        create_artist_station_visible = artist not in artist_seed_descriptions
+
+        if not create_song_station_visible and not create_artist_station_visible:
+            self.song_menu_create_station.set_property("visible", False)
+        else:
+            self.song_menu_create_station.set_property("visible", True)
+            self.song_menu_create_song_station.set_property("visible", create_song_station_visible)
+
+            if create_song_station_visible:
+                self.song_menu_create_song_station.set_property("label", "%s Radio" %self.selected_song().title)
+
+            self.song_menu_create_artist_station.set_property("visible", create_artist_station_visible)
+
+            if create_artist_station_visible:
+                self.song_menu_create_artist_station.set_property("label", "%s Radio" %artist)
 
     def on_treeview_button_press_event(self, treeview, event):
         x = int(event.x)
@@ -1226,6 +1292,7 @@ class PithosWindow(Gtk.ApplicationWindow):
                 self.song_menu_unlove.set_property("visible", rating == RATE_LOVE)
                 self.song_menu_ban.set_property("visible", rating != RATE_BAN)
                 self.song_menu_unban.set_property("visible", rating == RATE_BAN)
+                self.prepare_create_station_menu()
 
                 popup_at_pointer(self.song_menu, event)
                 return True

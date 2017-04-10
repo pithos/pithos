@@ -317,7 +317,7 @@ class Pandora:
         logging.info('Explicit Content Filter set to: %s' %(state))
 
     def get_stations(self, *ignore):
-        stations = self.json_call('user.getStationList')['stations']
+        stations = self.json_call('user.getStationList', {'includeStationSeeds': True})['stations']
         self.quickMixStationIds = None
         self.stations = [Station(self, i) for i in stations]
 
@@ -349,7 +349,20 @@ class Pandora:
         return l
 
     def add_station_by_music_id(self, musicid):
-        d = self.json_call('station.createStation', {'musicToken': musicid})
+        d = self.json_call('station.createStation', {'musicToken': musicid, 'includeStationSeeds': True})
+        station = Station(self, d)
+        self.stations.append(station)
+        return station
+
+    def add_station_by_track_token(self, trackToken, musicType, new_name):
+        """Creates a Station using the trackToken based on the song or artist 
+           depending on the musicType('song' or 'artist') and optionally renames the new station.
+        """
+        d = self.json_call('station.createStation', {'trackToken': trackToken, 'musicType': musicType, 'includeStationSeeds': True})
+
+        if new_name is not None:
+            idToken = d['stationToken']
+            d = self.json_call('station.renameStation', {'stationToken': idToken, 'stationName': new_name, 'includeStationSeeds': True})
         station = Station(self, d)
         self.stations.append(station)
         return station
@@ -378,9 +391,32 @@ class Station:
         self.isQuickMix = d['isQuickMix']
         self.name = d['stationName']
         self.useQuickMix = False
+        self.seedInfo = None
 
         if self.isQuickMix:
             self.pandora.quickMixStationIds = d.get('quickMixStationIds', [])
+        else:
+            self.seedInfo = []
+            m = d['music']
+            for k, v in m.items():
+                for i in m[k]:
+                    if len(m[k]) > 0:
+                        x = {}
+                        if k == 'genres':
+                            x['type'] = 'genre'
+                            x['genreName'] = i['genreName']
+                        elif k == 'artists':
+                            x['type'] = 'artist'
+                            x['artistName'] = i['artistName']
+                        elif k == 'songs':
+                            x['type'] = 'song'
+                            x['artistName'] = i['artistName']
+                            x['songName'] = i['songName']
+                        else:
+                            x['type'] = 'unknown'
+                        x['seedId'] = i['seedId']
+                        x['musicToken'] = i['musicToken']
+                        self.seedInfo.append(x)
 
     def transformIfShared(self):
         if not self.isCreator:
