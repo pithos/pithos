@@ -444,7 +444,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             # Update rating icons and background, and generic cover icon and background.
             self.render_cover_art.update_icons(style_context)
 
-    def worker_run(self, fn, args=(), callback=None, message=None, context='net'):
+    def worker_run(self, fn, args=(), callback=None, message=None, context='net', errorback=None):
         if context and message:
             self.statusbar.push(self.statusbar.get_context_id(context), message)
 
@@ -475,7 +475,9 @@ class PithosWindow(Gtk.ApplicationWindow):
             else:
                 logging.warning(e.traceback)
 
-        self.worker.send(fn, args, cb, eb)
+        err = errorback or eb
+
+        self.worker.send(fn, args, cb, err)
 
     def get_proxy(self):
         """ Get HTTP proxy, first trying preferences then system proxy """

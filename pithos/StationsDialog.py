@@ -92,9 +92,43 @@ class StationsDialog(Gtk.Dialog):
 
     def station_renamed(self, cellrenderertext, path, new_text):
         station = self.modelfilter[path][0]
-        self.worker_run(station.rename, (new_text,), context='net', message="Renaming Station...")
+        old_station_name = station.name
+
+        def errorback(e):
+            if hasattr(e, 'status') and e.status == 1008 and old_station_name == 'Thumbprint Radio':
+                dialog = Gtk.MessageDialog(
+                    parent=self,
+                    flags=Gtk.DialogFlags.MODAL,
+                    type=Gtk.MessageType.WARNING,
+                    buttons=Gtk.ButtonsType.OK,
+                    text='Could Not Rename Thumbprint Radio',
+                    secondary_text='Pandora does not permit renaming the Thumbprint Radio Station.',
+                )
+
+                dialog.connect('response', lambda *ignore: dialog.destroy())
+                dialog.show()
+
+            elif hasattr(e, 'message') and hasattr(e, 'submsg'):
+                self.window.error_dialog(e.message, None, submsg=e.submsg)
+
+            else:
+                logging.warning(e.traceback)
+
+            self.model[self.modelfilter.convert_path_to_child_path(Gtk.TreePath(path))][1] = old_station_name
+
+        def success(*ignore):
+            self.emit('station-renamed', (station.id, new_text))
+
+        self.worker_run(
+            station.rename,
+            (new_text,),
+            callback=success,
+            errorback=errorback,
+            context='net',
+            message="Renaming Station..."
+        )
+
         self.model[self.modelfilter.convert_path_to_child_path(Gtk.TreePath(path))][1] = new_text
-        self.emit('station-renamed', (station.id, new_text))
 
     def selected_station(self):
         sel = self.treeview.get_selection().get_selected()
