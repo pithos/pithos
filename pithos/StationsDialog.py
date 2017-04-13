@@ -95,6 +95,7 @@ class StationsDialog(Gtk.Dialog):
         old_station_name = station.name
 
         def errorback(e):
+            self.pithos.statusbar.pop(self.pithos.statusbar.get_context_id('net'))
             if hasattr(e, 'status') and e.status == 1008 and old_station_name == 'Thumbprint Radio':
                 dialog = Gtk.MessageDialog(
                     parent=self,
