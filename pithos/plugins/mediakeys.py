@@ -69,6 +69,7 @@ class MediaKeyPlugin(PithosPlugin):
                     return False
             else:
                 return False
+        return bound
 
         def update_focus_time(widget, event, userdata=None):
             if event.changed_mask & Gdk.WindowState.FOCUSED and event.new_window_state & Gdk.WindowState.FOCUSED:
