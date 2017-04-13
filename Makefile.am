@@ -16,7 +16,7 @@ pluginsdbusdir = $(pithosdir)/plugins/dbus_util
 pluginsdbus_PYTHON = $(wildcard pithos/plugins/dbus_util/*.py)
 
 bin_SCRIPTS = bin/pithos
-bin/pithos: bin/pithos.in
+bin/pithos: bin/pithos.in configure.ac
 	@$(MKDIR_P) bin
 	$(AM_V_GEN)$(SED)                     \
 		-e s!\@prefix\@!$(prefix)!          \
