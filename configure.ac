@@ -32,7 +32,13 @@ AS_IF([test "$with_docs" = "yes"], [
 ])
 AM_CONDITIONAL([WITH_DOCS], [test "$with_docs" = "yes"])
 
-AC_PATH_PROG([HELP2MAN], [help2man], [no])
+AC_ARG_WITH(help2man, AS_HELP_STRING([--with-help2man], [Build man page automatically]),
+            [with_help2man=$withval], [with_help2man=no])
+AS_IF([test "$with_help2man" = "yes"], [
+  AC_PATH_PROG([HELP2MAN], [help2man], [no])
+], [
+  HELP2MAN=no
+])
 AM_CONDITIONAL([HAVE_HELP2MAN], [test "$HELP2MAN" != "no"])
 
 AC_CONFIG_FILES([
