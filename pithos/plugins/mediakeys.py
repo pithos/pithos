@@ -60,19 +60,16 @@ class MediaKeyPlugin(PithosPlugin):
                         'org.{}.SettingsDaemon.MediaKeys'.format(de),
                         None,
                     )
-
                     if grab_media_keys():
                         bound = True
                         break
                 except GLib.Error as e:
                     logging.warning(e)
-                    return False
-            else:
-                return False
         return bound
 
         def update_focus_time(widget, event, userdata=None):
-            if event.changed_mask & Gdk.WindowState.FOCUSED and event.new_window_state & Gdk.WindowState.FOCUSED:
+            if event.changed_mask & Gdk.WindowState.FOCUSED and \
+               event.new_window_state & Gdk.WindowState.FOCUSED:
                 grab_media_keys()
             return False
 
@@ -112,7 +109,9 @@ class MediaKeyPlugin(PithosPlugin):
             except (ValueError, ImportError):
                 return False
 
-        self.keybinder.bind('XF86AudioPlay', self.window.playpause, None)
+        ret = self.keybinder.bind('XF86AudioPlay', self.window.playpause, None)
+        if not ret:  # Presumably all bindings will fail
+            return False
         self.keybinder.bind('XF86AudioStop', self.window.user_pause, None)
         self.keybinder.bind('XF86AudioNext', self.window.next_song, None)
         self.keybinder.bind('XF86AudioPrev', self.window.bring_to_top, None)
