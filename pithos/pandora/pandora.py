@@ -352,6 +352,10 @@ class Pandora:
         d = self.json_call('station.createStation', {'musicToken': musicid})
         return Station(self, d)
 
+    def add_station_by_track_token(self, trackToken, musicType):
+        d = self.json_call('station.createStation', {'trackToken': trackToken, 'musicType': musicType})
+        return Station(self, d)
+
     def get_station_by_id(self, id):
         for i in self.stations:
             if i.id == id:
