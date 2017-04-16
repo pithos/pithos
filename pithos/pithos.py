@@ -910,6 +910,53 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_popover.select_station(station)
         self.emit('station-changed', station)
 
+    def station_already_exists(self, station, description, music_type, parent):
+        def on_response(dialog, response):
+            if response == Gtk.ResponseType.YES:
+                self.station_changed(station)
+            dialog.destroy()
+
+        sub_title = _('Pandora does not permit multiple stations with the same seed.')
+
+        if music_type == 'song':
+            seed = _('Song Seed:')
+        elif music_type == 'artist':
+            seed = _('Artist Seed:')
+        else:
+            seed = _('Genre Seed:')
+
+        if station is self.current_station:
+            button_type = Gtk.ButtonsType.OK
+            message = _(', the Station you are currently listening to already contains the')
+            message = '{}\n"{}"{} {} {}'.format(sub_title, station.name, message, seed, description)
+
+        else:
+            button_type = Gtk.ButtonsType.YES_NO
+            your_station = _('Your Station')
+            already_contains = _('already contains the')
+            listen_now = _('Would you like to listen to it now?')
+            message = '{}\n{} "{}" {} {} {}.\n{}'.format(
+                sub_title,
+                your_station,
+                station.name,
+                already_contains,
+                seed,
+                description,
+                listen_now,
+           )
+
+        dialog = Gtk.MessageDialog(
+            parent=parent,
+            flags=Gtk.DialogFlags.MODAL,
+            type=Gtk.MessageType.WARNING,
+            buttons=button_type,
+            text=_('A New Station could not be created'),
+            secondary_text=message,
+        )
+
+        dialog.connect('response', on_response)
+        dialog.show()
+
     def query_position(self):
       pos_stat = self.player.query(self._query_position)
       if pos_stat:

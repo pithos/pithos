@@ -205,51 +205,17 @@ class StationsDialog(Gtk.Dialog):
         dialog.destroy()
         self.searchDialog = None
 
-    def station_already_exists(self, station):
-        def on_response(dialog, response):
-            if response == Gtk.ResponseType.YES:
-                self.pithos.station_changed(station)
-            dialog.destroy()
-
-        sub_title = 'Pandora does not permit multiple stations with the same seed.\n'
-
-        if self.result.resultType is 'song':
-            seed = 'Song Seed: {} by {}'.format(html.escape(self.result.title), html.escape(self.result.artist))
-        else:
-            seed = 'Artist Seed: {}'.format(html.escape(self.result.name))
-
-        self.result = None
-
-        if station is self.pithos.current_station:
-            button_type = Gtk.ButtonsType.OK
-            message = (
-                '{}"{}", the Station you are currently listening '
-                'to already contains the {}.'.format(sub_title, station.name, seed)
-            )
-
-        else:
-            button_type = Gtk.ButtonsType.YES_NO
-            message = (
-                '{}Your Station "{}" already contains the {}.\n'
-                'Would you like to listen to it now?'.format(sub_title, station.name, seed)
-            )
-
-        dialog = Gtk.MessageDialog(
-            parent=self,
-            flags=Gtk.DialogFlags.MODAL,
-            type=Gtk.MessageType.WARNING,
-            buttons=button_type,
-            text='A New Station could not be created',
-            secondary_text=message,
-        )
-
-        dialog.connect('response', on_response)
-        dialog.show()
-
     def station_added(self, station):
         for existing_station in self.model:
             if existing_station[0].id == station.id:
-                self.station_already_exists(existing_station[0])
+                if self.result.resultType is 'song':
+                    description = '{} by {}'.format(html.escape(self.result.title), html.escape(self.result.artist))
+                elif self.result.resultType is 'artist':
+                    description = html.escape(self.result.name)
+                else:
+                    description = html.escape(self.result.stationName)                    
+                self.pithos.station_already_exists(existing_station[0], description, self.result.resultType, self)
+                self.result = None
                 return
         self.result = None
         logging.debug("1 " + repr(station))
@@ -258,13 +224,13 @@ class StationsDialog(Gtk.Dialog):
         self.pithos.pandora.stations.append(station)
         it = self.model.insert_with_valuesv(0, (0, 1, 2), (station, station.name, 0))
         logging.debug("2 " + repr(it))
+        self.emit('station-added', station)
         self.pithos.station_changed(station)
         logging.debug("3 ")
         self.modelfilter.refilter()
         logging.debug("4")
         self.treeview.set_cursor(0)
         logging.debug("5 ")
-        self.emit('station-added', station)
 
     @GtkTemplate.Callback
     def on_close(self, widget, data=None):
