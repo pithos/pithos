@@ -253,6 +253,9 @@ class StationsDialog(Gtk.Dialog):
                 return
         self.result = None
         logging.debug("1 " + repr(station))
+        # We shouldn't actually add the station to the pandora stations list
+        # until we know it's not a duplicate.
+        self.pithos.pandora.stations.append(station)
         it = self.model.insert_with_valuesv(0, (0, 1, 2), (station, station.name, 0))
         logging.debug("2 " + repr(it))
         self.pithos.station_changed(station)
