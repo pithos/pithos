@@ -53,23 +53,26 @@ class MediaKeyPlugin(PithosPlugin):
                 'gnome': ('org.gnome.SettingDaemon.MediaKeys', 'org.gnome.SettingsDaemon'),
                 'mate': ('org.mate.SettingsDaemon', )
             }.items():
-                for bus_name in bus_names:
-                    try:
-                        self.mediakeys = Gio.DBusProxy.new_sync(
-                            bus,
-                            Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES,
-                            None,
-                            bus_name,
-                            '/org/{}/SettingsDaemon/MediaKeys'.format(de),
-                            'org.{}.SettingsDaemon.MediaKeys'.format(de),
-                            None,
-                        )
-                        if grab_media_keys():
-                            bound = True
-                            break
-                    except GLib.Error as e:
-                        logging.warning(e)
-        return bound
+                if not bound:
+                    for bus_name in bus_names:
+                        try:
+                            self.mediakeys = Gio.DBusProxy.new_sync(
+                                bus,
+                                Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES,
+                                None,
+                                bus_name,
+                                '/org/{}/SettingsDaemon/MediaKeys'.format(de),
+                                'org.{}.SettingsDaemon.MediaKeys'.format(de),
+                                None,
+                            )
+                            if grab_media_keys():
+                                bound = True
+                                break
+                        except GLib.Error as e:
+                            logging.warning(e)
+
+        if not bound:
+            return False
 
         def update_focus_time(widget, event, userdata=None):
             if event.changed_mask & Gdk.WindowState.FOCUSED and \
