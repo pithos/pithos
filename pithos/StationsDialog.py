@@ -44,7 +44,6 @@ class StationsDialog(Gtk.Dialog):
         self.worker_run = pithos.worker_run
         self.quickmix_changed = False
         self.searchDialog = None
-        self.result = None
 
         self.modelfilter = self.model.filter_new()
         self.modelfilter.set_visible_func(lambda m, i, d: m.get_value(i, 0) and not m.get_value(i, 0).isQuickMix)
@@ -196,28 +195,35 @@ class StationsDialog(Gtk.Dialog):
 
     @GtkTemplate.Callback
     def add_station_cb(self, dialog, response):
-        self.result = dialog.result
-        logging.info("in add_station_cb {} {}".format(self.result, response))
-        if response == Gtk.ResponseType.OK:
-            self.worker_run("add_station_by_music_id", (self.result.musicId,),
-                            self.station_added, "Creating station...")
+        result = dialog.result
+        if result is not None:
+            if result.resultType is 'song':
+                description = '{} by {}'.format(html.escape(result.title), html.escape(result.artist))
+            elif result.resultType is 'artist':
+                description = html.escape(result.name)
+            else:
+                description = html.escape(result.stationName)
+            user_data = result.resultType, description
+            logging.info("in add_station_cb {} {}".format(result, response))
+            if response == Gtk.ResponseType.OK:
+                self.worker_run(
+                    "add_station_by_music_id",
+                    (result.musicId,),
+                    self.station_added,
+                    "Creating station...",
+                    user_data=user_data,
+                )
+
         dialog.hide()
         dialog.destroy()
         self.searchDialog = None
 
-    def station_added(self, station):
+    def station_added(self, station, user_data):
+        music_type, description = user_data
         for existing_station in self.model:
             if existing_station[0].id == station.id:
-                if self.result.resultType is 'song':
-                    description = '{} by {}'.format(html.escape(self.result.title), html.escape(self.result.artist))
-                elif self.result.resultType is 'artist':
-                    description = html.escape(self.result.name)
-                else:
-                    description = html.escape(self.result.stationName)                    
-                self.pithos.station_already_exists(existing_station[0], description, self.result.resultType, self)
-                self.result = None
+                self.pithos.station_already_exists(existing_station[0], description, music_type, self)
                 return
-        self.result = None
         logging.debug("1 " + repr(station))
         # We shouldn't actually add the station to the pandora stations list
         # until we know it's not a duplicate.

@@ -339,6 +339,31 @@ audio-volume-medium-symbolic</property>
       </object>
     </child>
     <child>
+      <object class="GtkMenuItem" id="song_menu_create_station">
+        <property name="visible">1</property>
+        <property name="label" translatable="yes">Create a New Station</property>
+        <child type="submenu">
+          <object class="GtkMenu" id="create_station_submenu">
+            <property name="visible">1</property>
+            <child>
+              <object class="GtkMenuItem" id="song_menu_create_song_station">
+                <property name="visible">1</property>
+                <property name="label" translatable="yes">Based on this Song</property>
+                <signal name="activate" handler="on_menuitem_create_song_station" swapped="no"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuItem" id="song_menu_create_artist_station">
+                <property name="visible">1</property>
+                <property name="label" translatable="yes">Based on this Artist</property>
+                <signal name="activate" handler="on_menuitem_create_artist_station" swapped="no"/>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
       <object class="GtkMenuItem" id="menuitem4">
         <property name="visible">1</property>
         <property name="label" translatable="yes">Bookmark</property>

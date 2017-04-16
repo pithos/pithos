@@ -207,6 +207,11 @@ class PithosMprisService(DBusServiceObject):
                 'songs-added',
                 self._songs_added_handler,
             ),
+
+            window.connect(
+                'station-added',
+                self._add_playlist_handler,
+            ),
         ]
 
         if window.stations_dlg:
@@ -312,7 +317,7 @@ class PithosMprisService(DBusServiceObject):
         '''Adds a new station to the Playlist Interface when it is created.'''
         new_playlist = (self.PLAYLIST_OBJ_PATH + station.id, station.name, '')
         if new_playlist not in self._playlists:
-            self._playlists.append(new_playlist)
+            self._playlists.insert(1, new_playlist)
             self.PropertiesChanged(
                 self.MEDIA_PLAYER2_PLAYLISTS_IFACE,
                 {'PlaylistCount': GLib.Variant('u', len(self._playlists))},

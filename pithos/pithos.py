@@ -214,6 +214,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         "buffering-finished": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "station-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "stations-processed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "station-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "stations-dlg-ready": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "songs-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
     }
@@ -226,6 +227,9 @@ class PithosWindow(Gtk.ApplicationWindow):
     song_menu_unlove = GtkTemplate.Child()
     song_menu_ban = GtkTemplate.Child()
     song_menu_unban = GtkTemplate.Child()
+    song_menu_create_station = GtkTemplate.Child()
+    song_menu_create_song_station = GtkTemplate.Child()
+    song_menu_create_artist_station = GtkTemplate.Child()
     songs_treeview = GtkTemplate.Child()
     stations_button = GtkTemplate.Child()
     stations_label = GtkTemplate.Child()
@@ -444,7 +448,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             # Update rating icons and background, and generic cover icon and background.
             self.render_cover_art.update_icons(style_context)
 
-    def worker_run(self, fn, args=(), callback=None, message=None, context='net', errorback=None):
+    def worker_run(self, fn, args=(), callback=None, message=None, context='net', errorback=None, user_data=None):
         if context and message:
             self.statusbar.push(self.statusbar.get_context_id(context), message)
 
@@ -453,7 +457,11 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         def cb(v):
             if context: self.statusbar.pop(self.statusbar.get_context_id(context))
-            if callback: callback(v)
+            if callback:
+                if user_data:
+                    callback(v, user_data)
+                else:
+                    callback(v)
 
         def eb(e):
             if context and message:
@@ -910,6 +918,19 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_popover.select_station(station)
         self.emit('station-changed', station)
 
+    def station_added(self, station, user_data):
+        music_type, description = user_data
+        for existing_station in self.stations_model:
+            if existing_station[0].id == station.id:
+                self.station_already_exists(existing_station[0], description, music_type, self)
+                return
+        # We shouldn't actually add the station to the pandora stations list
+        # until we know it's not a duplicate.
+        self.pandora.stations.append(station)
+        self.stations_model.insert_with_valuesv(0, (0, 1, 2), (station, station.name, 0))
+        self.emit('station-added', station)
+        self.station_changed(station)
+
     def station_already_exists(self, station, description, music_type, parent):
         def on_response(dialog, response):
             if response == Gtk.ResponseType.YES:
@@ -927,23 +948,12 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         if station is self.current_station:
             button_type = Gtk.ButtonsType.OK
-            message = _(', the Station you are currently listening to already contains the')
-            message = '{}\n"{}"{} {} {}'.format(sub_title, station.name, message, seed, description)
-
+            message = _('{0}\n"{1}", the Station you are currently listening to already contains the {2} {3}.')
         else:
             button_type = Gtk.ButtonsType.YES_NO
-            your_station = _('Your Station')
-            already_contains = _('already contains the')
-            listen_now = _('Would you like to listen to it now?')
-            message = '{}\n{} "{}" {} {} {}.\n{}'.format(
-                sub_title,
-                your_station,
-                station.name,
-                already_contains,
-                seed,
-                description,
-                listen_now,
-           )
+            message = _('{0}\nYour Station "{1}" already contains the {2} {3}.\nWould you like to listen to it now?')
+
+        message = message.format(sub_title, station.name, seed, description)
 
         dialog = Gtk.MessageDialog(
             parent=parent,
@@ -1259,6 +1269,28 @@ class PithosWindow(Gtk.ApplicationWindow):
     @GtkTemplate.Callback
     def on_menuitem_bookmark_artist(self, widget):
         self.bookmark_song_artist(self.selected_song())
+
+    @GtkTemplate.Callback
+    def on_menuitem_create_artist_station(self, widget):
+        user_date = 'artist', html.escape(self.selected_song().artist)
+        self.worker_run(
+            'add_station_by_track_token',
+            (self.selected_song().trackToken, 'artist'),
+            self.station_added,
+            user_data=user_date,
+        )
+
+    @GtkTemplate.Callback
+    def on_menuitem_create_song_station(self, widget):
+        title = html.escape(self.selected_song().title)
+        artist = html.escape(self.selected_song().artist)
+        user_date = 'song', '{} by {}'.format(title, artist)
+        self.worker_run(
+            'add_station_by_track_token',
+            (self.selected_song().trackToken, 'song'),
+            self.station_added,
+            user_data=user_date,
+        )
 
     def on_treeview_button_press_event(self, treeview, event):
         x = int(event.x)
