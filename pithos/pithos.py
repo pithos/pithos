@@ -295,6 +295,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self._query_buffer = Gst.Query.new_buffering(Gst.Format.PERCENT)
 
         self.player = Gst.ElementFactory.make("playbin", "player")
+        self.player.set_property('buffer-duration', 3 * Gst.SECOND)
 
         bus = self.player.get_bus()
         bus.add_signal_watch()
@@ -704,6 +705,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         os.environ['PULSE_PROP_media.artist'] = song.artist
         os.environ['PULSE_PROP_media.name'] = '{}: {}'.format(song.artist, song.title)
         os.environ['PULSE_PROP_media.filename'] = audioUrl
+        self.player.set_property('buffer-size', int(song.bitrate) * 375)
+        self.player.set_property('connection-speed', int(song.bitrate))
         self.player.set_property("uri", audioUrl)
         self._set_player_state(PseudoGst.BUFFERING)
         self.playcount += 1
