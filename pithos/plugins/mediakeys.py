@@ -81,44 +81,30 @@ class MediaKeyPlugin(PithosPlugin):
             logging.warning(e)
 
         if bus:
-            schema = Gio.SettingsSchemaSource.get_default()
-            gnome = schema.lookup('org.gnome.settings-daemon.plugins.media-keys', True)
-            if gnome:
-                name = 'org.gnome.SettingsDaemon.MediaKeys'
-                path = '/org/gnome/SettingsDaemon/MediaKeys'
-                bus_names = [
-                    'org.gnome.SettingsDaemon',
-                    'org.gnome.SettingDaemon.MediaKeys',
-                ]
-            else:
-                mate = schema.lookup('org.mate.settings-daemon.plugins.media-keys', True)
-                if mate:
-                    name = 'org.mate.SettingsDaemon.MediaKeys'
-                    path = '/org/mate/SettingsDaemon/MediaKeys'
-                    bus_names = [
-                        'org.mate.SettingsDaemon',
-                    ]
-                else:
-                    bus_names = None
+            de_busnames = {
+                'gnome': ('org.gnome.SettingDaemon.MediaKeys', 'org.gnome.SettingsDaemon'),
+                'mate': ('org.mate.SettingsDaemon', )
+            }
 
-            if bus_names:
-                for bus_name in bus_names:
-                    try:
-                        self.mediakeys = Gio.DBusProxy.new_sync(
-                            bus,
-                            Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES,
-                            None,
-                            bus_name,
-                            path,
-                            name,
-                            None,
-                        )
+            for de, bus_names in de_busnames.items():
+                if not self.method:
+                    for bus_name in bus_names:
+                        try:
+                            self.mediakeys = Gio.DBusProxy.new_sync(
+                                bus,
+                                Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES,
+                                None,
+                                bus_name,
+                                '/org/{}/SettingsDaemon/MediaKeys'.format(de),
+                                'org.{}.SettingsDaemon.MediaKeys'.format(de),
+                                None,
+                            )
 
-                        if self.grab_media_keys():
-                            self.method = 'dbus'
-                            break
-                    except GLib.Error as e:
-                        logging.debug(e)
+                            if self.grab_media_keys():
+                                self.method = 'dbus'
+                                break
+                        except GLib.Error as e:
+                            logging.warning(e)
 
         if self.method is None:
             display = self.window.props.screen.get_display()
