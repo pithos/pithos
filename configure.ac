@@ -1,5 +1,5 @@
 AC_PREREQ(2.68)
-AC_INIT([pithos], [1.3.0], [https://github.com/pithos/pithos/issues],
+AC_INIT([pithos], [1.3.1], [https://github.com/pithos/pithos/issues],
                            [pithos], [https://pithos.github.io])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([build-aux])

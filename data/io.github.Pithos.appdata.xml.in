@@ -23,6 +23,22 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release date="2017-04-21" version="1.3.1">
+      <description>
+        <p>This is a minor release with some bug fixes and minor additions:</p>
+        <ul>
+          <li>Fix exception on Python 3.6+</li>
+          <li>Add ability to create stations based upon current song/artist</li>
+          <li>Show useful error on renaming Thumbprint Radio</li>
+          <li>Show useful error on creating already existing station</li>
+          <li>Minor buffering improvements</li>
+          <li>Lastfm: Improve preferences and offer to deauthorize account</li>
+          <li>Mpris: Add extension for ratings and remove legacy interface</li>
+          <li>Mediakeys: Fix on future versions of GNOME 3.24.2+</li>
+          <li>Mediakeys: Avoid using keybinder on Wayland (old keybinder would crash)</li>
+        </ul>
+      </description>
+    </release>
     <release date="2017-04-06" version="1.3.0">
       <description>
         <p>This is a new major release with numerous improvements:</p>
