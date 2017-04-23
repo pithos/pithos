@@ -22,7 +22,6 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import GLib, Gio, Gtk
 
 from .pithos import PithosWindow
-from .migrate_settings import maybe_migrate_settings
 from .util import open_browser
 
 
@@ -170,7 +169,6 @@ class PithosApplication(Gtk.Application):
 
     def do_activate(self):
         if not self.window:
-            maybe_migrate_settings()
             logging.info('Pithos {}'.format(self.version))
             self.window = PithosWindow(self, self.test_mode)
 
