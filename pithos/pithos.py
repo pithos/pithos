@@ -43,7 +43,8 @@ from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
 from .plugin import load_plugins
-from .util import parse_proxy, open_browser, get_account_password, popup_at_pointer, unlock_keyring
+from .util import parse_proxy, open_browser, SecretService, popup_at_pointer
+from .migrate_settings import maybe_migrate_settings
 
 try:
     import pacparser
@@ -247,7 +248,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.settings.connect('changed::proxy', self.set_proxy)
         self.settings.connect('changed::control-proxy', self.set_proxy)
         self.settings.connect('changed::control-proxy-pac', self.set_proxy)
-        self.settings.connect('changed::pandora-one', self.pandora_reconnect)
 
         self.prefs_dlg = PreferencesPithosDialog.PreferencesPithosDialog(transient_for=self)
         self.prefs_dlg.connect_after('response', self.on_prefs_response)
@@ -264,24 +264,20 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.pandora = make_pandora(test_mode)
         self.set_proxy(reconnect=False)
         self.set_audio_quality()
+        SecretService.unlock_keyring(self.on_keyring_unlocked)
 
-        try:
-            unlock_keyring()
-            email = self.settings['email']
-            password = get_account_password(email)
-        except GLib.Error as e:
-            if e.code == 2:
-                logging.error('You need to install a service such as gnome-keyring. Error: {}'.format(e))
-                self.fatal_error_dialog(
-                    e.message,
-                    _('You need to install a service such as gnome-keyring.'),
-                )
+    def on_keyring_unlocked(self, error):
+        if error:
+            logging.error('You need to install a service such as gnome-keyring. Error: {}'.format(error))
+            self.fatal_error_dialog(
+                error.message,
+                _('You need to install a service such as gnome-keyring.'),
+            )
 
-        if not email or not password:
-            self.show()
-            self.show_preferences()
         else:
+            maybe_migrate_settings()
             self.pandora_connect()
+
 
     def init_core(self):
         #                                Song object            display text  icon  album art
@@ -569,6 +565,19 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.worker_run('set_audio_quality', (self.settings['audio-quality'],))
 
     def pandora_connect(self, *ignore, message="Logging in...", callback=None):
+        def cb(password):
+            if not password:
+                self.show_preferences()
+            else:
+                self._pandora_connect_real(message, callback, email, password)
+
+        email = self.settings['email']
+        if not email:
+            self.show_preferences()
+        else:
+            SecretService.get_account_password(email, cb)
+
+    def _pandora_connect_real(self, message, callback, email, password):
         if self.settings['pandora-one']:
             client = client_keys[default_one_client_id]
         else:
@@ -584,15 +593,6 @@ class PithosWindow(Gtk.ApplicationWindow):
             except json.JSONDecodeError:
                 logging.error("Could not parse force_client json")
 
-
-        email = self.settings['email']
-        password = get_account_password(email)
-        if not email or not password:
-            # You probably shouldn't be able to reach here
-            # with no credentials set
-            logging.error('No email or no password set!')
-            self.quit()
-
         args = (
             client,
             email,
@@ -607,8 +607,9 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.worker_run('connect', args, pandora_ready, message, 'login')
 
-    def pandora_reconnect(self, *ignore):
+    def pandora_reconnect(self, prefs_dialog, email_password):
         ''' Stop everything and reconnect '''
+        email, password = email_password
         self.stop()
         self.waiting_for_playlist = False
         self.current_song_index = None
@@ -618,7 +619,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.have_stations = False
         self.playcount = 0
         self.songs_model.clear()
-        self.pandora_connect()
+        self._pandora_connect_real("Logging in...", None, email, password)
 
     def sync_explicit_content_filter_setting(self, *ignore):
         #reset checkbox to default state
@@ -746,10 +747,14 @@ class PithosWindow(Gtk.ApplicationWindow):
         return True
 
     def user_play(self, *ignore):
-        self.play()
-        self.emit('user-changed-play-state', True)
+        if self.play():
+            self.emit('user-changed-play-state', True)
 
     def play(self, change_gst_state=False):
+        # Edge case. If we try to go to Play while we're reconnecting
+        # to Pandora self.current_song will be None.
+        if self.current_song is None:
+            return False
         if not self.current_song.is_still_valid():
             self.current_song.message = 'Song expired'
             self.update_song_row()
@@ -758,6 +763,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if self._set_player_state(PseudoGst.PLAYING, change_gst_state=change_gst_state):
             self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
             self.emit('play-state-changed', True)
+        return True
 
     def user_pause(self, *ignore):
         self.pause()
@@ -990,6 +996,10 @@ class PithosWindow(Gtk.ApplicationWindow):
             return True
 
     def on_gst_stream_start(self, bus, message):
+        # Edge case. We might get this singal while we're reconnecting to Pandora.
+        # If so self.current_song will be None.
+        if self.current_song is None:
+            return
         # Fallback to using song.trackLength which is in seconds and converted to nanoseconds
         self.current_song.duration = self.query_duration() or self.current_song.trackLength * Gst.SECOND
         self.current_song.duration_message = self.format_time(self.current_song.duration)

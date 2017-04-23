@@ -18,7 +18,7 @@ import logging
 from gi.repository import Gio, Gtk, GObject, Pango
 
 from .gi_composites import GtkTemplate
-from .util import get_account_password, set_account_password
+from .util import SecretService
 from .pandora.data import valid_audio_formats
 
 try:
@@ -97,7 +97,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
     __gtype_name__ = "PreferencesPithosDialog"
 
     __gsignals__ = {
-        'login-changed': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        'login-changed': (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
     }
 
     preference_btn = GtkTemplate.Child()
@@ -165,7 +165,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         dialog.show_all()
 
     @GtkTemplate.Callback
-    def on_account_changed(self, widget):
+    def on_account_changed(self, *ignore):
         if not self.email_entry.get_text() or not self.password_entry.get_text():
             self.set_response_sensitive(Gtk.ResponseType.APPLY, False)
         else:
@@ -177,17 +177,47 @@ class PreferencesPithosDialog(Gtk.Dialog):
 
     @GtkTemplate.Callback
     def on_show(self, widget):
+        def cb(password):
+            self.last_password = password
+            self.password_entry.set_text(password)
+
         self.settings.delay()
+        self.on_account_changed()
 
         self.last_email = self.settings['email']
-        self.password_entry.set_text(get_account_password(self.settings['email']))
-        self.on_account_changed(None)
+        self.last_pandora_one = self.settings['pandora-one']
+        SecretService.get_account_password(self.last_email, cb)
 
     def do_response(self, response_id):
         if response_id == Gtk.ResponseType.APPLY:
-            self.settings.apply()
-            if set_account_password(self.settings['email'], self.password_entry.get_text(),
-                                    self.last_email):
-                self.emit('login-changed')
+            def cb(success):
+                if success:
+                    self.settings.apply()
+                    self.emit('login-changed', (email, password))
+                else:
+                    # Should never really ever happen...
+                    # But just in case.
+                    self.settings.revert()
+                    self.show()
+                    dialog = Gtk.MessageDialog(
+                        parent=self,
+                        flags=Gtk.DialogFlags.MODAL,
+                        type=Gtk.MessageType.WARNING,
+                        buttons=Gtk.ButtonsType.OK,
+                        text=_('Failed to Store Your Pandora Credentials'),
+                        secondary_text=_('Please re-enter your email and password.'),
+                    )
+
+                    dialog.connect('response', lambda *ignore: dialog.destroy())
+                    dialog.show()
+
+            email = self.email_entry.get_text()
+            password = self.password_entry.get_text()
+            pandora_one = self.pandora_one_checkbutton.get_active()
+
+            if self.last_email != email or self.last_password != password or self.last_pandora_one != pandora_one:
+                SecretService.set_account_password(self.last_email, email, password, cb)
+            else:
+                self.settings.revert()
         else:
             self.settings.revert()
