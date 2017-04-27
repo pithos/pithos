@@ -378,6 +378,7 @@ class Station:
         self.idToken = d['stationToken']
         self.isCreator = not d['isShared']
         self.isQuickMix = d['isQuickMix']
+        self.isThumbprint = d.get('isThumbprint', False)
         self.name = d['stationName']
         self.useQuickMix = False
 

@@ -649,7 +649,11 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_popover.clear()
         self.current_station = None
         selected = None
-
+        # Make sure that the Thumprint Radio Station is always 2nd.
+        for i, s in enumerate(self.pandora.stations):
+            if s.isThumbprint:
+                self.pandora.stations.insert(1, self.pandora.stations.pop(i))
+                break
         for i, s in enumerate(self.pandora.stations):
             if s.isQuickMix and s.isCreator:
                 self.stations_model.append((s, "QuickMix", i))

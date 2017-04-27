@@ -89,6 +89,7 @@ class PithosMprisService(DBusServiceObject):
 
     def _reset(self):
         '''Resets state to default.'''
+        self._has_thumbprint_radio = False
         self._volume = math.pow(self.window.player.props.volume, 1.0 / 3.0)
         self._metadata = self.NO_TRACK_METADATA
         self._metadata_list = [self.NO_TRACK_METADATA]
@@ -285,6 +286,8 @@ class PithosMprisService(DBusServiceObject):
 
     def _update_playlists_handler(self, window, stations):
         '''Updates the Playlist Interface when stations are loaded/refreshed.'''
+        # The Thumbprint Radio Station may not exist if it does it will be the 2nd station.
+        self._has_thumbprint_radio = stations[1].isThumbprint
         self._playlists = [(self.PLAYLIST_OBJ_PATH + station.id, station.name, '') for station in stations]
         self.PropertiesChanged(
             self.MEDIA_PLAYER2_PLAYLISTS_IFACE,
@@ -317,7 +320,10 @@ class PithosMprisService(DBusServiceObject):
         '''Adds a new station to the Playlist Interface when it is created.'''
         new_playlist = (self.PLAYLIST_OBJ_PATH + station.id, station.name, '')
         if new_playlist not in self._playlists:
-            self._playlists.insert(1, new_playlist)
+            if self._has_thumbprint_radio:
+                self._playlists.insert(2, new_playlist)
+            else:
+                self._playlists.insert(1, new_playlist)
             self.PropertiesChanged(
                 self.MEDIA_PLAYER2_PLAYLISTS_IFACE,
                 {'PlaylistCount': GLib.Variant('u', len(self._playlists))},
@@ -710,14 +716,15 @@ class PithosMprisService(DBusServiceObject):
     def GetPlaylists(self, Index, MaxCount, Order, ReverseOrder):
         '''(uusb) -> a(oss) Interface MediaPlayer2.Playlists'''
         playlists = self._playlists[:]
-        quick_mix = playlists.pop(0)
+        always_first = [playlists.pop(0)] # the QuickMix
+        if self._has_thumbprint_radio:
+            always_first.append(playlists.pop(0)) # Thumbprint Radio if it exists
 
         if Order not in ('CreationDate', 'Alphabetical') or Order == 'Alphabetical':
             playlists = sorted(playlists, key=lambda playlists: playlists[1])
         if ReverseOrder:
             playlists.reverse()
-        playlists = playlists[Index:MaxCount - 1]
-        playlists.insert(0, quick_mix)
+        playlists = always_first + playlists[Index:MaxCount - len(always_first)]
         return playlists
 
     @dbus_method(MEDIA_PLAYER2_PLAYLISTS_IFACE, in_signature='o')

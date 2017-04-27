@@ -92,7 +92,7 @@ class StationsPopover(Gtk.Popover):
         self.listbox.invalidate_filter()
 
     def listbox_header(self, row, before):
-        if before and before.station.isQuickMix and not row.get_header():
+        if before and before.station.isThumbprint and not row.get_header():
             row.set_header(Gtk.Separator.new(Gtk.Orientation.HORIZONTAL))
         elif row.get_header():
             row.set_header(None)
@@ -110,7 +110,7 @@ class StationsPopover(Gtk.Popover):
         return False
 
     def listbox_sort(self, row1, row2):
-        if row1.station.isQuickMix: # Always first
+        if row1.station.isQuickMix or row1.station.isThumbprint: # Always first
             return -1
         if not self.sorted: # This is the order Pandora lists it (aka create date)
             if row1.index < row2.index:

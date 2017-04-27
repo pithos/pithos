@@ -46,7 +46,11 @@ class StationsDialog(Gtk.Dialog):
         self.searchDialog = None
 
         self.modelfilter = self.model.filter_new()
-        self.modelfilter.set_visible_func(lambda m, i, d: m.get_value(i, 0) and not m.get_value(i, 0).isQuickMix)
+
+        def visible_func(m, i, d):
+            return m.get_value(i, 0) and not (m.get_value(i, 0).isQuickMix or m.get_value(i, 0).isThumbprint)
+
+        self.modelfilter.set_visible_func(visible_func)
 
         self.modelsortable = Gtk.TreeModelSort.sort_new_with_model(self.modelfilter)
         """
@@ -95,14 +99,14 @@ class StationsDialog(Gtk.Dialog):
 
         def errorback(e):
             self.pithos.statusbar.pop(self.pithos.statusbar.get_context_id('net'))
-            if hasattr(e, 'status') and e.status == 1008 and old_station_name == 'Thumbprint Radio':
+            if hasattr(e, 'status') and e.status == 1008:
                 dialog = Gtk.MessageDialog(
                     parent=self,
                     flags=Gtk.DialogFlags.MODAL,
                     type=Gtk.MessageType.WARNING,
                     buttons=Gtk.ButtonsType.OK,
-                    text='Could Not Rename Thumbprint Radio',
-                    secondary_text='Pandora does not permit renaming the Thumbprint Radio Station.',
+                    text='Could Not Rename {}'.format(old_station_name),
+                    secondary_text='Pandora does not permit renaming {}.'.format(old_station_name),
                 )
 
                 dialog.connect('response', lambda *ignore: dialog.destroy())
