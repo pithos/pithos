@@ -81,6 +81,7 @@
     <kudo>HiDpiIcon</kudo>
     <kudo>ModernToolkit</kudo>
     <kudo>Notifications</kudo>
+    <kudo>UserDocs</kudo>
   </kudos>
   <update_contact>tingping_at_fedoraproject.org</update_contact>
 </component>
