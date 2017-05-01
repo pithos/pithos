@@ -23,6 +23,7 @@ from gi.repository import GLib, Gio, Gtk
 
 from .pithos import PithosWindow
 from .migrate_settings import maybe_migrate_settings
+from .util import open_browser
 
 
 class PithosApplication(Gtk.Application):
@@ -62,6 +63,10 @@ class PithosApplication(Gtk.Application):
 
         action = Gio.SimpleAction.new("preferences", None)
         action.connect("activate", self.prefs_cb)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("help", None)
+        action.connect("activate", self.help_cb)
         self.add_action(action)
 
         action = Gio.SimpleAction.new("about", None)
@@ -181,6 +186,9 @@ class PithosApplication(Gtk.Application):
 
     def prefs_cb(self, action, param):
         self.window.show_preferences()
+
+    def help_cb(self, action, param):
+        open_browser("https://github.com/pithos/pithos/wiki", self.window)
 
     def about_cb(self, action, param):
         self.window.show_about(self.version)
