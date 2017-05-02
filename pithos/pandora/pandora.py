@@ -156,6 +156,7 @@ class Pandora:
     def __init__(self):
         self.opener = self.build_opener()
         self.connected = False
+        self.isSubscriber = False
 
     def pandora_encrypt(self, s):
         return b''.join([codecs.encode(self.blowfish_encode.encrypt(pad(s[i:i+8], 8)), 'hex_codec') for i in range(0, len(s), 8)])
@@ -288,13 +289,13 @@ class Pandora:
         pandora_time = int(self.pandora_decrypt(partner['syncTime'].encode('utf-8'))[4:14])
         self.time_offset = pandora_time - time.time()
         logging.info("Time offset is %s", self.time_offset)
-
-        user = self.json_call('auth.userLogin', {'username': user, 'password': password, 'loginType': 'user'}, https=True)
+        auth_args = {'username': user, 'password': password, 'loginType': 'user', 'returnIsSubscriber': True}
+        user = self.json_call('auth.userLogin', auth_args, https=True)
         self.userId = user['userId']
         self.userAuthToken = user['userAuthToken']
 
         self.connected = True
-        self.get_stations(self)
+        self.isSubscriber = user['isSubscriber']
 
     @property
     def explicit_content_filter_state(self):
