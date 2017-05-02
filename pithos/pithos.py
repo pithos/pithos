@@ -43,7 +43,7 @@ from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
 from .plugin import load_plugins
-from .util import parse_proxy, open_browser, get_account_password, popup_at_pointer, unlock_keyring
+from .util import parse_proxy, open_browser, popup_at_pointer, SecretService
 
 try:
     import pacparser
@@ -266,9 +266,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.set_audio_quality()
 
         try:
-            unlock_keyring()
+            SecretService.unlock_keyring()
             email = self.settings['email']
-            password = get_account_password(email)
+            password = SecretService.get_account_password(email)
         except GLib.Error as e:
             if e.code == 2:
                 logging.error('You need to install a service such as gnome-keyring. Error: {}'.format(e))
@@ -586,7 +586,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
 
         email = self.settings['email']
-        password = get_account_password(email)
+        password = SecretService.get_account_password(email)
         if not email or not password:
             # You probably shouldn't be able to reach here
             # with no credentials set
