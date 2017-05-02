@@ -108,7 +108,6 @@ class PreferencesPithosDialog(Gtk.Dialog):
     proxy_entry = GtkTemplate.Child()
     control_proxy_entry = GtkTemplate.Child()
     control_proxy_pac_entry = GtkTemplate.Child()
-    pandora_one_checkbutton = GtkTemplate.Child()
     explicit_content_filter_checkbutton = GtkTemplate.Child()
 
     def __init__(self, *args, **kwargs):
@@ -133,7 +132,6 @@ class PreferencesPithosDialog(Gtk.Dialog):
 
         settings_mapping = {
             'email': (self.email_entry, 'text'),
-            'pandora-one': (self.pandora_one_checkbutton, 'active'),
             'proxy': (self.proxy_entry, 'text'),
             'control-proxy': (self.control_proxy_entry, 'text'),
             'control-proxy-pac': (self.control_proxy_pac_entry, 'text'),
@@ -185,7 +183,6 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.on_account_changed()
 
         self.last_email = self.settings['email']
-        self.last_pandora_one = self.settings['pandora-one']
         SecretService.get_account_password(self.last_email, cb)
 
     def do_response(self, response_id):
@@ -213,11 +210,10 @@ class PreferencesPithosDialog(Gtk.Dialog):
 
             email = self.email_entry.get_text()
             password = self.password_entry.get_text()
-            pandora_one = self.pandora_one_checkbutton.get_active()
 
-            if self.last_email != email or self.last_password != password or self.last_pandora_one != pandora_one:
+            if self.last_email != email or self.last_password != password:
                 SecretService.set_account_password(self.last_email, email, password, cb)
             else:
-                self.settings.revert()
+                self.settings.apply()
         else:
             self.settings.revert()

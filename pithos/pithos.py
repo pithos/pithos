@@ -599,11 +599,18 @@ class PithosWindow(Gtk.ApplicationWindow):
             password,
         )
 
-        def pandora_ready(*ignore):
-            logging.info("Pandora connected")
+        def on_got_stations(*ignore):
             self.process_stations(self)
             if callback:
                 callback()
+
+        def pandora_ready(*ignore):
+            logging.info("Pandora connected")
+            if self.settings['pandora-one'] != self.pandora.isSubscriber:
+                self.settings['pandora-one'] = self.pandora.isSubscriber
+                self._pandora_connect_real(message, callback, email, password)
+            else:
+                self.worker_run('get_stations', (), on_got_stations, 'Getting stations...', 'login')
 
         self.worker_run('connect', args, pandora_ready, message, 'login')
 
