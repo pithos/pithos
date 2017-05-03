@@ -259,7 +259,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.plugins = {}
         load_plugins(self)
-        self.prefs_dlg.set_plugins(self.plugins)
 
         self.pandora = make_pandora(test_mode)
         self.set_proxy(reconnect=False)

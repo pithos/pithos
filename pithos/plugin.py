@@ -16,7 +16,10 @@
 import logging
 import glob
 import os
-from gi.repository import Gio
+from gi.repository import (
+    GLib,
+    Gio
+)
 
 
 class PithosPlugin:
@@ -24,9 +27,10 @@ class PithosPlugin:
     preference = None
     description = ""
 
-    def __init__(self, name, window):
+    def __init__(self, name, window, bus):
         self.name = name
         self.window = window
+        self.bus = bus
         self.preferences_dialog = None
         self.prepared = False
         self.enabled = False
@@ -65,7 +69,7 @@ class ErrorPlugin(PithosPlugin):
         self.enabled = False
 
 
-def load_plugin(name, window):
+def load_plugin(name, window, bus):
     try:
         module = __import__('pithos.plugins.' + name)
         module = getattr(module.plugins, name)
@@ -81,7 +85,7 @@ def load_plugin(name, window):
     else:
         return ErrorPlugin(name, "Could not find module class")
 
-    return plugin_class(name, window)
+    return plugin_class(name, window, bus)
 
 
 def _maybe_migrate_setting(new_setting, name):
@@ -95,29 +99,46 @@ def _maybe_migrate_setting(new_setting, name):
 
 
 def load_plugins(window):
-    plugins = window.plugins
+    def on_got_bus(source, result, userdata):
+        try:
+            bus = Gio.bus_get_finish(result)
+            logging.info('Got session bus')
+        except GLib.Error as e:
+            logging.warning('Failed to connect to session bus, some plugins will not function: {}'.format(e))
+            bus = None
 
-    settings = window.settings
-    in_tree_plugins = settings.props.settings_schema.list_children()
-    plugins_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
-    discovered_plugins = (fname[:-3] for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("_"))
+        plugins = window.plugins
 
-    for name in discovered_plugins:
-        if name not in plugins:
-            plugin = plugins[name] = load_plugin(name, window)
-        else:
-            plugin = plugins[name]
+        settings = window.settings
+        in_tree_plugins = settings.props.settings_schema.list_children()
+        plugins_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
+        discovered_plugins = (fname[:-3] for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("_"))
 
-        settings_name = name.replace('_', '-')
-        if settings_name in in_tree_plugins:
-            plugin.settings = settings.get_child(settings_name)
-            _maybe_migrate_setting(plugin.settings, name)
-        else:
-            # Out of tree plugin
-            plugin.settings = Gio.Settings.new_with_path('io.github.Pithos.plugin',
+        for name in discovered_plugins:
+            if name not in plugins:
+                plugin = plugins[name] = load_plugin(name, window, bus)
+            else:
+                plugin = plugins[name]
+
+            settings_name = name.replace('_', '-')
+            if settings_name in in_tree_plugins:
+                plugin.settings = settings.get_child(settings_name)
+                _maybe_migrate_setting(plugin.settings, name)
+            else:
+                # Out of tree plugin
+                plugin.settings = Gio.Settings.new_with_path('io.github.Pithos.plugin',
                                                          '/io/github/Pithos/{}/'.format(settings_name))
 
-        if plugin.settings['enabled']:
-            plugin.enable()
-        else:
-            plugin.disable()
+            if plugin.settings['enabled']:
+                plugin.enable()
+            else:
+                plugin.disable()
+
+        window.prefs_dlg.set_plugins(window.plugins)
+
+    Gio.bus_get(
+        Gio.BusType.SESSION,
+        None,
+        on_got_bus,
+        None,
+    )

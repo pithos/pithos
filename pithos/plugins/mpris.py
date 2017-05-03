@@ -40,15 +40,11 @@ class MprisPlugin(PithosPlugin):
     description = 'Allows control with external programs'
 
     def on_prepare(self):
-        '''Gets the Dbus Session Bus and initializes PithosMprisService.'''
-        try:
-            bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
-        except GLib.Error as e:
-            logging.warning('Failed to connect to session bus: {}'.format(e))
+        if self.bus is None:
+            logging.debug('Failed to connect to DBus')
             return 'Failed to connect to DBus'
-
         try:
-            self.mpris = PithosMprisService(self.window, connection=bus)
+            self.mpris = PithosMprisService(self.window, connection=self.bus)
         except Exception as e:
             logging.warning('Failed to create DBus mpris service: {}'.format(e))
             return 'Failed to create DBus mpris service'
