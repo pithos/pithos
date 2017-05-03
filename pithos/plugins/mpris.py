@@ -42,12 +42,15 @@ class MprisPlugin(PithosPlugin):
     def on_prepare(self):
         if self.bus is None:
             logging.debug('Failed to connect to DBus')
-            return 'Failed to connect to DBus'
-        try:
-            self.mpris = PithosMprisService(self.window, connection=self.bus)
-        except Exception as e:
-            logging.warning('Failed to create DBus mpris service: {}'.format(e))
-            return 'Failed to create DBus mpris service'
+            self.prepare_complete(error='Failed to connect to DBus')
+        else:
+            try:
+                self.mpris = PithosMprisService(self.window, connection=self.bus)
+            except Exception as e:
+                logging.warning('Failed to create DBus mpris service: {}'.format(e))
+                self.prepare_complete(error='Failed to create DBus mpris service')
+            else:
+                self.prepare_complete()
 
     def on_enable(self):
         '''Enables the mpris plugin.'''

@@ -41,7 +41,9 @@ class JournalLoggingPlugin(PithosPlugin):
             self._logger = logging.getLogger()
             self.preferences_dialog = LoggingPluginPrefsDialog(self.window, self.settings)
         except ImportError:
-            return _('Systemd Python module not found')
+            self.prepare_complete(error=_('Systemd Python module not found'))
+        else:
+            self.prepare_complete()
 
     def on_enable(self):
         self._on_logging_changed(None, self.settings['data'] or 'verbose')

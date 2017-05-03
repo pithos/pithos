@@ -94,6 +94,7 @@ class MediaKeyPlugin(PithosPlugin):
 
                             if self.grab_media_keys():
                                 self.method = 'dbus'
+                                self.prepare_complete()
                                 break
                         except GLib.Error as e:
                             logging.warning(e)
@@ -101,16 +102,19 @@ class MediaKeyPlugin(PithosPlugin):
         if self.method is None:
             display = self.window.props.screen.get_display()
             if not type(display).__name__.endswith('X11Display'):
-                return 'DBus binding failed and Keybinder requires X11.'
-            try:
-                import gi
-                gi.require_version('Keybinder', '3.0')
-                from gi.repository import Keybinder
-                self.keybinder = Keybinder
-                self.keybinder.init()
-                self.method = 'keybinder'
-            except (ValueError, ImportError):
-                return 'DBus binding failed and Keybinder not found.'
+                self.prepare_complete(error='DBus binding failed and Keybinder requires X11.')
+            else:
+                try:
+                    import gi
+                    gi.require_version('Keybinder', '3.0')
+                    from gi.repository import Keybinder
+                    self.keybinder = Keybinder
+                    self.keybinder.init()
+                    self.method = 'keybinder'
+                except (ValueError, ImportError):
+                    self.prepare_complete(error='DBus binding failed and Keybinder not found.')
+                else:
+                    self.prepare_complete()
 
     def on_enable(self):
         if self.method == 'dbus':

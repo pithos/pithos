@@ -34,21 +34,32 @@ class PithosPlugin:
         self.preferences_dialog = None
         self.prepared = False
         self.enabled = False
+        self.error = None
 
     def enable(self):
         if not self.prepared:
-            self.error = self.on_prepare()
-            self.prepared = True
-        if not self.error and not self.enabled:
-            logging.info('Enabling module {}'.format(self.name))
-            self.on_enable()
-            self.enabled = True
+            self.on_prepare()
+        elif not self.error and not self.enabled:
+            self._enable()
+
+    def _enable(self):
+        logging.info('Enabling module {}'.format(self.name))
+        self.on_enable()
+        self.enabled = True
 
     def disable(self):
         if self.enabled:
             logging.info('Disabling module {}'.format(self.name))
             self.on_disable()
             self.enabled = False
+
+    def prepare_complete(self, error=None):
+        self.prepared = True
+        if error:
+            self.error = error
+            self.settings['enabled'] = False
+        else:
+            self._enable()
 
     def on_prepare(self):
         pass

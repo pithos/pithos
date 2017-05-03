@@ -39,7 +39,9 @@ class ScreenSaverPausePlugin(PithosPlugin):
     def on_prepare(self):
         if self.bus is None:
             logging.debug('Failed to connect to DBus')
-            return 'Failed to connect to DBus'
+            self.prepare_complete(error='Failed to connect to DBus')
+        else:
+            self.prepare_complete()
 
     def on_enable(self):
         self._connect_events()

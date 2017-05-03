@@ -38,13 +38,14 @@ class LastfmPlugin(PithosPlugin):
             import pylast
         except ImportError:
             logging.warning('pylast not found.')
-            return _('pylast not found')
-
-        self.pylast = pylast
-        self.worker = GObjectWorker()
-        self.preferences_dialog = LastFmAuth(self.pylast, self.settings)
-        self.preferences_dialog.connect('lastfm-authorized', self.on_lastfm_authorized)
-        self.window.prefs_dlg.connect('login-changed', self._show_dialog)
+            self.prepare_complete(error=_('pylast not found'))
+        else:
+            self.pylast = pylast
+            self.worker = GObjectWorker()
+            self.preferences_dialog = LastFmAuth(self.pylast, self.settings)
+            self.preferences_dialog.connect('lastfm-authorized', self.on_lastfm_authorized)
+            self.window.prefs_dlg.connect('login-changed', self._show_dialog)
+            self.prepare_complete()
 
     def on_enable(self):
         if self.settings['data']:

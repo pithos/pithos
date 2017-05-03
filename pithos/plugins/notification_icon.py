@@ -46,7 +46,9 @@ class PithosNotificationIcon(PithosPlugin):
                                                   AppIndicator.IndicatorCategory.APPLICATION_STATUS)
             # FIXME: AppIndicator might be falling back to XEmbed
         elif not backend_is_supported(self.window):
-            return 'Notification icon requires X11 or AppIndicator'
+            self.prepare_complete(error='Notification icon requires X11 or AppIndicator')
+        else:
+            self.prepare_complete()
 
     def on_enable(self):
         self.delete_callback_handle = self.window.connect("delete-event", self._toggle_visible)
