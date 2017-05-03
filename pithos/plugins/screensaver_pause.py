@@ -36,28 +36,15 @@ class ScreenSaverPausePlugin(PithosPlugin):
     wasplaying = False
     subs = []
 
+    def on_prepare(self):
+        if self.bus is None:
+            logging.debug('Failed to connect to DBus')
+            return 'Failed to connect to DBus'
+
     def on_enable(self):
-        def on_got_bus(obj, result, userdata=None):
-            self.cancel = None
-            try:
-                self.bus = Gio.bus_get_finish(result)
-                logging.info('Got session bus')
-            except Glib.Error as e:
-                logging.warning(e)
-                return
-
-            self._connect_events()
-
-        self.cancel = Gio.Cancellable()
-        Gio.bus_get(Gio.BusType.SESSION, self.cancel, on_got_bus)
-
-        # Since this async always succeed.
-        return True
+        self._connect_events()
 
     def on_disable(self):
-        if self.cancel:
-            self.cancel.cancel()
-
         for sub in self.subs:
             self.bus.signal_unsubscribe(sub)
 

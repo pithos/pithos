@@ -72,15 +72,7 @@ class MediaKeyPlugin(PithosPlugin):
                 self.window.bring_to_top()
 
     def on_prepare(self):
-        # TODO: support more desktops.
-        try:
-            bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
-            logging.info('Got session bus')
-        except GLib.Error as e:
-            bus = None
-            logging.warning(e)
-
-        if bus:
+        if self.bus:
             de_busnames = {
                 'gnome': ('org.gnome.SettingDaemon.MediaKeys', 'org.gnome.SettingsDaemon'),
                 'mate': ('org.mate.SettingsDaemon', )
@@ -91,7 +83,7 @@ class MediaKeyPlugin(PithosPlugin):
                     for bus_name in bus_names:
                         try:
                             self.mediakeys = Gio.DBusProxy.new_sync(
-                                bus,
+                                self.bus,
                                 Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES,
                                 None,
                                 bus_name,
@@ -109,7 +101,7 @@ class MediaKeyPlugin(PithosPlugin):
         if self.method is None:
             display = self.window.props.screen.get_display()
             if not type(display).__name__.endswith('X11Display'):
-                return 'Keybinder requires X11'
+                return 'DBus binding failed and Keybinder requires X11.'
             try:
                 import gi
                 gi.require_version('Keybinder', '3.0')
@@ -118,7 +110,7 @@ class MediaKeyPlugin(PithosPlugin):
                 self.keybinder.init()
                 self.method = 'keybinder'
             except (ValueError, ImportError):
-                return 'Keybinder not found'
+                return 'DBus binding failed and Keybinder not found.'
 
     def on_enable(self):
         if self.method == 'dbus':
