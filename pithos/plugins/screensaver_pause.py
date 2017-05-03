@@ -28,7 +28,7 @@ SCREENSAVERS = (
 
 class ScreenSaverPausePlugin(PithosPlugin):
     preference = 'enable_screensaverpause'
-    description = 'Pause playback when screensaver starts'
+    description = 'Pause playback on screensaver'
 
     bus = None
     cancel = None

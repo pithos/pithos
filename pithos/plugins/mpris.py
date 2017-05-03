@@ -37,7 +37,7 @@ from pithos.plugin import PithosPlugin
 
 class MprisPlugin(PithosPlugin):
     preference = 'enable_mpris'
-    description = 'Allows control with external programs'
+    description = 'Control with external programs'
 
     def on_prepare(self):
         if self.bus is None:
