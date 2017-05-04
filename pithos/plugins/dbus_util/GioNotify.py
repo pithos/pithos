@@ -100,7 +100,7 @@ class GioNotify(Gio.DBusProxy):
                     None,
                     on_GetServerInformation_finish,
                     None,
-               )
+                )
 
         def on_GetServerInformation_finish(self, result, data):
             try:
