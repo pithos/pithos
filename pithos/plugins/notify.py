@@ -26,43 +26,45 @@ class NotifyPlugin(PithosPlugin):
     preference = 'notify'
     description = 'Shows notifications on song change'
 
+    notification = None
+    supports_actions = False
+    escape_markup = False
+
     def on_prepare(self):
-        try:
-            self.notification = GioNotify.sync_init('Pithos')
-        except Exception as e:
-            self.notification = None
-            logging.warning('Notification server not found: {}'.format(e))
-            self.prepare_complete('Notification server not found')
-        else:
-            caps = self.notification.capabilities
-            server_info = self.notification.server_information
+        def on_notify_init_finish(notification, server_info, caps, error=None):
+            if error:
+                logging.warning('Notification server not found: {}'.format(error))
+                self.prepare_complete(error='Notification server not found')
+            else:
+                self.notification = notification
+                self.supports_actions = 'actions' in caps
+                self.escape_markup = 'body-markup' in caps
 
-            self.supports_actions = 'actions' in caps
-            self.escape_markup = 'body-markup' in caps
+                self.notification.set_hint('desktop-entry', GLib.Variant('s', 'io.github.Pithos'))
+                self.notification.set_hint('category', GLib.Variant('s', 'x-gnome.music'))
+                if 'action-icons' in caps:
+                    self.notification.set_hint('action-icons', GLib.Variant('b', True))
 
-            self.notification.set_hint('desktop-entry', GLib.Variant('s', 'io.github.Pithos'))
-            self.notification.set_hint('category', GLib.Variant('s', 'x-gnome.music'))
-            if 'action-icons' in caps:
-                self.notification.set_hint('action-icons', GLib.Variant('b', True))
+                # GNOME Shell 3.20 or higher has bultin MPRIS functionality that makes
+                # persistent song notifications redundant.
+                has_built_in_mpris = False
+                version = server_info['version'].split('.')
+                if server_info['name'] == 'gnome-shell' and len(version) >= 2:
+                    major_version, minor_version = (int(x) if x.isdigit() else 0 for x in version[0:2])
+                    if major_version == 3 and minor_version >= 20:
+                        has_built_in_mpris = True
 
-            # GNOME Shell 3.20 or higher has bultin MPRIS functionality that makes
-            # persistent song notifications redundant.
-            has_built_in_mpris = False
-            version = server_info['version'].split('.')
-            if server_info['name'] == 'gnome-shell' and len(version) >= 2:
-                major_version, minor_version = (int(x) if x.isdigit() else 0 for x in version[0:2])
-                if major_version == 3 and minor_version >= 20:
-                    has_built_in_mpris = True
+                if 'persistence' in caps and has_built_in_mpris:
+                    self.notification.set_hint('transient', GLib.Variant('b', True))
 
-            if 'persistence' in caps and has_built_in_mpris:
-                self.notification.set_hint('transient', GLib.Variant('b', True))
+                server_info = '\n'.join(('{}: {}'.format(k, v) for k, v in server_info.items()))
+                logging.debug('\nNotification Server Information:\n{}'.format(server_info))
 
-            server_info = '\n'.join(('{}: {}'.format(k, v) for k, v in server_info.items()))
-            logging.debug('\nNotification Server Information:\n{}'.format(server_info))
+                caps = '\n'.join((cap for cap in caps))
+                logging.debug('\nNotification Server Capabilities:\n{}'.format(caps))
+                self.prepare_complete()
 
-            caps = '\n'.join((cap for cap in caps))
-            logging.debug('\nNotification Server Capabilities:\n{}'.format(caps))
-            self.prepare_complete()
+        GioNotify.async_init('Pithos', on_notify_init_finish)
 
     def on_enable(self):
         self.song_change_handler = self.window.connect('song-changed', self.send_notification)

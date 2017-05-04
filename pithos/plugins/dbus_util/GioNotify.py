@@ -70,49 +70,57 @@ class GioNotify(Gio.DBusProxy):
 
     @classmethod
     def async_init(cls, app_name, callback):
-        def on_init_finish(self, result, callback):
-            self.init_finish(result)
-            self.call(
-                'GetCapabilities',
-                None,
-                Gio.DBusCallFlags.NONE,
-                -1,
-                None,
-                on_GetCapabilities_finish,
-                callback,
-            )
+        def on_init_finish(self, result, data):
+            try:
+                self.init_finish(result)
+            except GLib.Error as e:
+                callback(None, None, None, error=e)
+            else:
+                self.call(
+                    'GetCapabilities',
+                    None,
+                    Gio.DBusCallFlags.NONE,
+                    -1,
+                    None,
+                    on_GetCapabilities_finish,
+                    None,
+                )
 
-        def on_GetCapabilities_finish(self, result, callback):
-            caps = self.call_finish(result).unpack()[0]
-            user_data = callback, caps
-            self.call(
-                'GetServerInformation',
-                None,
-                Gio.DBusCallFlags.NONE,
-                -1,
-                None,
-                on_GetServerInformation_finish,
-                user_data,
-            )
+        def on_GetCapabilities_finish(self, result, data):
+            try:
+                self._caps = self.call_finish(result).unpack()[0]
+            except GLib.Error as e:
+                callback(None, None, None, error=e)
+            else:
+                self.call(
+                    'GetServerInformation',
+                    None,
+                    Gio.DBusCallFlags.NONE,
+                    -1,
+                    None,
+                    on_GetServerInformation_finish,
+                    None,
+               )
 
-        def on_GetServerInformation_finish(self, result, user_data):
-            callback, caps = user_data
-            info = self.call_finish(result).unpack()
-            self._server_info = {
-                'name': info[0],
-                'vendor': info[1],
-                'version': info[2],
-                'spec_version': info[3],
-            }
+        def on_GetServerInformation_finish(self, result, data):
+            try:
+                info = self.call_finish(result).unpack()
+            except GLib.Error as e:
+                callback(None, None, None, error=e)
+            else:
+                self._server_info = {
+                    'name': info[0],
+                    'vendor': info[1],
+                    'version': info[2],
+                    'spec_version': info[3],
+                }
 
-            self._caps = caps
-            self._app_name = app_name
+                self._app_name = app_name
 
-            callback(self._server_info, self._caps)
+                callback(self, self._server_info, self._caps)
 
         self = cls()
-        self.init_async(GLib.PRIORITY_DEFAULT, None, on_init_finish, callback)
-        return self
+        self.init_async(GLib.PRIORITY_DEFAULT, None, on_init_finish, None)
 
     @classmethod
     def sync_init(cls, app_name):
