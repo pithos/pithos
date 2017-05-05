@@ -341,10 +341,6 @@ class PithosWindow(Gtk.ApplicationWindow):
     def init_ui(self):
         GLib.set_application_name("Pithos")
         Gtk.Window.set_default_icon_name('pithos')
-        self.current_window_theme_name = None
-        self.current_icon_theme_name = None
-
-        self.treeview_style_context = self.songs_treeview.get_style_context()
 
         self.volume.set_relief(Gtk.ReliefStyle.NORMAL)  # It ignores glade...
         self.settings.bind('volume', self.volume, 'value', Gio.SettingsBindFlags.DEFAULT)
@@ -353,11 +349,10 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         title_col   = Gtk.TreeViewColumn()
 
-        self.render_cover_art = CellRendererAlbumArt()
-        self.treeview_style_context.connect('changed', self.style_context_change_handler)
-        title_col.pack_start(self.render_cover_art, False)
-        title_col.add_attribute(self.render_cover_art, "icon", 2)
-        title_col.add_attribute(self.render_cover_art, "pixbuf", 3)
+        render_cover_art = CellRendererAlbumArt()
+        title_col.pack_start(render_cover_art, False)
+        title_col.add_attribute(render_cover_art, "icon", 2)
+        title_col.add_attribute(render_cover_art, "pixbuf", 3)
 
         render_text = Gtk.CellRendererText(xpad=TEXT_X_PADDING)
         render_text.props.ellipsize = Pango.EllipsizeMode.END
@@ -366,6 +361,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         title_col.add_attribute(render_text, "markup", 1)
 
         self.songs_treeview.append_column(title_col)
+
+        self.get_style_context().connect('changed', lambda sc: render_cover_art.update_icons(sc))
 
         self.songs_treeview.connect('button_press_event', self.on_treeview_button_press_event)
 
@@ -432,17 +429,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.add_action(action)
         app.add_accelerator('<Primary>d', 'win.bookmark', None)
         action.connect('activate', self.bookmark_song)
-
-    def style_context_change_handler(self, style_context):
-        # We only care if the window or icon theme has changed.
-        current_theme = Gtk.Settings.get_default()
-        window_theme_changed = self.current_window_theme_name != current_theme.props.gtk_theme_name
-        icon_theme_chanced = self.current_icon_theme_name != current_theme.props.gtk_icon_theme_name
-        if window_theme_changed or icon_theme_chanced:
-            self.current_window_theme_name = current_theme.props.gtk_theme_name
-            self.current_icon_theme_name = current_theme.props.gtk_icon_theme_name
-            # Update rating icons and background, and generic cover icon and background.
-            self.render_cover_art.update_icons(style_context)
 
     def worker_run(self, fn, args=(), callback=None, message=None, context='net', errorback=None, user_data=None):
         if context and message:
