@@ -71,19 +71,19 @@ appstream_XML = $(appstream_in_files:.xml.in=.xml)
 
 hicolor_scalabledir = $(datadir)/icons/hicolor/scalable/apps
 hicolor_scalable_DATA = data/icons/hicolor/scalable/apps/io.github.Pithos.svg \
-                        data/icons/hicolor/scalable/apps/pithos-tray-icon.svg
+                        data/icons/hicolor/scalable/apps/io.github.Pithos-tray.svg
 
 hicolordir = $(datadir)/icons/hicolor/48x48/apps
-hicolor_DATA = data/icons/hicolor/48x48/apps/pithos-tray-icon.png
+hicolor_DATA = data/icons/hicolor/48x48/apps/io.github.Pithos-tray.png
 
 symbolicdir = $(datadir)/icons/hicolor/symbolic/apps
 symbolic_DATA = data/icons/hicolor/symbolic/apps/io.github.Pithos-symbolic.svg
 
 ubuntu_lightdir = $(datadir)/icons/ubuntu-mono-light/16x16/apps
-ubuntu_light_DATA = data/icons/ubuntu-mono-light/16x16/apps/pithos-tray-icon.svg
+ubuntu_light_DATA = data/icons/ubuntu-mono-light/16x16/apps/io.github.Pithos-tray.svg
 
 ubuntu_darkdir = $(datadir)/icons/ubuntu-mono-dark/16x16/apps
-ubuntu_dark_DATA = data/icons/ubuntu-mono-dark/16x16/apps/pithos-tray-icon.svg
+ubuntu_dark_DATA = data/icons/ubuntu-mono-dark/16x16/apps/io.github.Pithos-tray.svg
 
 UPDATE_ICON_CACHE = gtk-update-icon-cache -f -t $(datadir)/icons/hicolor || :
 

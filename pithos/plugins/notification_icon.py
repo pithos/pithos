@@ -41,8 +41,8 @@ class PithosNotificationIcon(PithosPlugin):
 
     def on_prepare(self):
         if indicator_capable:
-            self.ind = AppIndicator.Indicator.new("pithos-tray-icon",
-                                                  "pithos-tray-icon",
+            self.ind = AppIndicator.Indicator.new("io.github.Pithos-tray",
+                                                  "io.github.Pithos-tray",
                                                   AppIndicator.IndicatorCategory.APPLICATION_STATUS)
             # FIXME: AppIndicator might be falling back to XEmbed
         elif not backend_is_supported(self.window):
@@ -56,7 +56,7 @@ class PithosNotificationIcon(PithosPlugin):
         if indicator_capable:
             self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         else:
-            self.statusicon = Gtk.StatusIcon.new_from_icon_name('pithos-tray-icon')
+            self.statusicon = Gtk.StatusIcon.new_from_icon_name('io.github.Pithos-tray')
             self.statusicon.connect('activate', self._toggle_visible)
 
         self.build_context_menu()
