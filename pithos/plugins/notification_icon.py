@@ -176,6 +176,7 @@ class PithosNotificationIcon(PithosPlugin):
                 GObject.signal_handler_block(self.visible_check, handler)
                 self.visible_check.set_active(active)
                 GObject.signal_handler_unblock(self.visible_check, handler)
+                return True
 
             # Ensure it is kept in sync
             self.window.connect("hide", lambda w: set_active(False))
