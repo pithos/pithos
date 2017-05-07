@@ -32,17 +32,6 @@ class PithosNotificationIcon(PithosPlugin):
     appindicator = None
 
     def on_prepare(self):
-        # 1st we check for AppIndicator3.
-        # If it's not found we check to make sure we aren't running on KDE Plasma
-        # because it doesn't support Gtk.StatusIcon. If we aren't we then
-        # check to make sure we aren't running in Wayland because GNOME Shell doesn't support
-        # tray icons in Wayland.
-        # If AppIndicator3 is found we check for com.canonical.indicator.application
-        # or if we have the appindicatorsupport GNOME Shell extension installed and enabled,
-        # if not we check to see if we're running in KDE Plasma. If we aren't running in KDE Plasma,
-        # have the indicator.application service or have the appindicatorsupport GNOME Shell extension
-        # installed and enabled we have to check to see if we're on Wayland to see if we can use Gtk.StatusIcon.
-        # It's all rather convoluted...
         def check_for_x():
             self.appindicator = None
             display = self.window.props.screen.get_display()
@@ -54,22 +43,12 @@ class PithosNotificationIcon(PithosPlugin):
 
         def init_appindicator():
             self.ind = self.appindicator.Indicator.new(
-                "pithos-tray-icon",
-                "pithos-tray-icon",
+                'io.github.Pithos-tray',
+                'io.github.Pithos-tray',
                 self.appindicator.IndicatorCategory.APPLICATION_STATUS,
             )
 
             self.prepare_complete()
-
-        def has_appindicator_shell_ext():
-            schema = Gio.SettingsSchemaSource.get_default()
-            valid_schema = schema.lookup('org.gnome.shell', True)
-            if valid_schema:
-                gnome_shell = Gio.Settings.new('org.gnome.shell')
-                enabled_extensions = gnome_shell.get_value('enabled-extensions')
-                if 'appindicatorsupport@rgcjonas.gmail.com' in enabled_extensions:
-                    return True
-            return False
 
         def on_plasmashell_finish(source, result, data):
             try:
@@ -87,18 +66,6 @@ class PithosNotificationIcon(PithosPlugin):
                 else:
                     check_for_x()
 
-        def on_indicator_finish(source, result, data):
-            try:
-                indicator_service = Gio.DBusProxy.new_finish(result)
-            except GLib.Error as e:
-                logging.debug(e)
-                check_for_x()
-            else:
-                if indicator_service.get_name_owner() or has_appindicator_shell_ext():
-                    init_appindicator()
-                else:
-                    check_for_plasma()
-
         def check_for_plasma():
             Gio.DBusProxy.new(
                 self.bus,
@@ -111,6 +78,18 @@ class PithosNotificationIcon(PithosPlugin):
                 on_plasmashell_finish,
                 None
             )
+
+        def on_StatusNotifierWatcher_finish(source, result, data):
+            try:
+                StatusNotifierWatcher = Gio.DBusProxy.new_finish(result)
+            except GLib.Error as e:
+                logging.debug(e)
+                check_for_x()
+            else:
+                if StatusNotifierWatcher.get_name_owner():
+                    init_appindicator()
+                else:
+                    check_for_x()
 
         try:
             import gi
@@ -125,11 +104,11 @@ class PithosNotificationIcon(PithosPlugin):
                 self.bus,
                 Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES,
                 None,
-                'com.canonical.indicator.application',
-                '/com/canonical/indicator/application/service',
-                'com.canonical.indicator.application.service',
+                'org.kde.StatusNotifierWatcher',
+                '/StatusNotifierWatcher',
+                'org.kde.StatusNotifierWatcher',
                 None,
-                on_indicator_finish,
+                on_StatusNotifierWatcher_finish,
                 None
             )
 
@@ -143,9 +122,9 @@ class PithosNotificationIcon(PithosPlugin):
         self.build_context_menu()
 
         self.window_handlers = [
-            self.window.connect("delete-event", self._toggle_visible),
-            self.window.connect("play-state-changed", self.play_state_changed),
-            self.window.connect("song-changed", self.song_changed)
+            self.window.connect('delete-event', self._toggle_visible),
+            self.window.connect('play-state-changed', self.play_state_changed),
+            self.window.connect('song-changed', self.song_changed)
         ]
 
     def scroll(self, direction):
@@ -170,7 +149,7 @@ class PithosNotificationIcon(PithosPlugin):
 
         if self.appindicator:
             # We have to add another entry for show / hide Pithos window
-            self.visible_check, handler = button("Show Pithos", self._toggle_visible, True)
+            self.visible_check, handler = button('Show Pithos', self._toggle_visible, True)
 
             def set_active(active):
                 GObject.signal_handler_block(self.visible_check, handler)
@@ -179,18 +158,18 @@ class PithosNotificationIcon(PithosPlugin):
                 return True
 
             # Ensure it is kept in sync
-            self.window.connect("hide", lambda w: set_active(False))
-            self.window.connect("show", lambda w: set_active(True))
+            self.window.connect('hide', lambda w: set_active(False))
+            self.window.connect('show', lambda w: set_active(True))
 
             # On middle-click
             self.ind.set_secondary_activate_target(self.visible_check)
 
-        self.playpausebtn = button("Pause", self.window.playpause)[0]
-        button("Skip", self.window.next_song)
-        button("Love", (lambda *i: self.window.love_song()))
-        button("Ban", (lambda *i: self.window.ban_song()))
-        button("Tired", (lambda *i: self.window.tired_song()))
-        button("Quit", self.window.quit)
+        self.playpausebtn = button('Pause', self.window.playpause)[0]
+        button('Skip', self.window.next_song)
+        button('Love', (lambda *i: self.window.love_song()))
+        button('Ban', (lambda *i: self.window.ban_song()))
+        button('Tired', (lambda *i: self.window.tired_song()))
+        button('Quit', self.window.quit)
 
         # connect our new menu to the statusicon or the appindicator
         if self.appindicator:
@@ -203,20 +182,20 @@ class PithosNotificationIcon(PithosPlugin):
         self.menu = menu
 
     def play_state_changed(self, window, playing):
-        """ play or pause and rotate the text """
+        ''' play or pause and rotate the text '''
 
         button = self.playpausebtn
         if not playing:
-            button.set_label("Play")
+            button.set_label('Play')
         else:
-            button.set_label("Pause")
+            button.set_label('Pause')
 
         if self.appindicator: # menu needs to be reset to get updated icon
             self.ind.set_menu(self.menu)
 
     def song_changed(self, window, song):
         if not self.appindicator:
-            self.statusicon.set_tooltip_text("{} by {}".format(song.title, song.artist))
+            self.statusicon.set_tooltip_text('{} by {}'.format(song.title, song.artist))
 
     def _toggle_visible(self, *args):
         self.window.set_visible(not self.window.get_visible())
