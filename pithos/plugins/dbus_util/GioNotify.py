@@ -76,15 +76,18 @@ class GioNotify(Gio.DBusProxy):
             except GLib.Error as e:
                 callback(None, None, None, error=e)
             else:
-                self.call(
-                    'GetCapabilities',
-                    None,
-                    Gio.DBusCallFlags.NONE,
-                    -1,
-                    None,
-                    on_GetCapabilities_finish,
-                    None,
-                )
+                if not self.get_name_owner():
+                    callback(None, None, None, error='Notification service is unowned')
+                else:
+                    self.call(
+                        'GetCapabilities',
+                        None,
+                        Gio.DBusCallFlags.NONE,
+                        -1,
+                        None,
+                        on_GetCapabilities_finish,
+                        None,
+                    )
 
         def on_GetCapabilities_finish(self, result, data):
             try:
