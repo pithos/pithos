@@ -56,10 +56,13 @@ class PithosPlugin:
     def prepare_complete(self, error=None):
         self.prepared = True
         if error:
-            self.error = error
-            self.settings['enabled'] = False
+            self.on_error(error)
         else:
             self._enable()
+
+    def on_error(self, error):
+        self.error = error
+        self.settings['enabled'] = False
 
     def on_prepare(self):
         pass
