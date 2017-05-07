@@ -26,30 +26,21 @@ class MediaKeyPlugin(PithosPlugin):
     description = 'Control playback with media keys'
 
     method = None
+    mediakeys = None
     de_busnames = [
         ('gnome', 'org.gnome.SettingDaemon.MediaKeys'),
         ('gnome', 'org.gnome.SettingsDaemon'),
         ('mate', 'org.mate.SettingsDaemon'),
     ]
 
-    def grab_media_keys(self, callback=None):
-        def on_call_finish(source, result):
-            try:
-                self.mediakeys.call_finish(result)
-                success = True
-            except GLib.Error as e:
-                logging.debug(e)
-                success = False
-            if callback:
-                callback(success)
-
+    def grab_media_keys(self):
         self.mediakeys.call(
             'GrabMediaPlayerKeys',
             GLib.Variant('(su)', (APP_ID, 0)),
             Gio.DBusCallFlags.NONE,
             -1,
             None,
-            on_call_finish,
+            None,
         )
 
     def release_media_keys(self):
@@ -100,17 +91,6 @@ class MediaKeyPlugin(PithosPlugin):
                 else:
                     self.prepare_complete()
 
-        def on_grab_media_keys(success):
-            if success:
-                self.method = 'dbus'
-                self.prepare_complete()
-            elif self.de_busnames:
-                de, busname = self.de_busnames.pop(0)
-                get_bus(de, busname)
-            else:
-                logging.debug('DBus binding failed')
-                prepare_keybinder()
-
         def on_new_finish(source, result, data):
             try:
                 self.mediakeys = Gio.DBusProxy.new_finish(result)
@@ -118,7 +98,16 @@ class MediaKeyPlugin(PithosPlugin):
                 logging.warning(e)
                 prepare_keybinder()
             else:
-                self.grab_media_keys(callback=on_grab_media_keys)
+                if self.mediakeys.get_name_owner():
+                    self.method = 'dbus'
+                    self.prepare_complete()
+                elif self.de_busnames:
+                    de, busname = self.de_busnames.pop(0)
+                    get_bus(de, busname)
+                else:
+                    self.mediakeys = None
+                    logging.debug('DBus binding failed')
+                    prepare_keybinder()
 
         def get_bus(de, bus_name):
             Gio.DBusProxy.new(
