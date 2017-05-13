@@ -12,6 +12,7 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import sys
 import gi
 
@@ -35,6 +36,13 @@ def backend_is_supported(window):
     return type(display).__name__.endswith('X11Display')
 
 
+def get_local_icon_path():
+    # This basically duplicates what is in bin/pithos.in
+    srcdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    if os.path.exists(os.path.join(srcdir, 'Makefile')):
+        return os.path.join(srcdir, 'data', 'icons')
+
+
 class PithosNotificationIcon(PithosPlugin):
     preference = 'show_icon'
     description = 'Adds pithos icon to system tray'
@@ -45,6 +53,10 @@ class PithosNotificationIcon(PithosPlugin):
                                                   "io.github.Pithos-tray",
                                                   AppIndicator.IndicatorCategory.APPLICATION_STATUS)
             # FIXME: AppIndicator might be falling back to XEmbed
+            local_icon_path = get_local_icon_path()
+            if local_icon_path:
+                self.ind.set_icon_theme_path(local_icon_path)
+            self.prepare_complete()
         elif not backend_is_supported(self.window):
             self.prepare_complete(error='Notification icon requires X11 or AppIndicator')
         else:
