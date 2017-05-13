@@ -38,6 +38,7 @@ class PithosPlugin:
 
     def enable(self):
         if not self.prepared:
+            logging.info('Preparing module {}'.format(self.name))
             self.on_prepare()
         elif not self.error and not self.enabled:
             self._enable()
