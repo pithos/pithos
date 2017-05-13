@@ -14,9 +14,15 @@
 
 import os
 import sys
+import logging
 import gi
-
-from gi.repository import GObject, Gdk, Gtk
+from gi.repository import (
+    GLib,
+    GObject,
+    Gio,
+    Gdk,
+    Gtk
+)
 
 from pithos.plugin import PithosPlugin
 
@@ -48,19 +54,48 @@ class PithosNotificationIcon(PithosPlugin):
     description = 'Adds pithos icon to system tray'
 
     def on_prepare(self):
-        if indicator_capable:
-            self.ind = AppIndicator.Indicator.new("io.github.Pithos-tray",
-                                                  "io.github.Pithos-tray",
-                                                  AppIndicator.IndicatorCategory.APPLICATION_STATUS)
-            # FIXME: AppIndicator might be falling back to XEmbed
-            local_icon_path = get_local_icon_path()
-            if local_icon_path:
-                self.ind.set_icon_theme_path(local_icon_path)
-            self.prepare_complete()
-        elif not backend_is_supported(self.window):
-            self.prepare_complete(error='Notification icon requires X11 or AppIndicator')
-        else:
-            self.prepare_complete()
+        if self.bus is None:
+            # This is technically a lie but we aren't going to maintain a list of DEs
+            # where XEmbed is still supported
+            self.prepare_complete(error='DBus failed and is required for notification icon')
+            return
+
+        def on_has_name_owner(bus, result):
+            try:
+                is_owned = bus.call_finish(result)[0]
+                logging.info('org.kde.StatusNotifierWatcher is owned: {}'.format(is_owned))
+            except GLib.Error as e:
+                logging.exception(e)
+                self.prepare_complete(error='Failed to find DBus service')
+                return
+
+            # This is an awful mess but I don't know a better way of organizing it
+            if is_owned and indicator_capable:
+                self._create_appindicator()
+                self.prepare_complete()
+            elif is_owned and not indicator_capable:
+                # If you have the service, we assume required
+                self.prepare_complete(error='AppIndicator service found but '
+                                            'AppIndicator not installed')
+
+            # No indicator service:
+            elif not backend_is_supported(self.window):
+                error_message = 'DBus service for AppIndicator not found' if indicator_capable \
+                                else 'AppIndicator is required for this platform'
+                self.prepare_complete(error=error_message)
+            elif indicator_capable:
+                # Odd situation but appindicator is capable of auto-upgrading if service
+                # appears. In the future we could handle this ourself but this is fine
+                self._create_appindicator()
+                self.prepare_complete()
+            else:
+                # No fancy tray here
+                self.prepare_complete()
+
+        logging.info('Checking if org.kde.StatusNotifierWatcher is owned')
+        self.bus.call('org.freedesktop.DBus', '/', 'org.freedesktop.DBus',
+                      'NameHasOwner', GLib.Variant('(s)', ('org.kde.StatusNotifierWatcher',)),
+                      GLib.VariantType('(b)'), Gio.DBusCallFlags.NONE, -1, None, on_has_name_owner)
 
     def on_enable(self):
         self.delete_callback_handle = self.window.connect("delete-event", self._toggle_visible)
@@ -80,6 +115,14 @@ class PithosNotificationIcon(PithosPlugin):
             self.window.adjust_volume(-1)
         elif direction == Gdk.ScrollDirection.UP:
             self.window.adjust_volume(+1)
+
+    def _create_appindicator(self):
+        self.ind = AppIndicator.Indicator.new("io.github.Pithos-tray",
+                                              "io.github.Pithos-tray",
+                                              AppIndicator.IndicatorCategory.APPLICATION_STATUS)
+        local_icon_path = get_local_icon_path()
+        if local_icon_path:
+            self.ind.set_icon_theme_path(local_icon_path)
 
     def build_context_menu(self):
         menu = Gtk.Menu()
