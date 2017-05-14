@@ -14,3 +14,4 @@ pithos/StationsPopover.py
 pithos/PreferencesPithosDialog.py
 pithos/plugins/journald_logging.py
 pithos/plugins/lastfm.py
+pithos/plugins/notification_icon.py

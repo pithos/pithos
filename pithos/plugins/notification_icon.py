@@ -69,6 +69,7 @@ class PithosNotificationIcon(PithosPlugin):
                 self.prepare_complete(error='Failed to find DBus service')
                 return
 
+            self.preferences_dialog = NotificationIconPluginPrefsDialog(self.window, self.settings)
             # This is an awful mess but I don't know a better way of organizing it
             if is_owned and indicator_capable:
                 self._create_appindicator()
@@ -92,6 +93,9 @@ class PithosNotificationIcon(PithosPlugin):
                 # No fancy tray here
                 self.prepare_complete()
 
+        if not self.settings['data']:
+            self.settings['data'] = 'io.github.Pithos-tray'
+
         logging.info('Checking if org.kde.StatusNotifierWatcher is owned')
         self.bus.call('org.freedesktop.DBus', '/', 'org.freedesktop.DBus',
                       'NameHasOwner', GLib.Variant('(s)', ('org.kde.StatusNotifierWatcher',)),
@@ -105,7 +109,8 @@ class PithosNotificationIcon(PithosPlugin):
         if indicator_capable:
             self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         else:
-            self.statusicon = Gtk.StatusIcon.new_from_icon_name('io.github.Pithos-tray')
+            self.statusicon = Gtk.StatusIcon.new_from_icon_name(self.settings['data'])
+            self.settings.bind('data', self.statusicon, 'icon-name', Gio.SettingsBindFlags.GET)
             self.statusicon.connect('activate', self._toggle_visible)
 
         self.build_context_menu()
@@ -118,8 +123,9 @@ class PithosNotificationIcon(PithosPlugin):
 
     def _create_appindicator(self):
         self.ind = AppIndicator.Indicator.new("io.github.Pithos-tray",
-                                              "io.github.Pithos-tray",
+                                              self.settings['data'],
                                               AppIndicator.IndicatorCategory.APPLICATION_STATUS)
+        self.settings.bind('data', self.ind, 'icon-name', Gio.SettingsBindFlags.GET)
         local_icon_path = get_local_icon_path()
         if local_icon_path:
             self.ind.set_icon_theme_path(local_icon_path)
@@ -213,3 +219,46 @@ class PithosNotificationIcon(PithosPlugin):
 
         # Pithos window needs to be reconnected to on_destro()
         self.window.connect('delete-event', self.window.on_destroy)
+
+
+class NotificationIconPluginPrefsDialog(Gtk.Dialog):
+
+    def __init__(self, parent, settings):
+        super().__init__(
+            _('Icon Type'),
+            parent,
+            0,
+            ('_Cancel', Gtk.ResponseType.CANCEL, '_Apply', Gtk.ResponseType.APPLY),
+            use_header_bar=1,
+            resizable=False,
+            default_width=300
+        )
+        self.settings = settings
+
+        sub_title = Gtk.Label.new(_('Set the Notification Icon Type'))
+        sub_title.set_halign(Gtk.Align.CENTER)
+        self.icons_combo = Gtk.ComboBoxText.new()
+
+        icons = (
+            ('io.github.Pithos-tray', _('Full Color')),
+            ('io.github.Pithos-symbolic', _('Symbolic')),
+        )
+
+        for icon in icons:
+            self.icons_combo.append(icon[0], icon[1])
+        self._reset_combo()
+
+        content_area = self.get_content_area()
+        content_area.add(sub_title)
+        content_area.add(self.icons_combo)
+        content_area.show_all()
+
+    def _reset_combo(self):
+        self.icons_combo.set_active_id(self.settings['data'])
+
+    def do_response(self, response):
+        if response == Gtk.ResponseType.APPLY:
+            self.settings['data'] = self.icons_combo.get_active_id()
+        else:
+            self._reset_combo()
+        self.hide()
