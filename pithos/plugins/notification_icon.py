@@ -69,6 +69,7 @@ class PithosNotificationIcon(PithosPlugin):
                 self.prepare_complete(error='Failed to find DBus service')
                 return
 
+            self.preferences_dialog = NotificationIconPluginPrefsDialog(self.window, self.settings)
             # This is an awful mess but I don't know a better way of organizing it
             if is_owned and indicator_capable:
                 self._create_appindicator()
@@ -92,12 +93,16 @@ class PithosNotificationIcon(PithosPlugin):
                 # No fancy tray here
                 self.prepare_complete()
 
+        if not self.settings['data']:
+            self.settings['data'] = 'io.github.Pithos-tray'
+
         logging.info('Checking if org.kde.StatusNotifierWatcher is owned')
         self.bus.call('org.freedesktop.DBus', '/', 'org.freedesktop.DBus',
                       'NameHasOwner', GLib.Variant('(s)', ('org.kde.StatusNotifierWatcher',)),
                       GLib.VariantType('(b)'), Gio.DBusCallFlags.NONE, -1, None, on_has_name_owner)
 
     def on_enable(self):
+        self.icon_changed_handler = self.preferences_dialog.connect('icon-changed', self._on_icon_changed)
         self.delete_callback_handle = self.window.connect("delete-event", self._toggle_visible)
         self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
         self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
@@ -105,7 +110,7 @@ class PithosNotificationIcon(PithosPlugin):
         if indicator_capable:
             self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
         else:
-            self.statusicon = Gtk.StatusIcon.new_from_icon_name('io.github.Pithos-tray')
+            self.statusicon = Gtk.StatusIcon.new_from_icon_name(self.settings['data'])
             self.statusicon.connect('activate', self._toggle_visible)
 
         self.build_context_menu()
@@ -118,7 +123,7 @@ class PithosNotificationIcon(PithosPlugin):
 
     def _create_appindicator(self):
         self.ind = AppIndicator.Indicator.new("io.github.Pithos-tray",
-                                              "io.github.Pithos-tray",
+                                              self.settings['data'],
                                               AppIndicator.IndicatorCategory.APPLICATION_STATUS)
         local_icon_path = get_local_icon_path()
         if local_icon_path:
@@ -201,6 +206,13 @@ class PithosNotificationIcon(PithosPlugin):
                 data.show_all()
                 data.popup(None, None, None, None, 3, time)
 
+    def _on_icon_changed(self, prefs_dialog, icon):
+        self.settings['data'] = icon
+        if indicator_capable:
+            self.ind.props.icon_name = icon
+        else:
+            self.statusicon.props.icon_name = icon
+
     def on_disable(self):
         if indicator_capable:
             self.ind.set_status(AppIndicator.IndicatorStatus.PASSIVE)
@@ -210,6 +222,56 @@ class PithosNotificationIcon(PithosPlugin):
         self.window.disconnect(self.delete_callback_handle)
         self.window.disconnect(self.state_callback_handle)
         self.window.disconnect(self.song_callback_handle)
+        self.preferences_dialog.disconnect(self.icon_changed_handler)
 
         # Pithos window needs to be reconnected to on_destro()
         self.window.connect('delete-event', self.window.on_destroy)
+
+
+class NotificationIconPluginPrefsDialog(Gtk.Dialog):
+    __gtype_name__ = 'NotificationIconPluginPrefsDialog'
+    __gsignals__ = {
+        'icon-changed': (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_STRING,)),
+    }
+
+    def __init__(self, parent, settings):
+        super().__init__(
+            _('Icon Type'),
+            parent,
+            0,
+            ('_Cancel', Gtk.ResponseType.CANCEL, '_Apply', Gtk.ResponseType.APPLY),
+            use_header_bar=1,
+        )
+        self.set_default_size(300, -1)
+        self.settings = settings
+        self.set_resizable(False)
+        self.connect('response', self._on_response)
+
+        sub_title = Gtk.Label.new(_('Set the Notification Icon Type'))
+        sub_title.set_halign(Gtk.Align.CENTER)
+        self.icons_combo = Gtk.ComboBoxText.new()
+
+        icons = [
+            ('io.github.Pithos-tray', 'Full Color'),
+            ('io.github.Pithos-symbolic', 'Symbolic'),
+        ]
+
+        for icon in icons:
+            self.icons_combo.append(icon[0], icon[1])
+
+        self._reset_combo()
+        content_area = self.get_content_area()
+
+        content_area.add(sub_title)
+        content_area.add(self.icons_combo)
+        content_area.show_all()
+
+    def _reset_combo(self):
+        self.icons_combo.set_active_id(self.settings['data'])
+
+    def _on_response(self, dialog, response):
+        if response == Gtk.ResponseType.APPLY:
+            self.emit('icon-changed', self.icons_combo.get_active_id())
+        else:
+            self._reset_combo()
+        self.hide()
