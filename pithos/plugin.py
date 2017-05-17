@@ -18,23 +18,35 @@ import glob
 import os
 from gi.repository import (
     GLib,
-    Gio
+    Gio,
+    GObject
 )
 
 
-class PithosPlugin:
+class PithosPlugin(GObject.Object):
+    __gtype_name__ = 'PithosPlugin'
+
     _PITHOS_PLUGIN = True # used to find the plugin class in a module
     preference = None
     description = ""
 
     def __init__(self, name, window, bus):
+        super().__init__()
         self.name = name
         self.window = window
         self.bus = bus
         self.preferences_dialog = None
         self.prepared = False
-        self.enabled = False
+        self._enabled = False
         self.error = None
+
+    @GObject.Property
+    def enabled(self):
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, enabled):
+        self._enabled = enabled
 
     def enable(self):
         if not self.prepared:
