@@ -4,7 +4,7 @@
   <requires lib="gtk+" version="3.14"/>
   <template class="AboutPithosDialog" parent="GtkAboutDialog">
     <property name="program_name">Pithos</property>
-    <property name="copyright" translatable="yes">Copyright © 2012 Kevin Mehall</property>
+    <property name="copyright" translatable="yes">Copyright © 2012-2017 Kevin Mehall</property>
     <property name="comments" translatable="yes">A Pandora Radio client for the GNOME Desktop</property>
     <property name="website">https://pithos.github.io</property>
     <property name="authors">Kevin Mehall
