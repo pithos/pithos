@@ -317,6 +317,19 @@ class Pandora:
         self.json_call('user.setExplicitContentFilter', {'isExplicitContentFilterEnabled': state})
         logging.info('Explicit Content Filter set to: %s' %(state))
 
+    def add_seed_to_station(self, stationToken, musicId):
+        """Add the song and songs like it to the corresponding station"""
+        self.json_call('station.addMusic', {'stationToken': stationToken, 'musicToken': musicId})
+
+    def remove_seed_from_station(self, stationToken, musicId):
+        """Remove the song and songs like it from the corresponding station"""
+        self.json_call('station.deleteMusic', {'stationToken': stationToken, 'musicToken': musicId})
+
+    def move_seed_to_different_station(self, from_stationToken, to_stationToken, musicId):
+        """Convenience method for moving a song and songs like it from one station to another"""
+        self.remove_seed_from_station(from_stationToken, musicId)
+        self.add_seed_to_station(to_stationToken, musicId)
+
     def get_stations(self, *ignore):
         stations = self.json_call('user.getStationList')['stations']
         self.quickMixStationIds = None
@@ -444,6 +457,7 @@ class Song:
         self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
         self.trackLength = d['trackLength']
+        self.musicId = d['musicId']
 
         self.audioUrlMap = d['audioUrlMap']
 
