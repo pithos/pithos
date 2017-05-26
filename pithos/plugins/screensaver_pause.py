@@ -30,8 +30,6 @@ class ScreenSaverPausePlugin(PithosPlugin):
     preference = 'enable_screensaverpause'
     description = 'Pause playback on screensaver'
 
-    bus = None
-    cancel = None
     locked = 0
     wasplaying = False
     subs = []
@@ -50,9 +48,9 @@ class ScreenSaverPausePlugin(PithosPlugin):
         for sub in self.subs:
             self.bus.signal_unsubscribe(sub)
 
+        self.locked = 0
+        self.wasplaying = False
         self.subs = []
-        self.bus = None
-        self.cancel = None
 
     def _connect_events(self):
         def on_screensaver_active_changed(conn, sender, path, interface, sig, param, userdata=None):
