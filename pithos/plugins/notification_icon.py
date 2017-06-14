@@ -44,8 +44,8 @@ def backend_is_supported(window):
 
 def get_local_icon_path():
     # This basically duplicates what is in bin/pithos.in
-    srcdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-    if os.path.exists(os.path.join(srcdir, 'Makefile')):
+    srcdir = os.environ.get('MESON_SOURCE_ROOT')
+    if srcdir:
         return os.path.join(srcdir, 'data', 'icons')
 
 

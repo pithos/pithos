@@ -8,8 +8,8 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0+</project_license>
   <description>
-    <_p>Pithos is a easy to use native Pandora Radio client that is more lightweight than the pandora.com web client and integrates with the desktop.</_p>
-    <_p>It supports most functionality of pandora.com such as rating songs, creating/managing stations, quickmix, etc. On top of that it has features such as last.fm scrobbling, media keys, notifications, proxies, and mpris support.</_p>
+    <p>Pithos is a easy to use native Pandora Radio client that is more lightweight than the pandora.com web client and integrates with the desktop.</p>
+    <p>It supports most functionality of pandora.com such as rating songs, creating/managing stations, quickmix, etc. On top of that it has features such as last.fm scrobbling, media keys, notifications, proxies, and mpris support.</p>
   </description>
   <url type="homepage">https://pithos.github.io</url>
   <url type="bugtracker">https://github.com/pithos/pithos/issues</url>
@@ -19,7 +19,7 @@
   <screenshots>
     <screenshot type="default" width="624" height="351">
       <image>http://i.imgur.com/2U2ce8v.png</image>
-      <_caption>Main Window</_caption>
+      <caption>Main Window</caption>
     </screenshot>
   </screenshots>
   <releases>

@@ -1,7 +1,7 @@
 [Desktop Entry]
-_Name=Pithos
-_Comment=Play music from Pandora Radio
-_Keywords=Music;
+Name=Pithos
+Comment=Play music from Pandora Radio
+Keywords=Music;
 Categories=GNOME;AudioVideo;Player;
 Exec=pithos
 Icon=io.github.Pithos

@@ -1,0 +1,17 @@
+data/io.github.Pithos.appdata.xml.in
+data/io.github.Pithos.desktop.in
+data/io.github.Pithos.gschema.xml
+data/ui/AboutPithosDialog.ui
+data/ui/PithosWindow.ui
+data/ui/PreferencesPithosDialog.ui
+data/ui/SearchDialog.ui
+data/ui/StationsDialog.ui
+data/gtk/menus.ui
+data/gtk/help-overlay.ui
+pithos/application.py
+pithos/pithos.py
+pithos/StationsPopover.py
+pithos/PreferencesPithosDialog.py
+pithos/plugins/journald_logging.py
+pithos/plugins/lastfm.py
+pithos/plugins/notification_icon.py

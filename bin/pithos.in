@@ -1,4 +1,4 @@
-#!@PYTHON@
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -13,23 +13,26 @@ from gi.repository import Gio
 sys.modules['gi.overrides.Gst'] = None
 sys.modules['gi.overrides.GstPbutils'] = None
 
-sys.path.insert(1, '@pyexecdir@')
-sys.path.insert(1, '@pythondir@')
-
 VERSION = '@VERSION@'
 pkgdatadir = '@pkgdatadir@'
 localedir = '@localedir@'
-srcdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-if os.path.exists(os.path.join(srcdir, 'Makefile')):
-    sys.path.insert(1, srcdir)
-    pkgdatadir = srcdir
+srcdir = pkgdatadir
+builddir = os.environ.get('MESON_BUILD_ROOT')
+if builddir:
+    pkgdatadir = os.path.join(builddir, 'data')
+    localedir = os.path.join(builddir, 'po')
+    srcdir = os.environ.get('MESON_SOURCE_ROOT')
+
+    os.environ['GSETTINGS_SCHEMA_DIR'] = pkgdatadir
+    sys.dont_write_bytecode = True
 
     import gi
     gi.require_version('Gtk', '3.0')
     from gi.repository import Gtk
     theme = Gtk.IconTheme.get_default()
-    theme.append_search_path(os.path.join(srcdir, 'data', 'icons'))
+    theme.append_search_path(os.path.join(pkgdatadir, 'icons'))
 
+sys.path.insert(1, srcdir)
 locale.bindtextdomain('pithos', localedir)
 locale.textdomain('pithos')
 gettext.install('pithos', localedir)
