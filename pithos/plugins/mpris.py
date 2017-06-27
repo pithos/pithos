@@ -755,7 +755,7 @@ class PithosMprisService(DBusServiceObject):
     def GoTo(self, TrackId):
         '''(o) -> nothing Interface MediaPlayer2.TrackList'''
         song = self._song_from_track_id(TrackId)
-        if song and song.index > self.window.current_song_index:
+        if song and song.index > self.window.current_song_index and not (song.tired or song.rating == 'ban'):
             self.window.start_song(song.index)
 
     @dbus_method(MEDIA_PLAYER2_RATINGS_IFACE, in_signature='o')
