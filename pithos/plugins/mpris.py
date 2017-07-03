@@ -23,7 +23,8 @@ import math
 
 from gi.repository import (
     GLib,
-    Gio
+    Gio,
+    Gtk
 )
 from .dbus_util.DBusServiceObject import (
     DBusServiceObject,
@@ -50,6 +51,7 @@ class MprisPlugin(PithosPlugin):
                 logging.warning('Failed to create DBus mpris service: {}'.format(e))
                 self.prepare_complete(error='Failed to create DBus mpris service')
             else:
+                self.preferences_dialog = MprisPluginPrefsDialog(self.window, self.settings)
                 self.prepare_complete()
 
     def on_enable(self):
@@ -830,3 +832,60 @@ class PithosMprisService(DBusServiceObject):
                                         ))
         except GLib.Error as e:
             logging.warning(e)
+
+
+class MprisPluginPrefsDialog(Gtk.Dialog):
+    __gtype_name__ = 'MprisPluginPrefsDialog'
+
+    def __init__(self, window, settings):
+        super().__init__(use_header_bar=1)
+        self.set_title(_('Hide on Close'))
+        self.set_default_size(300, -1)
+        self.set_resizable(False)
+        self.connect('delete-event', self.on_close)
+
+        self.pithos = window
+        self.settings = settings
+        self.window_delete_handler = None
+
+        box = Gtk.Box()
+        label = Gtk.Label()
+        label.set_markup('<b>{}</b>\n{}'.format(_('Hide Pithos on Close'), _('Instead of Quitting')))
+        label.set_halign(Gtk.Align.START)
+        box.pack_start(label, True, True, 4)
+
+        self.switch = Gtk.Switch()
+        self.switch.connect('notify::active', self.on_activated)
+        self.switch.set_active(self.settings['data'] == 'True')
+        self.settings.connect('changed::enabled', self._on_plugin_enabled)
+        self.switch.set_halign(Gtk.Align.END)
+        self.switch.set_valign(Gtk.Align.CENTER)
+        box.pack_end(self.switch, False, False, 2)
+
+        content_area = self.get_content_area()
+        content_area.add(box)
+        content_area.show_all()
+
+    def on_close(self, window, event):
+        window.hide()
+        return True
+
+    def on_activated(self, *ignore):
+        if self.switch.get_active():
+            self.settings['data'] = 'True'
+            self.delete_callback_handle = self.pithos.connect('delete-event', self.on_close)
+        else:
+            self.settings['data'] = 'False'
+            self._disable()
+
+    def _on_plugin_enabled(self, *ignore):
+        if self.settings['enabled']:
+            self.switch.set_active(self.settings['data'] == 'True')
+        else:
+            self._disable()
+
+    def _disable(self):
+        if self.delete_callback_handle:
+            self.pithos.disconnect(self.delete_callback_handle)
+            self.pithos.connect('delete-event', self.pithos.on_destroy)
+        self.window_delete_handler = None
