@@ -756,7 +756,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.current_song.message = 'Song expired'
             self.update_song_row()
             return self.next_song()
- 
+
         if self._set_player_state(PseudoGst.PLAYING, change_gst_state=change_gst_state):
             self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
             self.emit('play-state-changed', True)
@@ -1398,7 +1398,8 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     @GtkTemplate.Callback
     def on_configure_event(self, widget, event, data=None):
-        self.settings.set_value('win-pos', GLib.Variant('(ii)', (event.x, event.y)))
+        x, y = self.get_position()
+        self.settings.set_value('win-pos', GLib.Variant('(ii)', (x, y)))
         return False
 
     def quit(self, widget=None, data=None):
