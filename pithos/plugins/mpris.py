@@ -514,18 +514,36 @@ class PithosMprisService(DBusServiceObject):
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='s')
     def LoopStatus(self):
-        '''s Read only (optional) Interface MediaPlayer2.Player'''
+        '''s Read/Write only (optional) Interface MediaPlayer2.Player'''
         return 'None'
+
+    @LoopStatus.setter
+    def LoopStatus(self, LoopStatus):
+        '''Not Implemented'''
+        # There is no way to tell clients this property can't be set.
+        pass
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='b')
     def Shuffle(self):
-        '''b Read only (optional) Interface MediaPlayer2.Player'''
+        '''b Read/Write (optional) Interface MediaPlayer2.Player'''
         return False
+
+    @Shuffle.setter
+    def Shuffle(self, Shuffle):
+        '''Not Implemented'''
+        # There is no way to tell clients this property can't be set.
+        pass
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='d')
     def Rate(self):
-        '''d Read only (optional) Interface MediaPlayer2.Player'''
+        '''d Read/Write Interface MediaPlayer2.Player'''
         return 1.0
+
+    @Rate.setter
+    def Rate(self, Rate):
+        '''Not Implemented'''
+        # There is no way to tell clients this property can't be set.
+        pass
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='a{sv}')
     def Metadata(self):
