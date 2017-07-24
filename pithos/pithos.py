@@ -217,7 +217,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         "stations-processed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "station-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "stations-dlg-ready": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
-        "songs-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "songs-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_INT,)),
     }
 
     volume = GtkTemplate.Child()
@@ -322,6 +322,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.start_new_playlist = False
         self.buffering_timer_id = 0
         self.ui_loop_timer_id = 0
+        self.playlist_update_timer_id = 0
         self.worker = GObjectWorker()
 
         try:
@@ -670,7 +671,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def start_song(self, song_index):
         songs_remaining = len(self.songs_model) - song_index
-
         if songs_remaining <= 0:
             # We don't have this song yet. Get a new playlist.
             return self.get_playlist(start = True)
@@ -800,6 +800,11 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.user_play()
 
     def get_playlist(self, start = False):
+        if self.playlist_update_timer_id:
+            GLib.source_remove(self.playlist_update_timer_id)
+        self.playlist_update_timer_id = 0
+        songs_left_to_process = 0
+        song_count = 0
         self.start_new_playlist = self.start_new_playlist or start
         if self.waiting_for_playlist: return
 
@@ -808,6 +813,11 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.waiting_for_playlist = 1
             self.error_dialog(self.gstreamer_error, self.get_playlist)
             return
+
+        def emit_songs_added(song_count):
+            self.playlist_update_timer_id = 0
+            self.emit('songs-added', song_count)
+            return False
 
         def get_album_art(url, tmpdir, *extra):
             try:
@@ -832,17 +842,31 @@ class PithosWindow(Gtk.ApplicationWindow):
             return (loader.get_pixbuf(), file_url,) + extra
 
         def art_callback(t):
+            nonlocal songs_left_to_process
             pixbuf, file_url, song, index = t
+            songs_left_to_process -= 1
             if index<len(self.songs_model) and self.songs_model[index][0] is song: # in case the playlist has been reset
                 logging.info("Downloaded album art for %i"%song.index)
                 song.art_pixbuf = pixbuf
                 self.songs_model[index][3]=pixbuf
+                self.update_song_row(song)
                 if file_url:
                     song.artUrl = file_url
-                    self.emit('metadata-changed', song)
-                self.update_song_row(song)
+                    # The song is either the current song or we got the cover after
+                    # after the timeout has expired.
+                    if song is self.current_song or not self.playlist_update_timer_id:
+                        self.emit('metadata-changed', song)
+                # We tried to get covers for all the songs in the playlist,
+                # and the timeout is still live. Cancel it and emit
+                # a 'songs-added' signal.
+                if not songs_left_to_process and self.playlist_update_timer_id:
+                    GLib.source_remove(self.playlist_update_timer_id)
+                    emit_songs_added(song_count)
 
         def callback(l):
+            nonlocal songs_left_to_process
+            nonlocal song_count
+            songs_left_to_process = song_count = len(l)
             start_index = len(self.songs_model)
             for i in l:
                 i.index = len(self.songs_model)
@@ -851,8 +875,12 @@ class PithosWindow(Gtk.ApplicationWindow):
                 i.art_pixbuf = None
                 if i.artRadio:
                     self.worker_run(get_album_art, (i.artRadio, self.tempdir, i, i.index), art_callback)
+                else:
+                    songs_left_to_process -= 1
+            # Give Pandora about 1 secs per song to return the playlist's cover art
+            # after that emit a 'songs-added' Anyway. We can't wait forever after all.
+            self.playlist_update_timer_id = GLib.timeout_add_seconds(song_count, emit_songs_added, song_count)
 
-            self.emit('songs-added', l)
             self.statusbar.pop(self.statusbar.get_context_id('net'))
             if self.start_new_playlist:
                 self.start_song(start_index)
@@ -1000,7 +1028,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_song.duration_message = self.format_time(self.current_song.duration)
         self.update_song_row()
         self.check_if_song_is_ad()
-        self.emit('metadata-changed', self.current_song)
+        # We can't seek so duration in MPRIS is just for display purposes if it's not off by more than a sec it's OK.
+        if self.current_song.get_duration_sec() != self.current_song.trackLength:
+            self.emit('metadata-changed', self.current_song)
 
     def on_gst_eos(self, bus, message):
         logging.info("EOS")

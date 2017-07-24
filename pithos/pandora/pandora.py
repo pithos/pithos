@@ -518,17 +518,17 @@ class Song:
     def station(self):
         return self.pandora.get_station_by_id(self.stationId)
 
-    def get_duration_sec (self):
-      if self.duration is not None:
-        return self.duration / 1000000000
-      else:
-        return self.trackLength
+    def get_duration_sec(self):
+        if self.duration is not None:
+            return self.duration // 1000000000
+        else:
+            return self.trackLength
 
-    def get_position_sec (self):
-      if self.position is not None:
-        return self.position / 1000000000
-      else:
-        return 0
+    def get_position_sec(self):
+        if self.position is not None:
+            return self.position // 1000000000
+        else:
+            return 0
 
     def rate(self, rating):
         if self.rating != rating:

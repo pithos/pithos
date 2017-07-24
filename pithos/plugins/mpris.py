@@ -149,14 +149,9 @@ class PithosMprisService(DBusServiceObject):
             )
 
         if song:
-            songs_model = window.songs_model
-            stop = len(songs_model)
-            start = max(0, stop - 5)
-            songs = [songs_model[i][0] for i in range(start, stop)]
-
             self._songs_added_handler(
                 window,
-                songs,
+                4,
             )
 
             self._metadatachange_handler(
@@ -366,14 +361,14 @@ class PithosMprisService(DBusServiceObject):
                 [],
             )
 
-    def _songs_added_handler(self, window, songs):
+    def _songs_added_handler(self, window, song_count):
         '''Adds songs to the TrackList Interface.'''
-        # Replace the old playlist with the new one but make sure to include the current song.
+        songs_model = window.songs_model
+        stop = len(songs_model)
+        start = max(0, stop - (song_count + 1))
+        songs = [songs_model[i][0] for i in range(start, stop)]
         self._tracks = [self._track_id_from_song(song) for song in songs]
         self._metadata_list = [self._get_metadata(window, song) for song in songs]
-        if window.current_song and window.current_song not in songs:
-            self._tracks.insert(0, self._track_id_from_song(window.current_song))
-            self._metadata_list.insert(0, self._get_metadata(window, window.current_song))
         self.TrackListReplaced(self._tracks, self._tracks[0])
 
     def _metadatachange_handler(self, window, song):
@@ -385,13 +380,14 @@ class PithosMprisService(DBusServiceObject):
         trackId = self._track_id_from_song(song)
         if trackId in self._tracks:
             for index, track_id in enumerate(self._tracks):
-                if track_id == trackId:
+                if track_id == trackId and not self._metadata_equal(self._metadata_list[index], metadata):
                     self._metadata_list[index] = metadata
                     self.TrackMetadataChanged(trackId, metadata)
                     break
         # No need to update the current metadata if the current song has been banned
         # or set tired as it will be skipped anyway very shortly.
-        if song is window.current_song and not (song.tired or song.rating == 'ban'):
+        if (song is window.current_song and not (song.tired or song.rating == 'ban') and
+                not self._metadata_equal(self._metadata, metadata)):
             self._metadata = metadata
             self.PropertiesChanged(
                 self.MEDIA_PLAYER2_PLAYER_IFACE,
@@ -403,7 +399,7 @@ class PithosMprisService(DBusServiceObject):
         '''Generates metadata for a song.'''
         # Map pithos ratings to something MPRIS understands
         userRating = 1.0 if song.rating == 'love' else 0.0
-        duration = self._duration if song is window.current_song else song.trackLength * 1000000
+        duration = song.get_duration_sec() * 1000000
         pithos_rating = window.song_icon(song) or ''
         trackid = self._track_id_from_song(song)
 
@@ -426,6 +422,16 @@ class PithosMprisService(DBusServiceObject):
 
         return metadata
 
+    def _metadata_equal(self, m1, m2):
+        # Test to see if 2 sets of metadata are the same
+        # to avoid unneeded updates.
+        if len(m1) != len(m2):
+            return False
+        for key in m1.keys():
+            if not m1[key].equal(m2[key]):
+                return False
+        return True
+
     def _song_from_track_id(self, TrackId):
         '''Convenience method that takes a TrackId and returns the corresponding song object.'''
         if TrackId not in self._tracks:
@@ -443,17 +449,6 @@ class PithosMprisService(DBusServiceObject):
     def _track_id_from_song(self, song):
         '''Convenience method that generates a TrackId based on a song.'''
         return self.TRACK_OBJ_PATH + codecs.encode(bytes(song.trackToken, 'ascii'), 'hex').decode('ascii')
-
-    @property
-    def _duration(self):
-        '''The current song's Duration.'''
-        # use the duration provided by Pandora
-        # if Gstreamer hasn't figured out the duration yet
-        duration = self.window.query_duration()
-        if duration is not None:
-            return duration // 1000
-        else:
-            return self.window.current_song.trackLength * 1000000
 
     @dbus_property(MEDIA_PLAYER2_IFACE, signature='b')
     def CanQuit(self):
