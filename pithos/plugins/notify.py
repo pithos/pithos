@@ -29,6 +29,7 @@ class NotifyPlugin(PithosPlugin):
     notification = None
     supports_actions = False
     escape_markup = False
+    no_cover = False
 
     def on_prepare(self):
         def on_notify_init_finish(notification, server_info, caps, error=None):
@@ -51,8 +52,11 @@ class NotifyPlugin(PithosPlugin):
                 version = server_info['version'].split('.')
                 if server_info['name'] == 'gnome-shell' and len(version) >= 2:
                     major_version, minor_version = (int(x) if x.isdigit() else 0 for x in version[0:2])
-                    if major_version == 3 and minor_version >= 20:
-                        has_built_in_mpris = True
+                    if major_version == 3:
+                        if minor_version >= 20:
+                            has_built_in_mpris = True
+                        if minor_version >= 24:
+                            self.no_cover = True
 
                 if 'persistence' in caps and has_built_in_mpris:
                     self.notification.set_hint('transient', GLib.Variant('b', True))
@@ -102,11 +106,16 @@ class NotifyPlugin(PithosPlugin):
             self.notification.clear_actions()
             self.set_actions(window.playing is not False)
         song = window.current_song
-        summary = song.title
-        body = 'by {} from {}'.format(song.artist, song.album)
+        if self.no_cover:
+            summary = song.artist
+            body = song.title
+            icon = 'io.github.Pithos-symbolic'
+        else:
+            summary = song.title
+            body = 'by {} from {}'.format(song.artist, song.album)
+            icon = song.artUrl or 'audio-x-generic'
         if self.escape_markup:
             body = html.escape(body, quote=False)
-        icon = song.artUrl or 'audio-x-generic'
         self.notification.show_new(summary, body, icon)
 
     def on_disable(self):
