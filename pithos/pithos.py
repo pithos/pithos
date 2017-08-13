@@ -373,8 +373,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_popover.listbox.connect('row-activated', self.active_station_changed)
         self.stations_button.set_popover(self.stations_popover)
 
-        self.set_initial_pos()
-
     def init_actions(self, app):
         action = Gio.SimpleAction.new('playpause', None)
         self.add_action(action)
@@ -1385,16 +1383,23 @@ class PithosWindow(Gtk.ApplicationWindow):
         del self.stations_model[station_index(self.stations_model, station)]
         self.stations_popover.remove_station(station)
 
-    def set_initial_pos(self):
+    def restore_position(self):
         """ Moves window to position stored in preferences """
         x, y = self.settings['win-pos']
         if not x is None and not y is None:
             self.move(int(x), int(y))
 
     def bring_to_top(self, *ignore):
-        self.set_initial_pos()
-        self.show()
-        self.present()
+        timestamp = Gtk.get_current_event_time()
+        self.present_with_time(timestamp)
+
+    def present_with_time(self, timestamp):
+        self.restore_position()
+        Gtk.Window.present_with_time(self, timestamp)
+
+    def present(self):
+        self.restore_position()
+        Gtk.Window.present(self)
 
     @GtkTemplate.Callback
     def on_configure_event(self, widget, event, data=None):
