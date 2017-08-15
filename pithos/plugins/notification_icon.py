@@ -194,11 +194,10 @@ class PithosNotificationIcon(PithosPlugin):
             self.statusicon.set_tooltip_text("{} by {}".format(song.title, song.artist))
 
     def _toggle_visible(self, *args):
-        self.window.set_visible(not self.window.get_visible())
-
-        if self.window.get_visible(): # Ensure it's on top
+        if self.window.get_visible():
+            self.window.hide()
+        else:
             self.window.bring_to_top()
-
         return True
 
     def context_menu(self, widget, button, time, data=None):
