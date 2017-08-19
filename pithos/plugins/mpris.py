@@ -601,9 +601,7 @@ class PithosMprisService(DBusServiceObject):
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='b')
     def CanSeek(self):
         '''b Read only Interface MediaPlayer2.Player'''
-        # This a lie because some sound applets depend upon
-        # this to show song position/duration info
-        return True
+        return False
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='b')
     def CanControl(self):
@@ -694,7 +692,7 @@ class PithosMprisService(DBusServiceObject):
     @dbus_method(MEDIA_PLAYER2_PLAYER_IFACE, in_signature='x')
     def Seek(self, Offset):
         '''Not Implemented'''
-        self.Seeked(self.Position)
+        pass
 
     @dbus_method(MEDIA_PLAYER2_PLAYER_IFACE, in_signature='s')
     def OpenUri(self, Uri):
@@ -703,28 +701,8 @@ class PithosMprisService(DBusServiceObject):
 
     @dbus_method(MEDIA_PLAYER2_PLAYER_IFACE, in_signature='ox')
     def SetPosition(self, TrackId, Position):
-        '''
-        We can't actually seek, we lie so gnome-shell-extensions-mediaplayer[1] will show the
-        position slider. We send a Seeked signal with the current position to make sure applets
-        update their postion.
-
-        Under normal circumstances SetPosition would tell the player where to seek to and any
-        seeking caused by either the MPRIS client or the player would cause a Seeked signal to
-        be fired with current track position after the seek.
-
-        (The MPRIS client tells the player that it wants to seek to a position >>>
-         the player seeks to the disired position >>>
-         the player tells the MPRIS client were it actually seeked too.)
-
-        We're skipping the middleman(Pithos) because we can't seek. Some players do not send
-        a Seeked signal and some clients workaround that[2] so this may not be necessary for
-        all clients.
-
-        [1] https://github.com/eonpatapon/gnome-shell-extensions-mediaplayer/issues/246
-        [2] https://github.com/eonpatapon/gnome-shell-extensions-mediaplayer#known-bugs
-        '''
-
-        self.Seeked(self.Position)
+        '''Not Implemented'''
+        pass
 
     @dbus_method(MEDIA_PLAYER2_PLAYLISTS_IFACE, in_signature='uusb', out_signature='a(oss)')
     def GetPlaylists(self, Index, MaxCount, Order, ReverseOrder):
