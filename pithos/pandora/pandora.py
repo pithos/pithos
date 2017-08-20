@@ -28,6 +28,8 @@ import time
 import urllib.request, urllib.parse, urllib.error
 import codecs
 import ssl
+import string
+import random
 from enum import IntEnum
 
 from . import data
@@ -371,6 +373,28 @@ class Pandora:
     def delete_feedback(self, stationToken, feedbackId):
         self.json_call('station.deleteFeedback', {'feedbackId': feedbackId, 'stationToken': stationToken})
 
+    def get_ad_metadata(self, adTokens):
+        logging.info('attemping to retrieve ad metadata')
+        metadata = self.json_call('ad.getAdMetadata', {'adToken': adTokens,
+                                                       'supportAudioAds': True,
+                                                       'includeBannerAd': False,
+                                                       'includeTrackLength': True, 
+                                                       'additionalAudioUrl': 'HTTP_32_AACPLUS,HTTP_128_MP3',
+                                                       'returnAdTrackingTokens': True})
+
+        #Pandora at times returns metadata containing only an empty list of adTrackingTokens.
+        if not metadata.get('adTrackingTokens'): 
+            logging.info('No ad metadata returned')
+            return None
+
+        metadata['isAd'] = True
+        logging.info('successfully retrieved ad metadata')
+        return metadata
+
+    def register_ad(self, adTrackingTokens, stationId):
+        logging.info('registering ad')
+        self.json_call('ad.registerAd', {'adTrackingTokens': adTrackingTokens, 'stationId': stationId})
+
 class Station:
     def __init__(self, pandora, d):
         self.pandora = pandora
@@ -400,11 +424,22 @@ class Station:
         playlist_time = time.time()
         playlist = self.pandora.json_call('station.getPlaylist', {
                         'stationToken': self.idToken,
+                        'audioAdPodCapable': True,
                         'includeTrackLength': True,
                         'additionalAudioUrl': 'HTTP_32_AACPLUS,HTTP_128_MP3',
                     }, https=True)['items']
 
-        return [Song(self.pandora, i, playlist_time) for i in playlist if 'songName' in i] 
+        songs = []
+        for i in playlist:
+            if 'adToken' in i:
+                logging.info('adToken present in playlist')
+                ad = self.pandora.get_ad_metadata(i['adToken'])
+                if ad is not None:
+                    ad['stationId'] = playlist[playlist.index(i) -1]['stationId']
+                    songs.append(Song(self.pandora, ad, playlist_time))
+            else:
+                songs.append(Song(self.pandora, i, playlist_time))
+        return songs 
 
     @property
     def info_url(self):
@@ -434,16 +469,17 @@ class Song:
         self.pandora = pandora
         self.playlist_time = playlist_time
 
-        self.album = d['albumName']
-        self.artist = d['artistName']
-        self.trackToken = d['trackToken']
-        self.rating = RATE_LOVE if d['songRating'] == 1 else RATE_NONE # banned songs won't play, so we don't care about them
-        self.stationId = d['stationId']
-        self.songName = d['songName']
-        self.songDetailURL = d['songDetailUrl']
-        self.songExplorerUrl = d['songExplorerUrl']
-        self.artRadio = d['albumArtUrl']
-        self.trackLength = d['trackLength']
+        self.album = d.get('albumName', 'Pandora')
+        self.artist = d.get('artistName', 'Pandora')
+        self.trackToken = d.get('trackToken', ''.join(random.choices(string.ascii_uppercase, k=50)))
+        self.rating = RATE_LOVE if d.get('songRating') == 1 else RATE_NONE # banned songs won't play, so we don't care about them
+        self.stationId = d.get('stationId', '')
+        self.songName = d.get('songName', 'Commercial Advertisement')
+        self.songDetailURL = d.get('songDetailUrl', d.get('clickThroughUrl', ''))
+        self.songExplorerUrl = d.get('songExplorerUrl', '')
+        self.artRadio = d.get('albumArtUrl', d.get('imageUrl', ''))
+        self.trackLength = d.get('trackLength', 30)
+        self.adTokens = d.get('adTrackingTokens', None)
 
         self.audioUrlMap = d['audioUrlMap']
 
@@ -465,9 +501,9 @@ class Song:
                     'audioUrl': d['additionalAudioUrl'][0],
                 }
 
-        self.is_ad = None  # None = we haven't checked, otherwise True/False
-        self.tired=False
-        self.message=''
+        self.is_ad = d.get('isAd', None)
+        self.tired = False
+        self.message = ''
         self.duration = None
         self.position = None
         self.bitrate = None
@@ -476,7 +512,7 @@ class Song:
         self.feedbackId = None
         self.bitrate = None
         self.artUrl = None
-        self._title = ''
+        self._title = 'Commercial Advertisement' if self.is_ad else ''
 
     @property
     def title(self):
@@ -531,6 +567,9 @@ class Song:
             return 0
 
     def rate(self, rating):
+        if self.is_ad:
+            logging.info("Can't Rate ads.")
+            return
         if self.rating != rating:
             self.station.transformIfShared()
             if rating == RATE_NONE:
@@ -547,14 +586,23 @@ class Song:
             self.rating = rating
 
     def set_tired(self):
+        if self.is_ad:
+            logging.info("Can't Tired ads.")
+            return
         if not self.tired:
             self.pandora.json_call('user.sleepSong', {'trackToken': self.trackToken})
             self.tired = True
 
     def bookmark(self):
+        if self.is_ad:
+            logging.info("Can't Bookmark ads.")
+            return
         self.pandora.json_call('bookmark.addSongBookmark', {'trackToken': self.trackToken})
 
     def bookmark_artist(self):
+        if self.is_ad:
+            logging.info("Can't Bookmark ads.")
+            return
         self.pandora.json_call('bookmark.addArtistBookmark', {'trackToken': self.trackToken})
 
     @property
