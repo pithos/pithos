@@ -59,6 +59,7 @@ if gtk_builder_tool.found()
     ['ui', 'PreferencesPithosDialog.ui'],
     ['ui', 'SearchDialog.ui'],
     ['ui', 'StationsDialog.ui'],
+    ['ui', 'EqDialog.ui'],
     ['gtk', 'help-overlay.ui'],
     ['gtk', 'menus.ui'],
   ]

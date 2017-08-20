@@ -218,6 +218,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         "station-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "stations-dlg-ready": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "songs-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_INT,)),
+        "player-ready": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
     }
 
     volume = GtkTemplate.Child()
@@ -291,6 +292,21 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.player = Gst.ElementFactory.make("playbin", "player")
         self.player.set_property('buffer-duration', 3 * Gst.SECOND)
+        self.equalizer = Gst.ElementFactory.make("equalizer-10bands", "equalizer-10bands")
+        audioconvert = Gst.ElementFactory.make("audioconvert", "audioconvert")
+        audiosink = Gst.ElementFactory.make("autoaudiosink", "audiosink")
+        sinkbin = Gst.Bin()
+        sinkbin.add(self.equalizer)
+        sinkbin.add(audioconvert)
+        sinkbin.add(audiosink)
+
+        self.equalizer.link(audioconvert)
+        audioconvert.link(audiosink)
+
+        sinkbin.add_pad(Gst.GhostPad.new("sink", self.equalizer.get_static_pad("sink")))
+        self.player.set_property("audio-sink", sinkbin)
+
+        self.emit('player-ready', True)
 
         bus = self.player.get_bus()
         bus.add_signal_watch()
