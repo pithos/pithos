@@ -30,8 +30,9 @@ from enum import Enum
 
 import gi
 gi.require_version('Gst', '1.0')
+gi.require_version('GstAudio', '1.0')
 gi.require_version('GstPbutils', '1.0')
-from gi.repository import Gst, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
+from gi.repository import Gst, GstAudio, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 from .gi_composites import GtkTemplate
 
 if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 14:
@@ -292,18 +293,31 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.player = Gst.ElementFactory.make("playbin", "player")
         self.player.set_property('buffer-duration', 3 * Gst.SECOND)
+        self.rgvolume = Gst.ElementFactory.make("rgvolume", "rgvolume")
+        self.rgvolume.set_property("album-mode", False)
+        self.rglimiter = Gst.ElementFactory.make("rglimiter", "rglimiter")
+        self.rglimiter.set_property("enabled", False)
         self.equalizer = Gst.ElementFactory.make("equalizer-10bands", "equalizer-10bands")
         audioconvert = Gst.ElementFactory.make("audioconvert", "audioconvert")
+        audioresample = Gst.ElementFactory.make("audioresample", "audioresample")
+        audioresample.set_property("quality", GstAudio.AUDIO_RESAMPLER_QUALITY_MAX)
+        audioresample.set_property("sinc-filter-mode", GstAudio.AudioResamplerFilterMode.FULL)
         audiosink = Gst.ElementFactory.make("autoaudiosink", "audiosink")
         sinkbin = Gst.Bin()
+        sinkbin.add(self.rgvolume)
+        sinkbin.add(self.rglimiter)
         sinkbin.add(self.equalizer)
         sinkbin.add(audioconvert)
+        sinkbin.add(audioresample)
         sinkbin.add(audiosink)
 
+        self.rgvolume.link(self.rglimiter)
+        self.rglimiter.link(self.equalizer)
         self.equalizer.link(audioconvert)
-        audioconvert.link(audiosink)
+        audioconvert.link(audioresample)
+        audioresample.link(audiosink)
 
-        sinkbin.add_pad(Gst.GhostPad.new("sink", self.equalizer.get_static_pad("sink")))
+        sinkbin.add_pad(Gst.GhostPad.new("sink", self.rgvolume.get_static_pad("sink")))
         self.player.set_property("audio-sink", sinkbin)
 
         self.emit('player-ready', True)
