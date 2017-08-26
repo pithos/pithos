@@ -444,6 +444,7 @@ class Song:
         self.songExplorerUrl = d['songExplorerUrl']
         self.artRadio = d['albumArtUrl']
         self.trackLength = d['trackLength']
+        self.trackGain = float(d.get('trackGain', '0.0'))
 
         self.audioUrlMap = d['audioUrlMap']
 
