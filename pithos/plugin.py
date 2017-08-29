@@ -139,7 +139,8 @@ def load_plugins(window):
         settings = window.settings
         in_tree_plugins = settings.props.settings_schema.list_children()
         plugins_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "plugins")
-        discovered_plugins = (fname[:-3] for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("_"))
+        discovered_plugins = [fname[:-3] for fname in glob.glob1(plugins_dir, "*.py") if not fname.startswith("_")]
+        discovered_plugins.sort()
 
         for name in discovered_plugins:
             if name not in plugins:
