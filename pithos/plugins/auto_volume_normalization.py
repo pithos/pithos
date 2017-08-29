@@ -58,7 +58,7 @@ class AutoVolumeNormalization(PithosPlugin):
             buttons=Gtk.ButtonsType.OK,
             text=text,
             secondary_text=_(
-                'Please lower the volume before resumming playback,\n'
+                'Please lower the volume before resuming playback,\n'
                 'as you may notice a sudden volume increase upon disabling this plugin.'
             ),
         )
