@@ -60,6 +60,26 @@ class PithosNotificationIcon(PithosPlugin):
             self.prepare_complete(error='DBus failed and is required for notification icon')
             return
 
+        def on_gnome_shell_proxy_finished(source, result, data):
+            try:
+                gnome_shell_proxy = Gio.DBusProxy.new_finish(result)
+            except GLib.Error as e:
+                logging.exception(e)
+                self.prepare_complete(error='Failed to find DBus service')
+            else:
+                if (gnome_shell_proxy.get_name_owner() and
+                        'ShellVersion' in gnome_shell_proxy.get_cached_property_names()):
+                    version = gnome_shell_proxy.get_cached_property('ShellVersion').unpack()
+                    logging.info('GNOME Shell version: {}'.format(version))
+                    version = version.split('.')
+                    major_version, minor_version = (int(x) if x.isdigit() else 0 for x in version[0:2])
+                    if minor_version > 24 or major_version > 3:
+                        self.prepare_complete(error='Tray Icons are no longer supported in GNOME Shell version 3.26 +')
+                    else:
+                        self.prepare_complete()
+                else:
+                    self.prepare_complete()
+
         def on_has_name_owner(bus, result):
             try:
                 is_owned = bus.call_finish(result)[0]
@@ -91,7 +111,18 @@ class PithosNotificationIcon(PithosPlugin):
                 self.prepare_complete()
             else:
                 # No fancy tray here
-                self.prepare_complete()
+                logging.info('Checking if org.gnome.Shell is owned and version')
+                Gio.DBusProxy.new(
+                    self.bus,
+                    Gio.DBusProxyFlags.NONE,
+                    None,
+                    'org.gnome.Shell',
+                    '/org/gnome/Shell',
+                    'org.gnome.Shell',
+                    None,
+                    on_gnome_shell_proxy_finished,
+                    None
+                )
 
         if not self.settings['data']:
             self.settings['data'] = 'io.github.Pithos-tray'
