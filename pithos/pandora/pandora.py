@@ -433,7 +433,17 @@ class Song:
     def __init__(self, pandora, d, playlist_time):
         self.pandora = pandora
         self.playlist_time = playlist_time
-
+        self.is_ad = None  # None = we haven't checked, otherwise True/False
+        self.tired = False
+        self.message = ''
+        self.duration = None
+        self.position = None
+        self.bitrate = None
+        self.start_time = None
+        self.finished = False
+        self.feedbackId = None
+        self.bitrate = None
+        self.artUrl = None
         self.album = d['albumName']
         self.artist = d['artistName']
         self.trackToken = d['trackToken']
@@ -445,7 +455,6 @@ class Song:
         self.artRadio = d['albumArtUrl']
         self.trackLength = d['trackLength']
         self.trackGain = float(d.get('trackGain', '0.0'))
-
         self.audioUrlMap = d['audioUrlMap']
 
         # Optionally we requested more URLs
@@ -466,40 +475,23 @@ class Song:
                     'audioUrl': d['additionalAudioUrl'][0],
                 }
 
-        self.is_ad = None  # None = we haven't checked, otherwise True/False
-        self.tired=False
-        self.message=''
-        self.duration = None
-        self.position = None
-        self.bitrate = None
-        self.start_time = None
-        self.finished = False
-        self.feedbackId = None
-        self.bitrate = None
-        self.artUrl = None
-        self._title = ''
+        # the actual name of the track, minus any special characters (except dashes) is stored
+        # as the last part of the songExplorerUrl, before the args.
+        explorer_name = self.songExplorerUrl.split('?')[0].split('/')[-1]
+        clean_expl_name = NAME_COMPARE_REGEX.sub('', explorer_name).lower()
+        clean_name = NAME_COMPARE_REGEX.sub('', self.songName).lower()
 
-    @property
-    def title(self):
-        if not self._title:
-            # the actual name of the track, minus any special characters (except dashes) is stored
-            # as the last part of the songExplorerUrl, before the args.
-            explorer_name = self.songExplorerUrl.split('?')[0].split('/')[-1]
-            clean_expl_name = NAME_COMPARE_REGEX.sub('', explorer_name).lower()
-            clean_name = NAME_COMPARE_REGEX.sub('', self.songName).lower()
+        if clean_name == clean_expl_name:
+            self.title = self.songName
+        else:
+            try:
+                with urllib.request.urlopen(self.songExplorerUrl) as x, minidom.parseString(x.read()) as dom:
+                    attr_value = dom.getElementsByTagName('songExplorer')[0].attributes['songTitle'].value
 
-            if clean_name == clean_expl_name:
-                self._title = self.songName
-            else:
-                try:
-                    with urllib.request.urlopen(self.songExplorerUrl) as x, minidom.parseString(x.read()) as dom:
-                        attr_value = dom.getElementsByTagName('songExplorer')[0].attributes['songTitle'].value
-
-                    # Pandora stores their titles for film scores and the like as 'Score name: song name'
-                    self._title = attr_value.replace('{0}: '.format(self.songName), '', 1)
-                except:
-                    self._title = self.songName
-        return self._title
+                # Pandora stores their titles for film scores and the like as 'Score name: song name'
+                self.title = attr_value.replace('{0}: '.format(self.songName), '', 1)
+            except:
+                self.title = self.songName
 
     @property
     def audioUrl(self):
@@ -572,7 +564,7 @@ class Song:
             __name__,
             __class__.__name__,
             self.trackToken,
-            self.songName,
+            self.title,
             self.artist,
             self.album,
         )
