@@ -74,7 +74,10 @@ class EqDialog(Gtk.Dialog):
         if not hasattr(self.plugin.window, 'player'):
             return
         if self.plugin.enabled:
-            self.load_eq_values()
+            if not self.plugin.settings['data']:
+                self.plugin.settings['data'] = self.get_eq_values()
+            else:
+                self.load_eq_values()
         else:
             self.zero_eq()
 
