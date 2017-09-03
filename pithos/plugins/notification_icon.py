@@ -263,6 +263,8 @@ class NotificationIconPluginPrefsDialog(Gtk.Dialog):
         )
         self.settings = settings
 
+        self.connect('delete-event', lambda *ignore: self.response(Gtk.ResponseType.CANCEL) or True)
+
         sub_title = Gtk.Label.new(_('Set the Notification Icon Type'))
         sub_title.set_halign(Gtk.Align.CENTER)
         self.icons_combo = Gtk.ComboBoxText.new()
