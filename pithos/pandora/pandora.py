@@ -28,7 +28,9 @@ import time
 import urllib.request, urllib.parse, urllib.error
 import codecs
 import ssl
+import os
 from enum import IntEnum
+from socket import error as SocketError
 
 from . import data
 
@@ -208,6 +210,13 @@ class Pandora:
                 raise PandoraTimeout("Network error", submsg="Timeout")
             else:
                 raise PandoraNetError("Network error", submsg=e.reason.strerror)
+        except SocketError as e:
+            try:
+                error_string = os.strerror(e.errno)
+            except (TypeError, ValueError):
+                error_string = "Unknown Error"
+            logging.error("Network Socket Error: %s", error_string)
+            raise PandoraNetError("Network Socket Error", submsg=error_string)
 
         logging.debug(text)
 
