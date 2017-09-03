@@ -360,11 +360,23 @@ class Pandora:
 
     def add_station_by_music_id(self, musicid):
         d = self.json_call('station.createStation', {'musicToken': musicid})
-        return Station(self, d)
+        station = Station(self, d)
+        if not self.get_station_by_id(station.id):
+            self.stations.append(station)
+        return station
 
     def add_station_by_track_token(self, trackToken, musicType):
         d = self.json_call('station.createStation', {'trackToken': trackToken, 'musicType': musicType})
-        return Station(self, d)
+        station = Station(self, d)
+        if not self.get_station_by_id(station.id):
+            self.stations.append(station)
+        return station
+
+    def delete_station(self, station):
+        if self.get_station_by_id(station.id):
+            logging.info("pandora: Deleting Station")
+            self.json_call('station.deleteStation', {'stationToken': station.idToken})
+            self.stations.remove(station)
 
     def get_station_by_id(self, id):
         for i in self.stations:
@@ -427,8 +439,7 @@ class Station:
             self.name = new_name
 
     def delete(self):
-        logging.info("pandora: Deleting Station")
-        self.pandora.json_call('station.deleteStation', {'stationToken': self.idToken})
+        self.pandora.delete_station(self)
 
     def __repr__(self):
         return '<{}.{} {} "{}">'.format(
