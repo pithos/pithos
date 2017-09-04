@@ -52,6 +52,14 @@ try:
 except ImportError:
     pacparser = None
 
+# Older versions of Gstreamer may not have these constants
+try:
+    RESAMPLER_QUALITY_MAX = GstAudio.AUDIO_RESAMPLER_QUALITY_MAX
+    RESAMPLER_FILTER_MODE_FULL = GstAudio.AudioResamplerFilterMode.FULL
+except AttributeError:
+    RESAMPLER_QUALITY_MAX = 10
+    RESAMPLER_FILTER_MODE_FULL = 1
+
 ALBUM_ART_SIZE = 96
 TEXT_X_PADDING = 12
 
@@ -300,8 +308,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.equalizer = Gst.ElementFactory.make("equalizer-10bands", "equalizer-10bands")
         audioconvert = Gst.ElementFactory.make("audioconvert", "audioconvert")
         audioresample = Gst.ElementFactory.make("audioresample", "audioresample")
-        audioresample.set_property("quality", GstAudio.AUDIO_RESAMPLER_QUALITY_MAX)
-        audioresample.set_property("sinc-filter-mode", GstAudio.AudioResamplerFilterMode.FULL)
+        audioresample.set_property("quality", RESAMPLER_QUALITY_MAX)
+        audioresample.set_property("sinc-filter-mode", RESAMPLER_FILTER_MODE_FULL)
         audiosink = Gst.ElementFactory.make("autoaudiosink", "audiosink")
         sinkbin = Gst.Bin()
         sinkbin.add(self.rgvolume)
