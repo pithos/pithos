@@ -252,6 +252,12 @@ class PithosWindow(Gtk.ApplicationWindow):
     def __init__(self, app, test_mode):
         super().__init__(application=app)
         self.init_template()
+        self.headerbar = Gtk.HeaderBar.new()
+        self.set_titlebar(self.headerbar)
+        self.headerbar.set_show_close_button(True)
+        self.headerbar.set_has_subtitle(False)
+        self.headerbar.show()
+        self.set_title('Pithos')
 
         self.settings = Gio.Settings.new('io.github.Pithos')
         self.settings.connect('changed::audio-quality', self.set_audio_quality)
