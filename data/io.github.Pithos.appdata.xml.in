@@ -23,6 +23,23 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release date="2017-09-08" version="1.4.0">
+      <description>
+        <p>This is a major release with some useful new plugin additions:</p>
+        <ul>
+          <li>Add new plugin that inhibits screensaver/suspend during playback</li>
+          <li>Add new plugin adding a 10-band equalizer</li>
+          <li>Add new plugin that automatically normalizes volume between tracks</li>
+          <li>Add help entry (F1) that opens the wiki</li>
+          <li>Replace build system with Meson</li>
+          <li>Automatically detect if the user has Pandora One</li>
+          <li>Improve saving and restoring window position</li>
+          <li>Improve plugin loading performance and error reporting</li>
+          <li>Notification Icon: Improve detecting if a tray is available</li>
+          <li>Notification Icon: Add option to use symbolic icon</li>
+        </ul>
+      </description>
+    </release>
     <release date="2017-04-21" version="1.3.1">
       <description>
         <p>This is a minor release with some bug fixes and minor additions:</p>
