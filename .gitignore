@@ -1,3 +1,4 @@
 /build/
 /po/*.pot
 *.tar.xz
+__pycache__/
