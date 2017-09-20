@@ -1,5 +1,16 @@
 gnome = import('gnome')
 
+bindir = join_paths(get_option('prefix'), get_option('bindir'))
+service_conf = configuration_data()
+service_conf.set('bindir', bindir)
+configure_file(
+  input: 'io.github.Pithos.service.in',
+  output: 'io.github.Pithos.service',
+  configuration: service_conf,
+  install: true,
+  install_dir: join_paths(get_option('datadir'), 'dbus-1/services')
+)
+
 pithos_resources = gnome.compile_resources('pithos',
   'io.github.Pithos.gresource.xml',
   gresource_bundle: true,

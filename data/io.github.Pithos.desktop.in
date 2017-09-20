@@ -7,3 +7,4 @@ Exec=pithos
 Icon=io.github.Pithos
 Terminal=false
 Type=Application
+DBusActivatable=true
