@@ -160,8 +160,7 @@ class PithosMprisService(DBusServiceObject):
             )
 
             self._playstate_handler(
-                window,
-                window.playing,
+                window.player,
             )
 
         self._sort_order_handler()
@@ -169,20 +168,12 @@ class PithosMprisService(DBusServiceObject):
     def _connect_handlers(self):
         '''Connects signal handlers.'''
         window = self.window
+        player = self.window.player
+
         self._window_handlers = [
             window.connect(
                 'metadata-changed',
                 self._metadatachange_handler,
-            ),
-
-            window.connect(
-                'play-state-changed',
-                self._playstate_handler,
-            ),
-
-            window.connect(
-                'buffering-finished',
-                lambda window, position: self.Seeked(position // 1000),
             ),
 
             window.connect(
@@ -211,16 +202,28 @@ class PithosMprisService(DBusServiceObject):
             ),
         ]
 
+        self._player_handlers = [
+            player.connect(
+                'buffering-finished',
+                lambda player, position: self.Seeked(position // 1000),
+            ),
+
+            player.connect(
+                'notify::volume',
+                self._volumechange_handler,
+            ),
+
+            player.connect(
+                'new-player-state',
+                self._playstate_handler,
+            ),
+        ]
+
         if window.stations_dlg:
             # If stations_dlg exsists already
             # we missed the ready signal and
             # we should connect our handlers.
             self._stations_dlg_ready_handler()
-
-        self._volumechange_handler_id = window.player.connect(
-            'notify::volume',
-            self._volumechange_handler,
-        )
 
         self._sort_order_handler_id = window.settings.connect(
             'changed::sort-stations',
@@ -231,6 +234,7 @@ class PithosMprisService(DBusServiceObject):
         '''Disconnects signal handlers.'''
         window = self.window
         stations_dlg = self.window.stations_dlg
+        player = self.window.player
 
         if self._window_handlers:
             for handler in self._window_handlers:
@@ -240,8 +244,9 @@ class PithosMprisService(DBusServiceObject):
             for handler in self._stations_dlg_handlers:
                 stations_dlg.disconnect(handler)
 
-        if self._volumechange_handler_id:
-            window.player.disconnect(self._volumechange_handler_id)
+        if self._player_handlers:
+            for handler in self._player_handlers:
+                player.disconnect(handler)
 
         if self._sort_order_handler_id:
             window.settings.disconnect(self._sort_order_handler_id)
@@ -337,9 +342,9 @@ class PithosMprisService(DBusServiceObject):
                 [],
             )
 
-    def _playstate_handler(self, window, state):
+    def _playstate_handler(self, player):
         '''Updates the mpris PlaybackStatus Property.'''
-        play_state = 'Playing' if state else 'Paused'
+        play_state = 'Playing' if player.props.playing else 'Paused'
 
         if self._playback_status != play_state: # stops unneeded updates
             self._playback_status = play_state
@@ -562,11 +567,7 @@ class PithosMprisService(DBusServiceObject):
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='x')
     def Position(self):
         '''x Read only Interface MediaPlayer2.Player'''
-        position = self.window.query_position()
-        if position is not None:
-            return position // 1000
-        else:
-            return 0
+        return self.window.player.query_position() // 1000
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='d')
     def MinimumRate(self):

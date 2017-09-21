@@ -100,7 +100,7 @@ class NotifyPlugin(PithosPlugin):
             return
         if self.supports_actions:
             self.notification.clear_actions()
-            self.set_actions(window.playing is not False)
+            self.set_actions(window.player.props.playing)
         song = window.current_song
         summary = song.title
         body = 'by {} from {}'.format(song.artist, song.album)

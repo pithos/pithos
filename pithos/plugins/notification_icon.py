@@ -132,7 +132,7 @@ class PithosNotificationIcon(PithosPlugin):
 
     def on_enable(self):
         self.delete_callback_handle = self.window.connect("delete-event", self._toggle_visible)
-        self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
+        self.state_callback_handle = self.window.player.connect("new-player-state", self.play_state_changed)
         self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
 
         if indicator_capable:
@@ -206,11 +206,11 @@ class PithosNotificationIcon(PithosPlugin):
 
         self.menu = menu
 
-    def play_state_changed(self, window, playing):
+    def play_state_changed(self, player):
         """ play or pause and rotate the text """
 
         button = self.playpausebtn
-        if not playing:
+        if not player.props.playing:
             button.set_label("Play")
         else:
             button.set_label("Pause")
@@ -242,7 +242,7 @@ class PithosNotificationIcon(PithosPlugin):
             self.statusicon.set_visible(False)
 
         self.window.disconnect(self.delete_callback_handle)
-        self.window.disconnect(self.state_callback_handle)
+        self.window.player.disconnect(self.state_callback_handle)
         self.window.disconnect(self.song_callback_handle)
 
         # Pithos window needs to be reconnected to on_destro()

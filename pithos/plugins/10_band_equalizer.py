@@ -85,7 +85,7 @@ class EqDialog(Gtk.Dialog):
     def on_scale_value_changed(self, scale):
         value = scale.get_value()
         name = scale.get_name()
-        self.plugin.window.equalizer.set_property(name, value)
+        self.plugin.window.player.set_property('eq-' + name, value)
         self.plugin.settings['data'] = self.get_eq_values()
 
     def zero_eq(self):
@@ -93,7 +93,7 @@ class EqDialog(Gtk.Dialog):
             self.set_eq_values(i)
 
     def get_eq_values(self):
-        return ' '.join([str(self.plugin.window.equalizer.get_property('band{}'.format(i))) for i in range(10)])
+        return ' '.join([str(self.plugin.window.player.get_property('eq-band{}'.format(i))) for i in range(10)])
 
     def load_eq_values(self, *ignore):
         values = self.plugin.settings['data'].split(' ')
@@ -106,4 +106,4 @@ class EqDialog(Gtk.Dialog):
         scale.handler_block_by_func(self.on_scale_value_changed)
         scale.set_value(value)
         scale.handler_unblock_by_func(self.on_scale_value_changed)
-        self.plugin.window.equalizer.set_property(name, value)
+        self.plugin.window.player.set_property('eq-' + name, value)
