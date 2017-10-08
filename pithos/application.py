@@ -32,6 +32,10 @@ class PithosApplication(Gtk.Application):
         super().__init__(application_id='io.github.Pithos',
                          flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
 
+        # First, get rid of existing logging handlers due to call in header as per
+        # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig
+        logging.root.handlers = []
+
         os.environ['PULSE_PROP_application.name'] = 'Pithos'
         os.environ['PULSE_PROP_application.version'] = version
         os.environ['PULSE_PROP_application.icon_name'] = 'io.github.Pithos'
@@ -87,10 +91,6 @@ class PithosApplication(Gtk.Application):
     def do_command_line(self, command_line):
         options = command_line.get_options_dict()
 
-        # First, get rid of existing logging handlers due to call in header as per
-        # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig
-        logging.root.handlers = []
-
         # Show the Pithos log since last reboot and exit
         if options.contains('last-logs'):
             try:
@@ -120,13 +120,18 @@ class PithosApplication(Gtk.Application):
             got_logs = False            
 
             for entry in reader:
-                got_logs = True
-                level = _PRIORITY_TO_LEVEL[entry['PRIORITY']]
-                line = entry['CODE_LINE']
-                function = entry['CODE_FUNC']
-                module = basename(entry['CODE_FILE'])[:-3]
-                message = entry['MESSAGE']
-                log_line = '{} - {}:{}:{} - {}'.format(level, module, function, line, message)
+                try:
+                    got_logs = True
+                    level = _PRIORITY_TO_LEVEL[entry['PRIORITY']]
+                    line = entry['CODE_LINE']
+                    function = entry['CODE_FUNC']
+                    module = basename(entry['CODE_FILE'])[:-3]
+                    message = entry['MESSAGE']
+                except KeyError:
+                    self._print(command_line, _('Error Reading log entry, printing complete entry'))
+                    log_line = '\n'.join(('{}: {}'.format(k, v) for k, v in entry.items()))
+                else:
+                    log_line = '{} - {}:{}:{} - {}'.format(level, module, function, line, message)
                 self._print(command_line, log_line)
 
             if not got_logs:
@@ -139,8 +144,6 @@ class PithosApplication(Gtk.Application):
             self._print(command_line, 'Pithos {}'.format(self.version))
             return 0
 
-        handlers = []
-
         # Set the logging level to show debug messages
         if options.contains('debug'):
             log_level = logging.DEBUG
@@ -152,9 +155,8 @@ class PithosApplication(Gtk.Application):
         stream = logging.StreamHandler()
         stream.setLevel(log_level)
         stream.setFormatter(logging.Formatter(fmt='%(levelname)s - %(module)s:%(funcName)s:%(lineno)d - %(message)s'))
-        handlers.append(stream)
 
-        logging.basicConfig(level=logging.NOTSET, handlers=handlers)
+        logging.basicConfig(level=logging.NOTSET, handlers=[stream])
 
         self.test_mode = options.lookup_value('test')
 
