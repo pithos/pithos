@@ -293,7 +293,10 @@ class DBusServiceObject(GObject.Object):
     def __dbus_export(self):
         xml = ElementTree.tostring(self.__dbus_info.generate_xml(), encoding='unicode')
         node_info = Gio.DBusNodeInfo.new_for_xml(xml)
-        logging.debug('--- XML: ---\n%s\n-------' %node_info.generate_xml(0).str)
+        try:
+            logging.debug('--- XML: ---\n{}\n-------'.format(node_info.generate_xml(0).str))
+        except TypeError:
+            pass
 
         for interface in self.__dbus_info.interfaces:
             regid = self.connection.register_object(
