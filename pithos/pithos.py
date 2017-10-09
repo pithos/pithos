@@ -582,10 +582,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         if control_proxy:
             control_opener = pandora.Pandora.build_opener(urllib.request.ProxyHandler({'http': control_proxy, 'https': control_proxy}))
 
-        self.worker_run('set_url_opener', (control_opener,), self.pandora_connect if reconnect else None)
+        self.pandora.set_url_opener(control_opener)
+
+        if reconnect:
+            self.pandora_connect()
 
     def set_audio_quality(self, *ignore):
-        self.worker_run('set_audio_quality', (self.settings['audio-quality'],))
+        self.pandora.set_audio_quality(self.settings['audio-quality'])
 
     def pandora_connect(self, *ignore, message="Logging in...", callback=None):
         def cb(password):
