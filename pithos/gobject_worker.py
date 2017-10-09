@@ -26,11 +26,11 @@ class GObjectWorker:
             try:
                 result = command(*args)
                 if callback:
-                    GLib.idle_add(callback, result)
+                    GLib.idle_add(callback, result, priority=GLib.PRIORITY_DEFAULT)
             except Exception as e:
                 e.traceback = traceback.format_exc()
                 if errorback:
-                    GLib.idle_add(errorback, e)
+                    GLib.idle_add(errorback, e, priority=GLib.PRIORITY_DEFAULT)
         if errorback is None:
             errorback = self._default_errorback
         data = command, args, callback, errorback
