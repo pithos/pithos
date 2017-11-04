@@ -84,10 +84,6 @@
                         <property name="relief">none</property>
                         <property name="focus_on_click">0</property>
                         <property name="orientation">vertical</property>
-                        <property name="icons">audio-volume-muted-symbolic
-audio-volume-high-symbolic
-audio-volume-low-symbolic
-audio-volume-medium-symbolic</property>
                         <signal name="value-changed" handler="on_volume_change_event" swapped="no"/>
                         <child internal-child="accessible">
                           <object class="AtkObject" id="volume-atkobject">
