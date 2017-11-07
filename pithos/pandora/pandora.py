@@ -102,11 +102,11 @@ class ApiError(IntEnum):
         if value == 1:
             return 'Pandora is performing maintenance.\nTry again later.'
         elif value == 12:
-            return 'Pandora is not available in your country.\n'
-            'If you wish to use Pandora you must configure your system or Pithos proxy accordingly.'
+            return ('Pandora is not available in your country.\n'
+                    'If you wish to use Pandora you must configure your system or Pithos proxy accordingly.')
         elif value == 13:
-            return 'Out of sync. Correct your system\'s clock.\n'
-            'If the problem persists, a Pithos update may be required.'
+            return ('Out of sync. Correct your system\'s clock.\n'
+                    'If the problem persists, a Pithos update may be required.')
         if value == 1000:
             return 'Pandora is in read-only mode.\nTry again later.'
         elif value == 1002:
@@ -114,8 +114,8 @@ class ApiError(IntEnum):
         elif value == 1003:
             return 'A Pandora One account is required to access this feature.\nUncheck "Pandora One" in Settings.'
         elif value == 1005:
-            return 'You have reached the maximum number of stations.\n'
-            'To add a new station you must first delete an existing station.'
+            return ('You have reached the maximum number of stations.\n'
+                    'To add a new station you must first delete an existing station.')
         elif value == 1010:
             return 'Invalid Pandora partner keys.\nA Pithos update may be required.'
         elif value == 1023:
