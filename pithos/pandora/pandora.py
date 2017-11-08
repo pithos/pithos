@@ -106,7 +106,7 @@ class ApiError(IntEnum):
                     'If you wish to use Pandora you must configure your system or Pithos proxy accordingly.')
         elif value == 13:
             return ('Out of sync. Correct your system\'s clock.\n'
-                    'If the problem persists, a Pithos update may be required.')
+                    'If the problem persists it may indicate a Pandora API change.\nA Pithos update may be required.')
         if value == 1000:
             return 'Pandora is in read-only mode.\nTry again later.'
         elif value == 1002:
