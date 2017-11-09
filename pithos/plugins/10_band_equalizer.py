@@ -60,7 +60,6 @@ class EqDialog(Gtk.Dialog):
         self.connect('delete-event', lambda *ignore: self.hide_on_delete())
 
         self.plugin = plugin
-        self.plugin.window.connect('player-ready', self.on_enabled)
         self.plugin.connect('notify::enabled', self.on_enabled)
 
     def on_response(self, dialog, response):
@@ -71,8 +70,6 @@ class EqDialog(Gtk.Dialog):
             self.plugin.settings['data'] = self.get_eq_values()
 
     def on_enabled(self, *ignore):
-        if not hasattr(self.plugin.window, 'player'):
-            return
         if self.plugin.enabled:
             if not self.plugin.settings['data']:
                 self.plugin.settings['data'] = self.get_eq_values()
@@ -93,7 +90,7 @@ class EqDialog(Gtk.Dialog):
             self.set_eq_values(i)
 
     def get_eq_values(self):
-        return ' '.join([str(self.plugin.window.player.get_property('eq-band{}'.format(i))) for i in range(10)])
+        return ' '.join((str(self.plugin.window.player.get_property('eq-band{}'.format(i))) for i in range(10)))
 
     def load_eq_values(self, *ignore):
         values = self.plugin.settings['data'].split(' ')

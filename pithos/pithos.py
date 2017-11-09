@@ -196,7 +196,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         "station-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "stations-dlg-ready": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "songs-added": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_INT,)),
-        "player-ready": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
     }
 
     volume = GtkTemplate.Child()
@@ -264,8 +263,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str,          int)
 
         self.player = GstPlayer(self.settings)
-
-        self.emit('player-ready', True)
 
         self.player.connect('notify::volume', self.on_gst_volume)
         self.player.connect('eos', self.on_player_eos)
@@ -517,7 +514,8 @@ class PithosWindow(Gtk.ApplicationWindow):
             SecretService.get_account_password(email, cb)
 
     def _pandora_connect_real(self, message, callback, email, password):
-        if self.settings['pandora-one']:
+        pandora_one = self.settings['pandora-one']
+        if pandora_one:
             client = client_keys[default_one_client_id]
         else:
             client = client_keys[default_client_id]
@@ -545,7 +543,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         def pandora_ready(*ignore):
             logging.info("Pandora connected")
-            if self.settings['pandora-one'] != self.pandora.isSubscriber:
+            if pandora_one != self.pandora.isSubscriber:
                 self.settings['pandora-one'] = self.pandora.isSubscriber
                 self._pandora_connect_real(message, callback, email, password)
             else:
@@ -655,7 +653,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         os.environ['PULSE_PROP_media.artist'] = song.artist
         os.environ['PULSE_PROP_media.name'] = '{}: {}'.format(song.artist, song.title)
         os.environ['PULSE_PROP_media.filename'] = audioUrl
-        self.player.start_stream(audioUrl)
+        self.player.start_stream(audioUrl, int(song.bitrate))
         self.playcount += 1
 
         self.current_song.start_time = time.time()

@@ -49,18 +49,71 @@ class PseudoGst(IntEnum):
             return Gst.State.NULL
 
 
-class GstPlayer(GObject.Object):
+class GstPlayer(Gst.Pipeline):
+    '''A custom mostly static Gst.Pipeline for playing MP3 and AAC network streams'''
     __gtype_name__ = 'GstPlayer'
 
+    # signals
+    # player, *signal value
     __gsignals__ = {
+        # no signal value
         'eos': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        # None or int time in nanoseconds
         'new-stream-duration': (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        # no signal value
         'new-player-state': (GObject.SignalFlags.RUN_FIRST, None, ()),
+        # None or int time in nanoseconds
         'buffering-finished': (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        # tuple (GLib.Error, str) err, debug
         'warning': (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        # str error message
         'error': (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        # str fatal-error message
         'fatal-error': (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
     }
+
+    # public read-write properties
+    location = GObject.Property(
+        type=str,
+        default='',
+        nick='location prop',
+        blurb='the URI to play next',
+        flags=GObject.ParamFlags.READWRITE,
+    )
+
+    proxy = GObject.Property(
+        type=str,
+        default='',
+        nick='proxy prop',
+        blurb='HTTP proxy server URI',
+        flags=GObject.ParamFlags.READWRITE,
+    )
+
+    proxy_id = GObject.Property(
+        type=str,
+        default='',
+        nick='proxy-id prop',
+        blurb='HTTP proxy URI user id for authentication',
+        flags=GObject.ParamFlags.READWRITE,
+    )
+
+    proxy_pw = GObject.Property(
+        type=str,
+        default='',
+        nick='proxy-pw prop',
+        blurb='HTTP proxy URI user password for authentication',
+        flags=GObject.ParamFlags.READWRITE,
+    )
+
+    max_size_bytes = GObject.Property(
+        type=GObject.TYPE_UINT,
+        default=0,
+        minimum=0,
+        maximum=GLib.MAXUINT,
+        nick='max-size-bytes prop',
+        blurb='Max. amount of data in the buffer',
+        flags=GObject.ParamFlags.READWRITE,
+    )
 
     rg_limiter = GObject.Property(
         type=GObject.TYPE_BOOLEAN,
@@ -193,47 +246,127 @@ class GstPlayer(GObject.Object):
     __query_duration = Gst.Query.new_duration(Gst.Format.TIME)
     __query_position = Gst.Query.new_position(Gst.Format.TIME)
     __query_buffer = Gst.Query.new_buffering(Gst.Format.PERCENT)
-    _desired_state = PseudoGst.STOPPED
-    _actual_state = PseudoGst.STOPPED
-    _buffering_timer_id = 0
 
     def __init__(self, settings):
         super().__init__()
-        self._settings = settings
-        self._player = Gst.ElementFactory.make('playbin', 'player')
-        rgvolume = Gst.ElementFactory.make('rgvolume', 'rgvolume')
-        rglimiter = Gst.ElementFactory.make('rglimiter', 'rglimiter')
-        equalizer = Gst.ElementFactory.make('equalizer-10bands', 'equalizer')
-        audiosink = Gst.ElementFactory.make('autoaudiosink', 'audiosink')
-        sinkbin = Gst.Bin()
 
-        sinkbin.add(rgvolume)
-        sinkbin.add(rglimiter)
-        sinkbin.add(equalizer)
-        sinkbin.add(audiosink)
+        self._desired_state = PseudoGst.STOPPED
+        self._actual_state = PseudoGst.STOPPED
+        self._prerolled = False
+        self._got_duration = False
+        self._buffering_timer_id = 0
+        self._current_bitrate = 0
 
-        rgvolume.link(rglimiter)
-        rglimiter.link(equalizer)
-        equalizer.link(audiosink)
+        # create and add elements to the Pipeline
+        souphttpsrc = Gst.ElementFactory.make('souphttpsrc', None)
+        souphttpsrc.props.iradio_mode = False
+        souphttpsrc.props.user_agent = 'io.github.Pithos'
+        souphttpsrc.props.method = 'GET'
+        souphttpsrc.props.compress = True
+        souphttpsrc.props.keep_alive = True
+        souphttpsrc.props.http_log_level = 0
 
-        sinkbin.add_pad(Gst.GhostPad.new('sink', rgvolume.get_static_pad('sink')))
+        self.add(souphttpsrc)
 
+        queue2 = Gst.ElementFactory.make('queue2', None)
+        queue2.props.use_buffering = True
+        queue2.props.max_size_buffers = 0
+        queue2.props.max_size_time = 0
+
+        self.add(queue2)
+
+        decodebin = Gst.ElementFactory.make('decodebin', None)
+        decodebin.props.expose_all_streams = False
+        decodebin.props.caps = Gst.Caps.from_string('audio/x-raw')
+
+        self.add(decodebin)
+
+        audioconvert = Gst.ElementFactory.make('audioconvert', None)
+
+        self.add(audioconvert)
+
+        audioresample = Gst.ElementFactory.make('audioresample', None)
+
+        self.add(audioresample)
+
+        rgvolume = Gst.ElementFactory.make('rgvolume', None)
         rgvolume.props.album_mode = False
-        rglimiter.props.enabled = False
-        self._player.props.flags = (1 << 1) | (1 << 4)
-        self._player.props.audio_sink = sinkbin
 
-        self._player.bind_property(
-            'volume',
+        self.add(rgvolume)
+
+        rglimiter = Gst.ElementFactory.make('rglimiter', None)
+        rglimiter.props.enabled = False
+
+        self.add(rglimiter)
+
+        equalizer = Gst.ElementFactory.make('equalizer-10bands', None)
+
+        self.add(equalizer)
+
+        # If PulseAudio is running use pulsesink and it's PulseAudio friendly volume,
+        # otherwise use a seperate volume element and autoaudiosink.
+        volume = self._get_pulse_sink()
+        if volume:
+            self.add(volume)
+        else:
+            volume = Gst.ElementFactory.make('volume', None)
+            self.add(volume)
+
+            sink = Gst.ElementFactory.make('autoaudiosink', None)
+            self.add(sink)
+
+            volume.link_pads_full('src', sink, 'sink', Gst.PadLinkCheck.NOTHING)
+
+        # link the rest of our elements in the Pipeline except decodebin >> audioconvert
+        souphttpsrc.link_pads_full('src', queue2, 'sink', Gst.PadLinkCheck.NOTHING)
+        queue2.link_pads_full('src', decodebin, 'sink', Gst.PadLinkCheck.NOTHING)
+        audioconvert.link_pads_full('src', audioresample, 'sink', Gst.PadLinkCheck.NOTHING)
+        audioresample.link_pads_full('src', rgvolume, 'sink', Gst.PadLinkCheck.NOTHING)
+        rgvolume.link_pads_full('src', rglimiter, 'sink', Gst.PadLinkCheck.NOTHING)
+        rglimiter.link_pads_full('src', equalizer, 'sink', Gst.PadLinkCheck.NOTHING)
+        equalizer.link_pads_full('src', volume, 'sink', Gst.PadLinkCheck.NOTHING)
+
+        # decodebin >> audioconvert must be linked on the fly.
+        sink_pad = audioconvert.get_static_pad('sink')
+        decodebin.connect('pad-added', lambda e, p: p.link_full(sink_pad, Gst.PadLinkCheck.NOTHING))
+
+        sink_pad_caps = sink_pad.query_caps(None)
+        decodebin.connect('autoplug-query', self._on_decodebin_autoplug_query, sink_pad_caps)
+
+        # Bind all of our intresting properties so from the outside
+        # our player appears as a single player/element.
+        souphttpsrc.bind_property(
+            'location',
             self,
-            'volume',
+            'location',
             GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
         )
 
-        rglimiter.bind_property(
-            'enabled',
+        souphttpsrc.bind_property(
+            'proxy',
             self,
-            'rg-limiter',
+            'proxy',
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
+
+        souphttpsrc.bind_property(
+            'proxy-id',
+            self,
+            'proxy-id',
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
+
+        souphttpsrc.bind_property(
+            'proxy-pw',
+            self,
+            'proxy-pw',
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
+
+        queue2.bind_property(
+            'max-size-bytes',
+            self,
+            'max-size-bytes',
             GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
         )
 
@@ -241,6 +374,13 @@ class GstPlayer(GObject.Object):
             'fallback-gain',
             self,
             'rg-fallback-gain',
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
+
+        rglimiter.bind_property(
+            'enabled',
+            self,
+            'rg-limiter',
             GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
         )
 
@@ -252,24 +392,30 @@ class GstPlayer(GObject.Object):
                 GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
             )
 
-        bus = self._player.get_bus()
-        bus.add_signal_watch()
-        bus.connect('message::buffering', self._on_gst_buffering)
-        bus.connect('message::element', self._on_gst_element)
-        bus.connect(
-            'message::eos',
-            lambda *ignore: self.emit('eos'),
+        volume.bind_property(
+            'volume',
+            self,
+            'volume',
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
         )
-        bus.connect(
-            'message::error',
-            lambda b, m: self.emit('warning', m.parse_error()),
-        )
-        bus.connect(
-            'message::stream-start',
-            lambda *ignore: self.emit('new-stream-duration', self._query_duration()),
-        )
-        self._player.connect('notify::source', self._on_gst_source)
 
+        # Bus message handlers
+        self.bus.add_signal_watch()
+        self.bus.connect('message::buffering', self._on_gst_buffering)
+        self.bus.connect('message::element', self._on_gst_element)
+        self.bus.connect('message::clock-lost', self._on_gst_clock_lost)
+        self.bus.connect('message::async-done', self._on_gst_async_done)
+        self.bus.connect('message::stream-start', self._get_duration)
+        self.bus.connect('message::duration-changed', self._get_duration)
+        self.bus.connect('message::eos', lambda *ignore: self.emit('eos'))
+        self.bus.connect('message::error', lambda b, m: self.emit('warning', m.parse_error()))
+        self.bus.connect('message::warning', lambda b, m: self.emit('warning', m.parse_warning()))
+
+        # set the proxy and connect the proxy changed handler
+        self._on_proxy_setting_changed(settings, 'proxy')
+        settings.connect_after('changed::proxy', self._on_proxy_setting_changed)
+
+    # public read-only properties
     @GObject.Property(
         type=GObject.TYPE_BOOLEAN,
         default=True,
@@ -283,7 +429,7 @@ class GstPlayer(GObject.Object):
     @GObject.Property(
         type=GObject.TYPE_PYOBJECT,
         nick='actual-state prop',
-        blurb='actual state of GstPlayer',
+        blurb='actual state of GstPlayer PseudoGst Enum',
         flags=GObject.ParamFlags.READABLE,
     )
     def actual_state(self):
@@ -292,23 +438,28 @@ class GstPlayer(GObject.Object):
     @GObject.Property(
         type=GObject.TYPE_PYOBJECT,
         nick='desired-state prop',
-        blurb='desired state of GstPlayer',
+        blurb='desired state of GstPlayer PseudoGst Enum',
         flags=GObject.ParamFlags.READABLE,
     )
     def desired_state(self):
         return self._desired_state
 
+    # public methods/functions
     def plugins_installation_in_progress(self):
         return GstPbutils.install_plugins_installation_in_progress()
 
     def query_position(self):
-        if self._player.query(self.__query_position):
+        if self.query(self.__query_position):
             return self.__query_position.parse_position()[1]
         else:
             return 0
 
-    def start_stream(self, url):
-        self._player.props.uri = url
+    def start_stream(self, url, bitrate):
+        if self._current_bitrate != bitrate:
+            self._current_bitrate = bitrate
+            # about 3 secs of compressed audio
+            self.props.max_size_bytes = bitrate * 375
+        self.props.location = url
         self._set_player_state(PseudoGst.BUFFERING)
 
     def play(self):
@@ -318,32 +469,63 @@ class GstPlayer(GObject.Object):
         self._set_player_state(PseudoGst.PAUSED)
 
     def stop(self):
+        self._prerolled = False
+        self._got_duration = False
         self._set_player_state(PseudoGst.STOPPED, change_gst_state=True)
 
-    def _query_duration(self):
-        if self._player.query(self.__query_duration):
-            return self.__query_duration.parse_duration()[1]
+    # private methods/functions/signal handlers
+    def _get_pulse_sink(self):
+        # If we have a pulsesink we can get the server presence through
+        # setting the ready state. If PulseAudio is running return the pulsesink.
+        pulsesink = Gst.ElementFactory.make('pulsesink', None)
+        if pulsesink is not None:
+            pulsesink.set_state(Gst.State.READY)
+            res = pulsesink.get_state(0)[0]
+            pulsesink.set_state(Gst.State.NULL)
+            if res != Gst.StateChangeReturn.FAILURE:
+                return pulsesink
 
     def _query_buffer(self):
-        if self._player.query(self.__query_buffer):
+        if self.query(self.__query_buffer):
             return self.__query_buffer.parse_buffering_percent()[0]
         else:
             return True
 
-    def _on_gst_plugin_installed(self, result, userdata):
-        if result == GstPbutils.InstallPluginsReturn.SUCCESS:
-            msg = (
-                _('Codec installation successful'),
-                _('The required codec was installed, please restart Pithos.'),
-            )
-            self.emit('fatal-error', msg)
-        else:
-            msg = (
-                _('Codec installation failed'),
-                None,
-                _('The required codec failed to install.\nEither manually install it or try another quality setting.'),
-            )
-            self.emit('error', msg)
+    def _query_duration(self):
+        if self.query(self.__query_duration):
+            return self.__query_duration.parse_duration()[1]
+
+    def _set_player_state(self, target, change_gst_state=False):
+        change_gst_state = change_gst_state or self._actual_state is not PseudoGst.BUFFERING
+        if change_gst_state:
+            ret = self.set_state(target.state)
+            if ret == Gst.StateChangeReturn.FAILURE:
+                current_state = self._player.state_get_name(self._actual_state.state)
+                target_state = self._player.state_get_name(target.state)
+                logging.warning('Error changing player state from: {} to: {}'.format(current_state, target_state))
+                return False
+            self._actual_state = target
+        if target is not PseudoGst.BUFFERING:
+            self._desired_state = target
+        self.emit('new-player-state')
+        return True
+
+    def _on_gst_clock_lost(self, *ignore):
+        # Not sure why this isn't just done automatically?
+        # Below is exactly what you should do per the docs.
+        if self.get_state(Gst.CLOCK_TIME_NONE)[1] == Gst.State.PLAYING:
+            logging.debug('Gst clock lost, resetting the pipeline to get a new clock')
+            self.set_state(Gst.State.PAUSED)
+            self.set_state(Gst.State.PLAYING)
+
+    def _on_gst_async_done(self, *ignore):
+        # The 1st async-done message going from STOPPED to BUFFERING
+        # means our pipeline is prerolled. As per the docs we should
+        # check to see if we're buffering. (we more than likely still are)
+        if not self._prerolled:
+            self._prerolled = True
+            self._get_duration()
+            self._on_gst_buffering()
 
     def _on_gst_element(self, bus, message):
         if GstPbutils.is_missing_plugin_message(message):
@@ -359,10 +541,30 @@ class GstPlayer(GObject.Object):
                 )
                 self.emit('error', msg)
 
+    def _on_gst_plugin_installed(self, result, userdata):
+        if result == GstPbutils.InstallPluginsReturn.SUCCESS:
+            msg = (
+                _('Codec installation successful'),
+                _('The required codec was installed, please restart Pithos.'),
+            )
+            self.emit('fatal-error', msg)
+        else:
+            msg = (
+                _('Codec installation failed'),
+                None,
+                _('The required codec failed to install.'
+                    '\nEither manually install it or try another quality setting.'),
+            )
+            self.emit('error', msg)
+
     def _on_gst_buffering(self, *ignore):
         # React to the buffer message immediately and also fire a short repeating timeout
         # to check the buffering state that cancels only if we're not buffering or there's a pending timeout.
         # This will insure we don't get stuck in a buffering state if we're really not buffering.
+
+        # Ignore buffering messages if the pipeline is not yet prerolled.
+        if not self._prerolled:
+            return
 
         self._react_to_buffering_mesage(False)
 
@@ -388,10 +590,11 @@ class GstPlayer(GObject.Object):
         if buffering and self._actual_state is not PseudoGst.BUFFERING:
             logging.debug('Buffer underrun')
             if self._set_player_state(PseudoGst.BUFFERING):
-                logging.debug('Pausing pipeline')
+                logging.debug('pipeline buffering')
         elif not buffering and self._actual_state is PseudoGst.BUFFERING:
             logging.debug('Buffer overrun')
             if self._desired_state is PseudoGst.STOPPED:
+                self._get_duration(final=True)
                 if self._set_player_state(PseudoGst.PLAYING, change_gst_state=True):
                     logging.debug('Song starting')
             elif self._desired_state is PseudoGst.PLAYING:
@@ -405,38 +608,33 @@ class GstPlayer(GObject.Object):
             self.emit('buffering-finished', self.query_position())
         return buffering
 
-    def _set_player_state(self, target, change_gst_state=False):
-        change_gst_state = change_gst_state or self._actual_state is not PseudoGst.BUFFERING
-        if change_gst_state:
-            ret = self._player.set_state(target.state)
-            if ret == Gst.StateChangeReturn.FAILURE:
-                current_state = self._player.state_get_name(self._actual_state.state)
-                target_state = self._player.state_get_name(target.state)
-                logging.warning('Error changing player state from: {} to: {}'.format(current_state, target_state))
-                return False
-            self._actual_state = target
-        if target is not PseudoGst.BUFFERING:
-            self._desired_state = target
-        self.emit('new-player-state')
-        return True
+    def _get_duration(self, *ignore, final=False):
+        # Do our very best to get a duration
+        # before buffering completes.
+        if self._got_duration:
+            return
+        duration = self._query_duration()
+        if duration or final:
+            self._got_duration = True
+            self.emit('new-stream-duration', duration)
 
-    def _on_gst_source(self, player, params):
-        soup = player.props.source.props
-        props = {
-            'iradio_mode': False,
-            'user_agent': 'io.github.Pithos',
-            'method': 'GET',
-            'compress': True,
-            'keep_alive': True,
-            'proxy': None,
-            'proxy_id': None,
-            'proxy_pw': None,
-        }
+    def _on_decodebin_autoplug_query(self, decodebin, pad, child, query, sink_pad_caps):
+        # As per docs answer yet to be linked decoder caps queries with the sink caps of the audioconvert element.
+        if query.type == Gst.QueryType.CAPS:
+            factory = child.get_factory()
+            if factory.list_is_type(Gst.ELEMENT_FACTORY_TYPE_DECODER):
+                query.set_caps_result(sink_pad_caps)
+                return True
+        return False
 
-        proxy = self._settings['proxy'] or urllib.request.getproxies().get('http')
+    def _on_proxy_setting_changed(self, settings, key):
+        scheme = user = password = hostport = None
+        proxy = settings[key] or urllib.request.getproxies().get('http')
         if proxy:
-            scheme, props['proxy_id'], props['proxy_pw'], props['proxy'] = parse_proxy(proxy)
-
-        for prop, value, in props.items():
-            if value is not None and hasattr(soup, prop):
-                setattr(soup, prop, value)
+            scheme, user, password, hostport = parse_proxy(proxy)
+        self.props.proxy = hostport
+        self.props.proxy_id = user
+        self.props.proxy_pw = password
+        logging.debug(
+            'souphttpsrc proxy set - proxy: {}, proxy-id: {}, proxy-pw: {}'.format(hostport, user, password),
+        )
