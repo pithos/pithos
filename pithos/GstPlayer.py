@@ -18,8 +18,9 @@ import logging
 import gi
 import urllib.request
 gi.require_version('Gst', '1.0')
+gi.require_version('GstAudio', '1.0')
 gi.require_version('GstPbutils', '1.0')
-from gi.repository import Gst, GstPbutils, GObject, GLib
+from gi.repository import Gst, GstAudio, GstPbutils, GObject, GLib
 from enum import IntEnum
 
 from .util import parse_proxy
@@ -27,6 +28,27 @@ from .util import parse_proxy
 Gst.init(None)
 
 PLAYER_SECOND = Gst.SECOND
+
+# Older versions of Gstreamer may not have these constants
+try:
+    _NOISE_SHAPING_METHOD_HIGH = GstAudio.AudioNoiseShapingMethod.HIGH
+    _DITHER_METHOD_TPDF_HF = GstAudio.AudioDitherMethod.TPDF_HF
+    _RESAMPLER_QUALITY_MAX = GstAudio.AUDIO_RESAMPLER_QUALITY_MAX
+    _RESAMPLER_FILTER_MODE_FULL = GstAudio.AudioResamplerFilterMode.FULL
+except AttributeError:
+    _NOISE_SHAPING_METHOD_HIGH = 4
+    _DITHER_METHOD_TPDF_HF = 3
+    _RESAMPLER_QUALITY_MAX = 10
+    _RESAMPLER_FILTER_MODE_FULL = 1
+
+# about 5 secs of compressed audio (125 * 5 * bitrate)
+_BUFFER_SIZE_MULTIPLIER = 625
+
+_AAC_EXT = '.mp4'
+_AAC_CAPS = Gst.Caps.from_string('application/x-3gp, profile=(string)basic')
+
+_MP3_EXT = '.mp3'
+_MP3_CAPS = Gst.Caps.from_string('audio/mpeg, mpegversion=(int)1, layer=(int)3, parsed=(boolean)false')
 
 
 class PseudoGst(IntEnum):
@@ -112,6 +134,13 @@ class GstPlayer(Gst.Pipeline):
         maximum=GLib.MAXUINT,
         nick='max-size-bytes prop',
         blurb='Max. amount of data in the buffer',
+        flags=GObject.ParamFlags.READWRITE,
+    )
+
+    decodebin_sink_caps = GObject.Property(
+        type=Gst.Caps,
+        nick='decodebin-sink-caps prop',
+        blurb='force caps without doing a typefind',
         flags=GObject.ParamFlags.READWRITE,
     )
 
@@ -256,6 +285,7 @@ class GstPlayer(Gst.Pipeline):
         self._got_duration = False
         self._buffering_timer_id = 0
         self._current_bitrate = 0
+        self._seek_time = None
 
         # create and add elements to the Pipeline
         souphttpsrc = Gst.ElementFactory.make('souphttpsrc', None)
@@ -282,10 +312,14 @@ class GstPlayer(Gst.Pipeline):
         self.add(decodebin)
 
         audioconvert = Gst.ElementFactory.make('audioconvert', None)
+        audioconvert.props.dithering = _DITHER_METHOD_TPDF_HF
+        audioconvert.props.noise_shaping = _NOISE_SHAPING_METHOD_HIGH
 
         self.add(audioconvert)
 
         audioresample = Gst.ElementFactory.make('audioresample', None)
+        audioresample.props.quality = _RESAMPLER_QUALITY_MAX
+        audioresample.props.sinc_filter_mode = _RESAMPLER_FILTER_MODE_FULL
 
         self.add(audioresample)
 
@@ -308,6 +342,7 @@ class GstPlayer(Gst.Pipeline):
         volume = self._get_pulse_sink()
         if volume:
             self.add(volume)
+            logging.debug('using pulsesink')
         else:
             volume = Gst.ElementFactory.make('volume', None)
             self.add(volume)
@@ -316,6 +351,7 @@ class GstPlayer(Gst.Pipeline):
             self.add(sink)
 
             volume.link_pads_full('src', sink, 'sink', Gst.PadLinkCheck.NOTHING)
+            logging.debug('using autoaudiosink')
 
         # link the rest of our elements in the Pipeline except decodebin >> audioconvert
         souphttpsrc.link_pads_full('src', queue2, 'sink', Gst.PadLinkCheck.NOTHING)
@@ -329,9 +365,8 @@ class GstPlayer(Gst.Pipeline):
         # decodebin >> audioconvert must be linked on the fly.
         sink_pad = audioconvert.get_static_pad('sink')
         decodebin.connect('pad-added', lambda e, p: p.link_full(sink_pad, Gst.PadLinkCheck.NOTHING))
-
-        sink_pad_caps = sink_pad.query_caps(None)
-        decodebin.connect('autoplug-query', self._on_decodebin_autoplug_query, sink_pad_caps)
+        decodebin.connect('autoplug-query', self._on_decodebin_autoplug_query, sink_pad.query_caps(None))
+        decodebin.connect('autoplug-factories', self._on_decodebin_autoplug_factories, self._get_cached_factories())
 
         # Bind all of our intresting properties so from the outside
         # our player appears as a single player/element.
@@ -367,6 +402,13 @@ class GstPlayer(Gst.Pipeline):
             'max-size-bytes',
             self,
             'max-size-bytes',
+            GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
+        )
+
+        decodebin.bind_property(
+            'sink-caps',
+            self,
+            'decodebin-sink-caps',
             GObject.BindingFlags.BIDIRECTIONAL | GObject.BindingFlags.SYNC_CREATE,
         )
 
@@ -452,15 +494,25 @@ class GstPlayer(Gst.Pipeline):
         if self.query(self.__query_position):
             return self.__query_position.parse_position()[1]
         else:
-            return 0
+            # Comming off an on the fly stream quailty
+            # change we may not be able to get a position
+            # so we just return the seek time otherwise.
+            return self._seek_time or 0
 
     def start_stream(self, url, bitrate):
         if self._current_bitrate != bitrate:
             self._current_bitrate = bitrate
-            # about 3 secs of compressed audio
-            self.props.max_size_bytes = bitrate * 375
+            self.props.max_size_bytes = bitrate * _BUFFER_SIZE_MULTIPLIER
+            self.props.decodebin_sink_caps = self._caps_for_url(url)
         self.props.location = url
         self._set_player_state(PseudoGst.BUFFERING)
+
+    def stream_quailty_change(self, url, bitrate):
+        self.set_state(Gst.State.PAUSED)
+        seek_time = self.query_position()
+        self.stop()
+        self._seek_time = seek_time
+        self.start_stream(url, bitrate)
 
     def play(self):
         self._set_player_state(PseudoGst.PLAYING)
@@ -471,9 +523,25 @@ class GstPlayer(Gst.Pipeline):
     def stop(self):
         self._prerolled = False
         self._got_duration = False
+        self._disk_cached = False
+        self._seek_time = None
         self._set_player_state(PseudoGst.STOPPED, change_gst_state=True)
 
     # private methods/functions/signal handlers
+    def _caps_for_url(self, url):
+        # Skip typefinding if we can and speed up prerolling.
+        # In the case of mp3 streams it also allows us to skip adding
+        # the id3demux element to decodebin. typefind reports the caps
+        # of mp3 streams as 'application/x-id3' more often than not leading
+        # to the addition of id3demux to the pipeline. As Pandora streams
+        # contain no useful tags there's no point in adding it.
+        if _MP3_EXT in url:
+            return _MP3_CAPS
+        elif _AAC_EXT in url:
+            return _AAC_CAPS
+        else:
+            return None
+
     def _get_pulse_sink(self):
         # If we have a pulsesink we can get the server presence through
         # setting the ready state. If PulseAudio is running return the pulsesink.
@@ -485,9 +553,79 @@ class GstPlayer(Gst.Pipeline):
             if res != Gst.StateChangeReturn.FAILURE:
                 return pulsesink
 
+    def _get_cached_factories(self):
+        # return a list of Gst.ElementFactory's sorted by rank containing a AAC demuxer, MP3 parser,
+        # and hopefully a AAC decoder and MP3 decoder if they exist.
+        demuxed_aac_caps = Gst.Caps.from_string('audio/mpeg, mpegversion=(int)4, '
+                                                'framed=(boolean)true, '
+                                                'stream-format=(string)raw')
+
+        parsed_mp3_caps = Gst.Caps.from_string('audio/mpeg, mpegversion=(int)1, '
+                                               'layer=(int)3, parsed=(boolean)true')
+
+        # Rank priority: resource useage, speed, sound quality.
+        # libav decoders use noticeably more resources compared to other decoders.
+        decoder_rank_map = {
+            'mad': 100,
+            'avdec_mp3': 150,
+            'avdec_mp3float': 200,
+            'flump3dec': 250,
+            'mpg123audiodec': 300,
+            'avdec_aac_fixed': 200,
+            'avdec_aac': 250,
+            'faad': 300,
+        }
+
+        def factories_for_caps_and_type(caps, factory_type):
+            factories = Gst.ElementFactory.list_get_elements(factory_type, Gst.Rank.MARGINAL)
+            return Gst.ElementFactory.list_filter(factories, caps, Gst.PadDirection.SINK, False)
+
+        def rank_decoder(factory):
+            # Not all decoders are created equal.
+            # Their ranks by Gstreamer are not necessarily a reflection
+            # of their speed, sound quality and resource useage, so we re-rank them.
+            new_rank = decoder_rank_map.get(factory.get_name())
+            if new_rank:
+                factory.set_rank(new_rank)
+            return factory
+
+        def factories_gen():
+            factories = factories_for_caps_and_type(parsed_mp3_caps, Gst.ELEMENT_FACTORY_TYPE_DECODER)
+            if factories:
+                factory = sorted(map(rank_decoder, factories), key=lambda f: f.get_rank(), reverse=True)[0]
+                logging.debug('MP3 decoder: {}'.format(factory.get_name()))
+                yield factory
+            else:
+                logging.debug('no MP3 decoder found')
+            factories = factories_for_caps_and_type(demuxed_aac_caps, Gst.ELEMENT_FACTORY_TYPE_DECODER)
+            if factories:
+                factory = sorted(map(rank_decoder, factories), key=lambda f: f.get_rank(), reverse=True)[0]
+                logging.debug('AAC decoder: {}'.format(factory.get_name()))
+                yield factory
+            else:
+                logging.debug('no AAC decoder found')
+            factories = factories_for_caps_and_type(_MP3_CAPS, Gst.ELEMENT_FACTORY_TYPE_PARSER)
+            if factories:
+                factory = factories[0]
+                logging.debug('MP3 parser: {}'.format(factory.get_name()))
+                yield factory
+            else:
+                logging.debug('no MP3 parser found')
+            factories = factories_for_caps_and_type(_AAC_CAPS, Gst.ELEMENT_FACTORY_TYPE_DEMUXER)
+            if factories:
+                factory = factories[0]
+                logging.debug('AAC demuxer: {}'.format(factory.get_name()))
+                yield factory
+            else:
+                logging.debug('no AAC demuxer found')
+
+        return sorted(factories_gen(), key=lambda f: f.get_rank(), reverse=True)
+
     def _query_buffer(self):
         if self.query(self.__query_buffer):
-            return self.__query_buffer.parse_buffering_percent()[0]
+            # If we have a seek_time always return True to help prevent buffer flutter when doing
+            # an on the fly stream quality change.
+            return self.__query_buffer.parse_buffering_percent()[0] or self._seek_time is not None
         else:
             return True
 
@@ -523,9 +661,19 @@ class GstPlayer(Gst.Pipeline):
         # means our pipeline is prerolled. As per the docs we should
         # check to see if we're buffering. (we more than likely still are)
         if not self._prerolled:
+            # If we're comming off a on the fly quality change
+            # we have to wait to be prerolled before we can seek
+            # to the previous stream time.
+            if self._seek_time:
+                self.seek_simple(
+                    Gst.Format.TIME,
+                    Gst.SeekFlags.FLUSH | Gst.SeekFlags.ACCURATE,
+                    self._seek_time,
+                )
             self._prerolled = True
             self._get_duration()
             self._on_gst_buffering()
+            self._seek_time = None
 
     def _on_gst_element(self, bus, message):
         if GstPbutils.is_missing_plugin_message(message):
@@ -571,7 +719,7 @@ class GstPlayer(Gst.Pipeline):
         if self._buffering_timer_id:
             GLib.source_remove(self._buffering_timer_id)
             self._buffering_timer_id = 0
-        self._buffering_timer_id = GLib.timeout_add(200, self._react_to_buffering_mesage, True)
+        self._buffering_timer_id = GLib.timeout_add(500, self._react_to_buffering_mesage, True)
 
     def _react_to_buffering_mesage(self, from_timeout):
         # If the pipeline signals that it is buffering set the player to PseudoGst.BUFFERING
@@ -619,13 +767,20 @@ class GstPlayer(Gst.Pipeline):
             self.emit('new-stream-duration', duration)
 
     def _on_decodebin_autoplug_query(self, decodebin, pad, child, query, sink_pad_caps):
-        # As per docs answer yet to be linked decoder caps queries with the sink caps of the audioconvert element.
-        if query.type == Gst.QueryType.CAPS:
-            factory = child.get_factory()
-            if factory.list_is_type(Gst.ELEMENT_FACTORY_TYPE_DECODER):
-                query.set_caps_result(sink_pad_caps)
-                return True
+        # As per docs answer yet to be linked audio decoder caps queries with the sink caps of the audioconvert element.
+        if query.type == Gst.QueryType.CAPS and child.get_factory().list_is_type(Gst.ELEMENT_FACTORY_TYPE_DECODER):
+            query.set_caps_result(sink_pad_caps)
+            return True
         return False
+
+    def _on_decodebin_autoplug_factories(self, decodebin, pad, caps, cached_factories):
+        # This speeds up the autoplug process(and thus prerolling),
+        # and stops aacparse from being added to decodebin for aac's unnecessary.
+        factories = Gst.ElementFactory.list_filter(cached_factories, caps, Gst.PadDirection.SINK, caps.is_fixed())
+        if not factories:
+            factories = Gst.ElementFactory.list_get_elements(Gst.ELEMENT_FACTORY_TYPE_DECODABLE, Gst.Rank.SECONDARY)
+            factories = Gst.ElementFactory.list_filter(factories, caps, Gst.PadDirection.SINK, caps.is_fixed())
+        return factories
 
     def _on_proxy_setting_changed(self, settings, key):
         scheme = user = password = hostport = None

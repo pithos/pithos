@@ -498,7 +498,18 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.pandora_connect()
 
     def set_audio_quality(self, *ignore):
+        # Don't change song quality on the fly if we're about to reload the playlist
+        # because the explicit content filter has been set or the new song url is not valid.
+        def player_stream_quailty_change():
+            checkbox_state = self.prefs_dlg.explicit_content_filter_checkbutton.get_active()
+            reload_playlist = self.filter_state is not None and self.filter_state != checkbox_state and checkbox_state
+            song = self.current_song
+            if not reload_playlist and song and song.is_still_valid():
+                self.player.stream_quailty_change(song.audioUrl, int(song.bitrate))
+
         self.pandora.set_audio_quality(self.settings['audio-quality'])
+        # Let the settings window close before we do anything.
+        GLib.idle_add(player_stream_quailty_change)
 
     def pandora_connect(self, *ignore, message="Logging in...", callback=None):
         def cb(password):
