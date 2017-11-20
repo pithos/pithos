@@ -63,6 +63,7 @@ class GioNotify(Gio.DBusProxy):
 
         self._app_name = ''
         self._last_signal = None
+        self._vendor_is_gnome = False
         self._replace_id = 0
         self._server_info = {}
         self._broken_signals = []
@@ -119,7 +120,7 @@ class GioNotify(Gio.DBusProxy):
                     'version': info[2],
                     'spec_version': info[3],
                 }
-
+                self._vendor_is_gnome = info[1] == 'GNOME'
                 self._app_name = app_name
 
                 callback(self, self._server_info, caps)
@@ -182,11 +183,12 @@ class GioNotify(Gio.DBusProxy):
             # We only care about our notifications.
             if notification_id != self._replace_id:
                 return
-            # In GNOME Shell at least this stops multiple
-            # redundant 'NotificationClosed' signals from being emmitted.
-            if (notification_id, signal_name, signal_value) == self._last_signal:
-                return
-            self._last_signal = notification_id, signal_name, signal_value
+            if self._vendor_is_gnome:
+                # In GNOME this stops multiple redundant 'NotificationClosed'
+                # signals from being emmitted. see: https://bugzilla.gnome.org/show_bug.cgi?id=790636
+                if (notification_id, signal_name) == self._last_signal:
+                    return
+                self._last_signal = notification_id, signal_name
             if signal_name == 'ActionInvoked':
                 if signal_name not in self._broken_signals:
                     callback = self._callbacks.get(signal_value)
