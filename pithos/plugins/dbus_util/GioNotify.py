@@ -164,7 +164,7 @@ class GioNotify(Gio.DBusProxy):
 
     def do_g_signal(self, sender_name, signal_name, parameters):
         try:
-            id, signal_value = parameters.unpack()
+            notification_id, signal_value = parameters.unpack()
         except ValueError:
             # Deepin's notification system is broken, see:
             # https://github.com/gnumdk/lollypop/issues/1203
@@ -180,13 +180,13 @@ class GioNotify(Gio.DBusProxy):
                                 'of your current Notification server:\n{}'.format(signal_name, server_info))
         else:
             # We only care about our notifications.
-            if id != self._replace_id:
+            if notification_id != self._replace_id:
                 return
             # In GNOME Shell at least this stops multiple
             # redundant 'NotificationClosed' signals from being emmitted.
-            if (id, signal_name, signal_value) == self._last_signal:
+            if (notification_id, signal_name, signal_value) == self._last_signal:
                 return
-            self._last_signal = id, signal_name, signal_value
+            self._last_signal = notification_id, signal_name, signal_value
             if signal_name == 'ActionInvoked':
                 if signal_name not in self._broken_signals:
                     callback = self._callbacks.get(signal_value)
