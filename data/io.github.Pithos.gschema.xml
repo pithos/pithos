@@ -59,7 +59,7 @@
         <choice value="mediumQuality"/>
         <choice value="highQuality"/>
       </choices>
-      <default>"mediumQuality"</default>
+      <default>"highQuality"</default>
       <summary>Quality of songs</summary>
     </key>
 
