@@ -27,7 +27,7 @@ valid_audio_formats = [
     ('mediumQuality', 'Medium'),
     ('lowQuality', 'Low'),
 ]
-default_audio_quality = 'mediumQuality'
+default_audio_quality = 'highQuality'
 
 # The CA used by internal-tuner.pandora.com is untrusted by most machines so we will just directly
 # trust it.
