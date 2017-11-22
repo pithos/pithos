@@ -19,7 +19,6 @@ from gi.repository import Gio, Gtk, GObject, Pango
 
 from .gi_composites import GtkTemplate
 from .util import SecretService
-from .pandora.data import valid_audio_formats
 
 try:
     import pacparser
@@ -117,16 +116,6 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.init_template()
 
         self.settings = Gio.Settings.new('io.github.Pithos')
-
-        # initialize the "Audio Quality" combobox backing list
-        fmt_store = Gtk.ListStore(GObject.TYPE_STRING, GObject.TYPE_STRING)
-        for audio_quality in valid_audio_formats:
-            fmt_store.append(audio_quality)
-        self.audio_quality_combo.set_model(fmt_store)
-        render_text = Gtk.CellRendererText()
-        self.audio_quality_combo.pack_start(render_text, True)
-        self.audio_quality_combo.add_attribute(render_text, "text", 1)
-        self.audio_quality_combo.set_id_column(0)
 
         if not pacparser:
             self.control_proxy_pac_entry.set_sensitive(False)

@@ -21,14 +21,6 @@ client_keys = {
 default_client_id = "android-generic"
 default_one_client_id = "pandora-one"
 
-# See http://pan-do-ra-api.wikia.com/wiki/Json/5/station.getPlaylist
-valid_audio_formats = [
-    ('highQuality', 'High'),
-    ('mediumQuality', 'Medium'),
-    ('lowQuality', 'Low'),
-]
-default_audio_quality = 'highQuality'
-
 # The CA used by internal-tuner.pandora.com is untrusted by most machines so we will just directly
 # trust it.
 
