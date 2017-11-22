@@ -179,8 +179,13 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkComboBox" id="audio_quality_combo">
+                          <object class="GtkComboBoxText" id="audio_quality_combo">
                             <property name="visible">1</property>
+                            <items>
+                              <item id="highQuality" translatable="yes">High</item>
+                              <item id="mediumQuality" translatable="yes">Medium</item>
+                              <item id="lowQuality" translatable="yes">Low</item>
+                            </items>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
