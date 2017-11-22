@@ -28,7 +28,7 @@ class MediaKeyPlugin(PithosPlugin):
     method = None
     mediakeys = None
     de_busnames = [
-        ('gnome', 'org.gnome.SettingDaemon.MediaKeys'),
+        ('gnome', 'org.gnome.SettingsDaemon.MediaKeys'),
         ('gnome', 'org.gnome.SettingsDaemon'),
         ('mate', 'org.mate.SettingsDaemon'),
     ]
