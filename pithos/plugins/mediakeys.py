@@ -68,10 +68,10 @@ class MediaKeyPlugin(PithosPlugin):
                 self.window.playpause_notify()
             elif action == 'Next':
                 self.window.next_song()
-            elif action == 'Stop':
-                self.window.user_pause()
             elif action == 'Previous':
                 self.window.bring_to_top()
+            elif action in ('Stop', 'Pause'):
+                self.window.user_pause()
 
     def on_prepare(self):
         def prepare_keybinder():
