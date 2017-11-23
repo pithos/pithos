@@ -53,9 +53,8 @@ class MediaKeyPlugin(PithosPlugin):
             None,
         )
 
-    def update_focus_time(self, widget, event, userdata=None):
-        if event.changed_mask & Gdk.WindowState.FOCUSED and \
-           event.new_window_state & Gdk.WindowState.FOCUSED:
+    def update_active(self, *ignore):
+        if self.window.is_active():
             self.grab_media_keys()
 
     def mediakey_signal(self, proxy, sender, signal, param, userdata=None):
@@ -130,7 +129,7 @@ class MediaKeyPlugin(PithosPlugin):
 
     def on_enable(self):
         if self.method == 'dbus':
-            self.focus_hook = self.window.connect('window-state-event', self.update_focus_time)
+            self.active_hook = self.window.connect('notify::is-active', self.update_active)
             self.mediakey_hook = self.mediakeys.connect('g-signal', self.mediakey_signal)
             logging.info('Bound media keys with DBUS {}'.format(self.mediakeys.props.g_interface_name))
         elif self.method == 'keybinder':
@@ -147,7 +146,7 @@ class MediaKeyPlugin(PithosPlugin):
 
     def on_disable(self):
         if self.method == 'dbus':
-            self.window.disconnect(self.focus_hook)
+            self.window.disconnect(self.active_hook)
             self.mediakeys.disconnect(self.mediakey_hook)
             self.release_media_keys()
             logging.info('Disabled dbus mediakey bindings')
