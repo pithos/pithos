@@ -361,6 +361,9 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.buffering_timer_id = 0
         self.ui_loop_timer_id = 0
         self.playlist_update_timer_id = 0
+        self.configure_event_timer_id = 0
+        display = self.props.screen.get_display()
+        self.running_in_x = type(display).__name__.endswith('X11Display')
         self.worker = GObjectWorker()
 
         try:
@@ -1460,22 +1463,63 @@ class PithosWindow(Gtk.ApplicationWindow):
         if not x is None and not y is None:
             self.move(int(x), int(y))
 
+    def restore_size(self):
+        """ resizes window to size stored in preferences """
+        w, h = self.settings['win-size']
+        if w is not None and h is not None:
+            self.resize(int(w), int(h))
+
+    def restore_maximized(self):
+        if self.settings['win-maxed']:
+            self.maximize()
+
+    def restore_window(self):
+        # Getting the window position
+        # does not work in Wayland.
+        if self.running_in_x:
+            self.restore_position()
+        self.restore_size()
+        self.restore_maximized()
+
     def bring_to_top(self, *ignore):
         timestamp = Gtk.get_current_event_time()
         self.present_with_time(timestamp)
 
     def present_with_time(self, timestamp):
-        self.restore_position()
+        self.restore_window()
         Gtk.Window.present_with_time(self, timestamp)
 
     def present(self):
-        self.restore_position()
+        self.restore_window()
         Gtk.Window.present(self)
 
     @GtkTemplate.Callback
-    def on_configure_event(self, widget, event, data=None):
-        x, y = self.get_position()
-        self.settings.set_value('win-pos', GLib.Variant('(ii)', (x, y)))
+    def on_configure_event(self, widget, *ignore):
+        def store_window_size_and_position():
+            self.configure_event_timer_id = 0
+            # Getting the window position
+            # does not work in Wayland.
+            if self.running_in_x:
+                x, y = widget.get_position()
+                self.settings.set_value('win-pos', GLib.Variant('(ii)', (x, y)))
+            w, h = widget.get_size()
+            self.settings.set_value('win-size', GLib.Variant('(ii)', (w, h)))
+            return False
+        # Debouncer. Don't hammer settings.
+        # Store the settings after the configure
+        # events stop comming.
+        if self.configure_event_timer_id:
+            GLib.source_remove(self.configure_event_timer_id)
+        self.configure_event_timer_id = GLib.timeout_add(
+            100,
+            store_window_size_and_position,
+            priority=GLib.PRIORITY_DEFAULT_IDLE,
+        )
+
+    @GtkTemplate.Callback
+    def on_window_state_event(self, widget, event):
+        maximized = 'GDK_WINDOW_STATE_MAXIMIZED' in event.new_window_state.value_names
+        self.settings.set_boolean('win-maxed', maximized)
         return False
 
     def quit(self, widget=None, data=None):
