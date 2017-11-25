@@ -25,9 +25,8 @@ class MediaKeyPlugin(PithosPlugin):
     preference = 'enable_mediakeys'
     description = 'Control playback with media keys'
 
-    method = None
     mediakeys = None
-    de = None
+    keybinder = None
     de_busnames = [
         ('gnome', 'org.gnome.SettingsDaemon.MediaKeys'),
         ('gnome', 'org.gnome.SettingsDaemon'),
@@ -90,29 +89,26 @@ class MediaKeyPlugin(PithosPlugin):
                     from gi.repository import Keybinder
                     self.keybinder = Keybinder
                     self.keybinder.init()
-                    self.method = 'keybinder'
                 except (ValueError, ImportError):
+                    self.keybinder = None
                     self.prepare_complete(error='DBus binding failed and Keybinder not found.')
                 else:
                     self.prepare_complete()
 
         def on_new_finish(source, result, data):
-            nonlocal de
             try:
-                self.mediakeys = Gio.DBusProxy.new_finish(result)
+                mediakeys = Gio.DBusProxy.new_finish(result)
             except GLib.Error as e:
                 logging.warning(e)
                 prepare_keybinder()
             else:
-                if self.mediakeys.get_name_owner():
-                    self.de = de
-                    self.method = 'dbus'
+                if mediakeys.get_name_owner():
+                    self.mediakeys = mediakeys
                     self.prepare_complete()
                 elif self.de_busnames:
                     de, busname = self.de_busnames.pop(0)
                     get_bus(de, busname)
                 else:
-                    self.mediakeys = None
                     logging.debug('DBus binding failed')
                     prepare_keybinder()
 
@@ -136,19 +132,20 @@ class MediaKeyPlugin(PithosPlugin):
             prepare_keybinder()
 
     def on_enable(self):
-        if self.method == 'dbus':
-            if self.de == 'mate':
+        if self.mediakeys:
+            iface_name = self.mediakeys.props.g_interface_name
+            if 'mate' in iface_name:
                 # Workaround for MATE not updating it's window state properly.
                 self.focus_hook = self.window.connect('notify::is-active', self.update_active)
                 self.grab_media_keys()
             else:
                 self.focus_hook = self.window.connect('window-state-event', self.update_focus_time)
             self.mediakey_hook = self.mediakeys.connect('g-signal', self.mediakey_signal)
-            logging.info('Bound media keys with DBUS {}'.format(self.mediakeys.props.g_interface_name))
-        elif self.method == 'keybinder':
+            logging.info('Bound media keys with DBUS {}'.format(iface_name))
+        elif self.keybinder:
             ret = self.keybinder.bind('XF86AudioPlay', self.window.playpause, None)
             if not ret:  # Presumably all bindings will fail
-                self.method = '' # We don't need to unbind any keys
+                self.keybinder = None # We don't need to unbind any keys
                 logging.error('Failed to bind media keys with Keybinder')
                 self.on_error('Failed to bind media keys with Keybinder')
                 return
@@ -158,12 +155,12 @@ class MediaKeyPlugin(PithosPlugin):
             logging.info('Bound media keys with Keybinder')
 
     def on_disable(self):
-        if self.method == 'dbus':
+        if self.mediakeys:
             self.window.disconnect(self.focus_hook)
             self.mediakeys.disconnect(self.mediakey_hook)
             self.release_media_keys()
             logging.info('Disabled dbus mediakey bindings')
-        elif self.method == 'keybinder':
+        elif self.keybinder:
             self.keybinder.unbind('XF86AudioPlay')
             self.keybinder.unbind('XF86AudioStop')
             self.keybinder.unbind('XF86AudioNext')
