@@ -361,6 +361,8 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.buffering_timer_id = 0
         self.ui_loop_timer_id = 0
         self.playlist_update_timer_id = 0
+        display = self.props.screen.get_display()
+        self.not_in_x = not type(display).__name__.endswith('X11Display')
         self.worker = GObjectWorker()
 
         try:
@@ -1456,9 +1458,13 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def restore_position(self):
         """ Moves window to position stored in preferences """
+        # Getting and setting window position does not work in Wayland.
+        if self.not_in_x:
+            return
         x, y = self.settings['win-pos']
-        if not x is None and not y is None:
-            self.move(int(x), int(y))
+        self.handler_block_by_func(self.on_configure_event)
+        self.move(x, y)
+        self.handler_unblock_by_func(self.on_configure_event)
 
     def bring_to_top(self, *ignore):
         timestamp = Gtk.get_current_event_time()
@@ -1473,10 +1479,12 @@ class PithosWindow(Gtk.ApplicationWindow):
         Gtk.Window.present(self)
 
     @GtkTemplate.Callback
-    def on_configure_event(self, widget, event, data=None):
-        x, y = self.get_position()
-        self.settings.set_value('win-pos', GLib.Variant('(ii)', (x, y)))
-        return False
+    def on_configure_event(self, *ignore):
+        # Getting and setting window position does not work in Wayland.
+        if self.not_in_x:
+            return
+        x, y = self.get_position() # This can return None
+        self.settings.set_value('win-pos', GLib.Variant('(ii)', (x or 0, y or 0)))
 
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
