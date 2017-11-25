@@ -150,6 +150,7 @@ class MediaKeyPlugin(PithosPlugin):
                 self.on_error('Failed to bind media keys with Keybinder')
                 return
             self.keybinder.bind('XF86AudioStop', self.window.user_pause, None)
+            self.keybinder.bind('XF86AudioPause', self.window.user_pause, None)
             self.keybinder.bind('XF86AudioNext', self.window.next_song, None)
             self.keybinder.bind('XF86AudioPrev', self.window.bring_to_top, None)
             logging.info('Bound media keys with Keybinder')
@@ -163,6 +164,7 @@ class MediaKeyPlugin(PithosPlugin):
         elif self.keybinder:
             self.keybinder.unbind('XF86AudioPlay')
             self.keybinder.unbind('XF86AudioStop')
+            self.keybinder.unbind('XF86AudioPause')
             self.keybinder.unbind('XF86AudioNext')
             self.keybinder.unbind('XF86AudioPrev')
             logging.info('Disabled keybinder mediakey bindings')
