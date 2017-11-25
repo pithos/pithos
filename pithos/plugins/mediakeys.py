@@ -27,6 +27,7 @@ class MediaKeyPlugin(PithosPlugin):
 
     method = None
     mediakeys = None
+    de = None
     de_busnames = [
         ('gnome', 'org.gnome.SettingsDaemon.MediaKeys'),
         ('gnome', 'org.gnome.SettingsDaemon'),
@@ -56,6 +57,10 @@ class MediaKeyPlugin(PithosPlugin):
     def update_focus_time(self, widget, event, userdata=None):
         if event.changed_mask & Gdk.WindowState.FOCUSED and \
            event.new_window_state & Gdk.WindowState.FOCUSED:
+            self.grab_media_keys()
+
+    def update_active(self, *ignore):
+        if self.window.is_active():
             self.grab_media_keys()
 
     def mediakey_signal(self, proxy, sender, signal, param, userdata=None):
@@ -92,6 +97,7 @@ class MediaKeyPlugin(PithosPlugin):
                     self.prepare_complete()
 
         def on_new_finish(source, result, data):
+            nonlocal de
             try:
                 self.mediakeys = Gio.DBusProxy.new_finish(result)
             except GLib.Error as e:
@@ -99,6 +105,7 @@ class MediaKeyPlugin(PithosPlugin):
                 prepare_keybinder()
             else:
                 if self.mediakeys.get_name_owner():
+                    self.de = de
                     self.method = 'dbus'
                     self.prepare_complete()
                 elif self.de_busnames:
@@ -130,7 +137,12 @@ class MediaKeyPlugin(PithosPlugin):
 
     def on_enable(self):
         if self.method == 'dbus':
-            self.focus_hook = self.window.connect('window-state-event', self.update_focus_time)
+            if self.de == 'mate':
+                # Workaround for MATE not updating it's window state properly.
+                self.focus_hook = self.window.connect('notify::is-active', self.update_active)
+                self.grab_media_keys()
+            else:
+                self.focus_hook = self.window.connect('window-state-event', self.update_focus_time)
             self.mediakey_hook = self.mediakeys.connect('g-signal', self.mediakey_signal)
             logging.info('Bound media keys with DBUS {}'.format(self.mediakeys.props.g_interface_name))
         elif self.method == 'keybinder':
