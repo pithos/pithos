@@ -23,6 +23,19 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release date="2017-11-26" version="1.4.1">
+      <description>
+        <p>This is a minor release fixing up some bugs:</p>
+        <ul>
+          <li>Change default quality to high (mp3)</li>
+          <li>Mark application as DBusActivatable</li>
+          <li>MPRIS: Fix potential unhandled exception</li>
+          <li>Mediakeys: Handle keyboards with a dedicated pause key</li>
+          <li>Mediakeys: Fix support on GNOME-Shell 3.26+ and MATE</li>
+          <li>Notify: Improve behavior on various notification servers</li>
+        </ul>
+      </description>
+    </release>
     <release date="2017-09-08" version="1.4.0">
       <description>
         <p>This is a major release with some useful new plugin additions:</p>

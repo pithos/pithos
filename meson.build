@@ -1,5 +1,5 @@
 project('pithos',
-  version: '1.4.0',
+  version: '1.4.1',
   meson_version: '>= 0.40.0'
 )
 
