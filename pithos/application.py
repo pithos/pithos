@@ -15,11 +15,15 @@
 import os
 import sys
 import signal
+import asyncio
 import logging
 
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import GLib, Gio, Gtk
+
+from .gbulb import gbulb
+gbulb.install(gtk=True)
 
 from .pithos import PithosWindow
 from .util import open_browser
@@ -199,8 +203,8 @@ class PithosApplication(Gtk.Application):
 
 def main(version=''):
     app = PithosApplication(version=version)
-    exit_status = app.run(sys.argv)
-    sys.exit(exit_status)
+    asyncio.get_event_loop().run_forever(application=app, argv=sys.argv)
+    # sys.exit(exit_status)
 
 
 if __name__ == '__main__':

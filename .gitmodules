@@ -1,0 +1,4 @@
+[submodule "pithos/gbulb"]
+	path = pithos/gbulb
+	url = https://github.com/TingPing/gbulb.git
+	branch = argv
