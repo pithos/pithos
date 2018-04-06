@@ -164,10 +164,10 @@ class PithosNotificationIcon(PithosPlugin):
 
         def button(text, action, checked=False):
             if checked:
-                item = Gtk.CheckMenuItem(text)
+                item = Gtk.CheckMenuItem.new_with_label(text)
                 item.set_active(True)
             else:
-                item = Gtk.MenuItem(text)
+                item = Gtk.MenuItem.new_with_label(text)
             handler = item.connect('activate', action)
             item.show()
             menu.append(item)
@@ -253,15 +253,15 @@ class NotificationIconPluginPrefsDialog(Gtk.Dialog):
 
     def __init__(self, parent, settings):
         super().__init__(
-            _('Icon Type'),
-            parent,
-            0,
-            ('_Cancel', Gtk.ResponseType.CANCEL, '_Apply', Gtk.ResponseType.APPLY),
+            title=_('Icon Type'),
+            transient_for=parent,
             use_header_bar=1,
             resizable=False,
             default_width=300
         )
         self.settings = settings
+
+        self.add_buttons('_Cancel', Gtk.ResponseType.CANCEL, '_Apply', Gtk.ResponseType.APPLY)
 
         self.connect('delete-event', lambda *ignore: self.response(Gtk.ResponseType.CANCEL) or True)
 
