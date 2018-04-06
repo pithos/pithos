@@ -16,7 +16,6 @@
 
 from gi.repository import Gtk
 
-from pithos.gi_composites import GtkTemplate
 from pithos.plugin import PithosPlugin
 
 
@@ -29,20 +28,20 @@ class TenBandEqPlugin(PithosPlugin):
         self.prepare_complete()
 
 
-@GtkTemplate(ui='/io/github/Pithos/ui/EqDialog.ui')
+@Gtk.Template(resource_path='/io/github/Pithos/ui/EqDialog.ui')
 class EqDialog(Gtk.Dialog):
     __gtype_name__ = 'EqDialog'
 
-    band0 = GtkTemplate.Child()
-    band1 = GtkTemplate.Child()
-    band2 = GtkTemplate.Child()
-    band3 = GtkTemplate.Child()
-    band4 = GtkTemplate.Child()
-    band5 = GtkTemplate.Child()
-    band6 = GtkTemplate.Child()
-    band7 = GtkTemplate.Child()
-    band8 = GtkTemplate.Child()
-    band9 = GtkTemplate.Child()
+    band0 = Gtk.Template.Child()
+    band1 = Gtk.Template.Child()
+    band2 = Gtk.Template.Child()
+    band3 = Gtk.Template.Child()
+    band4 = Gtk.Template.Child()
+    band5 = Gtk.Template.Child()
+    band6 = Gtk.Template.Child()
+    band7 = Gtk.Template.Child()
+    band8 = Gtk.Template.Child()
+    band9 = Gtk.Template.Child()
 
     def __init__(self, plugin):
         super().__init__(
@@ -52,7 +51,6 @@ class EqDialog(Gtk.Dialog):
             ('_Reset', Gtk.ResponseType.CANCEL, '_Close', Gtk.ResponseType.CLOSE),
             use_header_bar=1,
         )
-        self.init_template()
         self.set_title(_('10 Band Equalizer'))
         self.set_default_size(200, 200)
         self.set_resizable(False)
@@ -81,7 +79,7 @@ class EqDialog(Gtk.Dialog):
         else:
             self.zero_eq()
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_scale_value_changed(self, scale):
         value = scale.get_value()
         name = scale.get_name()

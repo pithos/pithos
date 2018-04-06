@@ -15,33 +15,30 @@
 import html
 from gi.repository import GObject, Gtk
 
-from .gi_composites import GtkTemplate
 
-
-@GtkTemplate(ui='/io/github/Pithos/ui/SearchDialog.ui')
+@Gtk.Template(resource_path='/io/github/Pithos/ui/SearchDialog.ui')
 class SearchDialog(Gtk.Dialog):
     __gtype_name__ = "SearchDialog"
 
-    entry = GtkTemplate.Child()
-    treeview = GtkTemplate.Child()
+    entry = Gtk.Template.Child()
+    treeview = Gtk.Template.Child()
 
     def __init__(self, *args, **kwargs):
         self.worker_run = kwargs["worker"]
         del kwargs["worker"]
 
         super().__init__(*args, use_header_bar=1, **kwargs)
-        self.init_template()
 
         self.model = Gtk.ListStore(GObject.TYPE_PYOBJECT, str)
         self.treeview.set_model(self.model)
         self.query = ''
         self.result = None
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def search_clicked(self, widget):
         self.search(self.entry.get_text())
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def get_selected(self):
         sel = self.treeview.get_selection().get_selected()
         if sel[1]:
