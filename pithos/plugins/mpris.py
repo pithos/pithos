@@ -116,7 +116,7 @@ class PithosMprisService(DBusServiceObject):
 
         self.bus_id = Gio.bus_own_name_on_connection(
             self.connection,
-            'org.mpris.MediaPlayer2.pithos',
+            'org.mpris.MediaPlayer2.io.github.Pithos',
             Gio.BusNameOwnerFlags.NONE,
             on_name_acquired,
             None,
