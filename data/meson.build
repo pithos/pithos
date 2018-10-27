@@ -36,7 +36,7 @@ pithos_appstream = i18n.merge_file(
   output: 'io.github.Pithos.appdata.xml',
   po_dir: '../po',
   install: true,
-  install_dir: join_paths(get_option('datadir'), 'appdata')
+  install_dir: join_paths(get_option('datadir'), 'metainfo')
 )
 
 pithos_settings = gnome.compile_schemas()
