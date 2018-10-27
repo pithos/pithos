@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop">
-  <id>io.github.Pithos.desktop</id>
+  <id>io.github.Pithos</id>
+  <launchable type="desktop-id">io.github.Pithos.desktop</launchable>
   <translation type="gettext">pithos</translation>
   <name>Pithos</name>
   <developer_name>Pithos</developer_name>
@@ -113,5 +114,6 @@
     <kudo>Notifications</kudo>
     <kudo>UserDocs</kudo>
   </kudos>
+  <content_rating type="oars-1.1"/>
   <update_contact>tingping_at_fedoraproject.org</update_contact>
 </component>
