@@ -38,20 +38,20 @@ class InhibitScreensaverPlugin(PithosPlugin):
         self._on_status_changed()
 
         if self._status_handler_id is None:
-            self._status_handler_id = self.window.connect(
-                'play-state-changed',
+            self._status_handler_id = self.window.player.connect(
+                'new-player-state',
                 self._on_status_changed,
             )
 
     def on_disable(self):
         if self._status_handler_id is not None:
-            self.window.disconnect(self._status_handler_id)
+            self.window.player.disconnect(self._status_handler_id)
             self._status_handler_id = None
 
         self._uninhibit()
 
     def _on_status_changed(self, *ignore):
-        playing = self.window.playing
+        playing = self.window.player.props.playing
 
         if self._playing != playing:
             self._playing = playing

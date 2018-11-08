@@ -28,7 +28,7 @@ class AutoVolumeNormalization(PithosPlugin):
 
     def on_enable(self):
         self._song_change_handler = self.window.connect('song-changed', self._on_song_changed)
-        self.window.rglimiter.set_property('enabled', True)
+        self.window.player.set_property('rg-limiter', True)
         if self.window.current_song is not None:
             self._on_song_changed(self.window, self.window.current_song)
 
@@ -39,17 +39,17 @@ class AutoVolumeNormalization(PithosPlugin):
         self._volume_warning_dialog()
 
     def _on_song_changed(self, window, song):
-        window.rgvolume.set_property('fallback-gain', song.trackGain)
+        window.player.set_property('rg-fallback-gain', song.trackGain)
 
     def _volume_warning_dialog(self):
-        if self.window.playing:
+        if self.window.player.props.playing:
             self.window.pause()
             text = _('Pithos Has Been Paused')
         else:
             text = _('Pithos Is Paused')
 
-        self.window.rgvolume.set_property('fallback-gain', 0.0)
-        self.window.rglimiter.set_property('enabled', False)
+        self.window.player.set_property('rg-fallback-gain', 0.0)
+        self.window.player.set_property('rg-limiter', False)
 
         dialog = Gtk.MessageDialog(
             parent=self.window.prefs_dlg,
