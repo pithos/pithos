@@ -32,6 +32,9 @@ class PithosApplication(Gtk.Application):
         super().__init__(application_id='io.github.Pithos',
                          flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
 
+        if hasattr(self.props, 'register_session'):
+            self.props.register_session = True
+
         # First, get rid of existing logging handlers due to call in header as per
         # http://stackoverflow.com/questions/1943747/python-logging-before-you-run-logging-basicconfig
         logging.root.handlers = []

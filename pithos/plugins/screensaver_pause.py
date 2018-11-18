@@ -14,73 +14,38 @@
 
 import logging
 
-from gi.repository import (GLib, Gio)
+from gi.repository import Gio, Gtk
 
 from pithos.plugin import PithosPlugin
-
-SCREENSAVERS = (
-    # interface, path
-    ('org.gnome.ScreenSaver', '/org/gnome/ScreenSaver'),
-    ('org.cinnamon.ScreenSaver', '/org/cinnamon/ScreenSaver'),
-    ('org.freedesktop.ScreenSaver', '/org/freedesktop/ScreenSaver'),
-)
 
 
 class ScreenSaverPausePlugin(PithosPlugin):
     preference = 'enable_screensaverpause'
     description = 'Pause playback on screensaver'
 
-    locked = 0
-    wasplaying = False
-    subs = []
+    _signal_handle = 0
+    _app = None
+    _wasplaying = False
 
     def on_prepare(self):
-        if self.bus is None:
-            logging.debug('Failed to connect to DBus')
-            self.prepare_complete(error='Failed to connect to DBus')
+        self._app = Gio.Application.get_default()
+        if not hasattr(self._app.props, 'screensaver_active'):
+            self.prepare_complete(error='Gtk 3.24+ required')
         else:
             self.prepare_complete()
 
-    def on_enable(self):
-        self._connect_events()
-
-    def on_disable(self):
-        for sub in self.subs:
-            self.bus.signal_unsubscribe(sub)
-
-        self.locked = 0
-        self.wasplaying = False
-        self.subs = []
-
-    def _connect_events(self):
-        def on_screensaver_active_changed(conn, sender, path, interface, sig, param, userdata=None):
-            self._pause() if param[0] else self._play()
-
-        def on_unity_session_changed(conn, sender, path, interface, sig, param, userdata=None):
-            self._pause() if sig == 'Locked' else self._play()
-
-        for ss in SCREENSAVERS:
-            self.subs.append(self.bus.signal_subscribe(
-                None, ss[0], 'ActiveChanged', ss[1],
-                None, Gio.DBusSignalFlags.NONE,
-                on_screensaver_active_changed, None))
-
-        for sig in ('Locked', 'Unlocked'):
-            self.subs.append(self.bus.signal_subscribe(
-                None, 'com.canonical.Unity.Session',
-                sig, '/com/canonical/Unity/Session',
-                None, Gio.DBusSignalFlags.NONE,
-                on_unity_session_changed, None))
-
-    def _play(self):
-        self.locked -= 1
-        if self.locked < 0:
-            self.locked = 0
-        if not self.locked and self.wasplaying:
+    def _on_screensaver_active(self, pspec, user_data=None):
+        if self._app.props.screensaver_active:
+            self._wasplaying = self.window.playing
+            self.window.pause()
+        elif self._wasplaying:
             self.window.user_play()
 
-    def _pause(self):
-        if not self.locked:
-            self.wasplaying = self.window.playing
-            self.window.pause()
-        self.locked += 1
+    def on_enable(self):
+        self._signal_handle = self._app.connect('notify::screensaver-active',
+                                                self._on_screensaver_active)
+
+    def on_disable(self):
+        if self._signal_handle:
+            self._app.disconnect(self._signal_handle)
+            self._signal_handle = 0
