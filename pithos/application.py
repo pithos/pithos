@@ -83,6 +83,18 @@ class PithosApplication(Gtk.Application):
         action.connect("activate", self.quit_cb)
         self.add_action(action)
 
+        action = Gio.SimpleAction.new("next-song", None)
+        action.connect("activate", lambda action, param: self.window.next_song())
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("play", None)
+        action.connect("activate", lambda action, param: self.window.user_play())
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("pause", None)
+        action.connect("activate", lambda action, param: self.window.user_pause())
+        self.add_action(action)
+
         if Gtk.get_major_version() > 3 or Gtk.get_minor_version() >= 20:
             menu = self.get_app_menu()
             it = menu.iterate_item_links(menu.get_n_items() - 1)
