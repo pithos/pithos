@@ -176,6 +176,12 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.last_email = self.settings['email']
         SecretService.get_account_password(self.last_email, cb)
 
+    @GtkTemplate.Callback
+    def on_delete_event(self, *ignore):
+        self.hide()
+        self.settings.revert()
+        return True
+
     def do_response(self, response_id):
         if response_id == Gtk.ResponseType.APPLY:
             def cb(success):
