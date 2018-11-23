@@ -13,7 +13,6 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import logging
 
 from gi.repository import Gio
 
@@ -25,7 +24,8 @@ class NotifyPlugin(PithosPlugin):
     description = 'Shows notifications on song change'
 
     _app = None
-    _last_id = ''
+    _app_id = None
+    _fallback_icon = None
 
     def on_prepare(self):
         # We prefer the behavior of the fdo backend to the gtk backend
@@ -35,40 +35,44 @@ class NotifyPlugin(PithosPlugin):
             os.environ['GNOTIFICATION_BACKEND'] = 'freedesktop'
 
         self._app = Gio.Application.get_default()
+        self._app_id = self._app.get_application_id()
+        self._fallback_icon = Gio.ThemedIcon.new('audio-x-generic')
         self.prepare_complete()
 
     def on_enable(self):
-        self.song_change_handler = self.window.connect('song-changed', self.send_notification)
-        self.state_change_handler = self.window.connect('user-changed-play-state', self.send_notification)
+        self._song_change_handler = self.window.connect('song-changed', self.send_notification)
+        self._shutdown_handler = self._app.connect('shutdown', lambda app: app.withdraw_notification(self._app_id))
 
     def send_notification(self, window, *ignore):
         if window.is_active():
-            return
-
-        song = window.current_song
-        # This matches GNOME-Shell's format
-        notification = Gio.Notification.new(song.artist)
-        notification.set_body(song.title)
-        if song.artUrl:
-            notification.set_icon(Gio.FileIcon.new(Gio.File.new_for_uri(song.artUrl)))
-
-        if window.playing:
-            notification.add_button(_('Pause'), 'app.pause')
+            # GNOME-Shell will auto dismiss notifications
+            # when the window becomes "active" but other DE's may not (KDE for example).
+            # If we're not going to replace a previous notification
+            # we should withdraw said stale previous notification.
+            self._app.withdraw_notification(self._app_id)
         else:
-            notification.add_button(_('Play'), 'app.play')
-        notification.add_button(_('Skip'), 'app.next-song')
+            song = window.current_song
+            # This matches GNOME-Shell's format
+            notification = Gio.Notification.new(song.artist)
+            # GNOME focuses the application by default, we want to match that behavior elsewhere such as on KDE.
+            notification.set_default_action('app.activate')
+            notification.set_body(song.title)
 
-        if self._last_id != song.trackToken:
-            self._app.withdraw_notification(self._last_id)
+            if song.artUrl:
+                icon = Gio.FileIcon.new(Gio.File.new_for_uri(song.artUrl))
+            else:
+                icon = self._fallback_icon
+            notification.set_icon(icon)
 
-        self._last_id = song.trackToken
-        self._app.send_notification(song.trackToken, notification)
+            notification.add_button(_('Skip'), 'app.next-song')
+
+            self._app.send_notification(self._app_id, notification)
 
     def on_disable(self):
-        if self._last_id:
-            self._app.withdraw_notification(self._last_id)
-            self._last_id = ''
-
-        self.window.disconnect(self.song_change_handler)
-        self.window.disconnect(self.state_change_handler)
-
+        self._app.withdraw_notification(self._app_id)
+        if self._song_change_handler:
+            self.window.disconnect(self._song_change_handler)
+            self._song_change_handler = 0
+        if self._shutdown_handler:
+            self._app.disconnect(self._shutdown_handler)
+            self._shutdown_handler = 0
