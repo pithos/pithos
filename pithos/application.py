@@ -40,6 +40,7 @@ class PithosApplication(Gtk.Application):
         logging.root.handlers = []
 
         os.environ['PULSE_PROP_application.name'] = 'Pithos'
+        os.environ['PULSE_PROP_application.id'] = 'io.github.Pithos'
         os.environ['PULSE_PROP_application.version'] = version
         os.environ['PULSE_PROP_application.icon_name'] = 'io.github.Pithos'
         os.environ['PULSE_PROP_media.role'] = 'music'
