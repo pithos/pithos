@@ -837,7 +837,7 @@ class MprisPluginPrefsDialog(Gtk.Dialog):
 
         self.pithos = window
         self.settings = settings
-        self.window_delete_handler = None
+        self.delete_handler = None
 
         box = Gtk.Box()
         label = Gtk.Label()
@@ -864,19 +864,27 @@ class MprisPluginPrefsDialog(Gtk.Dialog):
     def on_activated(self, *ignore):
         if self.switch.get_active():
             self.settings['data'] = 'True'
-            self.delete_callback_handle = self.pithos.connect('delete-event', self.on_close)
+            self._enable_hide_on_delete()
         else:
             self.settings['data'] = 'False'
-            self._disable()
+            self._disable_hide_on_delete()
 
     def _on_plugin_enabled(self, *ignore):
         if self.settings['enabled']:
             self.switch.set_active(self.settings['data'] == 'True')
+            if self.switch.get_active():
+                self._enable_hide_on_delete()
+            else:
+                self._disable_hide_on_delete()
         else:
-            self._disable()
+            self._disable_hide_on_delete()
 
-    def _disable(self):
-        if self.delete_callback_handle:
-            self.pithos.disconnect(self.delete_callback_handle)
-            self.pithos.connect('delete-event', self.pithos.on_destroy)
-        self.window_delete_handler = None
+    def _disable_hide_on_delete(self):
+        if self.delete_handler:
+            self.pithos.disconnect(self.delete_handler)
+        self.delete_handler = self.pithos.connect('delete-event', self.pithos.on_destroy)
+
+    def _enable_hide_on_delete(self):
+        if self.delete_handler:
+            self.pithos.disconnect(self.delete_handler)
+        self.delete_handler = self.pithos.connect('delete-event', self.on_close)
