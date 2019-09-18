@@ -366,8 +366,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.worker = GObjectWorker()
 
         try:
-            self.tempdir = tempfile.TemporaryDirectory(prefix='pithos-',
-                                                       dir=GLib.get_user_cache_dir())
+            self.tempdir = tempfile.TemporaryDirectory(prefix='pithos-')
             logging.info("Created temporary directory %s" %self.tempdir.name)
         except IOError as e:
             self.tempdir = None
