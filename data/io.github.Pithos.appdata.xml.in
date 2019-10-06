@@ -24,6 +24,18 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release date="2019-09-06" version="1.5.0">
+      <description>
+        <p>This is a relatively small release fixing appmenu integration on modern versions of GNOME as well as using more sandbox (Flatpak) friendly APIs. Note that this move may introduce behavior changes on some platforms.</p>
+        <ul>
+          <li>Remove appmenu and move into a menu button in the toolbar</li>
+          <li>Fix preference dialog accidentaly getting destroyed</li>
+          <li>Notify: Migrate to GNotification</li>
+          <li>MPRIS: Rename name to match app-id (org.mpris.MediaPlayer2.io.github.Pithos)</li>
+          <li>Screensaver Pause: Remove platform specific screensaver support and use GTK's built-in detection</li>
+        </ul>
+      </description>
+    </release>
     <release date="2017-11-26" version="1.4.1">
       <description>
         <p>This is a minor release fixing up some bugs:</p>

@@ -1,6 +1,6 @@
 project('pithos',
-  version: '1.4.1',
-  meson_version: '>= 0.40.0'
+  version: '1.5.0',
+  meson_version: '>= 0.50.0'
 )
 
 i18n = import('i18n')
