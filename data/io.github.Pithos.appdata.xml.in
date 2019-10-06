@@ -29,7 +29,7 @@
         <p>This is a relatively small release fixing appmenu integration on modern versions of GNOME as well as using more sandbox (Flatpak) friendly APIs. Note that this move may introduce behavior changes on some platforms.</p>
         <ul>
           <li>Remove appmenu and move into a menu button in the toolbar</li>
-          <li>Fix preference dialog accidentaly getting destroyed</li>
+          <li>Fix preference dialog accidentally getting destroyed</li>
           <li>Notify: Migrate to GNotification</li>
           <li>MPRIS: Rename name to match app-id (org.mpris.MediaPlayer2.io.github.Pithos)</li>
           <li>Screensaver Pause: Remove platform specific screensaver support and use GTK's built-in detection</li>
