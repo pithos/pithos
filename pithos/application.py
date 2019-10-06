@@ -83,6 +83,7 @@ class PithosApplication(Gtk.Application):
         action = Gio.SimpleAction.new("quit", None)
         action.connect("activate", self.quit_cb)
         self.add_action(action)
+        self.set_accels_for_action('app.quit', ['<Primary>q'])
 
         action = Gio.SimpleAction.new("next-song", None)
         action.connect("activate", lambda action, param: self.window.next_song())
@@ -92,14 +93,6 @@ class PithosApplication(Gtk.Application):
         action = Gio.SimpleAction.new("activate", None)
         action.connect("activate", lambda action, param: self.activate())
         self.add_action(action)
-
-        if Gtk.get_major_version() > 3 or Gtk.get_minor_version() >= 20:
-            menu = self.get_app_menu()
-            it = menu.iterate_item_links(menu.get_n_items() - 1)
-            assert(it.next())
-            last_section = it.get_value()
-            shortcuts_item = Gio.MenuItem.new(_('Keyboard Shortcuts'), 'win.show-help-overlay')
-            last_section.prepend_item(shortcuts_item)
 
     def do_command_line(self, command_line):
         options = command_line.get_options_dict()

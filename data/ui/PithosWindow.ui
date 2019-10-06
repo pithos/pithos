@@ -2,6 +2,35 @@
 <!-- Generated with glade 3.18.1 -->
 <interface>
   <requires lib="gtk+" version="3.14"/>
+  <menu id="app-menu">
+    <section>
+      <item>
+        <attribute name="action">app.stations</attribute>
+        <attribute name="label" translatable="yes">_Stations</attribute>
+        <attribute name="accel">&lt;Primary&gt;s</attribute>
+      </item>
+    </section>
+    <section>
+        <item>
+            <attribute name="action">app.preferences</attribute>
+            <attribute name="label" translatable="yes">_Preferences</attribute>
+            <attribute name="accel">&lt;Primary&gt;p</attribute>
+          </item>
+      <item>
+        <attribute name="action">win.show-help-overlay</attribute>
+        <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>
+      </item>
+      <item>
+        <attribute name="action">app.help</attribute>
+        <attribute name="label" translatable="yes">_Help</attribute>
+        <attribute name="accel">F1</attribute>
+      </item>
+      <item>
+        <attribute name="action">app.about</attribute>
+        <attribute name="label" translatable="yes">_About</attribute>
+      </item>
+    </section>
+  </menu>
   <object class="GtkAdjustment" id="adjustment1">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
@@ -166,6 +195,32 @@
                             <property name="position">1</property>
                           </packing>
                         </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkToolItem">
+                <property name="visible">1</property>
+                <child>
+                  <object class="GtkMenuButton">
+                    <property name="visible">1</property>
+                    <property name="can_focus">1</property>
+                    <property name="use-popover">TRUE</property>
+                    <property name="menu-model">app-menu</property>
+                    <property name="halign">end</property>
+                    <child internal-child="accessible">
+                      <object class="AtkObject">
+                        <property name="AtkObject::accessible-description" translatable="yes">menu</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">1</property>
+                        <property name="icon_name">open-menu-symbolic</property>
+                        <property name="icon_size">1</property>
                       </object>
                     </child>
                   </object>
