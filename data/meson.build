@@ -72,7 +72,6 @@ if gtk_builder_tool.found()
     ['ui', 'StationsDialog.ui'],
     ['ui', 'EqDialog.ui'],
     ['gtk', 'help-overlay.ui'],
-    ['gtk', 'menus.ui'],
   ]
   foreach ui_file : ui_files
     test('Validate @0@'.format(ui_file[1]), gtk_builder_tool,
