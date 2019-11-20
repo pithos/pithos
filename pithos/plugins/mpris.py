@@ -20,6 +20,7 @@
 import codecs
 import logging
 import math
+import time
 
 from gi.repository import (
     GLib,
@@ -104,6 +105,7 @@ class PithosMprisService(DBusServiceObject):
         self._stations_dlg_handlers = []
         self._volumechange_handler_id = None
         self._sort_order_handler_id = None
+        self._focus_time = time.time() if self.window.is_active() else 0
 
     def connect(self):
         '''Takes ownership of the Pithos mpris Interfaces.'''
@@ -209,6 +211,11 @@ class PithosMprisService(DBusServiceObject):
                 'station-added',
                 self._add_playlist_handler,
             ),
+
+            window.connect(
+                'notify::is-active',
+                self._update_focus_time_handler,
+            ),
         ]
 
         if window.stations_dlg:
@@ -277,6 +284,15 @@ class PithosMprisService(DBusServiceObject):
             self.PropertiesChanged(
                 self.MEDIA_PLAYER2_PLAYLISTS_IFACE,
                 {'Orderings': GLib.Variant('as', self._orderings)},
+                [],
+            )
+
+    def _update_focus_time_handler(self, *ignore):
+        if self.window.is_active():
+            self._focus_time = time.time()
+            self.PropertiesChanged(
+                self.MEDIA_PLAYER2_PLAYER_IFACE,
+                {'TimeLastFocus': GLib.Variant('t', self._focus_time)},
                 [],
             )
 
@@ -643,6 +659,11 @@ class PithosMprisService(DBusServiceObject):
         # Not all versions of Pithos will have this interface.
         # It serves a similar function as HasTrackList.
         return True
+
+    @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='t')
+    def TimeLastFocus(self):
+        '''t Read only Interface MediaPlayer2.Player'''
+        return self._focus_time
 
     @dbus_method(MEDIA_PLAYER2_IFACE)
     def Raise(self):
