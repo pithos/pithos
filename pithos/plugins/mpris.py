@@ -497,12 +497,12 @@ class PithosMprisService(DBusServiceObject):
     @dbus_property(MEDIA_PLAYER2_IFACE, signature='as')
     def SupportedUriScheme(self):
         '''as Read only Interface MediaPlayer2'''
-        return ['', ]
+        return []
 
     @dbus_property(MEDIA_PLAYER2_IFACE, signature='as')
     def SupportedMimeTypes(self):
         '''as Read only Interface MediaPlayer2'''
-        return ['', ]
+        return []
 
     @dbus_property(MEDIA_PLAYER2_PLAYER_IFACE, signature='s')
     def PlaybackStatus(self):
