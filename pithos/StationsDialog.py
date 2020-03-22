@@ -52,7 +52,7 @@ class StationsDialog(Gtk.Dialog):
 
         self.modelfilter.set_visible_func(visible_func)
 
-        self.modelsortable = Gtk.TreeModelSort.sort_new_with_model(self.modelfilter)
+        self.modelsortable = Gtk.TreeModelSort.new_with_model(self.modelfilter)
         """
         @todo Leaving it as sorting by date added by default.
         Probably should make a radio select in the window or an option in program options for user preference
