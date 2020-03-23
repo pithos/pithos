@@ -67,10 +67,12 @@ class PithosApplication(Gtk.Application):
         action = Gio.SimpleAction.new("stations", None)
         action.connect("activate", self.stations_cb)
         self.add_action(action)
+        self.set_accels_for_action('app.stations', ['<Primary>s'])
 
         action = Gio.SimpleAction.new("preferences", None)
         action.connect("activate", self.prefs_cb)
         self.add_action(action)
+        self.set_accels_for_action('app.preferences', ['<Primary>p'])
 
         action = Gio.SimpleAction.new("help", None)
         action.connect("activate", self.help_cb)
@@ -83,6 +85,7 @@ class PithosApplication(Gtk.Application):
         action = Gio.SimpleAction.new("quit", None)
         action.connect("activate", self.quit_cb)
         self.add_action(action)
+        self.set_accels_for_action('app.quit', ['<Primary>q'])
 
         action = Gio.SimpleAction.new("next-song", None)
         action.connect("activate", lambda action, param: self.window.next_song())

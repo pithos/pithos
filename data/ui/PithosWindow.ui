@@ -7,14 +7,12 @@
       <item>
         <attribute name="action">app.stations</attribute>
         <attribute name="label" translatable="yes">_Stations</attribute>
-        <attribute name="accel">&lt;Primary&gt;s</attribute>
       </item>
     </section>
     <section>
       <item>
         <attribute name="action">app.preferences</attribute>
         <attribute name="label" translatable="yes">_Preferences</attribute>
-        <attribute name="accel">&lt;Primary&gt;p</attribute>
       </item>
       <item>
         <attribute name="action">win.show-help-overlay</attribute>
@@ -34,7 +32,6 @@
       <item>
         <attribute name="action">app.quit</attribute>
         <attribute name="label" translatable="yes">_Quit</attribute>
-        <attribute name="accel">&lt;Primary&gt;q</attribute>
       </item>
     </section>
   </menu>
