@@ -44,7 +44,7 @@ from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
 from .plugin import load_plugins
-from .util import parse_proxy, open_browser, SecretService, popup_at_pointer
+from .util import parse_proxy, open_browser, SecretService, popup_at_pointer, is_flatpak
 from .migrate_settings import maybe_migrate_settings
 
 try:
@@ -366,11 +366,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.worker = GObjectWorker()
 
         try:
-            self.tempdir = tempfile.TemporaryDirectory(prefix='pithos-')
-            logging.info("Created temporary directory %s" %self.tempdir.name)
+            tempdir_base = '/var/tmp' # Prefered over /tmp as lots of icons can be large in size.
+            if is_flatpak():
+                # However in flatpak that path is not readable by the host.
+                tempdir_base = os.path.join(GLib.get_user_cache_dir(), 'tmp')
+            self.tempdir = tempfile.TemporaryDirectory(prefix='pithos-', dir=tempdir_base)
+            logging.info("Created temporary directory {}".format(self.tempdir.name))
         except IOError as e:
             self.tempdir = None
-            logging.warning('Failed to create a temporary directory')
+            logging.warning('Failed to create a temporary directory: {}'.format(e))
 
     @property
     def playing(self):
