@@ -11,11 +11,11 @@
       </item>
     </section>
     <section>
-        <item>
-            <attribute name="action">app.preferences</attribute>
-            <attribute name="label" translatable="yes">_Preferences</attribute>
-            <attribute name="accel">&lt;Primary&gt;p</attribute>
-          </item>
+      <item>
+        <attribute name="action">app.preferences</attribute>
+        <attribute name="label" translatable="yes">_Preferences</attribute>
+        <attribute name="accel">&lt;Primary&gt;p</attribute>
+      </item>
       <item>
         <attribute name="action">win.show-help-overlay</attribute>
         <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>
