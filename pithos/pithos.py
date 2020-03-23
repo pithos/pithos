@@ -876,7 +876,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             file_url = None
             if tmpdir:
                 try:
-                    with tempfile.NamedTemporaryFile(prefix='art-', dir=tmpdir.name, delete=False) as f:
+                    with tempfile.NamedTemporaryFile(prefix='art-', suffix='.jpeg', dir=tmpdir.name, delete=False) as f:
                         f.write(image)
                         file_url = urllib.parse.urljoin('file://', urllib.parse.quote(f.name))
                 except IOError:
