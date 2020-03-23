@@ -61,11 +61,11 @@ class SearchDialog(Gtk.Dialog):
                 return
 
             for i in results:
-                if i.resultType is 'song':
+                if i.resultType == 'song':
                     mk = '<b>{}</b> by {}'.format(html.escape(i.title), html.escape(i.artist))
-                elif i.resultType is 'artist':
+                elif i.resultType == 'artist':
                     mk = '<b>{}</b> (artist)'.format(html.escape(i.name))
-                elif i.resultType is 'genre':
+                elif i.resultType == 'genre':
                     mk = '<b>{}</b> (genre)'.format(html.escape(i.stationName))
                 self.model.append((i, mk))
             self.treeview.show()

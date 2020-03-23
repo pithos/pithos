@@ -201,9 +201,9 @@ class StationsDialog(Gtk.Dialog):
     def add_station_cb(self, dialog, response):
         result = dialog.result
         if result is not None:
-            if result.resultType is 'song':
+            if result.resultType == 'song':
                 description = '{} by {}'.format(html.escape(result.title), html.escape(result.artist))
-            elif result.resultType is 'artist':
+            elif result.resultType == 'artist':
                 description = html.escape(result.name)
             else:
                 description = html.escape(result.stationName)
