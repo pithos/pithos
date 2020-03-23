@@ -30,6 +30,13 @@
         <attribute name="label" translatable="yes">_About</attribute>
       </item>
     </section>
+    <section>
+      <item>
+        <attribute name="action">app.quit</attribute>
+        <attribute name="label" translatable="yes">_Quit</attribute>
+            <attribute name="accel">&lt;Primary&gt;q</attribute>
+      </item>
+    </section>
   </menu>
   <object class="GtkAdjustment" id="adjustment1">
     <property name="upper">100</property>
