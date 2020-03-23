@@ -83,7 +83,6 @@ class PithosApplication(Gtk.Application):
         action = Gio.SimpleAction.new("quit", None)
         action.connect("activate", self.quit_cb)
         self.add_action(action)
-        self.set_accels_for_action('app.quit', ['<Primary>q'])
 
         action = Gio.SimpleAction.new("next-song", None)
         action.connect("activate", lambda action, param: self.window.next_song())
