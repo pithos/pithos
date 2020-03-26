@@ -495,7 +495,7 @@ class PithosMprisService(DBusServiceObject):
         return 'io.github.Pithos'
 
     @dbus_property(MEDIA_PLAYER2_IFACE, signature='as')
-    def SupportedUriScheme(self):
+    def SupportedUriSchemes(self):
         '''as Read only Interface MediaPlayer2'''
         return []
 
