@@ -35,7 +35,7 @@
       </item>
     </section>
   </menu>
-  <object class="GtkAdjustment" id="adjustment1">
+  <object class="GtkAdjustment" id="adjustment">
     <property name="upper">100</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
@@ -49,16 +49,16 @@
     <signal name="configure-event" handler="on_configure_event" swapped="no"/>
     <signal name="destroy" handler="on_destroy" swapped="no"/>
     <child>
-      <object class="GtkBox" id="vbox1">
+      <object class="GtkBox">
         <property name="visible">1</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkToolbar" id="toolbar1">
+          <object class="GtkToolbar">
             <property name="visible">1</property>
             <property name="show_arrow">0</property>
             <property name="icon_size">2</property>
             <child>
-              <object class="GtkToolItem" id="toolitem1">
+              <object class="GtkToolItem">
                 <property name="visible">1</property>
                 <child>
                   <object class="GtkBox" id="playcontrol_box">
@@ -89,7 +89,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkButton" id="button7">
+                      <object class="GtkButton">
                         <property name="visible">1</property>
                         <property name="can_focus">1</property>
                         <property name="action_name">win.skip</property>
@@ -124,7 +124,7 @@
                           </object>
                         </child>
                         <child internal-child="plus_button">
-                          <object class="GtkButton" id="volumebutton-plus_button2">
+                          <object class="GtkButton">
                             <property name="can_focus">1</property>
                             <property name="receives_default">1</property>
                             <property name="halign">center</property>
@@ -133,7 +133,7 @@
                           </object>
                         </child>
                         <child internal-child="minus_button">
-                          <object class="GtkButton" id="volumebutton-minus_button2">
+                          <object class="GtkButton">
                             <property name="can_focus">1</property>
                             <property name="receives_default">1</property>
                             <property name="halign">center</property>
@@ -154,7 +154,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkSeparatorToolItem" id="toolbutton1">
+              <object class="GtkSeparatorToolItem">
                 <property name="visible">1</property>
                 <property name="draw">0</property>
               </object>
@@ -163,7 +163,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkToolItem" id="toolbutton2">
+              <object class="GtkToolItem">
                 <property name="visible">1</property>
                 <property name="width-request">300</property>
                 <child>
@@ -177,7 +177,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkBox" id="box2">
+                      <object class="GtkBox">
                         <property name="visible">1</property>
                         <property name="spacing">5</property>
                         <child>
@@ -188,7 +188,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkImage" id="image1">
+                          <object class="GtkImage">
                             <property name="visible">1</property>
                             <property name="halign">end</property>
                             <property name="valign">center</property>
@@ -234,21 +234,21 @@
           </object>
         </child>
         <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow1">
+          <object class="GtkScrolledWindow">
             <property name="visible">1</property>
-            <property name="vadjustment">adjustment1</property>
+            <property name="vadjustment">adjustment</property>
             <property name="hscrollbar_policy">never</property>
             <child>
               <object class="GtkTreeView" id="songs_treeview">
                 <property name="visible">1</property>
                 <property name="can_focus">1</property>
                 <property name="has_focus">1</property>
-                <property name="vadjustment">adjustment1</property>
+                <property name="vadjustment">adjustment</property>
                 <property name="headers_visible">0</property>
                 <property name="fixed_height_mode">1</property>
                 <property name="enable_search">0</property>
                 <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection1"/>
+                  <object class="GtkTreeSelection"/>
                 </child>
               </object>
             </child>
@@ -278,21 +278,21 @@
     <property name="secondary_text" translatable="yes">Pithos needs to be updated for compatibility with Pandora&apos;s latest changes.</property>
     <property name="secondary_use_markup">1</property>
     <child type="action">
-      <object class="GtkButton" id="button4">
+      <object class="GtkButton" id="button_help">
         <property name="label" translatable="yes">Get Help Online</property>
         <property name="visible">1</property>
       </object>
     </child>
     <child type="action">
-      <object class="GtkButton" id="button5">
+      <object class="GtkButton" id="button_quit">
         <property name="label" translatable="yes">Quit</property>
         <property name="visible">1</property>
         <property name="can_default">1</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="1">button4</action-widget>
-      <action-widget response="0" default="true">button5</action-widget>
+      <action-widget response="1">button_help</action-widget>
+      <action-widget response="0" default="true">button_quit</action-widget>
     </action-widgets>
   </object>
   <object class="GtkMessageDialog" id="error_dialog_real">
@@ -301,28 +301,28 @@
     <property name="message_type">error</property>
     <property name="text" translatable="yes">Error</property>
     <child type="action">
-      <object class="GtkButton" id="button1">
+      <object class="GtkButton" id="button_cancel">
         <property name="label" translatable="yes">Cancel</property>
         <property name="visible">1</property>
       </object>
     </child>
     <child type="action">
-      <object class="GtkButton" id="button2">
+      <object class="GtkButton" id="button_retry">
         <property name="label" translatable="yes">Retry</property>
         <property name="visible">1</property>
       </object>
     </child>
     <child type="action">
-      <object class="GtkButton" id="button3">
+      <object class="GtkButton" id="button_preferences">
         <property name="label" translatable="yes">Preferences</property>
         <property name="visible">1</property>
         <property name="can_default">1</property>
       </object>
     </child>
     <action-widgets>
-      <action-widget response="1">button1</action-widget>
-      <action-widget response="2">button2</action-widget>
-      <action-widget response="3" default="true">button3</action-widget>
+      <action-widget response="1">button_cancel</action-widget>
+      <action-widget response="2">button_retry</action-widget>
+      <action-widget response="3" default="true">button_preferences</action-widget>
     </action-widgets>
   </object>
   <object class="GtkMessageDialog" id="fatal_error_dialog_real">
@@ -419,21 +419,21 @@
       </object>
     </child>
     <child>
-      <object class="GtkMenuItem" id="menuitem4">
+      <object class="GtkMenuItem">
         <property name="visible">1</property>
         <property name="label" translatable="yes">Bookmark</property>
         <child type="submenu">
-          <object class="GtkMenu" id="menu1">
+          <object class="GtkMenu">
             <property name="visible">1</property>
             <child>
-              <object class="GtkMenuItem" id="menuitem2">
+              <object class="GtkMenuItem">
                 <property name="visible">1</property>
                 <property name="label" translatable="yes">Song</property>
                 <signal name="activate" handler="on_menuitem_bookmark_song" swapped="no"/>
               </object>
             </child>
             <child>
-              <object class="GtkMenuItem" id="menuitem3">
+              <object class="GtkMenuItem">
                 <property name="visible">1</property>
                 <property name="label" translatable="yes">Artist</property>
                 <signal name="activate" handler="on_menuitem_bookmark_artist" swapped="no"/>
