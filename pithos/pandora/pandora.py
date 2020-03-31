@@ -327,7 +327,10 @@ class Pandora:
         logging.info('Explicit Content Filter set to: %s' %(state))
 
     def get_stations(self, *ignore):
-        stations = self.json_call('user.getStationList')['stations']
+        stations = self.json_call(
+            'user.getStationList',
+            {'returnAllStations': True}
+        )['stations']
         self.quickMixStationIds = None
         self.stations = [Station(self, i) for i in stations]
 
