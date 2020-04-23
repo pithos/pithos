@@ -218,6 +218,7 @@ class PithosWindow(Gtk.ApplicationWindow):
     __gsignals__ = {
         "song-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "song-ended": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        "song-loved": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         "play-state-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "user-changed-play-state": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
         "metadata-changed": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
@@ -1286,6 +1287,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         def callback(l):
             self.update_song_row(song)
             self.emit('metadata-changed', song)
+            self.emit('song-loved', song)
         self.worker_run(song.rate, (RATE_LOVE,), callback, "Loving song...")
 
 

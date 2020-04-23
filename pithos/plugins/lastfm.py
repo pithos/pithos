@@ -151,6 +151,7 @@ class LastfmPlugin(PithosPlugin):
         self._handlers = [
             self.window.connect('song-ended', self._on_song_ended),
             self.window.connect('song-changed', self._on_song_changed),
+            self.window.connect('song-loved', self._on_song_loved),
         ]
         logging.debug('Last.fm plugin fully enabled')
 
@@ -183,6 +184,15 @@ class LastfmPlugin(PithosPlugin):
             logging.debug('Updated Last.fm now playing. {} by {}'.format(song.title, song.artist))
 
         self.worker.send(self.network.update_now_playing, (song.artist, song.title, song.album), success, err)
+
+    def _on_song_loved(self, window, song):
+        def err(e):
+            logging.error('Failed to update Last.fm song loved. Error: {}'.format(e))
+
+        def success(*ignore):
+            logging.debug('Updated Last.fm song loved. {} by {}'.format(song.title, song.artist))
+
+        self.worker.send(self.network.get_track(artist=song.artist, title=song.title, album=song.album).love(), success, err)
 
     def _on_song_ended(self, window, song):
         def err(e):
