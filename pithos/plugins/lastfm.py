@@ -192,7 +192,10 @@ class LastfmPlugin(PithosPlugin):
         def success(*ignore):
             logging.debug('Updated Last.fm song loved. {} by {}'.format(song.title, song.artist))
 
-        self.worker.send(self.network.get_track(artist=song.artist, title=song.title).love(), success, err)
+        def love(args):
+            self.network.get_track(args).love()
+
+        self.worker.send(love, (song.artist, song.title), success, err)
 
     def _on_song_ended(self, window, song):
         def err(e):
