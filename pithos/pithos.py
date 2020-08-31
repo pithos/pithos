@@ -416,6 +416,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.stations_popover.set_model(self.stations_model)
         self.stations_popover.listbox.connect('row-activated', self.active_station_changed)
         self.stations_button.set_popover(self.stations_popover)
+        self.stations_popover.search.connect('activate',self.search_activate_handler)
 
     def init_actions(self, app):
         action = Gio.SimpleAction.new('playpause', None)
@@ -1249,6 +1250,14 @@ class PithosWindow(Gtk.ApplicationWindow):
         if self.ui_loop_timer_id:
             GLib.source_remove(self.ui_loop_timer_id)
             self.ui_loop_timer_id = 0
+
+    def search_activate_handler(self,station):
+        row = self.stations_popover.listbox.get_row_at_y(0)
+        if not row:
+            return False
+        self.active_station_changed(self.stations_popover.listbox,row)
+        self.stations_popover.hide()
+        self.stations_popover.search.set_text('')
 
     def active_station_changed(self, listbox, row):
         self.station_changed(row.station)
