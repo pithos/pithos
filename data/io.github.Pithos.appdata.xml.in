@@ -24,6 +24,21 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release date="2020-10-26" version="1.5.1">
+      <description>
+        <p>This is yet another minor bug fix release.</p>
+        <ul>
+          <li>Add Quit to the app menu</li>
+          <li>Remove the limit of 95 stations</li>
+          <li>Handle Enter keypress in stations search</li>
+          <li>Fix app menu keybindings failing to work</li>
+          <li>Fix syntax error on Python 3.8</li>
+          <li>Fix an exception on newer versions of pygobject</li>
+          <li>Fix album art downloads in Flatpak</li>
+          <li>MPRIS: Fix media keys failing to bind on KDE</li>
+        </ul>
+      </description>
+    </release>
     <release date="2019-10-06" version="1.5.0">
       <description>
         <p>This is a relatively small release fixing appmenu integration on modern versions of GNOME as well as using more sandbox (Flatpak) friendly APIs. Note that this move may introduce behavior changes on some platforms.</p>
