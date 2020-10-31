@@ -1,0 +1,19 @@
+{
+    "name": "python3-pylast",
+    "buildsystem": "simple",
+    "build-commands": [
+        "pip3 install --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} pylast"
+    ],
+    "sources": [
+        {
+            "type": "file",
+            "url": "https://files.pythonhosted.org/packages/16/d8/bc6316cf98419719bd59c91742194c111b6f2e85abac88e496adefaf7afe/six-1.11.0.tar.gz",
+            "sha256": "70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9"
+        },
+        {
+            "type": "file",
+            "url": "https://files.pythonhosted.org/packages/8a/1a/ece4ef4ebf51236ac25e9708fb3e1e70b6447e01262f8b156ccbda894fa9/pylast-2.2.0.tar.gz",
+            "sha256": "a21a10e559cbb80db5eb72e20a22740496a292977ed3568c937560b8d6885ab4"
+        }
+    ]
+}
