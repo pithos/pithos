@@ -53,180 +53,160 @@
         <property name="visible">1</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkToolbar">
+          <object class="GtkBox">
             <property name="visible">1</property>
-            <property name="show_arrow">0</property>
-            <property name="icon_size">2</property>
+            <property name="can_focus">False</property>
+            <property name="spacing">6</property>
+            <property name="margin_start">6</property>
+            <property name="margin_end">6</property>
+            <property name="margin_top">6</property>
+            <property name="margin_bottom">6</property>
             <child>
-              <object class="GtkToolItem">
+              <object class="GtkBox" id="playcontrol_box">
                 <property name="visible">1</property>
+                <property name="homogeneous">1</property>
+                <child internal-child="accessible">
+                  <object class="AtkObject" id="playcontrol_box-atkobject">
+                    <property name="AtkObject::accessible-description" translatable="yes">playback controls</property>
+                  </object>
+                </child>
                 <child>
-                  <object class="GtkBox" id="playcontrol_box">
+                  <object class="GtkButton" id="playpause_button">
                     <property name="visible">1</property>
-                    <property name="homogeneous">1</property>
+                    <property name="can_focus">1</property>
+                    <property name="action_name">win.playpause</property>
                     <child internal-child="accessible">
-                      <object class="AtkObject" id="playcontrol_box-atkobject">
-                        <property name="AtkObject::accessible-description" translatable="yes">playback controls</property>
+                      <object class="AtkObject" id="playpause_button-atkobject">
+                        <property name="AtkObject::accessible-description" translatable="yes">play/pause</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkButton" id="playpause_button">
+                      <object class="GtkImage" id="playpause_image">
                         <property name="visible">1</property>
-                        <property name="can_focus">1</property>
-                        <property name="action_name">win.playpause</property>
-                        <child internal-child="accessible">
-                          <object class="AtkObject" id="playpause_button-atkobject">
-                            <property name="AtkObject::accessible-description" translatable="yes">play/pause</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkImage" id="playpause_image">
-                            <property name="visible">1</property>
-                            <property name="icon_name">media-playback-start-symbolic</property>
-                            <property name="icon_size">2</property>
-                          </object>
-                        </child>
+                        <property name="icon_name">media-playback-start-symbolic</property>
+                        <property name="icon_size">2</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="visible">1</property>
+                    <property name="can_focus">1</property>
+                    <property name="action_name">win.skip</property>
+                    <child internal-child="accessible">
+                      <object class="AtkObject" id="skip_button-atkobject">
+                        <property name="AtkObject::accessible-description" translatable="yes">skip</property>
                       </object>
                     </child>
                     <child>
+                      <object class="GtkImage" id="skip_image">
+                        <property name="visible">1</property>
+                        <property name="icon_name">media-skip-forward-symbolic</property>
+                        <property name="icon_size">2</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkVolumeButton" id="volume">
+                    <property name="visible">1</property>
+                    <property name="can_focus">1</property>
+                    <property name="relief">none</property>
+                    <property name="focus_on_click">0</property>
+                    <property name="orientation">vertical</property>
+                    <signal name="value-changed" handler="on_volume_change_event" swapped="no"/>
+                    <child internal-child="accessible">
+                      <object class="AtkObject" id="volume-atkobject">
+                        <property name="AtkObject::accessible-description" translatable="yes">volume</property>
+                      </object>
+                    </child>
+                    <child internal-child="plus_button">
                       <object class="GtkButton">
-                        <property name="visible">1</property>
                         <property name="can_focus">1</property>
-                        <property name="action_name">win.skip</property>
-                        <child internal-child="accessible">
-                          <object class="AtkObject" id="skip_button-atkobject">
-                            <property name="AtkObject::accessible-description" translatable="yes">skip</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkImage" id="skip_image">
-                            <property name="visible">1</property>
-                            <property name="icon_name">media-skip-forward-symbolic</property>
-                            <property name="icon_size">2</property>
-                          </object>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkVolumeButton" id="volume">
-                        <property name="visible">1</property>
-                        <property name="can_focus">1</property>
+                        <property name="receives_default">1</property>
+                        <property name="halign">center</property>
+                        <property name="valign">center</property>
                         <property name="relief">none</property>
-                        <property name="focus_on_click">0</property>
-                        <property name="orientation">vertical</property>
-                        <signal name="value-changed" handler="on_volume_change_event" swapped="no"/>
-                        <child internal-child="accessible">
-                          <object class="AtkObject" id="volume-atkobject">
-                            <property name="AtkObject::accessible-description" translatable="yes">volume</property>
-                          </object>
-                        </child>
-                        <child internal-child="plus_button">
-                          <object class="GtkButton">
-                            <property name="can_focus">1</property>
-                            <property name="receives_default">1</property>
-                            <property name="halign">center</property>
-                            <property name="valign">center</property>
-                            <property name="relief">none</property>
-                          </object>
-                        </child>
-                        <child internal-child="minus_button">
-                          <object class="GtkButton">
-                            <property name="can_focus">1</property>
-                            <property name="receives_default">1</property>
-                            <property name="halign">center</property>
-                            <property name="valign">center</property>
-                            <property name="relief">none</property>
-                          </object>
-                        </child>
                       </object>
-                      <packing>
-                        <property name="position">2</property>
-                      </packing>
                     </child>
-                    <style>
-                      <class name="linked"/>
-                    </style>
+                    <child internal-child="minus_button">
+                      <object class="GtkButton">
+                        <property name="can_focus">1</property>
+                        <property name="receives_default">1</property>
+                        <property name="halign">center</property>
+                        <property name="valign">center</property>
+                        <property name="relief">none</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+                <style>
+                  <class name="linked"/>
+                </style>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuButton" id="stations_button">
+                <property name="visible">1</property>
+                <property name="can_focus">1</property>
+                <property name="halign">end</property>
+                <property name="hexpand">True</property>
+                <child internal-child="accessible">
+                  <object class="AtkObject" id="stations_button-atkobject">
+                    <property name="AtkObject::accessible-description" translatable="yes">stations</property>
                   </object>
                 </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkSeparatorToolItem">
-                <property name="visible">1</property>
-                <property name="draw">0</property>
-              </object>
-              <packing>
-                <property name="expand">1</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolItem">
-                <property name="visible">1</property>
-                <property name="width-request">300</property>
                 <child>
-                  <object class="GtkMenuButton" id="stations_button">
+                  <object class="GtkBox">
                     <property name="visible">1</property>
-                    <property name="can_focus">1</property>
-                    <property name="halign">end</property>
-                    <child internal-child="accessible">
-                      <object class="AtkObject" id="stations_button-atkobject">
-                        <property name="AtkObject::accessible-description" translatable="yes">stations</property>
-                      </object>
-                    </child>
+                    <property name="spacing">5</property>
                     <child>
-                      <object class="GtkBox">
+                      <object class="GtkLabel" id="stations_label">
                         <property name="visible">1</property>
-                        <property name="spacing">5</property>
-                        <child>
-                          <object class="GtkLabel" id="stations_label">
-                            <property name="visible">1</property>
-                            <property name="single_line_mode">1</property>
-                            <property name="ellipsize">end</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkImage">
-                            <property name="visible">1</property>
-                            <property name="halign">end</property>
-                            <property name="valign">center</property>
-                            <property name="icon_name">pan-down-symbolic</property>
-                            <property name="icon_size">1</property>
-                          </object>
-                          <packing>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkToolItem">
-                <property name="visible">1</property>
-                <child>
-                  <object class="GtkMenuButton">
-                    <property name="visible">1</property>
-                    <property name="can_focus">1</property>
-                    <property name="use-popover">TRUE</property>
-                    <property name="menu-model">app-menu</property>
-                    <property name="halign">end</property>
-                    <child internal-child="accessible">
-                      <object class="AtkObject">
-                        <property name="AtkObject::accessible-description" translatable="yes">menu</property>
+                        <property name="single_line_mode">1</property>
+                        <property name="ellipsize">end</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImage">
                         <property name="visible">1</property>
-                        <property name="icon_name">open-menu-symbolic</property>
+                        <property name="halign">end</property>
+                        <property name="valign">center</property>
+                        <property name="icon_name">pan-down-symbolic</property>
                         <property name="icon_size">1</property>
                       </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
                     </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkMenuButton">
+                <property name="visible">1</property>
+                <property name="can_focus">1</property>
+                <property name="use-popover">TRUE</property>
+                <property name="menu-model">app-menu</property>
+                <property name="halign">end</property>
+                <child internal-child="accessible">
+                  <object class="AtkObject">
+                    <property name="AtkObject::accessible-description" translatable="yes">menu</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkImage">
+                    <property name="visible">1</property>
+                    <property name="icon_name">open-menu-symbolic</property>
+                    <property name="icon_size">1</property>
                   </object>
                 </child>
               </object>
