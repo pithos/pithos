@@ -1,7 +1,7 @@
 {
   "app-id": "io.github.Pithos",
   "runtime": "org.gnome.Platform",
-  "runtime-version": "master",
+  "runtime-version": "3.38",
   "sdk": "org.gnome.Sdk",
   "command": "pithos",
   "finish-args": [
