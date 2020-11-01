@@ -37,8 +37,8 @@
       "cleanup": ["/share/man"],
       "sources": [
         {
-          "type": "git",
-          "url": "https://github.com/pithos/pithos.git"
+          "type": "dir",
+          "path": "../"
         }
       ]
     }
