@@ -140,6 +140,11 @@ class StationsPopover(Gtk.Popover):
         for row in self.listbox.get_children():
             row.destroy()
 
+    def make_visible(self,*ignore):
+        if self.props.visible:
+            self.hide()
+        else:
+            self.show_all()
     def set_model(self, model):
         model.connect('row-inserted', self.insert_row)
         model.connect('row-changed', self.change_row)

@@ -474,6 +474,10 @@ class PithosWindow(Gtk.ApplicationWindow):
         app.add_accelerator('<Primary>d', 'win.bookmark', None)
         action.connect('activate', self.bookmark_song)
 
+        action = Gio.SimpleAction.new('station-popover', None)
+        self.add_action(action)
+        app.add_accelerator('<Primary>r', 'win.station-popover', None)
+        action.connect('activate', self.stations_popover.make_visible)
     def worker_run(self, fn, args=(), callback=None, message=None, context='net', errorback=None, user_data=None):
         if context and message:
             self.statusbar.push(self.statusbar.get_context_id(context), message)
