@@ -248,6 +248,7 @@ class PithosWindow(Gtk.ApplicationWindow):
     api_update_dialog_real = GtkTemplate.Child()
     error_dialog_real = GtkTemplate.Child()
     fatal_error_dialog_real = GtkTemplate.Child()
+    error_infobar = GtkTemplate.Child()
 
     def __init__(self, app, test_mode):
         super().__init__(application=app)
@@ -510,7 +511,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             elif isinstance(e, PandoraAPIVersionError):
                 self.api_update_dialog()
             elif isinstance(e, PandoraError):
-                self.error_dialog(e.message, retry_cb, submsg=e.submsg)
+                self.info_bar(e.message, retry_cb, submsg=e.submsg)
             else:
                 logging.warning(e.traceback)
 
@@ -945,6 +946,26 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.waiting_for_playlist = True
         self.worker_run(self.current_station.get_playlist, (), callback, "Getting songs...")
+
+    def info_bar(self, message, retry_cb, submsg=None):
+        content = self.error_infobar.get_content_area()
+        label = content.get_children()[0]
+        markup = '<b>{}</b>'.format(html.escape(message))
+        if submsg:
+            markup += ': {}'.format(html.escape(submsg))
+        label.set_markup(markup)
+
+        response_handler = 0
+
+        def on_response(infobar, response, *ignore):
+            infobar.props.revealed = False
+            infobar.disconnect(response_handler)
+            if response == 0:
+                retry_cb()
+
+        response_handler = self.error_infobar.connect('response', on_response)
+        self.error_infobar.props.revealed = True
+
 
     def error_dialog(self, message, retry_cb, submsg=None):
         dialog = self.error_dialog_real

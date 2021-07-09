@@ -222,6 +222,39 @@
         <property name="visible">1</property>
         <property name="orientation">vertical</property>
         <child>
+          <object class="GtkInfoBar" id="error_infobar">
+            <property name="visible">1</property>
+            <property name="message-type">warning</property>
+            <property name="revealed">0</property>
+            <child internal-child="content_area">
+              <object class="GtkBox">
+                <property name="visible">1</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="visible">1</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child internal-child="action_area">
+              <object class="GtkBox">
+                <property name="visible">1</property>
+                <child>
+                  <object class="GtkButton" id="info_button_retry">
+                    <property name="label" translatable="yes">Retry</property>
+                    <property name="visible">1</property>
+                    <property name="can_default">1</property>
+                    <property name="receives_default">1</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <action-widgets>
+              <action-widget response="0">info_button_retry</action-widget>
+            </action-widgets>
+          </object>
+        </child>
+        <child>
           <object class="GtkScrolledWindow">
             <property name="visible">1</property>
             <property name="vadjustment">adjustment</property>
@@ -243,7 +276,6 @@
           </object>
           <packing>
             <property name="expand">1</property>
-            <property name="position">1</property>
           </packing>
         </child>
         <child>
@@ -251,9 +283,6 @@
             <property name="visible">1</property>
             <property name="spacing">2</property>
           </object>
-          <packing>
-            <property name="position">2</property>
-          </packing>
         </child>
       </object>
     </child>
