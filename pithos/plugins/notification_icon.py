@@ -12,241 +12,164 @@
 # You should have received a copy of the GNU General Public License along
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
-import ctypes
 import logging
-import gi
 from gi.repository import (
     GLib,
-    GObject,
     Gio,
-    Gdk,
     Gtk
+)
+from .dbus_util.DBusServiceObject import (
+    DBusServiceObject,
+    dbus_method,
+    dbus_property
 )
 
 from pithos.plugin import PithosPlugin
 
-# Use appindicator if installed
-try:
-    gi.require_version('AppIndicator3', '0.1')
-    from gi.repository import AppIndicator3 as AppIndicator
-    indicator_capable = True
-except (ImportError, ValueError):
-    indicator_capable = False
 
+class PithosStatusNotifierItem(DBusServiceObject):
+    STATUS_NOTIFIER_ITEM_IFACE = 'org.kde.StatusNotifierItem'
+    STATUS_NOTIFIER_ITEM_PATH = '/StatusNotifierItem'
 
-def get_local_icon_path():
-    # This basically duplicates what is in bin/pithos.in
-    srcdir = os.environ.get('MESON_SOURCE_ROOT')
-    if srcdir:
-        return os.path.join(srcdir, 'data', 'icons')
+    def __init__(self, window, **kwargs):
+        self.conn = kwargs.get('connection')
+        super().__init__(object_path=self.STATUS_NOTIFIER_ITEM_PATH, **kwargs)
+        self.window = window
+        self.status = 'Passive'
+        self.icon = 'io.github.Pithos-tray-symbolic'
+        logging.info('PithosStatusNotifierItem created')
 
+    def notify_property_change(self, prop):
+        self.conn.emit_signal(
+            'org.kde.StatusNotifierWatcher',
+            self.STATUS_NOTIFIER_ITEM_PATH,
+            self.STATUS_NOTIFIER_ITEM_IFACE,
+            'New' + prop,
+            GLib.Variant('(s)', (self.status, )) if prop == 'Status' else None
+        )
 
-def get_system_tray_supported(screen):
-    from gi.repository import GdkX11
+    def set_active(self, active):
+        self.status = 'Active' if active else 'Passive'
+        self.notify_property_change('Status')
 
-    try:
-        xlib = ctypes.CDLL('libX11.so.6')
-    except OSError as e:
-        logging.warning('Failed to load libX11: {}'.format(e))
-        return False
+    def set_icon(self, icon):
+        self.icon = icon
+        self.notify_property_change('Icon')
 
-    screen_num = screen.get_number()
-    display = screen.get_display()
-    xdisplay = ctypes.c_void_p(hash(display.get_xdisplay()))
-    xatom = ctypes.c_int(GdkX11.x11_get_xatom_by_name_for_display(display,
-                         '_NET_SYSTEM_TRAY_S{}'.format(screen_num)))
+    @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 's')
+    def Id(self):
+        return 'pithos'
 
-    display.grab()
-    ret = bool(xlib.XGetSelectionOwner(xdisplay, xatom))
-    display.ungrab()
-    xlib.XFlush(xdisplay)
+    @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 's')
+    def Title(self):
+        return 'Pithos'
 
-    return ret
+    @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 's')
+    def Category(self):
+        return 'ApplicationStatus'
 
+    @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 's')
+    def Status(self):
+        return self.status
 
-class PithosNotificationIcon(PithosPlugin):
-    preference = 'show_icon'
-    description = 'Adds pithos icon to system tray'
+    @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 'u')
+    def Window(self):
+        return 0  # Not available on Wayland?
 
-    def on_prepare(self):
-        if not self.settings['data']:
-            self.settings['data'] = 'io.github.Pithos-tray'
-        self.preferences_dialog = NotificationIconPluginPrefsDialog(self.window, self.settings)
+    @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 's')
+    def IconName(self):
+        return self.icon
 
-        def prepare_legacy_tray():
-            if sys.platform in ('win32', 'darwin'):
-                # These platforms always support a tray
-                self.prepare_complete()
-                return
+    @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 's')
+    def OverlayIconName(self):
+        return ''
 
-            display = self.window.props.screen.get_display()
-            if not type(display).__name__.endswith('X11Display'):
-                error_message = 'AppIndicator tray not found' if indicator_capable \
-                                else 'AppIndicator is required for this platform'
-                self.prepare_complete(error=error_message)
-                return
+    @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 's')
+    def AttentionIconName(self):
+        return ''
 
-            legacy_tray_supported = get_system_tray_supported(self.window.props.screen)
-            if not legacy_tray_supported:
-                self.prepare_complete(error='Your platform does not have a system tray')
-                return
+    @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 'b')
+    def ItemIsMenu(self):
+        return False  # DBusMenu is an insane spec...
 
-            if indicator_capable:
-                # appindicator is capable of auto-upgrading if service appears
-                self._create_appindicator()
-                self.prepare_complete()
-            else:
-                self.prepare_complete()
-
-        if self.bus is None:
-            prepare_legacy_tray()
-            return
-
-        def on_has_name_owner(bus, result):
-            try:
-                is_owned = bus.call_finish(result)[0]
-                logging.info('org.kde.StatusNotifierWatcher is owned: {}'.format(is_owned))
-            except GLib.Error as e:
-                logging.exception(e)
-                prepare_legacy_tray()
-                return
-
-            if is_owned:
-                if indicator_capable:
-                    # Simple case, Use AppIndicator
-                    self._create_appindicator()
-                    self.prepare_complete()
-                else:
-                    # If you have the service, we assume you want to use it
-                    self.prepare_complete(error='AppIndicator tray found but '
-                                                'AppIndicator library not installed')
-            else:
-                prepare_legacy_tray()
-
-        logging.info('Checking if org.kde.StatusNotifierWatcher is owned')
-        self.bus.call('org.freedesktop.DBus', '/', 'org.freedesktop.DBus',
-                      'NameHasOwner', GLib.Variant('(s)', ('org.kde.StatusNotifierWatcher',)),
-                      GLib.VariantType('(b)'), Gio.DBusCallFlags.NONE, -1, None, on_has_name_owner)
-
-    def on_enable(self):
-        self.delete_callback_handle = self.window.connect("delete-event", self._toggle_visible)
-        self.state_callback_handle = self.window.connect("play-state-changed", self.play_state_changed)
-        self.song_callback_handle = self.window.connect("song-changed", self.song_changed)
-
-        if indicator_capable:
-            self.ind.set_status(AppIndicator.IndicatorStatus.ACTIVE)
-        else:
-            self.statusicon = Gtk.StatusIcon.new_from_icon_name(self.settings['data'])
-            self.settings.bind('data', self.statusicon, 'icon-name', Gio.SettingsBindFlags.GET)
-            self.statusicon.connect('activate', self._toggle_visible)
-
-        self.build_context_menu()
-
-    def scroll(self, direction):
-        if direction == Gdk.ScrollDirection.DOWN:
-            self.window.adjust_volume(-1)
-        elif direction == Gdk.ScrollDirection.UP:
-            self.window.adjust_volume(+1)
-
-    def _create_appindicator(self):
-        self.ind = AppIndicator.Indicator.new("io.github.Pithos-tray",
-                                              self.settings['data'],
-                                              AppIndicator.IndicatorCategory.APPLICATION_STATUS)
-        self.settings.bind('data', self.ind, 'icon-name', Gio.SettingsBindFlags.GET)
-        local_icon_path = get_local_icon_path()
-        if local_icon_path:
-            self.ind.set_icon_theme_path(local_icon_path)
-
-    def build_context_menu(self):
-        menu = Gtk.Menu()
-
-        def button(text, action, checked=False):
-            if checked:
-                item = Gtk.CheckMenuItem.new_with_label(text)
-                item.set_active(True)
-            else:
-                item = Gtk.MenuItem.new_with_label(text)
-            handler = item.connect('activate', action)
-            item.show()
-            menu.append(item)
-            return item, handler
-
-        if indicator_capable:
-            # We have to add another entry for show / hide Pithos window
-            self.visible_check, handler = button("Show Pithos", self._toggle_visible, True)
-
-            def set_active(active):
-                GObject.signal_handler_block(self.visible_check, handler)
-                self.visible_check.set_active(active)
-                GObject.signal_handler_unblock(self.visible_check, handler)
-
-            # Ensure it is kept in sync
-            self.window.connect("hide", lambda w: set_active(False))
-            self.window.connect("show", lambda w: set_active(True))
-
-            # On middle-click
-            self.ind.set_secondary_activate_target(self.visible_check)
-
-        self.playpausebtn = button("Pause", self.window.playpause)[0]
-        button("Skip", self.window.next_song)
-        button("Love", (lambda *i: self.window.love_song()))
-        button("Ban", (lambda *i: self.window.ban_song()))
-        button("Tired", (lambda *i: self.window.tired_song()))
-        button("Quit", self.window.quit)
-
-        # connect our new menu to the statusicon or the appindicator
-        if indicator_capable:
-            self.ind.set_menu(menu)
-            self.ind.connect('scroll-event', lambda wid, steps, direction: self.scroll(direction))
-        else:
-            self.statusicon.connect('popup-menu', self.context_menu, menu)
-            self.statusicon.connect('scroll-event', lambda wid, event: self.scroll(event.direction))
-
-        self.menu = menu
-
-    def play_state_changed(self, window, playing):
-        """ play or pause and rotate the text """
-
-        button = self.playpausebtn
-        if not playing:
-            button.set_label("Play")
-        else:
-            button.set_label("Pause")
-
-        if indicator_capable: # menu needs to be reset to get updated icon
-            self.ind.set_menu(self.menu)
-
-    def song_changed(self, window, song):
-        if not indicator_capable:
-            self.statusicon.set_tooltip_text("{} by {}".format(song.title, song.artist))
-
-    def _toggle_visible(self, *args):
+    @dbus_method(STATUS_NOTIFIER_ITEM_IFACE, 'ii')
+    def Activate(self, x, y):
         if self.window.get_visible():
             self.window.hide()
         else:
             self.window.bring_to_top()
-        return True
 
-    def context_menu(self, widget, button, time, data=None):
-        if button == 3:
-            if data:
-                data.show_all()
-                data.popup(None, None, None, None, 3, time)
+    @dbus_method(STATUS_NOTIFIER_ITEM_IFACE, 'ii')
+    def SecondaryActivate(self, x, y):
+        self.Activate(x, y)
+
+    @dbus_method(STATUS_NOTIFIER_ITEM_IFACE, 'is')
+    def Scroll(self, delta, orientation):
+        if orientation == 'vertical':
+            self.window.adjust_volume(-delta)
+
+
+class PithosNotificationIcon(PithosPlugin):
+    preference = 'show_icon'
+    description = 'Adds Pithos StatusNotifier to tray'
+
+    def on_prepare(self):
+        # Preferences for icon type
+        if not self.settings['data']:
+            self.settings['data'] = 'io.github.Pithos-tray-symbolic'
+        self.preferences_dialog = NotificationIconPluginPrefsDialog(self.window, self.settings)
+
+        def on_settings_changed(settings, key):
+            if key == 'data' and self.statusnotifieritem:
+                self.statusnotifieritem.set_icon_name(settings[key])
+
+        self.settings.connect('changed', on_settings_changed)
+
+        # Connect to watcher
+        def on_proxy_ready(obj, result, user_data=None):
+            try:
+                self.proxy = obj.new_finish(result)
+            except GLib.Error as e:
+                self.prepare_complete(error='Failed to connect to StatusNotifierWatcher {}'.format(e))
+            else:
+                logging.info('Connected to StatusNotifierWatcher')
+                self.statusnotifieritem = PithosStatusNotifierItem(self.window, connection=self.proxy.get_connection())
+                self.prepare_complete()
+
+        # FIXME: We need to watch for this bus name coming and going
+        Gio.DBusProxy.new(
+            self.bus,
+            Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES | Gio.DBusProxyFlags.DO_NOT_CONNECT_SIGNALS,
+            None,
+            'org.kde.StatusNotifierWatcher',
+            '/StatusNotifierWatcher',
+            'org.kde.StatusNotifierWatcher',
+            None,
+            on_proxy_ready,
+            None
+        )
+
+    def on_enable(self):
+        def on_register_failure(proxy, exception, user_data):
+            logging.warning('Failed to call RegisterStatusNotifierItem: {}'.format(exception))
+
+        def after_register(proxy, result, user_data):
+            logging.info('Called RegisterStatusNotifierItem successfully')
+            self.statusnotifieritem.set_icon(self.settings['data'])
+            self.statusnotifieritem.set_active(True)
+
+        bus_id = self.proxy.get_connection().get_unique_name()
+        assert bus_id
+        logging.info('Registering StatusNotifierItem on connection {}'.format(bus_id))
+        # NOTE: We don't actually track registration but in testing it seems harmless
+        #       to repeatedly call this. We could print nicer logs though.
+        self.proxy.RegisterStatusNotifierItem('(s)', bus_id,
+                                              result_handler=after_register,
+                                              error_handler=on_register_failure)
 
     def on_disable(self):
-        if indicator_capable:
-            self.ind.set_status(AppIndicator.IndicatorStatus.PASSIVE)
-        else:
-            self.statusicon.set_visible(False)
-
-        self.window.disconnect(self.delete_callback_handle)
-        self.window.disconnect(self.state_callback_handle)
-        self.window.disconnect(self.song_callback_handle)
-
-        # Pithos window needs to be reconnected to on_destro()
-        self.window.connect('delete-event', self.window.on_destroy)
+        if self.statusnotifieritem:
+            self.statusnotifieritem.set_active(False)
 
 
 class NotificationIconPluginPrefsDialog(Gtk.Dialog):
