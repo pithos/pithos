@@ -1,7 +1,7 @@
 {
   "app-id": "io.github.Pithos",
   "runtime": "org.gnome.Platform",
-  "runtime-version": "3.38",
+  "runtime-version": "41",
   "sdk": "org.gnome.Sdk",
   "command": "pithos",
   "finish-args": [
@@ -18,8 +18,6 @@
     "--talk-name=org.kde.StatusNotifierWatcher"
   ],
   "modules": [
-    "shared-modules/dbus-glib/dbus-glib-0.110.json",
-    "shared-modules/libappindicator/libappindicator-gtk3-introspection-12.10.json",
     "python3-pylast.json",
     {
       "name": "keybinder",
