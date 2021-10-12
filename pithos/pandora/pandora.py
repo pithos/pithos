@@ -312,8 +312,8 @@ class Pandora:
            returns the state of Explicit Content Filter and if the Explicit Content Filter is PIN protected
         """
         get_filter_state = self.json_call('user.getSettings', https=True)
-        filter_state = get_filter_state['isExplicitContentFilterEnabled']
-        pin_protected = get_filter_state['isExplicitContentFilterPINProtected']
+        filter_state = get_filter_state.get('isExplicitContentFilterEnabled', False)
+        pin_protected = get_filter_state.get('isExplicitContentFilterPINProtected', False)
         logging.info('Explicit Content Filter state: %s' %filter_state)
         logging.info('PIN protected: %s' %pin_protected)
         return filter_state, pin_protected
