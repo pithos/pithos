@@ -4,6 +4,8 @@
   <requires lib="gtk+" version="3.14"/>
   <template class="StationsDialog" parent="GtkDialog">
     <property name="modal">1</property>
+    <property name="default-width">360</property>
+    <property name="default-height">300</property>
     <signal name="delete-event" handler="on_close" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox" id="dialog-vbox1">
@@ -31,7 +33,6 @@
         <property name="visible">1</property>
         <property name="title" translatable="yes">Manage Stations</property>
         <property name="show_close_button">1</property>
-        <property name="width_request">360</property>
         <child>
           <object class="GtkButton" id="button1">
             <property name="visible">1</property>

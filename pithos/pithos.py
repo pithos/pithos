@@ -33,7 +33,6 @@ gi.require_version('Gst', '1.0')
 gi.require_version('GstAudio', '1.0')
 gi.require_version('GstPbutils', '1.0')
 from gi.repository import Gst, GstAudio, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
-from .gi_composites import GtkTemplate
 
 if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 14:
     sys.exit('Gtk 3.14 is required')
@@ -212,7 +211,7 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
         icon, was_symbolic = info.load_symbolic(fg_color, fg_color, fg_color, fg_color)
         self.tired_icon = icon.scale_simple(12, 12, GdkPixbuf.InterpType.BILINEAR)
 
-@GtkTemplate(ui='/io/github/Pithos/ui/PithosWindow.ui')
+@Gtk.Template(resource_path='/io/github/Pithos/ui/PithosWindow.ui')
 class PithosWindow(Gtk.ApplicationWindow):
     __gtype_name__ = "PithosWindow"
     __gsignals__ = {
@@ -230,24 +229,24 @@ class PithosWindow(Gtk.ApplicationWindow):
         "player-ready": (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_BOOLEAN,)),
     }
 
-    volume = GtkTemplate.Child()
-    playpause_image = GtkTemplate.Child()
-    statusbar = GtkTemplate.Child()
-    song_menu = GtkTemplate.Child()
-    song_menu_love = GtkTemplate.Child()
-    song_menu_unlove = GtkTemplate.Child()
-    song_menu_ban = GtkTemplate.Child()
-    song_menu_unban = GtkTemplate.Child()
-    song_menu_create_station = GtkTemplate.Child()
-    song_menu_create_song_station = GtkTemplate.Child()
-    song_menu_create_artist_station = GtkTemplate.Child()
-    songs_treeview = GtkTemplate.Child()
-    stations_button = GtkTemplate.Child()
-    stations_label = GtkTemplate.Child()
+    volume = Gtk.Template.Child()
+    playpause_image = Gtk.Template.Child()
+    statusbar = Gtk.Template.Child()
+    song_menu = Gtk.Template.Child()
+    song_menu_love = Gtk.Template.Child()
+    song_menu_unlove = Gtk.Template.Child()
+    song_menu_ban = Gtk.Template.Child()
+    song_menu_unban = Gtk.Template.Child()
+    song_menu_create_station = Gtk.Template.Child()
+    song_menu_create_song_station = Gtk.Template.Child()
+    song_menu_create_artist_station = Gtk.Template.Child()
+    songs_treeview = Gtk.Template.Child()
+    stations_button = Gtk.Template.Child()
+    stations_label = Gtk.Template.Child()
 
-    api_update_dialog_real = GtkTemplate.Child()
-    error_dialog_real = GtkTemplate.Child()
-    fatal_error_dialog_real = GtkTemplate.Child()
+    api_update_dialog_real = Gtk.Template.Child()
+    error_dialog_real = Gtk.Template.Child()
+    fatal_error_dialog_real = Gtk.Template.Child()
 
     def __init__(self, app, test_mode):
         super().__init__(application=app)
@@ -769,7 +768,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.emit('song-changed', song)
         self.emit('metadata-changed', song)
 
-    @GtkTemplate.Callback
     def next_song(self, *ignore):
         if self.current_song_index is not None:
             self.start_song(self.current_song_index + 1)
@@ -834,7 +832,6 @@ class PithosWindow(Gtk.ApplicationWindow):
             # desired state is playing when going to a new song.
             self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
 
-    @GtkTemplate.Callback
     def user_playpause(self, *ignore):
         self.playpause_notify()
 
@@ -1339,35 +1336,35 @@ class PithosWindow(Gtk.ApplicationWindow):
         song = song or self.current_song
         open_browser(song.songDetailURL)
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_menuitem_love(self, widget):
         self.love_song(song=self.selected_song())
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_menuitem_ban(self, widget):
         self.ban_song(song=self.selected_song())
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_menuitem_unrate(self, widget):
         self.unrate_song(song=self.selected_song())
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_menuitem_tired(self, widget):
         self.tired_song(song=self.selected_song())
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_menuitem_info(self, widget):
         self.info_song(song=self.selected_song())
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_menuitem_bookmark_song(self, widget):
         self.bookmark_song(song=self.selected_song())
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_menuitem_bookmark_artist(self, widget):
         self.bookmark_song_artist(self.selected_song())
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_menuitem_create_artist_station(self, widget):
         user_date = 'artist', html.escape(self.selected_song().artist)
         self.worker_run(
@@ -1377,7 +1374,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             user_data=user_date,
         )
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_menuitem_create_song_station(self, widget):
         title = html.escape(self.selected_song().title)
         artist = html.escape(self.selected_song().artist)
@@ -1430,7 +1427,7 @@ class PithosWindow(Gtk.ApplicationWindow):
     def volume_down(self, *ignore):
         self.adjust_volume(-2)
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_volume_change_event(self, volumebutton, value):
         self.set_player_volume(value)
 
@@ -1494,7 +1491,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.restore_position()
         Gtk.Window.present(self)
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_configure_event(self, *ignore):
         # Getting and setting window position does not work in Wayland.
         if self.not_in_x:
@@ -1506,7 +1503,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         """quit - signal handler for closing the PithosWindow"""
         Gio.Application.get_default().quit()
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_destroy(self, widget, data=None):
         """on_destroy - called when the PithosWindow is close. """
         self.stop()

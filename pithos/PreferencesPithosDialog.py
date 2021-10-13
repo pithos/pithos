@@ -17,7 +17,6 @@ import logging
 
 from gi.repository import Gio, Gtk, GObject, Pango
 
-from .gi_composites import GtkTemplate
 from .util import SecretService
 
 try:
@@ -93,7 +92,7 @@ class PithosPluginRow(Gtk.ListBoxRow):
             self.set_prefs_btn()
 
 
-@GtkTemplate(ui='/io/github/Pithos/ui/PreferencesPithosDialog.ui')
+@Gtk.Template(resource_path='/io/github/Pithos/ui/PreferencesPithosDialog.ui')
 class PreferencesPithosDialog(Gtk.Dialog):
     __gtype_name__ = "PreferencesPithosDialog"
 
@@ -101,15 +100,15 @@ class PreferencesPithosDialog(Gtk.Dialog):
         'login-changed': (GObject.SignalFlags.RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
     }
 
-    preference_btn = GtkTemplate.Child()
-    plugins_listbox = GtkTemplate.Child()
-    email_entry = GtkTemplate.Child()
-    password_entry = GtkTemplate.Child()
-    audio_quality_combo = GtkTemplate.Child()
-    proxy_entry = GtkTemplate.Child()
-    control_proxy_entry = GtkTemplate.Child()
-    control_proxy_pac_entry = GtkTemplate.Child()
-    explicit_content_filter_checkbutton = GtkTemplate.Child()
+    preference_btn = Gtk.Template.Child()
+    plugins_listbox = Gtk.Template.Child()
+    email_entry = Gtk.Template.Child()
+    password_entry = Gtk.Template.Child()
+    audio_quality_combo = Gtk.Template.Child()
+    proxy_entry = Gtk.Template.Child()
+    control_proxy_entry = Gtk.Template.Child()
+    control_proxy_pac_entry = Gtk.Template.Child()
+    explicit_content_filter_checkbutton = Gtk.Template.Child()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, use_header_bar=1, **kwargs)
@@ -140,12 +139,12 @@ class PreferencesPithosDialog(Gtk.Dialog):
             self.plugins_listbox.add(row)
         self.plugins_listbox.show_all()
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_plugins_row_selected(self, box, row):
         if row:
             self.preference_btn.set_sensitive(row.plugin.preferences_dialog is not None)
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_prefs_btn_clicked(self, btn):
         dialog = self.plugins_listbox.get_selected_rows()[0].plugin.preferences_dialog
         dialog.set_transient_for(self)
@@ -153,7 +152,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         dialog.set_modal(True)
         dialog.show_all()
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_account_changed(self, *ignore):
         if not self.email_entry.get_text() or not self.password_entry.get_text():
             self.set_response_sensitive(Gtk.ResponseType.APPLY, False)
@@ -164,7 +163,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         if before and not row.get_header():
             row.set_header(Gtk.Separator.new(Gtk.Orientation.HORIZONTAL))
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_show(self, widget):
         def cb(password):
             self.last_password = password
@@ -176,7 +175,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.last_email = self.settings['email']
         SecretService.get_account_password(self.last_email, cb)
 
-    @GtkTemplate.Callback
+    @Gtk.Template.Callback()
     def on_delete_event(self, *ignore):
         self.hide()
         self.settings.revert()
