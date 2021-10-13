@@ -61,6 +61,13 @@ class PithosStatusNotifierItem(DBusServiceObject):
         self.icon = icon
         self.notify_property_change('Icon')
 
+    def toggle_visible(self, *args):
+        if self.window.get_visible():
+            self.window.hide()
+        else:
+            self.window.bring_to_top()
+        return True
+
     @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 's')
     def Id(self):
         return 'pithos'
@@ -99,14 +106,11 @@ class PithosStatusNotifierItem(DBusServiceObject):
 
     @dbus_method(STATUS_NOTIFIER_ITEM_IFACE, 'ii')
     def Activate(self, x, y):
-        if self.window.get_visible():
-            self.window.hide()
-        else:
-            self.window.bring_to_top()
+        self.toggle_visible()
 
     @dbus_method(STATUS_NOTIFIER_ITEM_IFACE, 'ii')
     def SecondaryActivate(self, x, y):
-        self.Activate(x, y)
+        self.toggle_visible()
 
     @dbus_method(STATUS_NOTIFIER_ITEM_IFACE, 'is')
     def Scroll(self, delta, orientation):
@@ -159,9 +163,11 @@ class PithosNotificationIcon(PithosPlugin):
         self.prepare_complete()
 
     def on_enable(self):
+        self.delete_callback_handle = self.window.connect('delete-event', self.statusnotifieritem.toggle_visible)
         self.statusnotifieritem.set_active(True)
 
     def on_disable(self):
+        self.window.disconnect(self.delete_callback_handle)
         self.statusnotifieritem.set_active(False)
 
 
