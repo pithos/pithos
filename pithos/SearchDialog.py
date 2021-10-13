@@ -39,7 +39,6 @@ class SearchDialog(Gtk.Dialog):
     def search_clicked(self, widget):
         self.search(self.entry.get_text())
 
-    @Gtk.Template.Callback()
     def get_selected(self):
         sel = self.treeview.get_selection().get_selected()
         if sel[1]:
