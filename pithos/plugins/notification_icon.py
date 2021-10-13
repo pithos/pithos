@@ -27,21 +27,26 @@ from .dbus_util.DBusServiceObject import (
 from pithos.plugin import PithosPlugin
 
 
+STATUS_NOTIFIER_WATCH_NAME = 'org.kde.StatusNotifierWatcher'
+STATUS_NOTIFIER_WATCH_PATH = '/StatusNotifierWatcher'
+STATUS_NOTIFIER_WATCH_IFACE = 'org.kde.StatusNotifierWatcher'
+
+
 class PithosStatusNotifierItem(DBusServiceObject):
     STATUS_NOTIFIER_ITEM_IFACE = 'org.kde.StatusNotifierItem'
     STATUS_NOTIFIER_ITEM_PATH = '/StatusNotifierItem'
 
     def __init__(self, window, **kwargs):
         self.conn = kwargs.get('connection')
+        self.icon = kwargs.pop('icon')
         super().__init__(object_path=self.STATUS_NOTIFIER_ITEM_PATH, **kwargs)
         self.window = window
         self.status = 'Passive'
-        self.icon = 'io.github.Pithos-tray-symbolic'
         logging.info('PithosStatusNotifierItem created')
 
     def notify_property_change(self, prop):
         self.conn.emit_signal(
-            'org.kde.StatusNotifierWatcher',
+            STATUS_NOTIFIER_WATCH_NAME,
             self.STATUS_NOTIFIER_ITEM_PATH,
             self.STATUS_NOTIFIER_ITEM_IFACE,
             'New' + prop,
@@ -119,57 +124,45 @@ class PithosNotificationIcon(PithosPlugin):
             self.settings['data'] = 'io.github.Pithos-tray-symbolic'
         self.preferences_dialog = NotificationIconPluginPrefsDialog(self.window, self.settings)
 
-        def on_settings_changed(settings, key):
-            if key == 'data' and self.statusnotifieritem:
-                self.statusnotifieritem.set_icon_name(settings[key])
+        def on_icon_theme_changed(settings, key):
+            if self.statusnotifieritem:
+                self.statusnotifieritem.set_icon(settings[key])
 
-        self.settings.connect('changed', on_settings_changed)
+        self.settings.connect('changed::data', on_icon_theme_changed)
 
-        # Connect to watcher
-        def on_proxy_ready(obj, result, user_data=None):
-            try:
-                self.proxy = obj.new_finish(result)
-            except GLib.Error as e:
-                self.prepare_complete(error='Failed to connect to StatusNotifierWatcher {}'.format(e))
-            else:
-                logging.info('Connected to StatusNotifierWatcher')
-                self.statusnotifieritem = PithosStatusNotifierItem(self.window, connection=self.proxy.get_connection())
-                self.prepare_complete()
+        # Watch for the bus to appear
+        def on_watcher_appeared(conn, name, name_owner, user_data=None):
+            bus_id = conn.get_unique_name()
+            logging.info('Calling RegisterStatusNotifierItem("{}")'.format(bus_id))
+            conn.call(
+                STATUS_NOTIFIER_WATCH_NAME,
+                STATUS_NOTIFIER_WATCH_PATH,
+                STATUS_NOTIFIER_WATCH_IFACE,
+                'RegisterStatusNotifierItem',
+                GLib.Variant('(s)', (bus_id, )),
+                None,
+                Gio.DBusCallFlags.NONE,
+                -1,
+                None,
+                None
+            )
 
-        # FIXME: We need to watch for this bus name coming and going
-        Gio.DBusProxy.new(
+        Gio.bus_watch_name_on_connection(
             self.bus,
-            Gio.DBusProxyFlags.DO_NOT_LOAD_PROPERTIES | Gio.DBusProxyFlags.DO_NOT_CONNECT_SIGNALS,
-            None,
-            'org.kde.StatusNotifierWatcher',
-            '/StatusNotifierWatcher',
-            'org.kde.StatusNotifierWatcher',
-            None,
-            on_proxy_ready,
+            STATUS_NOTIFIER_WATCH_NAME,
+            Gio.BusNameWatcherFlags.AUTO_START,
+            on_watcher_appeared,
             None
         )
 
+        self.statusnotifieritem = PithosStatusNotifierItem(self.window, connection=self.bus, icon=self.settings['data'])
+        self.prepare_complete()
+
     def on_enable(self):
-        def on_register_failure(proxy, exception, user_data):
-            logging.warning('Failed to call RegisterStatusNotifierItem: {}'.format(exception))
-
-        def after_register(proxy, result, user_data):
-            logging.info('Called RegisterStatusNotifierItem successfully')
-            self.statusnotifieritem.set_icon(self.settings['data'])
-            self.statusnotifieritem.set_active(True)
-
-        bus_id = self.proxy.get_connection().get_unique_name()
-        assert bus_id
-        logging.info('Registering StatusNotifierItem on connection {}'.format(bus_id))
-        # NOTE: We don't actually track registration but in testing it seems harmless
-        #       to repeatedly call this. We could print nicer logs though.
-        self.proxy.RegisterStatusNotifierItem('(s)', bus_id,
-                                              result_handler=after_register,
-                                              error_handler=on_register_failure)
+        self.statusnotifieritem.set_active(True)
 
     def on_disable(self):
-        if self.statusnotifieritem:
-            self.statusnotifieritem.set_active(False)
+        self.statusnotifieritem.set_active(False)
 
 
 class NotificationIconPluginPrefsDialog(Gtk.Dialog):
