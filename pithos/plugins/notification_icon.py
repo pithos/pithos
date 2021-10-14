@@ -66,7 +66,6 @@ class PithosStatusNotifierItem(DBusServiceObject):
             self.window.hide()
         else:
             self.window.bring_to_top()
-        return True
 
     @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 's')
     def Id(self):
@@ -134,16 +133,50 @@ class PithosNotificationIcon(PithosPlugin):
 
         self.settings.connect('changed::data', on_icon_theme_changed)
 
-        # Watch for the bus to appear
+        self.registered = False
+
+        def on_registered_signal(conn, sender, path, iface, signal, params, user_data):
+            bus_id = params.get_child_value(0).get_string()
+            if bus_id.startswith(self.bus_id):
+                logging.info('StatusNotifierItemRegistered')
+                self.registered = True
+
+        def on_unregistered_signal(conn, sender, path, iface, signal, params, user_data):
+            bus_id = params.get_child_value(0).get_string()
+            if bus_id.startswith(self.bus_id):
+                logging.info('StatusNotifierItemUnregistered')
+                self.registered = False
+
         def on_watcher_appeared(conn, name, name_owner, user_data=None):
-            bus_id = conn.get_unique_name()
-            logging.info('Calling RegisterStatusNotifierItem("{}")'.format(bus_id))
+            self.registered_signal_handler = conn.signal_subscribe(
+                STATUS_NOTIFIER_WATCH_NAME,
+                STATUS_NOTIFIER_WATCH_IFACE,
+                'StatusNotifierItemRegistered',
+                STATUS_NOTIFIER_WATCH_PATH,
+                None,
+                Gio.DBusSignalFlags.NONE,
+                on_registered_signal,
+                None
+            )
+            self.unregistered_signal_handler = conn.signal_subscribe(
+                STATUS_NOTIFIER_WATCH_NAME,
+                STATUS_NOTIFIER_WATCH_IFACE,
+                'StatusNotifierItemUnregistered',
+                STATUS_NOTIFIER_WATCH_PATH,
+                None,
+                Gio.DBusSignalFlags.NONE,
+                on_unregistered_signal,
+                None
+            )
+
+            self.bus_id = conn.get_unique_name()
+            logging.info('Calling RegisterStatusNotifierItem("{}")'.format(self.bus_id))
             conn.call(
                 STATUS_NOTIFIER_WATCH_NAME,
                 STATUS_NOTIFIER_WATCH_PATH,
                 STATUS_NOTIFIER_WATCH_IFACE,
                 'RegisterStatusNotifierItem',
-                GLib.Variant('(s)', (bus_id, )),
+                GLib.Variant('(s)', (self.bus_id, )),
                 None,
                 Gio.DBusCallFlags.NONE,
                 -1,
@@ -151,19 +184,34 @@ class PithosNotificationIcon(PithosPlugin):
                 None
             )
 
+        def on_watcher_disappear(conn, name, user_data=None):
+            logging.info('StatusNotifierWatcher disappeared')
+            if hasattr(self, 'registered_signal_handler'):
+                conn.signal_unsubscribe(self.registered_signal_handler)
+                del self.registered_signal_handler
+            if hasattr(self, 'unregistered_signal_handler'):
+                conn.signal_unsubscribe(self.unregistered_signal_handler)
+                del self.unregistered_signal_handler
+            self.registered = False
+
         Gio.bus_watch_name_on_connection(
             self.bus,
             STATUS_NOTIFIER_WATCH_NAME,
             Gio.BusNameWatcherFlags.AUTO_START,
             on_watcher_appeared,
-            None
+            on_watcher_disappear
         )
 
         self.statusnotifieritem = PithosStatusNotifierItem(self.window, connection=self.bus, icon=self.settings['data'])
         self.prepare_complete()
 
+    def _toggle_visible(self, *args):
+        if self.registered:
+            self.statusnotifieritem.toggle_visible()
+            return True
+
     def on_enable(self):
-        self.delete_callback_handle = self.window.connect('delete-event', self.statusnotifieritem.toggle_visible)
+        self.delete_callback_handle = self.window.connect('delete-event', self._toggle_visible)
         self.statusnotifieritem.set_active(True)
 
     def on_disable(self):
