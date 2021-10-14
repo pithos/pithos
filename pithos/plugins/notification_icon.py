@@ -146,6 +146,7 @@ class PithosNotificationIcon(PithosPlugin):
             if bus_id.startswith(self.bus_id):
                 logging.info('StatusNotifierItemUnregistered')
                 self.registered = False
+                self._show_window()
 
         def on_watcher_appeared(conn, name, name_owner, user_data=None):
             self.registered_signal_handler = conn.signal_subscribe(
@@ -193,6 +194,7 @@ class PithosNotificationIcon(PithosPlugin):
                 conn.signal_unsubscribe(self.unregistered_signal_handler)
                 del self.unregistered_signal_handler
             self.registered = False
+            self._show_window()
 
         Gio.bus_watch_name_on_connection(
             self.bus,
@@ -204,6 +206,10 @@ class PithosNotificationIcon(PithosPlugin):
 
         self.statusnotifieritem = PithosStatusNotifierItem(self.window, connection=self.bus, icon=self.settings['data'])
         self.prepare_complete()
+
+    def _show_window(self):
+        if not self.window.get_visible():
+            self.window.show()
 
     def _toggle_visible(self, *args):
         if self.registered:
