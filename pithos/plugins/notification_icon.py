@@ -142,6 +142,8 @@ class PithosNotificationIcon(PithosPlugin):
     description = 'Adds Pithos StatusNotifier to tray'
 
     def on_prepare(self):
+        self.playpausebtn = None
+
         # Preferences for icon type
         if not self.settings['data']:
             self.settings['data'] = 'io.github.Pithos-tray-symbolic'
@@ -229,7 +231,8 @@ class PithosNotificationIcon(PithosPlugin):
         self.prepare_complete()
 
     def _play_state_changed(self, window, playing):
-        self.playpausebtn.set_label("Pause" if playing else "Play")
+        if self.playpausebtn:
+            self.playpausebtn.set_label("Pause" if playing else "Play")
 
     def _build_context_menu(self):
         menu = Gtk.Menu()
