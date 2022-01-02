@@ -13,11 +13,26 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import gi
+
 from gi.repository import (
     GLib,
     Gio,
     Gtk
 )
+
+try:
+    gi.require_versions({
+        'DbusmenuGtk3': '0.4',
+        'Dbusmenu': '0.4',
+    })
+    from gi.repository import Dbusmenu, DbusmenuGtk3
+    have_dbusmenu = True
+    logging.info('Imported Dbusmenu')
+except (ValueError, ImportError) as e:
+    logging.info('Failed to import Dbusmenu: {}'.format(e))
+    have_dbusmenu = False
+
 from .dbus_util.DBusServiceObject import (
     DBusServiceObject,
     dbus_method,
@@ -31,6 +46,7 @@ STATUS_NOTIFIER_WATCH_NAME = 'org.kde.StatusNotifierWatcher'
 STATUS_NOTIFIER_WATCH_PATH = '/StatusNotifierWatcher'
 STATUS_NOTIFIER_WATCH_IFACE = 'org.kde.StatusNotifierWatcher'
 
+DBUS_MENU_PATH = '/io/github/Pithos/notification_icon/menu'
 
 class PithosStatusNotifierItem(DBusServiceObject):
     STATUS_NOTIFIER_ITEM_IFACE = 'org.kde.StatusNotifierItem'
@@ -101,7 +117,11 @@ class PithosStatusNotifierItem(DBusServiceObject):
 
     @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 'b')
     def ItemIsMenu(self):
-        return False  # DBusMenu is an insane spec...
+        return have_dbusmenu
+
+    @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 'o')
+    def Menu(self):
+        return DBUS_MENU_PATH if have_dbusmenu else '/NO_DBUSMENU'
 
     @dbus_method(STATUS_NOTIFIER_ITEM_IFACE, 'ii')
     def Activate(self, x, y):
@@ -204,8 +224,39 @@ class PithosNotificationIcon(PithosPlugin):
             on_watcher_disappear
         )
 
+        self._setup_dbusmenu()
         self.statusnotifieritem = PithosStatusNotifierItem(self.window, connection=self.bus, icon=self.settings['data'])
         self.prepare_complete()
+
+    def _play_state_changed(self, window, playing):
+        self.playpausebtn.set_label("Pause" if playing else "Play")
+
+    def _build_context_menu(self):
+        menu = Gtk.Menu()
+
+        def button(text, action):
+            item = Gtk.MenuItem(text)
+            item.connect('activate', action)
+            item.show()
+            menu.append(item)
+            return item
+
+        self.playpausebtn = button("Pause", self.window.playpause)
+        button("Skip",  self.window.next_song)
+        button("Love",  (lambda *i: self.window.love_song()))
+        button("Ban",   (lambda *i: self.window.ban_song()))
+        button("Tired", (lambda *i: self.window.tired_song()))
+        button("Quit",  self.window.quit)
+
+        self.menu = menu
+
+    def _setup_dbusmenu(self):
+        if not have_dbusmenu:
+            return
+
+        self._build_context_menu()
+        self.dbusmenuservice = Dbusmenu.Server.new(DBUS_MENU_PATH)
+        self.dbusmenuservice.set_root(DbusmenuGtk3.gtk_parse_menu_structure(self.menu))
 
     def _show_window(self):
         if not self.window.get_visible():
@@ -218,10 +269,12 @@ class PithosNotificationIcon(PithosPlugin):
 
     def on_enable(self):
         self.delete_callback_handle = self.window.connect('delete-event', self._toggle_visible)
+        self.state_callback_handle = self.window.connect('play-state-changed', self._play_state_changed)
         self.statusnotifieritem.set_active(True)
 
     def on_disable(self):
         self.window.disconnect(self.delete_callback_handle)
+        self.window.disconnect(self.state_callback_handle)
         self.statusnotifieritem.set_active(False)
 
 
