@@ -33,8 +33,11 @@ if builddir:
     theme.append_search_path(os.path.join(pkgdatadir, 'icons'))
 
 sys.path.insert(1, srcdir)
-locale.bindtextdomain('pithos', localedir)
-locale.textdomain('pithos')
+try:
+    locale.bindtextdomain('pithos', localedir)
+    locale.textdomain('pithos')
+except AttributeError:
+    print("Could not bind to locale translation domain.  Some translations won't work")
 gettext.install('pithos', localedir)
 
 resource = Gio.resource_load(os.path.join(pkgdatadir, 'pithos.gresource'))
