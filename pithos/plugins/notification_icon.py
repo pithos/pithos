@@ -117,7 +117,7 @@ class PithosStatusNotifierItem(DBusServiceObject):
 
     @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 'b')
     def ItemIsMenu(self):
-        return have_dbusmenu
+        return False
 
     @dbus_property(STATUS_NOTIFIER_ITEM_IFACE, 'o')
     def Menu(self):
