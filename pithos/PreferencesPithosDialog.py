@@ -114,6 +114,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         super().__init__(*args, use_header_bar=1, **kwargs)
         self.init_template()
 
+        self.last_password = None
         self.settings = Gio.Settings.new('io.github.Pithos')
 
         if not pacparser:
