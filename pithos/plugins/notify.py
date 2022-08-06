@@ -27,6 +27,7 @@ class NotifyPlugin(PithosPlugin):
     _app = None
     _app_id = None
     _fallback_icon = None
+    _gnome_flatpak_env = None
 
     def on_prepare(self):
         # We prefer the behavior of the fdo backend to the gtk backend
@@ -34,6 +35,9 @@ class NotifyPlugin(PithosPlugin):
         # this application.
         if not is_flatpak():
             os.environ['GNOTIFICATION_BACKEND'] = 'freedesktop'
+
+        _env = os.environ['XDG_SESSION_DESKTOP']
+        self._gnome_flatpak_env = bool(is_flatpak() and 'gnome' in _env.lower())
 
         self._app = Gio.Application.get_default()
         self._app_id = self._app.get_application_id()
@@ -59,14 +63,23 @@ class NotifyPlugin(PithosPlugin):
             notification.set_default_action('app.activate')
             notification.set_body(song.title)
 
+            # FIXME: Use BytesIcon for Flatpak GNOME and ThemedIcon as a workaround other DEs and Flatpak,
+            #        otherwise notifications do not work
             if song.artUrl:
-                icon = Gio.FileIcon.new(Gio.File.new_for_uri(song.artUrl))
+                if self._gnome_flatpak_env:
+                    icon_uri = Gio.File.new_for_uri(song.artUrl)
+                    icon_bytes = icon_uri.load_bytes(None)
+                    icon = Gio.BytesIcon.new(icon_bytes[0])
+                elif is_flatpak():
+                    icon = Gio.ThemedIcon.new(song.artUrl)
+                else:
+                    icon_uri = Gio.File.new_for_uri(song.artUrl)
+                    icon = Gio.FileIcon.new(icon_uri)
             else:
                 icon = self._fallback_icon
+
             notification.set_icon(icon)
-
             notification.add_button(_('Skip'), 'app.next-song')
-
             self._app.send_notification(self._app_id, notification)
 
     def on_disable(self):
