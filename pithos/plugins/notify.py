@@ -17,6 +17,7 @@ import os
 from gi.repository import Gio
 
 from pithos.plugin import PithosPlugin
+from pithos.util import is_flatpak
 
 
 class NotifyPlugin(PithosPlugin):
@@ -31,7 +32,7 @@ class NotifyPlugin(PithosPlugin):
         # We prefer the behavior of the fdo backend to the gtk backend
         # as it doesn't force persistance which doesn't make sense for
         # this application.
-        if not os.path.exists('/.flatpak-info'):
+        if not is_flatpak():
             os.environ['GNOTIFICATION_BACKEND'] = 'freedesktop'
 
         self._app = Gio.Application.get_default()
