@@ -38,6 +38,11 @@ class _SecretService:
         self._current_collection = Secret.COLLECTION_DEFAULT
 
     def unlock_keyring(self, callback):
+        # Inside of flatpak we only have access to the simple API.
+        if is_flatpak():
+            callback(None)
+            return
+
         def on_unlock_finish(source, result, data):
             service, default_collection = data
             try:
@@ -106,20 +111,34 @@ class _SecretService:
         )
 
     def get_account_password(self, email, callback):
-        def on_password_lookup_finish(source, result, data):
+        def on_password_lookup_finish(_, result):
             try:
                 password = Secret.password_lookup_finish(result) or ''
+                callback(password)
             except GLib.Error as e:
-                password = ''
-                logging.error('Failed to lookup password, Error: {}'.format(e))
-            callback(password)
+                logging.error('Failed to lookup password async, Error: {}'.format(e))
+                callback('')
+
+        # The async version of this hangs forever in flatpak and its been broken for years
+        # so for now lets just use the sync version as it works.
+        if is_flatpak():
+            try:
+                password = Secret.password_lookup_sync(
+                    self._account_schema,
+                    {'email': email},
+                    None,
+                ) or ''
+                callback(password)
+            except GLib.Error as e:
+                logging.error('Failed to lookup password sync, Error: {}'.format(e))
+                callback('')
+            return
 
         Secret.password_lookup(
             self._account_schema,
             {'email': email},
             None,
             on_password_lookup_finish,
-            None,
         )
 
     def set_account_password(self, old_email, new_email, password, callback):

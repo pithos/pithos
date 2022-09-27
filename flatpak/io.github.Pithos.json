@@ -12,7 +12,6 @@
     "--socket=wayland",
     "--socket=pulseaudio",
     "--metadata=X-DConf=migrate-path=/io/github/Pithos/",
-    "--talk-name=org.freedesktop.secrets",
     "--talk-name=org.gnome.SettingsDaemon.MediaKeys",
     "--talk-name=org.mate.SettingsDaemon",
     "--talk-name=org.kde.StatusNotifierWatcher"
