@@ -24,6 +24,17 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release date="2022-09-27" version="1.6.0">
+      <description>
+        <p>This is a fairly small release with some UI tweaks and bug fixes</p>
+        <ul>
+          <li>Use a headerbar for main window</li>
+          <li>Add Ctrl+r shortcut to open stations popover</li>
+          <li>Remove access to host keyring when in flatpak</li>
+          <li>notification_icon: Remove dependency on libappindicator. StatusNotifier is directly supported but XEmbed trays are no longer supported</li>
+        </ul>
+      </description>
+    </release>
     <release date="2020-10-26" version="1.5.1">
       <description>
         <p>This is yet another minor bug fix release.</p>
