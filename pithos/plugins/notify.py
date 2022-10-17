@@ -30,7 +30,7 @@ class NotifyPlugin(PithosPlugin):
 
     def on_prepare(self):
         # We prefer the behavior of the fdo backend to the gtk backend
-        # as it doesn't force persistance which doesn't make sense for
+        # as it doesn't force persistence which doesn't make sense for
         # this application.
         if not is_flatpak():
             os.environ['GNOTIFICATION_BACKEND'] = 'freedesktop'

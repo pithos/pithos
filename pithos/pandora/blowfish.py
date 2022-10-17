@@ -216,7 +216,7 @@ class Blowfish:
 
         return bytes([b & 0xff for b in bval])
 
-# These are the standard initialization valies of P and S blocks for the
+# These are the standard initialization values of P and S blocks for the
 # cipher. The constants are internal to this module and should not be accessed
 # directly or modified by outside code.
 

@@ -51,7 +51,7 @@ class LastfmPlugin(PithosPlugin):
         if self.settings['data']:
             self._enable_real()
         else:
-            # Show the LastFmAuth dialog on enabling the plugin if we aren't aready authorized.
+            # Show the LastFmAuth dialog on enabling the plugin if we aren't already authorized.
             dialog = self.preferences_dialog
             dialog.set_transient_for(self.window.prefs_dlg)
             dialog.set_destroy_with_parent(True)

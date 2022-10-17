@@ -176,7 +176,7 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
         bg_rgb = bg_color.to_string()
 
         # Use our color values to create strings representing valid SVG's
-        # for backgound and rate_bg, then load them with PixbufLoader.
+        # for background and rate_bg, then load them with PixbufLoader.
         background = BACKGROUND_SVG.format(px=ALBUM_ART_SIZE, fg=fg_rgb).encode()
         rating_bg = RATING_BG_SVG.format(bg=bg_rgb).encode()
 
@@ -365,7 +365,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.worker = GObjectWorker()
 
         try:
-            tempdir_base = '/var/tmp' # Prefered over /tmp as lots of icons can be large in size.
+            tempdir_base = '/var/tmp' # Preferred over /tmp as lots of icons can be large in size.
             if is_flatpak():
                 # However in flatpak that path is not readable by the host.
                 tempdir_base = os.path.join(GLib.get_user_cache_dir(), 'tmp')
@@ -1068,7 +1068,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             return True
 
     def on_gst_stream_start(self, bus, message):
-        # Edge case. We might get this singal while we're reconnecting to Pandora.
+        # Edge case. We might get this signal while we're reconnecting to Pandora.
         # If so self.current_song will be None.
         if self.current_song is None:
             return
@@ -1134,17 +1134,17 @@ class PithosWindow(Gtk.ApplicationWindow):
         # to check the buffering state that cancels only if we're not buffering or there's a pending timeout.
         # This will insure we don't get stuck in a buffering state if we're really not buffering.
 
-        self.react_to_buffering_mesage(False)
+        self.react_to_buffering_message(False)
 
         if self.buffering_timer_id:
             GLib.source_remove(self.buffering_timer_id)
             self.buffering_timer_id = 0
-        self.buffering_timer_id = GLib.timeout_add(200, self.react_to_buffering_mesage, True)
+        self.buffering_timer_id = GLib.timeout_add(200, self.react_to_buffering_message, True)
 
-    def react_to_buffering_mesage(self, from_timeout):
+    def react_to_buffering_message(self, from_timeout):
         # If the pipeline signals that it is buffering set the player to PseudoGst.BUFFERING
         # (which is an alias to Gst.State.PAUSED). During buffering if the user goes to Pause
-        # or Play(an/or back again) go though all the motions but don't actaully change the
+        # or Play(an/or back again) go though all the motions but don't actually change the
         # player's state to the desired state until buffering has completed. The player only
         # cares about the actual state, the rest of Pithos only cares about our buffer_recovery
         # state, the state we *wish* we were in.
