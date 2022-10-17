@@ -212,7 +212,7 @@ class PithosMprisService(DBusServiceObject):
         ]
 
         if window.stations_dlg:
-            # If stations_dlg exsists already
+            # If stations_dlg exists already
             # we missed the ready signal and
             # we should connect our handlers.
             self._stations_dlg_ready_handler()
