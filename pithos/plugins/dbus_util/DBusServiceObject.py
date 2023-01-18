@@ -120,7 +120,7 @@ class DBusNodeInfo:
         return node
 
 def _create_arginfo_list(func, signature):
-    arg_names = inspect.getargspec(func).args
+    arg_names = inspect.getfullargspec(func).args
     signature_list = GLib.Variant.split_signature('(%s)' %signature) if signature else []
     arg_names.pop(0) # eat "self" argument
 
