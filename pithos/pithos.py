@@ -369,7 +369,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             if is_flatpak():
                 # However in flatpak that path is not readable by the host.
                 tempdir_base = os.path.join(GLib.get_user_cache_dir(), 'tmp')
-            self.tempdir = tempfile.TemporaryDirectory(prefix='pithos-', dir=tempdir_base)
+            self.tempdir = tempfile.TemporaryDirectory(prefix='pithos-', dir=tempdir_base, ignore_cleanup_errors=True)
             logging.info("Created temporary directory {}".format(self.tempdir.name))
         except IOError as e:
             self.tempdir = None
