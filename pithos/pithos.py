@@ -1076,7 +1076,6 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.current_song.duration = self.query_duration() or self.current_song.trackLength * Gst.SECOND
         self.current_song.duration_message = self.format_time(self.current_song.duration)
         self.update_song_row()
-        self.check_if_song_is_ad()
         # We can't seek so duration in MPRIS is just for display purposes if it's not off by more than a sec it's OK.
         if self.current_song.get_duration_sec() != self.current_song.trackLength:
             self.emit('metadata-changed', self.current_song)
@@ -1114,20 +1113,6 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         if not GstPbutils.install_plugins_installation_in_progress():
             self.next_song()
-
-    def check_if_song_is_ad(self):
-        if self.current_song.is_ad is None:
-            if self.current_song.duration:
-                if self.current_song.get_duration_sec() < 45:  # Less than 45 seconds we assume it's an ad
-                    logging.info('Ad detected!')
-                    self.current_song.is_ad = True
-                    self.update_song_row()
-                    self.set_title("Commercial Advertisement - Pithos")
-                else:
-                    logging.info('Not an Ad..')
-                    self.current_song.is_ad = False
-            else:
-                logging.warning('dur_stat is False. The assumption that duration is available once the stream-start messages feeds is bad.')
 
     def on_gst_buffering(self, bus, message):
         # React to the buffer message immediately and also fire a short repeating timeout
