@@ -24,6 +24,15 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release date="2023-05-19" version="1.6.1">
+      <description>
+        <p>This is a small bugfix release</p>
+        <ul>
+          <li>Fix Python 3.11 support</li>
+          <li>Fix incorrectly labeling very short songs as ads</li>
+        </ul>
+      </description>
+    </release>
     <release date="2022-09-27" version="1.6.0">
       <description>
         <p>This is a fairly small release with some UI tweaks and bug fixes</p>
