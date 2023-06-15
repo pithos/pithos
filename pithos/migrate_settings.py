@@ -16,7 +16,7 @@
 import os
 import logging
 from gi.repository import GLib, Gio
-from .util import SecretService
+from .Secrets import SecretService
 
 
 def _get_plugin_settings(name):
