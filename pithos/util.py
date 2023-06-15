@@ -15,6 +15,7 @@
 
 import logging
 import os
+import sysconfig
 from urllib.parse import splittype, splituser, splitpasswd
 
 import gi
@@ -26,7 +27,7 @@ from gi.repository import (
 )
 
 
-class _SecretService:
+class _DefaultSecretService:
 
     _account_schema = Secret.Schema.new(
         'io.github.Pithos.Account',
@@ -195,10 +196,6 @@ class _SecretService:
                 None,
             )
 
-
-SecretService = _SecretService()
-
-
 def parse_proxy(proxy):
     """ _parse_proxy from urllib """
     scheme, r_scheme = splittype(proxy)
@@ -252,3 +249,12 @@ def is_flatpak() -> bool:
         _is_flatpak = os.path.exists('/.flatpak-info')
 
     return _is_flatpak
+
+_is_msys2 = None
+def is_msys2() -> bool:
+    global _is_msys2
+
+    if _is_msys2 is None:
+        _is_msys2 = sysconfig.get_platform().startswith("mingw")
+
+    return _is_msys2
