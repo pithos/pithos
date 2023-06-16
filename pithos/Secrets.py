@@ -18,17 +18,22 @@ import util
 from gi.repository import GLib
 
 if util.is_msys2():
+    import pywintypes
     import win32cred
+    from gobject_worker import GObjectWorker
 else:
     import gi
     gi.require_version('Secret', '1')
     from gi.repository import Secret
 
+_SERVICE_NAME = 'io.github.Pithos.Account'
+_SERVICE_COMMENT = 'Pandora Account'
+
 
 class _DefaultSecretService:
 
     _account_schema = Secret.Schema.new(
-        'io.github.Pithos.Account',
+        _SERVICE_NAME,
         Secret.SchemaFlags.NONE,
         {'email': Secret.SchemaAttributeType.STRING},
     )
@@ -166,7 +171,7 @@ class _DefaultSecretService:
                     self._account_schema,
                     {'email': new_email},
                     self._current_collection,
-                    'Pandora Account',
+                    _SERVICE_COMMENT,
                     password,
                     None,
                     on_password_store_finish,
@@ -187,7 +192,7 @@ class _DefaultSecretService:
                 self._account_schema,
                 {'email': new_email},
                 self._current_collection,
-                'Pandora Account',
+                _SERVICE_COMMENT,
                 password,
                 None,
                 on_password_store_finish,
@@ -196,15 +201,107 @@ class _DefaultSecretService:
 
 
 class _WindowsSecretService:
-    _SERVICE_NAME = 'io.github.Pithos.Account'
+    CRED_TYPE = win32cred.CRED_TYPE_GENERIC
+    persist_type = None
 
     def __init__(self):
-        ...
+        self.worker = GObjectWorker()
+
+    def _validate_session(self):
+        """This function should call `CredGetSessionTypes`, and validate around the data gathered from it.
+        However, as of 6/16/2023, this function is not implemented in pywin32...
+
+        Below is the proper code commented out, and a workaround, which is also denoted.
+        https://github.com/mhammond/pywin32/issues/2067
+        https://learn.microsoft.com/en-us/windows/win32/api/wincred/nf-wincred-credgetsessiontypes
+        """
+        if self.persist_type:
+            return
+
+        persist_type = win32cred.CRED_PERSIST_NONE
+        """
+        try:
+            persist_type = win32cred.CredGetSessionTypes(self.CRED_TYPE)[self.CRED_TYPE]
+        except pywintypes.error as e:
+            if e.winerror == 1312 and e.funcname == 'CredGetSessionTypes':
+                logging.error('Error with session, {} failed with message: {}'.format(e.funcname, e.strerror)
+            else:
+                logging.error('Unknown error while calling {}. [{}], {}'.format(e.funcname, e.winerror, e.strerror)
+            raise e
+            
+        """
+
+        """To get around this issue in the current state, we attempt to read/write a credential"""
+        try:
+            test = self._credential_lookup()
+            self._credential_store(test['UserName'], test['CredentialBlob'].decode('utf-16'))
+            persist_type = test['Persist']  # if the existing credential can be re-written our persist is the same
+
+        except pywintypes.error as e:
+            if e.winerror == 1312 and e.funcname == 'CredRead':
+                logging.debug('No credential found for {}.\
+                               {} failed with [{}], {}'.format(_SERVICE_NAME, e.funcname, e.winerror, e.strerror))
+            else:
+                logging.error('Unknown error while calling {}.\
+                               Failed with [{}], {}'.format(e.funcname, e.winerror, e.strerror))
+                raise e
+
+        if persist_type == win32cred.CRED_PERSIST_NONE:
+            persist_check = win32cred.CRED_PERSIST_ENTERPRISE  # largest documented value of 3
+            while persist_check > win32cred.CRED_PERSIST_NONE and persist_type == win32cred.CRED_PERSIST_NONE:
+                try:
+                    self._credential_store('', '')
+                    self._credential_clear()
+                    persist_type = persist_check
+                except pywintypes.error as e:
+                    # MSDN doesn't document what occurs when attempting to call the write function when using a
+                    # persist_type that has been disabled. Therefore, we brute-force calls here.
+                    logging.debug('Persist value check with: {} failed.\
+                                   {} failed with [{}], {}'.format(persist_check, e.funcname, e.winerror, e.strerror))
+                    persist_check -= 1
+        """End work-around"""
+
+        if persist_type == win32cred.CRED_PERSIST_NONE:
+            raise OSError("Generic credential storing has been disabled by your administrator.\
+                           Pithos requires this to run.")
+
+        if persist_type == win32cred.CRED_PERSIST_SESSION:
+            logging.error('Generic credentials have been set to per session persistence via group policy.\
+                           You will need to re-enter your login info each time pithos is launched')
+
+        self.persist_type = persist_type
+        return
+
+    def _credential_clear(self):
+        win32cred.CredDelete(TargetName=_SERVICE_NAME,
+                             Type=win32cred.CRED_TYPE_GENERIC)
+        return
+
+    def _credential_lookup(self):
+        credential = win32cred.CredRead(TargetName=_SERVICE_NAME,
+                                          Type=win32cred.CRED_TYPE_GENERIC)
+        return credential  # https://mhammond.github.io/pywin32/PyCREDENTIAL.html
+
+    def _credential_store(self, new_email, password):
+        credential = {'Type': win32cred.CRED_TYPE_GENERIC,
+                      'TargetName': _SERVICE_NAME,
+                      'Comment': _SERVICE_COMMENT,
+                      'CredentialBlob': password.encode('utf-16'),
+                      'Persist': self.persist_type,
+                      'UserName': new_email,
+                      }
+        win32cred.CredWrite(credential)
+        return
+
 
     def unlock_keyring(self, callback):
-        ...
+        """Checks that the current logon session has a credential set, and that credentials can be stored"""
+
 
     def get_account_password(self, email, callback):
+        # command, args=(), callback=None, errorback=None
+
+        self.worker.send(None, (_SERVICE_NAME,))
         ...
 
     def set_account_password(self, old_email, new_email, password, callback):
