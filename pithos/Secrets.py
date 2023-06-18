@@ -262,8 +262,9 @@ class _WindowsSecretService:
         """End work-around"""
 
         if persist_type == win32cred.CRED_PERSIST_NONE:
-            raise OSError("Generic credential storing has been disabled by your administrator.\
-                           Pithos requires this to run.")
+            logging.error('Generic credential storing has been disabled by your administrator.\
+                           Pithos requires this to run.')
+            raise RuntimeError('Credential Persistence is CRED_PERSIST_NONE.')
 
         if persist_type == win32cred.CRED_PERSIST_SESSION:
             logging.error('Generic credentials have been set to per session persistence via group policy.\
@@ -293,20 +294,50 @@ class _WindowsSecretService:
         win32cred.CredWrite(credential)
         return
 
+    @staticmethod
+    def _async_call_wrapper(command, *args):
+        try:
+            result = command(*args)
+        except Exception as e:
+            result = e
+
+        return result
 
     def unlock_keyring(self, callback):
         """Checks that the current logon session has a credential set, and that credentials can be stored"""
+        def on_unlock_finish(source, result, data):
+            if not isinstance(result, Exception):
+                result = None
 
+            if callback:
+                callback(result)
+
+        call = lambda command, args: self._async_call_wrapper(self._validate_session, ())
+        self.worker.send(call, (), on_unlock_finish)
 
     def get_account_password(self, email, callback):
-        # command, args=(), callback=None, errorback=None
 
-        self.worker.send(None, (_SERVICE_NAME,))
-        ...
+        def on_password_lookup_finish(_, result):
+            password = ''
+            if not isinstance(result, Exception):
+                password = result['CredentialBlob'].decode('utf-16')
+
+            if callback:
+                callback(password)
+
+        call = lambda command, args: self._async_call_wrapper(self._credential_lookup, ())
+        self.worker.send(call, (), on_password_lookup_finish)
 
     def set_account_password(self, old_email, new_email, password, callback):
-        ...
 
+        def on_password_store_finish(source, result, data):
+            success = not isinstance(result, Exception)
+            if callback:
+                callback(success)
+
+        call = lambda command, args: self._async_call_wrapper(self._credential_store, (new_email, password))
+        self.worker.send(call, (), on_password_store_finish)
+                
 
 if util.is_msys2():
     SecretService = _WindowsSecretService()
