@@ -22,7 +22,6 @@ import re
 import os
 import sys
 import time
-import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -369,8 +368,10 @@ class PithosWindow(Gtk.ApplicationWindow):
             if is_flatpak():
                 # However in flatpak that path is not readable by the host.
                 tempdir_base = os.path.join(GLib.get_user_cache_dir(), 'tmp')
-            self.tempdir = tempfile.TemporaryDirectory(prefix='pithos-', dir=tempdir_base, ignore_cleanup_errors=True)
-            logging.info("Created temporary directory {}".format(self.tempdir.name))
+            self.tempdir = os.path.join(tempdir_base, 'pithos_cache')
+            if not os.path.exists(self.tempdir):
+                os.makedirs(self.tempdir)
+                logging.info("Created temporary directory {}".format(self.tempdir.name))
         except IOError as e:
             self.tempdir = None
             logging.warning('Failed to create a temporary directory: {}'.format(e))
@@ -848,6 +849,14 @@ class PithosWindow(Gtk.ApplicationWindow):
         else:
             self.user_play()
 
+    def clear_art_cache(self):
+        logging.info('Checking for expired art in cache')
+        with os.scandir(self.tempdir) as art_list:
+            for art in art_list:
+                age = time.time() - art.stat().st_mtime
+                if age > 1.296e+6:
+                    os.remove(os.path.join(self.tempdir, art.name))
+
     def get_playlist(self, start = False):
         if self.playlist_update_timer_id:
             GLib.source_remove(self.playlist_update_timer_id)
@@ -877,11 +886,18 @@ class PithosWindow(Gtk.ApplicationWindow):
                 return (None, None,) + extra
 
             file_url = None
+            song, index = extra
             if tmpdir:
                 try:
-                    with tempfile.NamedTemporaryFile(prefix='art-', suffix='.jpeg', dir=tmpdir.name, delete=False) as f:
-                        f.write(image)
-                        file_url = urllib.parse.urljoin('file://', urllib.parse.quote(f.name))
+                    # TODO move cache clear call somewhere more sane?
+                    self.clear_art_cache()
+                    encoded_filename = (song.artist+song.album).encode('utf-8').hex()[:222]+'.jpeg'
+                    if os.path.exists(os.path.join(self.tempdir, encoded_filename)):
+                        file_url = urllib.parse.urljoin('file://', urllib.parse.quote(encoded_filename))
+                    else:
+                        with open(os.path.join(self.tempdir, encoded_filename), 'xb') as f:
+                            f.write(image)
+                            file_url = urllib.parse.urljoin('file://', urllib.parse.quote(f.name))
                 except IOError:
                     logging.warning("Failed to write art tempfile")
 
