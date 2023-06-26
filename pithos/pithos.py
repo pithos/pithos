@@ -14,6 +14,7 @@
 
 
 import contextlib
+import hashlib
 import html
 import json
 import logging
@@ -60,6 +61,8 @@ except AttributeError:
 
 ALBUM_ART_SIZE = 96
 TEXT_X_PADDING = 12
+# Time in seconds to retain album art files
+ART_CACHE_TIME = 1.296e+6
 
 FALLBACK_BLACK = Gdk.RGBA(red=0.0, green=0.0, blue=0.0, alpha=1.0)
 FALLBACK_WHITE = Gdk.RGBA(red=1.0, green=1.0, blue=1.0, alpha=1.0)
@@ -369,9 +372,8 @@ class PithosWindow(Gtk.ApplicationWindow):
                 # However in flatpak that path is not readable by the host.
                 tempdir_base = os.path.join(GLib.get_user_cache_dir(), 'tmp')
             self.tempdir = os.path.join(tempdir_base, 'pithos_cache')
-            if not os.path.exists(self.tempdir):
-                os.makedirs(self.tempdir)
-                logging.info("Created temporary directory {}".format(self.tempdir.name))
+            os.makedirs(self.tempdir, exist_ok=True)
+            logging.info("Created temporary directory {}".format(self.tempdir))
         except IOError as e:
             self.tempdir = None
             logging.warning('Failed to create a temporary directory: {}'.format(e))
@@ -851,11 +853,12 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def clear_art_cache(self):
         logging.info('Checking for expired art in cache')
+        timestamp = time.time()
         with os.scandir(self.tempdir) as art_list:
             for art in art_list:
-                age = time.time() - art.stat().st_mtime
-                if age > 1.296e+6:
-                    os.remove(os.path.join(self.tempdir, art.name))
+                age = timestamp - art.stat().st_mtime
+                if age > ART_CACHE_TIME:
+                    os.remove(os.path.join(self.tempdir, art.path))
 
     def get_playlist(self, start = False):
         if self.playlist_update_timer_id:
@@ -889,15 +892,13 @@ class PithosWindow(Gtk.ApplicationWindow):
             song, index = extra
             if tmpdir:
                 try:
-                    # TODO move cache clear call somewhere more sane?
                     self.clear_art_cache()
-                    encoded_filename = (song.artist+song.album).encode('utf-8').hex()[:222]+'.jpeg'
-                    if os.path.exists(os.path.join(self.tempdir, encoded_filename)):
-                        file_url = urllib.parse.urljoin('file://', urllib.parse.quote(encoded_filename))
+                    filename_hash = hashlib.sha256((song.artist+song.album).encode('utf-8')).hexdigest()+'.jpeg'
+                    if os.path.exists(os.path.join(self.tempdir, filename_hash)):
+                        file_url = urllib.parse.urljoin('file://', urllib.parse.quote(filename_hash))
                     else:
-                        with open(os.path.join(self.tempdir, encoded_filename), 'xb') as f:
+                        with open(os.path.join(self.tempdir, filename_hash), 'xb') as f:
                             f.write(image)
-                            file_url = urllib.parse.urljoin('file://', urllib.parse.quote(f.name))
                 except IOError:
                     logging.warning("Failed to write art tempfile")
 
