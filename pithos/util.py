@@ -15,7 +15,7 @@
 
 import logging
 import os
-import sysconfig
+import platform
 from urllib.parse import splittype, splituser, splitpasswd
 
 from gi.repository import (
@@ -77,11 +77,5 @@ def is_flatpak() -> bool:
 
     return _is_flatpak
 
-_is_msys2 = None
-def is_msys2() -> bool:
-    global _is_msys2
-
-    if _is_msys2 is None:
-        _is_msys2 = sysconfig.get_platform().startswith("mingw")
-
-    return _is_msys2
+def is_windows() -> bool:
+    return platform.system() == 'Windows'

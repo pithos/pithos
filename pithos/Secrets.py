@@ -14,18 +14,14 @@
 
 
 import logging
-from .util import is_msys2, is_flatpak
+from .util import is_windows, is_flatpak
 from gi.repository import GLib
 
 _SERVICE_NAME = 'io.github.Pithos.Account'
 _SERVICE_COMMENT = 'Pandora Account'
 
 
-class _SecretService:
-    pass
-
-
-if is_msys2():
+if is_windows():
     import pywintypes
     import win32cred
     from .gobject_worker import GObjectWorker
@@ -46,7 +42,7 @@ if is_msys2():
             https://github.com/mhammond/pywin32/issues/2067
             https://learn.microsoft.com/en-us/windows/win32/api/wincred/nf-wincred-credgetsessiontypes
             """
-            if self.persist_type:
+            if self.persist_type != win32cred.CRED_PERSIST_NONE:
                 return
 
             """
