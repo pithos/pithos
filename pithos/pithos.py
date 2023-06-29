@@ -61,7 +61,7 @@ except AttributeError:
 
 ALBUM_ART_SIZE = 96
 TEXT_X_PADDING = 12
-# Time in seconds to retain album art files
+# 15 days in seconds to retain album art files.
 ART_CACHE_TIME = 1.296e+6
 
 FALLBACK_BLACK = Gdk.RGBA(red=0.0, green=0.0, blue=0.0, alpha=1.0)
@@ -894,10 +894,10 @@ class PithosWindow(Gtk.ApplicationWindow):
                 try:
                     self.clear_art_cache()
                     filename_hash = hashlib.sha256((song.artist+song.album).encode('utf-8')).hexdigest()+'.jpeg'
-                    if os.path.exists(os.path.join(self.tempdir, filename_hash)):
-                        file_url = urllib.parse.urljoin('file://', urllib.parse.quote(filename_hash))
-                    else:
-                        with open(os.path.join(self.tempdir, filename_hash), 'xb') as f:
+                    cache_file_path = os.path.join(self.tempdir, filename_hash)
+                    file_url = urllib.parse.urljoin('file://', urllib.parse.quote(cache_file_path))
+                    if not os.path.exists(cache_file_path):
+                        with open(cache_file_path, 'xb') as f:
                             f.write(image)
                 except IOError:
                     logging.warning("Failed to write art tempfile")
