@@ -1204,7 +1204,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         album = html.escape(song.album)
         msg = []
         if song is self.current_song:
-            song.position = self.query_position()
+            # Avoid race condition where query_position() sometimes points us
+            # permanently to an invalid segment if we are called whilst
+            # buffering. Most reliable semaphore for buffering state is
+            # buffering_timer_id, cleared after buffering (see on_gst_buffering())
+            if self.buffering_timer_id == 0:
+                song.position = self.query_position()
+            else:
+                song.position = None
+
             if not song.bitrate is None:
                 msg.append("%skbit/s" % (song.bitrate))
 
