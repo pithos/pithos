@@ -300,7 +300,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self._query_position = Gst.Query.new_position(Gst.Format.TIME)
         self._query_buffer = Gst.Query.new_buffering(Gst.Format.PERCENT)
 
-        self.player = Gst.ElementFactory.make("playbin", "player")
+        self.player = Gst.ElementFactory.make("playbin3", "play")
         self.player.set_property('buffer-duration', 3 * Gst.SECOND)
         self.rgvolume = Gst.ElementFactory.make("rgvolume", "rgvolume")
         self.rgvolume.set_property("album-mode", False)
