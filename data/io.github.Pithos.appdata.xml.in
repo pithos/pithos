@@ -9,18 +9,30 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0+</project_license>
   <description>
-    <p>Pithos is a easy to use native Pandora Radio client that is more lightweight than the pandora.com web client and integrates with the desktop.</p>
-    <p>It supports most functionality of pandora.com such as rating songs, creating/managing stations, quickmix, etc. On top of that it has features such as last.fm scrobbling, media keys, notifications, proxies, and mpris support.</p>
+    <p>An easy to use native Pandora Radio client that is more lightweight than the pandora.com web client and integrates with the desktop.</p>
+    <p>It supports most functionality of pandora.com such as rating songs, creating/managing stations, quickmix, etc. On top of that it has many features such as last.fm scrobbling</p>
   </description>
   <url type="homepage">https://pithos.github.io</url>
   <url type="bugtracker">https://github.com/pithos/pithos/issues</url>
   <url type="translate">https://github.com/pithos/pithos/wiki/Contributing</url>
   <url type="donation">https://goo.gl/StrKkg</url>
   <url type="help">https://github.com/pithos/pithos/wiki</url>
+  <branding>
+    <color type="primary" scheme_preference="light">#e6d4ff</color>
+    <color type="primary" scheme_preference="dark">#644b93</color>
+  </branding>
   <screenshots>
-    <screenshot type="default" width="624" height="351">
-      <image>http://i.imgur.com/2U2ce8v.png</image>
-      <caption>Main Window</caption>
+    <screenshot type="default">
+      <image>https://i.imgur.com/RzMCls4.png</image>
+      <caption>Main Window showing a playlist</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://i.imgur.com/5tcEhkp.png</image>
+      <caption>Dialog showing available plugins</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://i.imgur.com/NyQ0uZB.png</image>
+      <caption>Dark variant of the main window</caption>
     </screenshot>
   </screenshots>
   <releases>
