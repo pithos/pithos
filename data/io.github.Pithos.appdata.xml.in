@@ -36,6 +36,15 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release date="2024-03-03" version="1.6.2">
+      <description>
+        <p>This is a small release with a few fixes</p>
+        <ul>
+          <li>Fix issue where playback would stop after a few songs</li>
+          <li>Fix album art caches never being deleted</li>
+        </ul>
+      </description>
+    </release>
     <release date="2023-05-19" version="1.6.1">
       <description>
         <p>This is a small bugfix release</p>
