@@ -37,7 +37,7 @@ public domain. Stated on the web site:
 
 The implementation in this module is a python conversion and
 adaptation of Bruce Schneier's `C implementation
-<http://www.schneier.com/blowfish-download.html>`__\ .
+<http://www.schneier.com/blowfish-download.html>`__.
 
 """
 
