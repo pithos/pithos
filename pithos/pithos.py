@@ -43,7 +43,8 @@ from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
 from .plugin import load_plugins
-from .util import parse_proxy, open_browser, SecretService, popup_at_pointer, is_flatpak
+from .util import parse_proxy, open_browser, popup_at_pointer, is_flatpak
+from .Secrets import SecretService
 from .migrate_settings import maybe_migrate_settings
 
 try:
