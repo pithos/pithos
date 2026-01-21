@@ -2,9 +2,11 @@
 Name=Pithos
 Comment=Play music from Pandora Radio
 Keywords=Music;
-Categories=GNOME;AudioVideo;Player;
+Categories=GNOME;GTK;AudioVideo;Audio;Player;
 Exec=pithos
 Icon=io.github.Pithos
 Terminal=false
 Type=Application
 DBusActivatable=true
+X-GNOME-UsesNotifications=true
+StartupNotify=true
