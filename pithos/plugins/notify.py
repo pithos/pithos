@@ -14,7 +14,7 @@
 
 import os
 
-from gi.repository import Gio
+from gi.repository import Gio, Gtk
 
 from pithos.plugin import PithosPlugin
 from pithos.util import is_flatpak
@@ -38,6 +38,7 @@ class NotifyPlugin(PithosPlugin):
         self._app = Gio.Application.get_default()
         self._app_id = self._app.get_application_id()
         self._fallback_icon = Gio.ThemedIcon.new('audio-x-generic')
+        self.preferences_dialog = NotifyPluginPrefsWindow(self.window, self.settings)
         self.prepare_complete()
 
     def on_enable(self):
@@ -53,11 +54,12 @@ class NotifyPlugin(PithosPlugin):
             self._app.withdraw_notification(self._app_id)
         else:
             song = window.current_song
+            album = '\n' + song.album if song.album and self.preferences_dialog.show_album else ''
             # This matches GNOME-Shell's format
             notification = Gio.Notification.new(song.artist)
             # GNOME focuses the application by default, we want to match that behavior elsewhere such as on KDE.
             notification.set_default_action('app.activate')
-            notification.set_body(song.title)
+            notification.set_body(song.title + album)
 
             if song.artUrl:
                 icon = Gio.FileIcon.new(Gio.File.new_for_uri(song.artUrl))
@@ -77,3 +79,44 @@ class NotifyPlugin(PithosPlugin):
         if self._shutdown_handler:
             self._app.disconnect(self._shutdown_handler)
             self._shutdown_handler = 0
+
+
+class NotifyPluginPrefsWindow(Gtk.Window):
+    __gtype_name__ = 'NotifyPluginPrefsWindow'
+
+    def __init__(self, window, settings):
+        super().__init__(title='Notification Preferences', resizable=False,
+                         default_height=-1, default_width=300)
+        self.connect('delete-event', self.on_close)
+
+        self.pithos = window
+        self.settings = settings
+        self.show_album = self.settings['data'] == 'True' if self.settings['data'] else False
+
+        box = Gtk.Box(spacing=6)
+        label = Gtk.Label()
+        label.set_markup('\n<b>{}</b>\n'.format(_('Show Album Info')))
+        label.set_halign(Gtk.Align.START)
+        label.set_valign(Gtk.Align.CENTER)
+        box.pack_start(label, True, True, 4)
+
+        self.switch = Gtk.Switch()
+        self.switch.connect('notify::active', self.toggle_album_info)
+        self.switch.set_active(self.show_album)
+        self.settings.connect('changed::enabled', self._on_album_info_plugin_enabled)
+        self.switch.set_halign(Gtk.Align.END)
+        self.switch.set_valign(Gtk.Align.CENTER)
+        box.pack_end(self.switch, False, False, 2)
+
+        self.add(box)
+
+    def on_close(self, window, event):
+        window.hide()
+        return True
+
+    def toggle_album_info(self, *ignore):
+        self.show_album = bool(self.switch.get_active())
+        self.settings['data'] = str(self.show_album)
+
+    def _on_album_info_plugin_enabled(self, *ignore):
+        self.switch.set_active(self.show_album)
