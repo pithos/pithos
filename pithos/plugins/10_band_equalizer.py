@@ -56,7 +56,7 @@ class EqDialog(Gtk.Dialog):
         self.set_default_size(200, 200)
         self.set_resizable(False)
         self.connect('response', self.on_response)
-        self.connect('delete-event', lambda *ignore: self.hide_on_delete())
+        self.connect('close-request', lambda *ignore: self.set_visible(False) or True)
 
         self.plugin = plugin
         self.plugin.window.connect('player-ready', self.on_enabled)
@@ -64,7 +64,7 @@ class EqDialog(Gtk.Dialog):
 
     def on_response(self, dialog, response):
         if response == Gtk.ResponseType.CLOSE:
-            self.hide()
+            self.set_visible(False)
         elif response == Gtk.ResponseType.CANCEL:
             self.zero_eq()
             self.plugin.settings['data'] = self.get_eq_values()

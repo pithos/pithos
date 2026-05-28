@@ -42,13 +42,18 @@ class PithosPluginRow(Gtk.ListBoxRow):
         label.set_max_width_chars(30)
         label.set_line_wrap(True)
         label.set_lines(1)
-        box.pack_start(label, True, True, 4)
+        label.set_hexpand(True)
+        label.set_margin_start(4)
+        label.set_margin_end(4)
+        box.append(label)
 
         self.switch = Gtk.Switch()
         plugin.settings.bind('enabled', self.switch, 'active', Gio.SettingsBindFlags.DEFAULT)
         self.switch.connect('notify::active', self.on_activated)
         self.switch.set_valign(Gtk.Align.CENTER)
-        box.pack_end(self.switch, False, False, 2)
+        self.switch.set_margin_start(2)
+        self.switch.set_margin_end(2)
+        box.append(self.switch)
         self.connect('grab-focus', self.set_prefs_btn)
         self.plugin.connect('notify::enabled', self.on_enabled)
 
@@ -56,7 +61,7 @@ class PithosPluginRow(Gtk.ListBoxRow):
             self.set_sensitive(False)
             self.set_tooltip_text(plugin.error)
 
-        self.add(box)
+        self.set_child(box)
 
     def on_enabled(self, *ignore):
         if self.is_selected():
@@ -137,8 +142,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         self.plugins_listbox.set_header_func(self.on_listbox_update_header)
         for plugin in plugins.values():
             row = PithosPluginRow(plugin)
-            self.plugins_listbox.add(row)
-        self.plugins_listbox.show_all()
+            self.plugins_listbox.append(row)
 
     @Gtk.Template.Callback()
     def on_plugins_row_selected(self, box, row):
@@ -151,7 +155,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
         dialog.set_transient_for(self)
         dialog.set_destroy_with_parent(True)
         dialog.set_modal(True)
-        dialog.show_all()
+        dialog.present()
 
     @Gtk.Template.Callback()
     def on_account_changed(self, *ignore):
@@ -178,7 +182,7 @@ class PreferencesPithosDialog(Gtk.Dialog):
 
     @Gtk.Template.Callback()
     def on_delete_event(self, *ignore):
-        self.hide()
+        self.set_visible(False)
         self.settings.revert()
         return True
 
@@ -192,18 +196,18 @@ class PreferencesPithosDialog(Gtk.Dialog):
                     # Should never really ever happen...
                     # But just in case.
                     self.settings.revert()
-                    self.show()
+                    self.present()
                     dialog = Gtk.MessageDialog(
-                        parent=self,
-                        flags=Gtk.DialogFlags.MODAL,
-                        type=Gtk.MessageType.WARNING,
+                        transient_for=self,
+                        modal=True,
+                        message_type=Gtk.MessageType.WARNING,
                         buttons=Gtk.ButtonsType.OK,
                         text=_('Failed to Store Your Pandora Credentials'),
                         secondary_text=_('Please re-enter your email and password.'),
                     )
 
                     dialog.connect('response', lambda *ignore: dialog.destroy())
-                    dialog.show()
+                    dialog.present()
 
             email = self.email_entry.get_text()
             password = self.password_entry.get_text()

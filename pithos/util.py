@@ -226,23 +226,14 @@ def parse_proxy(proxy):
 
 def open_browser(url, parent=None, timestamp=0):
     logging.info("Opening URL {}".format(url))
-    if not timestamp:
-        timestamp = Gtk.get_current_event_time()
     try:
-        if hasattr(Gtk, 'show_uri_on_window'):
-            Gtk.show_uri_on_window(parent, url, timestamp)
-        else: # Gtk <= 3.20
-            screen = None
-            if parent:
-                screen = parent.get_screen()
-            Gtk.show_uri(screen, url, timestamp)
+        Gtk.show_uri(parent, url, 0)
     except GLib.Error as e:
         logging.warning('Failed to open URL: {}'.format(e.message))
 
-if hasattr(Gtk.Menu, 'popup_at_pointer'):
-    popup_at_pointer = Gtk.Menu.popup_at_pointer
-else:
-    popup_at_pointer = lambda menu, event: menu.popup(None, None, None, None, event.button, event.time)
+def popup_at_pointer(menu, event):
+    # Phase 2: GtkMenu removed in GTK4; replace callers with GtkPopoverMenu
+    pass
 
 _is_flatpak = None
 def is_flatpak() -> bool:

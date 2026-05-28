@@ -833,7 +833,7 @@ class MprisPluginPrefsDialog(Gtk.Dialog):
         self.set_title(_('Hide on Close'))
         self.set_default_size(300, -1)
         self.set_resizable(False)
-        self.connect('delete-event', self.on_close)
+        self.connect('close-request', self.on_close)
 
         self.pithos = window
         self.settings = settings
@@ -843,7 +843,10 @@ class MprisPluginPrefsDialog(Gtk.Dialog):
         label = Gtk.Label()
         label.set_markup('<b>{}</b>\n{}'.format(_('Hide Pithos on Close'), _('Instead of Quitting')))
         label.set_halign(Gtk.Align.START)
-        box.pack_start(label, True, True, 4)
+        label.set_hexpand(True)
+        label.set_margin_start(4)
+        label.set_margin_end(4)
+        box.append(label)
 
         self.switch = Gtk.Switch()
         self.switch.connect('notify::active', self.on_activated)
@@ -851,14 +854,15 @@ class MprisPluginPrefsDialog(Gtk.Dialog):
         self.settings.connect('changed::enabled', self._on_plugin_enabled)
         self.switch.set_halign(Gtk.Align.END)
         self.switch.set_valign(Gtk.Align.CENTER)
-        box.pack_end(self.switch, False, False, 2)
+        self.switch.set_margin_start(2)
+        self.switch.set_margin_end(2)
+        box.append(self.switch)
 
         content_area = self.get_content_area()
-        content_area.add(box)
-        content_area.show_all()
+        content_area.append(box)
 
-    def on_close(self, window, event):
-        window.hide()
+    def on_close(self, window):
+        window.set_visible(False)
         return True
 
     def on_activated(self, *ignore):
@@ -882,9 +886,9 @@ class MprisPluginPrefsDialog(Gtk.Dialog):
     def _disable_hide_on_delete(self):
         if self.delete_handler:
             self.pithos.disconnect(self.delete_handler)
-        self.delete_handler = self.pithos.connect('delete-event', self.pithos.on_destroy)
+        self.delete_handler = self.pithos.connect('close-request', self.pithos.on_destroy)
 
     def _enable_hide_on_delete(self):
         if self.delete_handler:
             self.pithos.disconnect(self.delete_handler)
-        self.delete_handler = self.pithos.connect('delete-event', self.on_close)
+        self.delete_handler = self.pithos.connect('close-request', self.on_close)

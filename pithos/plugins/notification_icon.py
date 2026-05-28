@@ -79,7 +79,7 @@ class PithosStatusNotifierItem(DBusServiceObject):
 
     def toggle_visible(self, *args):
         if self.window.get_visible():
-            self.window.hide()
+            self.window.set_visible(False)
         else:
             self.window.bring_to_top()
 
@@ -235,23 +235,10 @@ class PithosNotificationIcon(PithosPlugin):
             self.playpausebtn.set_label("Pause" if playing else "Play")
 
     def _build_context_menu(self):
-        menu = Gtk.Menu()
-
-        def button(text, action):
-            item = Gtk.MenuItem(text)
-            item.connect('activate', action)
-            item.show()
-            menu.append(item)
-            return item
-
-        self.playpausebtn = button("Pause", self.window.playpause)
-        button("Skip",  self.window.next_song)
-        button("Love",  (lambda *i: self.window.love_song()))
-        button("Ban",   (lambda *i: self.window.ban_song()))
-        button("Tired", (lambda *i: self.window.tired_song()))
-        button("Quit",  self.window.quit)
-
-        self.menu = menu
+        # Phase 4: GtkMenu/MenuItem removed in GTK4; DbusmenuGtk3 has no GTK4 equivalent.
+        # The dbusmenu path is fully disabled until a replacement is found.
+        self.menu = None
+        self.playpausebtn = None
 
     def _setup_dbusmenu(self):
         if not have_dbusmenu:
@@ -263,7 +250,7 @@ class PithosNotificationIcon(PithosPlugin):
 
     def _show_window(self):
         if not self.window.get_visible():
-            self.window.show()
+            self.window.present()
 
     def _toggle_visible(self, *args):
         if self.registered:
@@ -271,7 +258,7 @@ class PithosNotificationIcon(PithosPlugin):
             return True
 
     def on_enable(self):
-        self.delete_callback_handle = self.window.connect('delete-event', self._toggle_visible)
+        self.delete_callback_handle = self.window.connect('close-request', self._toggle_visible)
         self.state_callback_handle = self.window.connect('play-state-changed', self._play_state_changed)
         self.statusnotifieritem.set_active(True)
 
@@ -295,7 +282,7 @@ class NotificationIconPluginPrefsDialog(Gtk.Dialog):
 
         self.add_buttons('_Cancel', Gtk.ResponseType.CANCEL, '_Apply', Gtk.ResponseType.APPLY)
 
-        self.connect('delete-event', lambda *ignore: self.response(Gtk.ResponseType.CANCEL) or True)
+        self.connect('close-request', lambda *ignore: self.response(Gtk.ResponseType.CANCEL) or True)
 
         sub_title = Gtk.Label.new(_('Set the Notification Icon Type'))
         sub_title.set_halign(Gtk.Align.CENTER)
@@ -311,9 +298,8 @@ class NotificationIconPluginPrefsDialog(Gtk.Dialog):
         self._reset_combo()
 
         content_area = self.get_content_area()
-        content_area.add(sub_title)
-        content_area.add(self.icons_combo)
-        content_area.show_all()
+        content_area.append(sub_title)
+        content_area.append(self.icons_combo)
 
     def _reset_combo(self):
         self.icons_combo.set_active_id(self.settings['data'])
@@ -323,4 +309,4 @@ class NotificationIconPluginPrefsDialog(Gtk.Dialog):
             self.settings['data'] = self.icons_combo.get_active_id()
         else:
             self._reset_combo()
-        self.hide()
+        self.set_visible(False)

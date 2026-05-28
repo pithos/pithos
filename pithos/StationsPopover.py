@@ -14,8 +14,7 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from gi.repository import GLib, Gio, Gtk, Gdk, Pango
-from .util import open_browser, popup_at_pointer
+from gi.repository import GLib, Gio, Gtk, Pango
 
 
 class StationsPopover(Gtk.Popover):
@@ -25,63 +24,51 @@ class StationsPopover(Gtk.Popover):
         super().__init__()
 
         box2 = Gtk.Box()
-        self.search = Gtk.SearchEntry(can_default=True,
-                                      placeholder_text=_('Search stations…'))
+        self.search = Gtk.SearchEntry(placeholder_text=_('Search stations…'))
         self.sorted = False
         self.sort = Gtk.ToggleButton.new()
-        self.sort.get_accessible().props.accessible_description = _('sort button')
-        self.sort.add(Gtk.Image.new_from_icon_name("view-sort-ascending-symbolic", Gtk.IconSize.BUTTON))
+        self.sort.set_child(Gtk.Image.new_from_icon_name("view-sort-ascending-symbolic"))
         self.sort.connect("toggled", self.sort_changed)
-        box2.pack_start(self.search, True, True, 0)
-        box2.add(self.sort)
+        self.search.set_hexpand(True)
+        box2.append(self.search)
+        box2.append(self.sort)
 
         self.listbox = Gtk.ListBox()
-        self.listbox.connect('button-press-event', self.on_button_press)
+        # Phase 2: replace with GtkGestureClick (button-press-event removed in GTK4)
         self.listbox.connect('row-activated', self.on_row_activated)
         self.listbox.set_sort_func(self.listbox_sort)
         self.listbox.set_header_func(self.listbox_header)
         sw = Gtk.ScrolledWindow()
         sw.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         sw.set_size_request(-1, 200)
-        sw.add(self.listbox)
+        sw.set_child(self.listbox)
 
         self.search.connect("search-changed", self.search_changed)
         self.listbox.set_filter_func(self.listbox_filter, self.search)
 
         box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
-        box.props.margin = 3
-        box.pack_start(box2, True, False, 3)
-        box.pack_start(sw, True, True, 0)
+        box.set_margin_top(3)
+        box.set_margin_bottom(3)
+        box.set_margin_start(3)
+        box.set_margin_end(3)
+        box2.set_margin_top(3)
+        box2.set_margin_bottom(3)
+        box.append(box2)
+        sw.set_hexpand(True)
+        sw.set_vexpand(True)
+        box.append(sw)
 
         settings = Gio.Settings.new('io.github.Pithos')
         settings.bind('sort-stations', self.sort, 'active', Gio.SettingsBindFlags.DEFAULT)
 
-        box.show_all()
-        self.add(box)
+        self.set_child(box)
 
     def on_button_press(self, widget, event):
-        def open_info(item, station):
-            open_browser(station.info_url, parent=self.get_toplevel(),
-                         timestamp=event.time)
-
-        if event.button != Gdk.BUTTON_SECONDARY:
-            return False
-
-        row = self.listbox.get_row_at_y(event.y)
-        if not row:
-            return False
-
-        item = Gtk.MenuItem.new_with_label('Station Info…')
-        item.connect('activate', open_info, row.station)
-        item.show()
-        menu = Gtk.Menu.new()
-        menu.append(item)
-        menu.attach_to_widget(widget)
-        popup_at_pointer(menu, event)
-        return True
+        # Phase 2: GtkMenu and button-press-event removed in GTK4; replace with GtkGestureClick + GtkPopoverMenu
+        pass
 
     def on_row_activated(self, listbox, row):
-        self.hide()
+        self.set_visible(False)
         self.search.set_text('')
 
     def sort_changed(self, widget):
@@ -120,15 +107,23 @@ class StationsPopover(Gtk.Popover):
         else:
             return GLib.ascii_strcasecmp(row1.name, row2.name)
 
+    def _iter_rows(self):
+        i = 0
+        while True:
+            row = self.listbox.get_row_at_index(i)
+            if row is None:
+                break
+            yield row
+            i += 1
+
     def insert_row(self, model, path, iter):
         station, name, index = model.get(iter, 0, 1, 2)
         row = StationListBoxRow(station, name, index)
-        row.show_all()
-        self.listbox.add(row)
+        self.listbox.append(row)
 
     def change_row(self, model, path, iter, data=None):
         station, name, index = model.get(iter, 0, 1, 2)
-        for row in self.listbox.get_children():
+        for row in self._iter_rows():
             if row.station == station:
                 row.name, row.index = name, index
                 self.listbox.invalidate_sort()
@@ -137,27 +132,24 @@ class StationsPopover(Gtk.Popover):
             logging.warning('Row changed on unknown station')
 
     def clear(self):
-        for row in self.listbox.get_children():
-            row.destroy()
+        for row in list(self._iter_rows()):
+            self.listbox.remove(row)
 
     def toggle_visibility(self, *ignore):
-        if self.props.visible:
-            self.hide()
-        else:
-            self.show_all()
+        self.set_visible(not self.get_visible())
 
     def set_model(self, model):
         model.connect('row-inserted', self.insert_row)
         model.connect('row-changed', self.change_row)
 
     def select_station(self, station):
-        for row in self.listbox.get_children():
+        for row in self._iter_rows():
             if row.station == station:
                 self.listbox.select_row(row)
                 break
 
     def remove_station(self, station):
-        for row in self.listbox.get_children():
+        for row in list(self._iter_rows()):
             if row.station == station:
                 self.listbox.remove(row)
                 break
@@ -172,14 +164,15 @@ class StationListBoxRow(Gtk.ListBoxRow):
 
         box = Gtk.Box()
         self.label = Gtk.Label()
-        self.label.set_alignment(0, .5)
+        self.label.set_halign(Gtk.Align.START)
         self.label.set_ellipsize(Pango.EllipsizeMode.END)
         self.label.set_max_width_chars(15)
         self.label.set_text(name)
-        box.pack_start(self.label, True, True, 0)
+        self.label.set_hexpand(True)
+        box.append(self.label)
 
         # TODO: Modify quickmix from here
-        self.add(box)
+        self.set_child(box)
 
     @property
     def name(self):

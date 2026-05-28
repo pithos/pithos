@@ -1,47 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.19.0 -->
 <interface>
-  <requires lib="gtk+" version="3.14"/>
+  <requires lib="gtk" version="4.0"/>
   <template class="StationsDialog" parent="GtkDialog">
     <property name="modal">1</property>
     <property name="default-width">360</property>
     <property name="default-height">300</property>
-    <signal name="delete-event" handler="on_close" swapped="no"/>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="dialog-vbox1">
-        <property name="orientation">vertical</property>
-        <child>
-          <object class="GtkScrolledWindow" id="scrolledwindow1">
-            <property name="shadow_type">in</property>
-            <child>
-              <object class="GtkTreeView" id="treeview">
-                <child internal-child="selection">
-                  <object class="GtkTreeSelection" id="treeview-selection1"/>
-                </child>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">1</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
-      </object>
-    </child>
+    <signal name="close-request" handler="on_close" swapped="no"/>
     <child type="titlebar">
       <object class="GtkHeaderBar" id="headerbar1">
-        <property name="visible">1</property>
-        <property name="title" translatable="yes">Manage Stations</property>
-        <property name="show_close_button">1</property>
+        <property name="show_title_buttons">1</property>
+        <child type="title">
+          <object class="GtkLabel">
+            <property name="label" translatable="yes">Manage Stations</property>
+          </object>
+        </child>
         <child>
           <object class="GtkButton" id="button1">
-            <property name="visible">1</property>
-            <property name="can_focus">1</property>
-            <property name="receives_default">1</property>
             <signal name="clicked" handler="add_station" swapped="no"/>
             <child>
               <object class="GtkImage" id="image1">
-                <property name="visible">1</property>
                 <property name="icon_name">list-add-symbolic</property>
               </object>
             </child>
@@ -49,20 +26,25 @@
         </child>
         <child>
           <object class="GtkButton" id="button2">
-            <property name="visible">1</property>
-            <property name="can_focus">1</property>
-            <property name="receives_default">1</property>
             <signal name="clicked" handler="refresh_stations" swapped="no"/>
             <child>
               <object class="GtkImage" id="image2">
-                <property name="visible">1</property>
                 <property name="icon_name">view-refresh-symbolic</property>
               </object>
             </child>
           </object>
-          <packing>
-            <property name="position">1</property>
-          </packing>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkScrolledWindow" id="scrolledwindow1">
+        <property name="vexpand">1</property>
+        <child>
+          <object class="GtkTreeView" id="treeview">
+            <child internal-child="selection">
+              <object class="GtkTreeSelection" id="treeview-selection1"/>
+            </child>
+          </object>
         </child>
       </object>
     </child>
@@ -73,14 +55,11 @@
     <child type="action">
       <object class="GtkButton" id="button_yes">
         <property name="label" translatable="yes">Yes</property>
-        <property name="visible">1</property>
-        <property name="can_default">1</property>
       </object>
     </child>
     <child type="action">
       <object class="GtkButton" id="button_no">
         <property name="label" translatable="yes">No</property>
-        <property name="visible">1</property>
       </object>
     </child>
     <action-widgets>
@@ -88,34 +67,5 @@
       <action-widget response="-8" default="true">button_yes</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkMenu" id="station_menu">
-    <child>
-      <object class="GtkMenuItem" id="menuitem_listen">
-        <property name="visible">1</property>
-        <property name="label" translatable="yes">Listen Now</property>
-        <signal name="activate" handler="on_menuitem_listen" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="menuitem_info">
-        <property name="visible">1</property>
-        <property name="label" translatable="yes">Info</property>
-        <signal name="activate" handler="on_menuitem_info" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="menuitem_rename">
-        <property name="visible">1</property>
-        <property name="label" translatable="yes">Rename</property>
-        <signal name="activate" handler="on_menuitem_rename" swapped="no"/>
-      </object>
-    </child>
-    <child>
-      <object class="GtkMenuItem" id="menuitem_delete">
-        <property name="visible">1</property>
-        <property name="label" translatable="yes">Delete</property>
-        <signal name="activate" handler="on_menuitem_delete" swapped="no"/>
-      </object>
-    </child>
-  </object>
+  <!-- Phase 2: station_menu (GtkMenu/GtkMenuItem) removed; replace with GtkPopoverMenu -->
 </interface>

@@ -56,7 +56,7 @@ class LastfmPlugin(PithosPlugin):
             dialog.set_transient_for(self.window.prefs_dlg)
             dialog.set_destroy_with_parent(True)
             dialog.set_modal(True)
-            dialog.show_all()
+            dialog.present()
 
     def on_lastfm_authorized(self, prefs_dialog, auth_state):
         if auth_state is prefs_dialog.AuthState.AUTHORIZED:
@@ -118,9 +118,9 @@ class LastfmPlugin(PithosPlugin):
             parent = self.window
 
         dialog = Gtk.MessageDialog(
-            parent=parent,
-            flags=Gtk.DialogFlags.MODAL,
-            type=Gtk.MessageType.INFO,
+            transient_for=parent,
+            modal=True,
+            message_type=Gtk.MessageType.INFO,
             buttons=Gtk.ButtonsType.YES_NO,
             text=text,
             secondary_text=secondary_text,
@@ -136,11 +136,10 @@ class LastfmPlugin(PithosPlugin):
         trinary_label.set_halign(Gtk.Align.CENTER)
 
         message_area = dialog.get_message_area()
-        message_area.add(link_label)
-        message_area.add(trinary_label)
+        message_area.append(link_label)
+        message_area.append(trinary_label)
 
-        message_area.show_all()
-        dialog.show()
+        dialog.present()
 
     def _enable_real(self):
         self._connect(self.settings['data'])
@@ -223,7 +222,7 @@ class LastFmAuth(Gtk.Dialog):
         self.set_title('Last.fm')
         self.set_default_size(300, -1)
         self.set_resizable(False)
-        self.connect('delete-event', self.on_close)
+        self.connect('close-request', self.on_close)
 
         self.worker = GObjectWorker()
         self.settings = settings
@@ -243,12 +242,11 @@ class LastFmAuth(Gtk.Dialog):
         self.button.connect('clicked', self.on_clicked)
 
         content_area = self.get_content_area()
-        content_area.add(self.label)
-        content_area.add(self.button)
-        content_area.show_all()
+        content_area.append(self.label)
+        content_area.append(self.button)
 
     def on_close(self, *ignore):
-        self.hide()
+        self.set_visible(False)
         # Don't let things be left in a half authorized state if the dialog is closed and not fully authorized.
         # Also disable the plugin if it's not fully authorized so there's no confusion.
         if self.auth_state is not self.AuthState.AUTHORIZED:

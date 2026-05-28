@@ -1,86 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.18.3 -->
 <interface>
-  <requires lib="gtk+" version="3.14"/>
+  <requires lib="gtk" version="4.0"/>
   <template class="SearchDialog" parent="GtkDialog">
-    <property name="border_width">2</property>
     <property name="modal">1</property>
     <property name="title" translatable="yes">Search</property>
     <child type="action">
       <object class="GtkButton" id="button_cancel">
         <property name="label" translatable="yes">Cancel</property>
-        <property name="visible">1</property>
       </object>
     </child>
     <child type="action">
       <object class="GtkButton" id="button_ok">
         <property name="label" translatable="yes">Add</property>
-        <property name="visible">1</property>
-      </object>
-    </child>
-    <child internal-child="vbox">
-      <object class="GtkBox" id="dialog-vbox1">
-        <property name="visible">1</property>
-        <property name="spacing">2</property>
-        <!-- 360 - 4 due to border-width == 2-->
-        <property name="width_request">356</property>
-        <child>
-          <object class="GtkVBox" id="vbox1">
-            <property name="visible">1</property>
-            <property name="spacing">4</property>
-            <child>
-              <object class="GtkSearchEntry" id="entry">
-                <property name="visible">1</property>
-                <property name="can_focus">1</property>
-                <property name="placeholder_text" translatable="yes">Search for an Artist or Song…</property>
-                <signal name="search-changed" handler="search_clicked" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkScrolledWindow" id="scrolledwindow1">
-                <property name="visible">1</property>
-                <property name="shadow_type">in</property>
-                <child>
-                  <object class="GtkTreeView" id="treeview">
-                    <property name="visible">1</property>
-                    <property name="headers_visible">0</property>
-                    <signal name="cursor-changed" handler="cursor_changed" swapped="no"/>
-                    <child internal-child="selection">
-                      <object class="GtkTreeSelection" id="treeview-selection1"/>
-                    </child>
-                    <child>
-                      <object class="GtkTreeViewColumn" id="col">
-                        <property name="title">column</property>
-                        <child>
-                          <object class="GtkCellRendererText" id="cellrenderertext"/>
-                          <attributes>
-                            <attribute name="markup">1</attribute>
-                          </attributes>
-                        </child>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">1</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">1</property>
-            <property name="position">1</property>
-          </packing>
-        </child>
       </object>
     </child>
     <action-widgets>
       <action-widget response="-6">button_cancel</action-widget>
       <action-widget response="-5">button_ok</action-widget>
     </action-widgets>
+    <child>
+      <object class="GtkBox" id="vbox1">
+        <property name="orientation">vertical</property>
+        <property name="spacing">4</property>
+        <property name="width_request">356</property>
+        <child>
+          <object class="GtkSearchEntry" id="entry">
+            <property name="placeholder_text" translatable="yes">Search for an Artist or Song…</property>
+            <signal name="search-changed" handler="search_clicked" swapped="no"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledwindow1">
+            <property name="vexpand">1</property>
+            <child>
+              <object class="GtkTreeView" id="treeview">
+                <property name="headers_visible">0</property>
+                <signal name="cursor-changed" handler="cursor_changed" swapped="no"/>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="treeview-selection1"/>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="col">
+                    <property name="title">column</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertext"/>
+                      <attributes>
+                        <attribute name="markup">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
   </template>
 </interface>

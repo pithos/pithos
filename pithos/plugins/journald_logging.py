@@ -80,7 +80,7 @@ class LoggingPluginPrefsDialog(Gtk.Dialog):
         self.settings = settings
         self.set_resizable(False)
 
-        self.connect('delete-event', lambda *ignore: self.response(Gtk.ResponseType.CANCEL) or True)
+        self.connect('close-request', lambda *ignore: self.response(Gtk.ResponseType.CANCEL) or True)
 
         sub_title = Gtk.Label.new(_('Set the journald logging level for Pithos'))
         sub_title.set_halign(Gtk.Align.CENTER)
@@ -98,16 +98,15 @@ class LoggingPluginPrefsDialog(Gtk.Dialog):
         self._reset_combo()
         content_area = self.get_content_area()
 
-        content_area.add(sub_title)
-        content_area.add(self.log_level_combo)
-        content_area.show_all()
+        content_area.append(sub_title)
+        content_area.append(self.log_level_combo)
 
     def _reset_combo(self):
         self.log_level_combo.set_active_id(self.settings['data'] or 'verbose')
 
     def do_response(self, response):
         if response != Gtk.ResponseType.APPLY:
-            self.hide()
+            self.set_visible(False)
             self._reset_combo()
             return
 
@@ -115,17 +114,17 @@ class LoggingPluginPrefsDialog(Gtk.Dialog):
         active_id = self.log_level_combo.get_active_id()
 
         if setting == active_id:
-            self.hide()
+            self.set_visible(False)
             return
 
         if active_id != 'debug':
-            self.hide()
+            self.set_visible(False)
             self.emit('logging-changed', active_id)
             return
 
         def on_dialog_response(dialog, response):
             if response == Gtk.ResponseType.YES:
-                self.hide()
+                self.set_visible(False)
                 self.emit('logging-changed', active_id)
             dialog.destroy()
 
@@ -136,13 +135,13 @@ class LoggingPluginPrefsDialog(Gtk.Dialog):
         ))
 
         dialog = Gtk.MessageDialog(
-            parent=self.pithos_window.prefs_dlg,
-            flags=Gtk.DialogFlags.MODAL,
-            type=Gtk.MessageType.WARNING,
+            transient_for=self.pithos_window.prefs_dlg,
+            modal=True,
+            message_type=Gtk.MessageType.WARNING,
             buttons=Gtk.ButtonsType.YES_NO,
             text=_('Debug Logging Level'),
             secondary_text=message,
         )
 
         dialog.connect('response', on_dialog_response)
-        dialog.show()
+        dialog.present()

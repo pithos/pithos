@@ -18,8 +18,9 @@ import signal
 import logging
 
 import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import GLib, Gio, Gtk
+gi.require_version('Gtk', '4.0')
+gi.require_version('Gdk', '4.0')
+from gi.repository import GLib, Gio, Gtk, Gdk
 
 from .pithos import PithosWindow
 from .util import open_browser
@@ -63,6 +64,12 @@ class PithosApplication(Gtk.Application):
     def do_startup(self):
         Gtk.Application.do_startup(self)
         signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+        icon_path = os.environ.get('PITHOS_ICON_PATH')
+        if icon_path:
+            display = Gdk.Display.get_default()
+            if display:
+                Gtk.IconTheme.get_for_display(display).add_search_path(icon_path)
 
         action = Gio.SimpleAction.new("stations", None)
         action.connect("activate", self.stations_cb)

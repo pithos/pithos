@@ -37,11 +37,11 @@ class FakePandora(Pandora):
         self.window.set_opacity(0.7)
         self.auth_check = Gtk.CheckButton.new_with_label("Authenticated")
         self.time_check = Gtk.CheckButton.new_with_label("Be really slow")
-        vbox = Gtk.VBox()
-        self.window.add(vbox)
-        vbox.pack_start(self.auth_check, True, True, 0)
-        vbox.pack_start(self.time_check, True, True, 0)
-        self.window.show_all()
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.window.set_child(vbox)
+        vbox.append(self.auth_check)
+        vbox.append(self.time_check)
+        self.window.present()
 
     def maybe_fail(self):
         if self.time_check.get_active():

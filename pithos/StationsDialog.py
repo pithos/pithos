@@ -15,9 +15,9 @@
 import html
 import logging
 
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, Gdk, Gio, GObject
 
-from .util import open_browser, popup_at_pointer
+from .util import open_browser
 from . import SearchDialog
 
 
@@ -32,10 +32,9 @@ class StationsDialog(Gtk.Dialog):
 
     treeview = Gtk.Template.Child()
     delete_confirm_dialog = Gtk.Template.Child()
-    station_menu = Gtk.Template.Child()
 
     def __init__(self, pithos, *args, **kwargs):
-        super().__init__(*args, use_header_bar=1, **kwargs)
+        super().__init__(*args, **kwargs)
         self.init_template()
 
         self.pithos = pithos
@@ -59,7 +58,34 @@ class StationsDialog(Gtk.Dialog):
 #        self.modelsortable.set_sort_column_id(1, Gtk.SortType.ASCENDING)
 
         self.treeview.set_model(self.modelsortable)
-        self.treeview.connect('button_press_event', self.on_treeview_button_press_event)
+
+        # Station context menu (right-click on treeview)
+        station_menu = Gio.Menu()
+        station_menu.append(_("Listen to Station"), "ctx.station-listen")
+        station_menu.append(_("Station Info"), "ctx.station-info")
+        station_menu.append(_("Rename Station"), "ctx.station-rename")
+        station_menu.append(_("Delete Station"), "ctx.station-delete")
+
+        self._station_menu_popover = Gtk.PopoverMenu.new_from_model(station_menu)
+        self._station_menu_popover.set_parent(self.treeview)
+        self._station_menu_popover.set_has_arrow(False)
+
+        ctx_group = Gio.SimpleActionGroup()
+        for name, handler in [
+            ('station-listen', lambda *_: self.on_menuitem_listen(None)),
+            ('station-info',   lambda *_: self.on_menuitem_info(None)),
+            ('station-rename', lambda *_: self.on_menuitem_rename(None)),
+            ('station-delete', lambda *_: self.on_menuitem_delete(None)),
+        ]:
+            a = Gio.SimpleAction.new(name, None)
+            a.connect('activate', handler)
+            ctx_group.add_action(a)
+        self.insert_action_group('ctx', ctx_group)
+
+        right_click = Gtk.GestureClick.new()
+        right_click.set_button(3)
+        right_click.connect('pressed', self._on_treeview_right_click)
+        self.treeview.add_controller(right_click)
 
         name_col = Gtk.TreeViewColumn()
         name_col.set_title("Name")
@@ -100,16 +126,16 @@ class StationsDialog(Gtk.Dialog):
             self.pithos.statusbar.pop(self.pithos.statusbar.get_context_id('net'))
             if hasattr(e, 'status') and e.status == 1008:
                 dialog = Gtk.MessageDialog(
-                    parent=self,
-                    flags=Gtk.DialogFlags.MODAL,
-                    type=Gtk.MessageType.WARNING,
+                    transient_for=self,
+                    modal=True,
+                    message_type=Gtk.MessageType.WARNING,
                     buttons=Gtk.ButtonsType.OK,
                     text='Could Not Rename {}'.format(old_station_name),
                     secondary_text='Pandora does not permit renaming {}.'.format(old_station_name),
                 )
 
                 dialog.connect('response', lambda *ignore: dialog.destroy())
-                dialog.show()
+                dialog.present()
 
             elif hasattr(e, 'message') and hasattr(e, 'submsg'):
                 self.window.error_dialog(e.message, None, submsg=e.submsg)
@@ -138,49 +164,50 @@ class StationsDialog(Gtk.Dialog):
         if sel:
             return self.treeview.get_model().get_value(sel[1], 0)
 
-    def on_treeview_button_press_event(self, treeview, event):
-        if event.button == 3:
-            x = int(event.x)
-            y = int(event.y)
-            pthinfo = treeview.get_path_at_pos(x, y)
-            if pthinfo is not None:
-                path, col, cellx, celly = pthinfo
-                treeview.grab_focus()
-                treeview.set_cursor(path, col, 0)
-                popup_at_pointer(self.station_menu, event)
-            return True
+    def _on_treeview_right_click(self, gesture, n_press, x, y):
+        pthinfo = self.treeview.get_path_at_pos(int(x), int(y))
+        if pthinfo is None:
+            return
+        path, col, cellx, celly = pthinfo
+        self.treeview.grab_focus()
+        self.treeview.set_cursor(path, col, 0)
+        rect = Gdk.Rectangle()
+        rect.x, rect.y, rect.width, rect.height = int(x), int(y), 1, 1
+        self._station_menu_popover.set_pointing_to(rect)
+        self._station_menu_popover.popup()
 
-    @Gtk.Template.Callback()
+    # Station context menu actions
     def on_menuitem_listen(self, widget):
         station = self.selected_station()
         self.pithos.station_changed(station)
-        self.hide()
+        self.set_visible(False)
 
-    @Gtk.Template.Callback()
     def on_menuitem_info(self, widget):
         open_browser(self.selected_station().info_url, parent=self)
 
-    @Gtk.Template.Callback()
     def on_menuitem_rename(self, widget):
         sel = self.treeview.get_selection().get_selected()
         path = self.treeview.get_model().get_path(sel[1])
         self.treeview.set_cursor(path, self.treeview.get_column(0), True)
 
-    @Gtk.Template.Callback()
     def on_menuitem_delete(self, widget):
         station = self.selected_station()
 
         dialog = self.delete_confirm_dialog
         dialog.set_property('text', 'Are you sure you want to delete the station "{}"?'.format(station.name))
-        response = dialog.run()
-        dialog.hide()
 
-        if response == Gtk.ResponseType.YES:
-            self.worker_run(station.delete, context='net', message="Deleting Station...")
-            self.pithos.remove_station(station)
-            if self.pithos.current_station is station:
-                self.pithos.station_changed(self.model[0][0])
-            self.emit('station-removed', station)
+        def on_response(dialog, response):
+            dialog.disconnect_by_func(on_response)
+            dialog.set_visible(False)
+            if response == Gtk.ResponseType.YES:
+                self.worker_run(station.delete, context='net', message="Deleting Station...")
+                self.pithos.remove_station(station)
+                if self.pithos.current_station is station:
+                    self.pithos.station_changed(self.model[0][0])
+                self.emit('station-removed', station)
+
+        dialog.connect('response', on_response)
+        dialog.present()
 
     @Gtk.Template.Callback()
     def add_station(self, widget):
@@ -188,7 +215,7 @@ class StationsDialog(Gtk.Dialog):
             self.searchDialog.present()
         else:
             self.searchDialog = SearchDialog.SearchDialog(worker=self.worker_run, transient_for=self)
-            self.searchDialog.show_all()
+            self.searchDialog.present()
             self.searchDialog.connect("response", self.add_station_cb)
 
     @Gtk.Template.Callback()
@@ -215,7 +242,6 @@ class StationsDialog(Gtk.Dialog):
                     user_data=user_data,
                 )
 
-        dialog.hide()
         dialog.destroy()
         self.searchDialog = None
 
@@ -241,7 +267,7 @@ class StationsDialog(Gtk.Dialog):
 
     @Gtk.Template.Callback()
     def on_close(self, widget, data=None):
-        self.hide()
+        self.set_visible(False)
 
         if self.quickmix_changed:
             self.worker_run("save_quick_mix", message="Saving QuickMix...")

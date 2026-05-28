@@ -34,8 +34,8 @@ gi.require_version('GstAudio', '1.0')
 gi.require_version('GstPbutils', '1.0')
 from gi.repository import Gst, GstAudio, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
 
-if Gtk.get_major_version() < 3 or Gtk.get_minor_version() < 14:
-    sys.exit('Gtk 3.14 is required')
+if Gtk.get_major_version() < 4:
+    sys.exit('Gtk 4.0 is required')
 
 from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
 from .StationsPopover import StationsPopover
@@ -234,14 +234,7 @@ class PithosWindow(Gtk.ApplicationWindow):
     volume = Gtk.Template.Child()
     playpause_image = Gtk.Template.Child()
     statusbar = Gtk.Template.Child()
-    song_menu = Gtk.Template.Child()
-    song_menu_love = Gtk.Template.Child()
-    song_menu_unlove = Gtk.Template.Child()
-    song_menu_ban = Gtk.Template.Child()
-    song_menu_unban = Gtk.Template.Child()
-    song_menu_create_station = Gtk.Template.Child()
-    song_menu_create_song_station = Gtk.Template.Child()
-    song_menu_create_artist_station = Gtk.Template.Child()
+    # Phase 2: song_menu (GtkMenu) removed; will be replaced with GtkPopoverMenu
     songs_treeview = Gtk.Template.Child()
     stations_button = Gtk.Template.Child()
     stations_label = Gtk.Template.Child()
@@ -362,8 +355,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.buffering_timer_id = 0
         self.ui_loop_timer_id = 0
         self.playlist_update_timer_id = 0
-        display = self.props.screen.get_display()
-        self.not_in_x = not type(display).__name__.endswith('X11Display')
+        # Phase 2: window position save/restore removed (configure-event gone in GTK4)
         self.worker = GObjectWorker()
 
         try:
@@ -387,9 +379,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def init_ui(self):
         GLib.set_application_name("Pithos")
-        Gtk.Window.set_default_icon_name('pithos')
 
-        self.volume.set_relief(Gtk.ReliefStyle.NORMAL)  # It ignores glade...
         self.settings.bind('volume', self.volume, 'value', Gio.SettingsBindFlags.DEFAULT)
 
         self.songs_treeview.set_model(self.songs_model)
@@ -409,12 +399,20 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.songs_treeview.append_column(title_col)
 
-        self.get_style_context().connect('changed', lambda sc: render_cover_art.update_icons(sc))
+        # Phase 3: get_style_context() removed in GTK4; revisit CellRenderer icon update
 
-        self.songs_treeview.connect('button_press_event', self.on_treeview_button_press_event)
+        self.songs_treeview.connect('row-activated', lambda tv, path, col: self.start_selected_song())
+
+        self._song_menu_popover = Gtk.PopoverMenu.new_from_model(Gio.Menu())
+        self._song_menu_popover.set_parent(self.songs_treeview)
+        self._song_menu_popover.set_has_arrow(False)
+
+        right_click = Gtk.GestureClick.new()
+        right_click.set_button(3)
+        right_click.connect('pressed', self._on_songs_right_click)
+        self.songs_treeview.add_controller(right_click)
 
         self.stations_popover = StationsPopover()
-        self.stations_popover.set_relative_to(self.stations_button)
         self.stations_popover.set_model(self.stations_model)
         self.stations_popover.listbox.connect('row-activated', self.active_station_changed)
         self.stations_button.set_popover(self.stations_popover)
@@ -480,6 +478,21 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.add_action(action)
         app.add_accelerator('<Primary>r', 'win.toggle-station-popover', None)
         action.connect('activate', self.stations_popover.toggle_visibility)
+
+        for name, handler in [
+            ('song-ctx-love',            lambda *_: self.on_menuitem_love(None)),
+            ('song-ctx-ban',             lambda *_: self.on_menuitem_ban(None)),
+            ('song-ctx-unrate',          lambda *_: self.on_menuitem_unrate(None)),
+            ('song-ctx-tired',           lambda *_: self.on_menuitem_tired(None)),
+            ('song-ctx-info',            lambda *_: self.on_menuitem_info(None)),
+            ('song-ctx-bookmark-song',   lambda *_: self.on_menuitem_bookmark_song(None)),
+            ('song-ctx-bookmark-artist', lambda *_: self.on_menuitem_bookmark_artist(None)),
+            ('song-ctx-create-artist',   lambda *_: self.on_menuitem_create_artist_station(None)),
+            ('song-ctx-create-song',     lambda *_: self.on_menuitem_create_song_station(None)),
+        ]:
+            a = Gio.SimpleAction.new(name, None)
+            a.connect('activate', handler)
+            self.add_action(a)
 
     def worker_run(self, fn, args=(), callback=None, message=None, context='net', errorback=None, user_data=None):
         if context and message:
@@ -967,37 +980,44 @@ class PithosWindow(Gtk.ApplicationWindow):
         dialog.props.secondary_text = submsg
 
         btn = dialog.get_widget_for_response(2)
-        if retry_cb is None:
-            btn.hide()
-        else:
-            btn.show()
+        btn.set_visible(retry_cb is not None)
 
-        response = dialog.run()
-        dialog.hide()
+        def on_response(dialog, response):
+            dialog.disconnect_by_func(on_response)
+            dialog.set_visible(False)
+            if response == 2:
+                self.gstreamer_errorcount_2 = 0
+                logging.info("Manual retry")
+                retry_cb()
+            elif response == 3:
+                self.show_preferences()
 
-        if response == 2:
-            self.gstreamer_errorcount_2 = 0
-            logging.info("Manual retry")
-            return retry_cb()
-        elif response == 3:
-            self.show_preferences()
+        dialog.connect('response', on_response)
+        dialog.present()
 
     def fatal_error_dialog(self, message, submsg):
         dialog = self.fatal_error_dialog_real
         dialog.props.text = message
         dialog.props.secondary_text = submsg
 
-        dialog.run()
-        dialog.hide()
+        def on_response(dialog, response):
+            dialog.disconnect_by_func(on_response)
+            self.quit()
 
-        self.quit()
+        dialog.connect('response', on_response)
+        dialog.present()
 
     def api_update_dialog(self):
         dialog = self.api_update_dialog_real
-        response = dialog.run()
-        if response:
-            open_browser("http://pithos.github.io/itbroke", self)
-        self.quit()
+
+        def on_response(dialog, response):
+            dialog.disconnect_by_func(on_response)
+            if response:
+                open_browser("http://pithos.github.io/itbroke", self)
+            self.quit()
+
+        dialog.connect('response', on_response)
+        dialog.present()
 
     def station_changed(self, station, reconnecting=False):
         if station is self.current_station: return
@@ -1054,16 +1074,16 @@ class PithosWindow(Gtk.ApplicationWindow):
         message = message.format(sub_title, station.name, seed, description)
 
         dialog = Gtk.MessageDialog(
-            parent=parent,
-            flags=Gtk.DialogFlags.MODAL,
-            type=Gtk.MessageType.WARNING,
+            transient_for=parent,
+            modal=True,
+            message_type=Gtk.MessageType.WARNING,
             buttons=button_type,
             text=_('A New Station could not be created'),
             secondary_text=message,
         )
 
         dialog.connect('response', on_response)
-        dialog.show()
+        dialog.present()
 
     def query_position(self):
       pos_stat = self.player.query(self._query_position)
@@ -1338,35 +1358,28 @@ class PithosWindow(Gtk.ApplicationWindow):
         song = song or self.current_song
         open_browser(song.songDetailURL)
 
-    @Gtk.Template.Callback()
+    # Phase 2: song_menu actions — @Gtk.Template.Callback removed (GtkMenuItem removed in GTK4)
     def on_menuitem_love(self, widget):
         self.love_song(song=self.selected_song())
 
-    @Gtk.Template.Callback()
     def on_menuitem_ban(self, widget):
         self.ban_song(song=self.selected_song())
 
-    @Gtk.Template.Callback()
     def on_menuitem_unrate(self, widget):
         self.unrate_song(song=self.selected_song())
 
-    @Gtk.Template.Callback()
     def on_menuitem_tired(self, widget):
         self.tired_song(song=self.selected_song())
 
-    @Gtk.Template.Callback()
     def on_menuitem_info(self, widget):
         self.info_song(song=self.selected_song())
 
-    @Gtk.Template.Callback()
     def on_menuitem_bookmark_song(self, widget):
         self.bookmark_song(song=self.selected_song())
 
-    @Gtk.Template.Callback()
     def on_menuitem_bookmark_artist(self, widget):
         self.bookmark_song_artist(self.selected_song())
 
-    @Gtk.Template.Callback()
     def on_menuitem_create_artist_station(self, widget):
         user_date = 'artist', html.escape(self.selected_song().artist)
         self.worker_run(
@@ -1376,7 +1389,6 @@ class PithosWindow(Gtk.ApplicationWindow):
             user_data=user_date,
         )
 
-    @Gtk.Template.Callback()
     def on_menuitem_create_song_station(self, widget):
         title = html.escape(self.selected_song().title)
         artist = html.escape(self.selected_song().artist)
@@ -1388,28 +1400,50 @@ class PithosWindow(Gtk.ApplicationWindow):
             user_data=user_date,
         )
 
-    def on_treeview_button_press_event(self, treeview, event):
-        x = int(event.x)
-        y = int(event.y)
-        pthinfo = treeview.get_path_at_pos(x, y)
-        if pthinfo is not None:
-            path, col, cellx, celly = pthinfo
-            treeview.grab_focus()
-            treeview.set_cursor( path, col, 0)
+    def _build_song_menu(self, song):
+        menu = Gio.Menu()
+        rating = song.rating
 
-            if event.button == 3:
-                rating = self.selected_song().rating
-                self.song_menu_love.set_property("visible", rating != RATE_LOVE)
-                self.song_menu_unlove.set_property("visible", rating == RATE_LOVE)
-                self.song_menu_ban.set_property("visible", rating != RATE_BAN)
-                self.song_menu_unban.set_property("visible", rating == RATE_BAN)
+        section1 = Gio.Menu()
+        if rating == RATE_LOVE:
+            section1.append(_("Un-love Song"), "win.song-ctx-unrate")
+        else:
+            section1.append(_("Love Song"), "win.song-ctx-love")
+        if rating == RATE_BAN:
+            section1.append(_("Un-ban Song"), "win.song-ctx-unrate")
+        else:
+            section1.append(_("Ban Song"), "win.song-ctx-ban")
+        section1.append(_("I'm Tired of This Song"), "win.song-ctx-tired")
+        menu.append_section(None, section1)
 
-                popup_at_pointer(self.song_menu, event)
-                return True
+        section2 = Gio.Menu()
+        section2.append(_("Song Info"), "win.song-ctx-info")
+        section2.append(_("Bookmark Song"), "win.song-ctx-bookmark-song")
+        section2.append(_("Bookmark Artist"), "win.song-ctx-bookmark-artist")
+        menu.append_section(None, section2)
 
-            if event.button == 1 and event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
-                logging.info("Double clicked on song %s", self.selected_song().index)
-                return self.start_selected_song()
+        section3 = Gio.Menu()
+        section3.append(_("Create Artist Station"), "win.song-ctx-create-artist")
+        section3.append(_("Create Song Station"), "win.song-ctx-create-song")
+        menu.append_section(None, section3)
+
+        return menu
+
+    def _on_songs_right_click(self, gesture, n_press, x, y):
+        pthinfo = self.songs_treeview.get_path_at_pos(int(x), int(y))
+        if pthinfo is None:
+            return
+        path, col, cellx, celly = pthinfo
+        self.songs_treeview.grab_focus()
+        self.songs_treeview.set_cursor(path, col, 0)
+        song = self.selected_song()
+        if song is None:
+            return
+        self._song_menu_popover.set_menu_model(self._build_song_menu(song))
+        rect = Gdk.Rectangle()
+        rect.x, rect.y, rect.width, rect.height = int(x), int(y), 1, 1
+        self._song_menu_popover.set_pointing_to(rect)
+        self._song_menu_popover.popup()
 
     def set_player_volume(self, value):
         # Use a cubic scale for volume. This matches what PulseAudio uses.
@@ -1434,14 +1468,13 @@ class PithosWindow(Gtk.ApplicationWindow):
         self.set_player_volume(value)
 
     def show_about(self, version):
-        """about - display the about box for pithos """
         about = AboutPithosDialog.AboutPithosDialog(transient_for=self)
         about.set_version(version)
-        about.run()
-        about.destroy()
+        about.connect('response', lambda d, r: d.destroy())
+        about.present()
 
     def on_prefs_response(self, widget, response):
-        self.prefs_dlg.hide()
+        self.prefs_dlg.set_visible(False)
 
         if response == Gtk.ResponseType.APPLY:
             self.on_explicit_content_filter_checkbox()
@@ -1452,14 +1485,14 @@ class PithosWindow(Gtk.ApplicationWindow):
     def show_preferences(self):
         """preferences - display the preferences window for pithos """
         self.sync_explicit_content_filter_setting()
-        self.prefs_dlg.show()
+        self.prefs_dlg.present()
 
     def show_stations(self):
         if self.stations_dlg:
             self.stations_dlg.present()
         else:
             self.stations_dlg = StationsDialog.StationsDialog(self, transient_for=self)
-            self.stations_dlg.show_all()
+            self.stations_dlg.present()
             self.emit('stations-dlg-ready', True)
 
     def refresh_stations(self, *ignore):
@@ -1471,42 +1504,15 @@ class PithosWindow(Gtk.ApplicationWindow):
         del self.stations_model[station_index(self.stations_model, station)]
         self.stations_popover.remove_station(station)
 
-    def restore_position(self):
-        """ Moves window to position stored in preferences """
-        # Getting and setting window position does not work in Wayland.
-        if self.not_in_x:
-            return
-        x, y = self.settings['win-pos']
-        self.handler_block_by_func(self.on_configure_event)
-        self.move(x, y)
-        self.handler_unblock_by_func(self.on_configure_event)
-
     def bring_to_top(self, *ignore):
-        timestamp = Gtk.get_current_event_time()
-        self.present_with_time(timestamp)
-
-    def present_with_time(self, timestamp):
-        self.restore_position()
-        Gtk.Window.present_with_time(self, timestamp)
-
-    def present(self):
-        self.restore_position()
-        Gtk.Window.present(self)
-
-    @Gtk.Template.Callback()
-    def on_configure_event(self, *ignore):
-        # Getting and setting window position does not work in Wayland.
-        if self.not_in_x:
-            return
-        x, y = self.get_position() # This can return None
-        self.settings.set_value('win-pos', GLib.Variant('(ii)', (x or 0, y or 0)))
+        self.present()
 
     def quit(self, widget=None, data=None):
         """quit - signal handler for closing the PithosWindow"""
         Gio.Application.get_default().quit()
 
     @Gtk.Template.Callback()
-    def on_destroy(self, widget, data=None):
-        """on_destroy - called when the PithosWindow is close. """
+    def on_destroy(self, widget=None):
+        """on_destroy - called when the PithosWindow is closed. """
         self.stop()
         self.quit()

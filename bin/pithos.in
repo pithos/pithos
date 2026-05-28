@@ -25,12 +25,7 @@ if builddir:
 
     os.environ['GSETTINGS_SCHEMA_DIR'] = pkgdatadir
     sys.dont_write_bytecode = True
-
-    import gi
-    gi.require_version('Gtk', '3.0')
-    from gi.repository import Gtk
-    theme = Gtk.IconTheme.get_default()
-    theme.append_search_path(os.path.join(pkgdatadir, 'icons'))
+    os.environ['PITHOS_ICON_PATH'] = os.path.join(pkgdatadir, 'icons')
 
 sys.path.insert(1, srcdir)
 try:

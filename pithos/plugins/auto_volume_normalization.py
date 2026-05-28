@@ -52,9 +52,9 @@ class AutoVolumeNormalization(PithosPlugin):
         self.window.rglimiter.set_property('enabled', False)
 
         dialog = Gtk.MessageDialog(
-            parent=self.window.prefs_dlg,
-            flags=Gtk.DialogFlags.MODAL,
-            type=Gtk.MessageType.WARNING,
+            transient_for=self.window.prefs_dlg,
+            modal=True,
+            message_type=Gtk.MessageType.WARNING,
             buttons=Gtk.ButtonsType.OK,
             text=text,
             secondary_text=_(
@@ -64,4 +64,4 @@ class AutoVolumeNormalization(PithosPlugin):
         )
 
         dialog.connect('response', lambda d, r: d.destroy())
-        dialog.show()
+        dialog.present()
