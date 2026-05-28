@@ -32,7 +32,8 @@ import gi
 gi.require_version('Gst', '1.0')
 gi.require_version('GstAudio', '1.0')
 gi.require_version('GstPbutils', '1.0')
-from gi.repository import Gst, GstAudio, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib
+gi.require_version('Graphene', '1.0')
+from gi.repository import Gst, GstAudio, GstPbutils, GObject, Gtk, Gdk, Pango, GdkPixbuf, Gio, GLib, Graphene
 
 if Gtk.get_major_version() < 4:
     sys.exit('Gtk 4.0 is required')
@@ -43,7 +44,7 @@ from .gobject_worker import GObjectWorker
 from .pandora import *
 from .pandora.data import *
 from .plugin import load_plugins
-from .util import parse_proxy, open_browser, SecretService, popup_at_pointer, is_flatpak
+from .util import parse_proxy, open_browser, SecretService, is_flatpak
 from .migrate_settings import maybe_migrate_settings
 
 try:
@@ -104,114 +105,124 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
         super().__init__(height=ALBUM_ART_SIZE, width=ALBUM_ART_SIZE)
         self.icon = None
         self.pixbuf = None
-        self.love_icon = None
-        self.ban_icon = None
-        self.tired_icon = None
-        self.generic_audio_icon = None
-        self.background = None
-        self.rate_bg = None
+        self._love_paintable = None
+        self._ban_paintable = None
+        self._tired_paintable = None
+        self._generic_audio_paintable = None
+        self._background_texture = None
+        self._rate_bg_texture = None
+        self._fg_color = FALLBACK_WHITE
+        self._bg_color = FALLBACK_BLACK
 
     __gproperties__ = {
         'icon': (str, 'icon', 'icon', '', GObject.ParamFlags.READWRITE),
-        'pixbuf': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap',  GObject.ParamFlags.READWRITE)
+        'pixbuf': (GdkPixbuf.Pixbuf, 'pixmap', 'pixmap', GObject.ParamFlags.READWRITE)
     }
 
     def do_set_property(self, pspec, value):
         setattr(self, pspec.name, value)
+
     def do_get_property(self, pspec):
         return getattr(self, pspec.name)
-    def do_render(self, ctx, widget, background_area, cell_area, flags):
+
+    def do_snapshot(self, snapshot, widget, background_area, cell_area, flags):
+        if self._background_texture is None:
+            return  # update_icons not yet called
+
+        x, y = float(cell_area.x), float(cell_area.y)
+        w, h = float(cell_area.width), float(cell_area.height)
+
         if self.pixbuf is not None:
-            Gdk.cairo_set_source_pixbuf(ctx, self.pixbuf, cell_area.x, cell_area.y)
-            ctx.paint()
+            texture = Gdk.Texture.new_for_pixbuf(self.pixbuf)
+            bounds = Graphene.Rect()
+            bounds.init(x, y, w, h)
+            snapshot.append_texture(texture, bounds)
         else:
-            Gdk.cairo_set_source_pixbuf(ctx, self.background, cell_area.x, cell_area.y)
-            ctx.paint()
-            x = cell_area.x + (ALBUM_ART_SIZE - self.generic_audio_icon.get_width()) // 2
-            y = cell_area.y + (ALBUM_ART_SIZE - self.generic_audio_icon.get_height()) // 2
-            Gdk.cairo_set_source_pixbuf(ctx, self.generic_audio_icon, x, y)
-            ctx.paint()
+            bounds = Graphene.Rect()
+            bounds.init(x, y, w, h)
+            snapshot.append_texture(self._background_texture, bounds)
 
-        if self.icon is not None:
-            x = cell_area.x + (cell_area.width - self.rate_bg.get_width()) # right
-            y = cell_area.y + (cell_area.height - self.rate_bg.get_height()) # bottom
-            Gdk.cairo_set_source_pixbuf(ctx, self.rate_bg, x, y)
-            ctx.paint()
+            if self._generic_audio_paintable is not None:
+                icon_w = float(self._generic_audio_paintable.get_intrinsic_width())
+                icon_h = float(self._generic_audio_paintable.get_intrinsic_height())
+                ix = x + (w - icon_w) / 2
+                iy = y + (h - icon_h) / 2
+                snapshot.save()
+                snapshot.translate(Graphene.Point().init(ix, iy))
+                self._generic_audio_paintable.snapshot_symbolic(
+                    snapshot, icon_w, icon_h, [self._bg_color])
+                snapshot.restore()
 
-            if self.icon == 'love':
-                rating_icon = self.love_icon
-            elif self.icon == 'tired':
-                rating_icon = self.tired_icon
-            elif self.icon == 'ban':
-                rating_icon = self.ban_icon
+        if self.icon is not None and self._rate_bg_texture is not None:
+            bg_w = float(self._rate_bg_texture.get_width())
+            bg_h = float(self._rate_bg_texture.get_height())
+            bx = x + w - bg_w
+            by = y + h - bg_h
+            bounds = Graphene.Rect()
+            bounds.init(bx, by, bg_w, bg_h)
+            snapshot.append_texture(self._rate_bg_texture, bounds)
 
-            x = x + (rating_icon.get_width() // 2)
-            y = y + (rating_icon.get_height() // 2)
+            paintable = {
+                'love': self._love_paintable,
+                'ban': self._ban_paintable,
+                'tired': self._tired_paintable,
+            }.get(self.icon)
 
-            Gdk.cairo_set_source_pixbuf(ctx, rating_icon, x, y)
-            ctx.paint()
+            if paintable is not None:
+                icon_size = 12.0
+                ix = bx + (bg_w - icon_size) / 2
+                iy = by + (bg_h - icon_size) / 2
+                snapshot.save()
+                snapshot.translate(Graphene.Point().init(ix, iy))
+                paintable.snapshot_symbolic(snapshot, icon_size, icon_size, [self._fg_color])
+                snapshot.restore()
 
-    def update_icons(self, style_context):
-        # Dynamically change the color of backgrounds and icons
-        # to match the current theme at theme changes.
-        # Attempt to look up the background and foreground colors
-        # in the theme's CSS file. Otherwise if they aren't found
-        # fallback to black and white. *Most* new themes use 'theme_bg_color' and 'theme_fg_color'.
-        # Some(older) themes use 'bg_color' and 'fg_color'.(like Ubuntu light themes)
-        for key in ('theme_bg_color', 'bg_color'):
-            bg_bool, bg_color = style_context.lookup_color(key)
-            if bg_bool:
+    def update_icons(self, widget):
+        sc = widget.get_style_context()
+
+        bg_color = FALLBACK_BLACK
+        for key in ('theme_bg_color', 'bg_color', 'window_bg_color'):
+            found, color = sc.lookup_color(key)
+            if found:
+                bg_color = color
                 break
-        if not bg_bool:
-            bg_color = FALLBACK_BLACK
-            logging.debug("Could not find theme's background color falling back to black.")
+        else:
+            logging.debug("Could not find theme background color, falling back to black.")
 
+        fg_color = FALLBACK_WHITE
         for key in ('theme_fg_color', 'fg_color'):
-            fg_bool, fg_color = style_context.lookup_color(key)
-            if fg_bool:
+            found, color = sc.lookup_color(key)
+            if found:
+                fg_color = color
                 break
-        if not fg_bool:
-            fg_color = FALLBACK_WHITE
-            logging.debug("Could not find theme's foreground color falling back to white.")
+        else:
+            logging.debug("Could not find theme foreground color, falling back to white.")
 
-        fg_rgb = fg_color.to_string()
-        bg_rgb = bg_color.to_string()
+        self._fg_color = fg_color
+        self._bg_color = bg_color
 
-        # Use our color values to create strings representing valid SVG's
-        # for background and rate_bg, then load them with PixbufLoader.
-        background = BACKGROUND_SVG.format(px=ALBUM_ART_SIZE, fg=fg_rgb).encode()
-        rating_bg = RATING_BG_SVG.format(bg=bg_rgb).encode()
+        background_svg = BACKGROUND_SVG.format(px=ALBUM_ART_SIZE, fg=fg_color.to_string()).encode()
+        rating_bg_svg = RATING_BG_SVG.format(bg=bg_color.to_string()).encode()
 
         with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
-            loader.write(background)
-        self.background = loader.get_pixbuf()
+            loader.write(background_svg)
+        self._background_texture = Gdk.Texture.new_for_pixbuf(loader.get_pixbuf())
 
         with contextlib.closing(GdkPixbuf.PixbufLoader()) as loader:
-            loader.write(rating_bg)
-        self.rate_bg = loader.get_pixbuf()
+            loader.write(rating_bg_svg)
+        self._rate_bg_texture = Gdk.Texture.new_for_pixbuf(loader.get_pixbuf())
 
-        current_theme = Gtk.IconTheme.get_default()
+        theme = Gtk.IconTheme.get_for_display(widget.get_display())
+        flags = Gtk.IconLookupFlags(0)
 
-        # Pithos requires an icon theme with symbolic icons.
-
-        # Manually color audio-x-generic-symbolic 48px icon to be used as part of the "default cover".
-        info = current_theme.lookup_icon('audio-x-generic-symbolic', 48, 0)
-        self.generic_audio_icon, was_symbolic = info.load_symbolic(bg_color, bg_color, bg_color, bg_color)
-
-        # We request 24px icons because what we really want is 12px icons,
-        # and they doesn't exist in many(or any?) icon themes. We then manually color
-        # and scale them down to 12px.
-        info = current_theme.lookup_icon('emblem-favorite-symbolic', 24, 0)
-        icon, was_symbolic = info.load_symbolic(fg_color, fg_color, fg_color, fg_color)
-        self.love_icon = icon.scale_simple(12, 12, GdkPixbuf.InterpType.BILINEAR)
-
-        info = current_theme.lookup_icon('dialog-error-symbolic', 24, 0)
-        icon, was_symbolic = info.load_symbolic(fg_color, fg_color, fg_color, fg_color)
-        self.ban_icon = icon.scale_simple(12, 12, GdkPixbuf.InterpType.BILINEAR)
-
-        info = current_theme.lookup_icon('go-jump-symbolic', 24, 0)
-        icon, was_symbolic = info.load_symbolic(fg_color, fg_color, fg_color, fg_color)
-        self.tired_icon = icon.scale_simple(12, 12, GdkPixbuf.InterpType.BILINEAR)
+        self._generic_audio_paintable = theme.lookup_icon(
+            'audio-x-generic-symbolic', None, 48, 1, Gtk.TextDirection.NONE, flags)
+        self._love_paintable = theme.lookup_icon(
+            'emblem-favorite-symbolic', None, 12, 1, Gtk.TextDirection.NONE, flags)
+        self._ban_paintable = theme.lookup_icon(
+            'dialog-error-symbolic', None, 12, 1, Gtk.TextDirection.NONE, flags)
+        self._tired_paintable = theme.lookup_icon(
+            'go-jump-symbolic', None, 12, 1, Gtk.TextDirection.NONE, flags)
 
 @Gtk.Template(resource_path='/io/github/Pithos/ui/PithosWindow.ui')
 class PithosWindow(Gtk.ApplicationWindow):
@@ -386,10 +397,10 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         title_col   = Gtk.TreeViewColumn()
 
-        render_cover_art = CellRendererAlbumArt()
-        title_col.pack_start(render_cover_art, False)
-        title_col.add_attribute(render_cover_art, "icon", 2)
-        title_col.add_attribute(render_cover_art, "pixbuf", 3)
+        self.render_cover_art = CellRendererAlbumArt()
+        title_col.pack_start(self.render_cover_art, False)
+        title_col.add_attribute(self.render_cover_art, "icon", 2)
+        title_col.add_attribute(self.render_cover_art, "pixbuf", 3)
 
         render_text = Gtk.CellRendererText(xpad=TEXT_X_PADDING)
         render_text.props.ellipsize = Pango.EllipsizeMode.END
@@ -399,7 +410,10 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self.songs_treeview.append_column(title_col)
 
-        # Phase 3: get_style_context() removed in GTK4; revisit CellRenderer icon update
+        self.songs_treeview.connect(
+            'realize',
+            lambda w: self.render_cover_art.update_icons(w)
+        )
 
         self.songs_treeview.connect('row-activated', lambda tv, path, col: self.start_selected_song())
 
