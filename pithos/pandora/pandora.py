@@ -206,10 +206,12 @@ class Pandora:
             raise PandoraNetError(str(e))
         except urllib.error.URLError as e:
             logging.error("Network error: %s", e)
-            if e.reason.strerror == 'timed out':
+            reason = e.reason
+            strerror = getattr(reason, 'strerror', None)
+            if isinstance(reason, TimeoutError) or strerror == 'timed out' or 'timed out' in str(reason):
                 raise PandoraTimeout("Network error", submsg="Timeout")
             else:
-                raise PandoraNetError("Network error", submsg=e.reason.strerror)
+                raise PandoraNetError("Network error", submsg=strerror or str(reason))
         except SocketError as e:
             try:
                 error_string = os.strerror(e.errno)
@@ -259,11 +261,15 @@ class Pandora:
     def build_opener(*handlers):
         """Creates a new opener
 
-        Wrapper around urllib.request.build_opener() that adds
-        a custom ssl.SSLContext for use with internal-tuner.pandora.com
+        Wrapper around urllib.request.build_opener() that uses an
+        ssl.SSLContext validating against the system CA trust store.
+
+        Historically this loaded a bundled CA certificate for
+        internal-tuner.pandora.com (the legacy "Pandora One" endpoint).
+        That certificate expired in 2020, so it has been removed; the
+        default endpoint validates against the system trust store.
         """
         ctx = ssl.create_default_context()
-        ctx.load_verify_locations(cadata=data.internal_cert)
         https = urllib.request.HTTPSHandler(context=ctx)
         return urllib.request.build_opener(https, *handlers)
 

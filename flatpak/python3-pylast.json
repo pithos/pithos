@@ -7,13 +7,8 @@
     "sources": [
         {
             "type": "file",
-            "url": "https://files.pythonhosted.org/packages/16/d8/bc6316cf98419719bd59c91742194c111b6f2e85abac88e496adefaf7afe/six-1.11.0.tar.gz",
-            "sha256": "70e8a77beed4562e7f14fe23a786b54f6296e34344c23bc42f07b15018ff98e9"
-        },
-        {
-            "type": "file",
-            "url": "https://files.pythonhosted.org/packages/8a/1a/ece4ef4ebf51236ac25e9708fb3e1e70b6447e01262f8b156ccbda894fa9/pylast-2.2.0.tar.gz",
-            "sha256": "a21a10e559cbb80db5eb72e20a22740496a292977ed3568c937560b8d6885ab4"
+            "url": "https://files.pythonhosted.org/packages/d8/17/6c216d5a12c51aea6f1e8caa1ed1d4a496dd435d4db31ab67b4db0adc13c/pylast-4.5.0.tar.gz",
+            "sha256": "62800b72e971dadac40c3d6f538c6188219d6f53853ddc48d69d9fc25659018f"
         }
     ]
 }

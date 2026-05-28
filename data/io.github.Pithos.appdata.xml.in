@@ -36,6 +36,17 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release date="2026-05-28" version="1.6.3">
+      <description>
+        <p>Maintenance release modernizing dependencies and networking</p>
+        <ul>
+          <li>Remove the bundled internal-tuner CA certificate, which expired in 2020; TLS now validates against the system trust store</li>
+          <li>Harden network error handling against modern Python URLError/TimeoutError types</li>
+          <li>Update bundled pylast from 2.2.0 to 4.5.0 and drop the obsolete six dependency</li>
+          <li>Update the Flatpak runtime from the end-of-life GNOME 41 to GNOME 47</li>
+        </ul>
+      </description>
+    </release>
     <release date="2024-03-03" version="1.6.2">
       <description>
         <p>This is a small release with a few fixes</p>
