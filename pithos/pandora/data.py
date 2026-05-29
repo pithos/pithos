@@ -20,4 +20,3 @@ client_keys = {
 }
 default_client_id = "android-generic"
 default_one_client_id = "pandora-one"
-

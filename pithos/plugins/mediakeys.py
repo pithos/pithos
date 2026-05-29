@@ -74,7 +74,7 @@ class MediaKeyPlugin(PithosPlugin):
 
     def on_prepare(self):
         def prepare_keybinder():
-            display = self.window.props.screen.get_display()
+            display = self.window.get_display()
             if not type(display).__name__.endswith('X11Display'):
                 self.prepare_complete(error='DBus binding failed and Keybinder requires X11.')
             else:
