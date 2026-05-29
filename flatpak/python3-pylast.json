@@ -2,9 +2,21 @@
     "name": "python3-pylast",
     "buildsystem": "simple",
     "build-commands": [
+        "pip3 install --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} typing-extensions",
+        "pip3 install --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} setuptools-scm",
         "pip3 install --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} pylast"
     ],
     "sources": [
+        {
+            "type": "file",
+            "url": "https://files.pythonhosted.org/packages/18/67/36e9267722cc04a6b9f15c7f3441c2363321a3ea07da7ae0c0707beb2a9c/typing_extensions-4.15.0-py3-none-any.whl",
+            "sha256": "f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"
+        },
+        {
+            "type": "file",
+            "url": "https://files.pythonhosted.org/packages/1d/66/8f42c941be949ef2b22fe905d850c794e7c170a526023612aad5f3a121ad/setuptools_scm-7.1.0-py3-none-any.whl",
+            "sha256": "73988b6d848709e2af142aa48c986ea29592bbcfca5375678064708205253d8e"
+        },
         {
             "type": "file",
             "url": "https://files.pythonhosted.org/packages/d8/17/6c216d5a12c51aea6f1e8caa1ed1d4a496dd435d4db31ab67b4db0adc13c/pylast-4.5.0.tar.gz",
