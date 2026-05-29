@@ -85,9 +85,17 @@ class StationsPopover(Gtk.Popover):
         ctx_menu.append(_('Share Station…'), 'ctx.share')
         ctx_menu.append(_('Delete Station'), 'ctx.delete')
 
+        # Nest the context popover inside the listbox so it appears at the
+        # clicked row. To keep the outer stations popover from getting its
+        # grab stuck open, the inner popover is set non-autohiding: it
+        # doesn't take grab away from the outer. Dismissal of the inner is
+        # handled in three ways: PopoverMenu auto-dismisses on action
+        # activation; the outer's 'closed' signal forwards to it; and a
+        # key controller closes it on Escape.
         self._ctx_popover = Gtk.PopoverMenu.new_from_model(ctx_menu)
         self._ctx_popover.set_parent(self.listbox)
         self._ctx_popover.set_has_arrow(False)
+        self._ctx_popover.set_autohide(False)
         self._ctx_station = None
 
         ctx_group = Gio.SimpleActionGroup()
@@ -103,10 +111,26 @@ class StationsPopover(Gtk.Popover):
             ctx_group.add_action(action)
         self.listbox.insert_action_group('ctx', ctx_group)
 
+        # When the outer stations popover closes (autohide on outside click),
+        # dismiss the inner context popover too.
+        self.connect('closed', lambda *_: self._ctx_popover.popdown())
+
+        # Escape closes the inner popover (it isn't autohide, so it won't
+        # close on its own from key events).
+        key_ctl = Gtk.EventControllerKey.new()
+        key_ctl.connect('key-pressed', self._on_ctx_key_pressed)
+        self._ctx_popover.add_controller(key_ctl)
+
         right_click = Gtk.GestureClick.new()
         right_click.set_button(3)
         right_click.connect('pressed', self._on_right_click)
         self.listbox.add_controller(right_click)
+
+    def _on_ctx_key_pressed(self, controller, keyval, keycode, state):
+        if keyval == Gdk.KEY_Escape:
+            self._ctx_popover.popdown()
+            return True
+        return False
 
     def _on_right_click(self, gesture, n_press, x, y):
         row = self.listbox.get_row_at_y(int(y))
@@ -115,6 +139,7 @@ class StationsPopover(Gtk.Popover):
         station = row.station
         if station.isQuickMix or station.isThumbprint:
             return
+        gesture.set_state(Gtk.EventSequenceState.CLAIMED)
         self._ctx_station = station
         rect = Gdk.Rectangle()
         rect.x, rect.y, rect.width, rect.height = int(x), int(y), 1, 1
