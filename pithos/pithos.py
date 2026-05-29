@@ -429,7 +429,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         right_click.connect('pressed', self._on_songs_right_click)
         self.songs_treeview.add_controller(right_click)
 
-        self.stations_popover = StationsPopover()
+        self.stations_popover = StationsPopover(self)
         self.stations_popover.set_model(self.stations_model)
         self.stations_popover.listbox.connect('row-activated', self.active_station_changed)
         self.stations_button.set_popover(self.stations_popover)

@@ -4,6 +4,8 @@
   <template class="SearchDialog" parent="GtkDialog">
     <property name="modal">1</property>
     <property name="title" translatable="yes">Search</property>
+    <property name="default-width">400</property>
+    <property name="default-height">420</property>
     <child type="action">
       <object class="GtkButton" id="button_cancel">
         <property name="label" translatable="yes">Cancel</property>
