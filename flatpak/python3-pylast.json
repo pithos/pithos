@@ -4,7 +4,7 @@
     "build-commands": [
         "pip3 install --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} typing-extensions",
         "pip3 install --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} setuptools-scm",
-        "pip3 install --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} pylast"
+        "PYTHONPATH=${FLATPAK_DEST}/lib/python$(python3 -c 'import sys;print(f\"{sys.version_info.major}.{sys.version_info.minor}\")')/site-packages pip3 install --no-index --no-build-isolation --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} pylast"
     ],
     "sources": [
         {
