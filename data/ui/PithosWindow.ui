@@ -4,6 +4,10 @@
   <menu id="app-menu">
     <section>
       <item>
+        <attribute name="action">app.new-station</attribute>
+        <attribute name="label" translatable="yes">_New Station…</attribute>
+      </item>
+      <item>
         <attribute name="action">app.stations</attribute>
         <attribute name="label" translatable="yes">_Stations</attribute>
       </item>
@@ -88,10 +92,10 @@
             <property name="visible">False</property>
           </object>
         </child>
-        <child>
+        <child type="end">
           <object class="GtkMenuButton">
             <property name="menu-model">app-menu</property>
-            <property name="halign">end</property>
+            <property name="tooltip-text" translatable="yes">Main Menu</property>
             <child>
               <object class="GtkImage">
                 <property name="icon_name">open-menu-symbolic</property>
@@ -99,10 +103,9 @@
             </child>
           </object>
         </child>
-        <child>
+        <child type="end">
           <object class="GtkMenuButton" id="stations_button">
-            <property name="halign">end</property>
-            <property name="hexpand">True</property>
+            <property name="tooltip-text" translatable="yes">Stations</property>
             <child>
               <object class="GtkBox">
                 <property name="spacing">5</property>
@@ -110,6 +113,7 @@
                   <object class="GtkLabel" id="stations_label">
                     <property name="single_line_mode">1</property>
                     <property name="ellipsize">end</property>
+                    <property name="max_width_chars">20</property>
                   </object>
                 </child>
                 <child>

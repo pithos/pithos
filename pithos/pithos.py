@@ -38,7 +38,7 @@ from gi.repository import Gst, GstAudio, GstPbutils, GObject, Gtk, Gdk, Pango, G
 if Gtk.get_major_version() < 4:
     sys.exit('Gtk 4.0 is required')
 
-from . import AboutPithosDialog, PreferencesPithosDialog, StationsDialog
+from . import AboutPithosDialog, PreferencesPithosDialog, SearchDialog, StationsDialog
 from .StationsPopover import StationsPopover
 from .gobject_worker import GObjectWorker
 from .pandora import *
@@ -504,6 +504,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             ('song-ctx-bookmark-artist', lambda *_: self.on_menuitem_bookmark_artist(None)),
             ('song-ctx-create-artist',   lambda *_: self.on_menuitem_create_artist_station(None)),
             ('song-ctx-create-song',     lambda *_: self.on_menuitem_create_song_station(None)),
+            ('song-ctx-explain',         lambda *_: self.on_menuitem_explain(None)),
         ]:
             a = Gio.SimpleAction.new(name, None)
             a.connect('activate', handler)
@@ -1415,6 +1416,31 @@ class PithosWindow(Gtk.ApplicationWindow):
             user_data=user_date,
         )
 
+    def on_menuitem_explain(self, widget):
+        song = self.selected_song()
+        if song is None:
+            return
+
+        def show(traits):
+            if traits:
+                bullets = '\n'.join('• {}'.format(t) for t in traits)
+                secondary = _('Based on what you\'ve told us so far, we\'re playing this track '
+                              'because it features:\n\n{}').format(bullets)
+            else:
+                secondary = _('Pandora did not return an explanation for this track.')
+            dialog = Gtk.MessageDialog(
+                transient_for=self,
+                modal=True,
+                message_type=Gtk.MessageType.INFO,
+                buttons=Gtk.ButtonsType.CLOSE,
+                text=_('Why is "{}" playing?').format(song.title),
+                secondary_text=secondary,
+            )
+            dialog.connect('response', lambda d, *a: d.destroy())
+            dialog.present()
+
+        self.worker_run(song.explain, (), show, 'Asking Pandora…')
+
     def _build_song_menu(self, song):
         menu = Gio.Menu()
         rating = song.rating
@@ -1433,6 +1459,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         section2 = Gio.Menu()
         section2.append(_("Song Info"), "win.song-ctx-info")
+        section2.append(_("Why is This Playing?"), "win.song-ctx-explain")
         section2.append(_("Bookmark Song"), "win.song-ctx-bookmark-song")
         section2.append(_("Bookmark Artist"), "win.song-ctx-bookmark-artist")
         menu.append_section(None, section2)
@@ -1508,6 +1535,37 @@ class PithosWindow(Gtk.ApplicationWindow):
             self.stations_dlg = StationsDialog.StationsDialog(self, transient_for=self)
             self.stations_dlg.present()
             self.emit('stations-dlg-ready', True)
+
+    def show_new_station(self):
+        if getattr(self, '_search_dlg', None):
+            self._search_dlg.present()
+            return
+
+        self._search_dlg = SearchDialog.SearchDialog(worker=self.worker_run, transient_for=self)
+        self._search_dlg.set_response_sensitive(Gtk.ResponseType.OK, False)
+
+        def on_response(dialog, response):
+            result = dialog.result
+            if response == Gtk.ResponseType.OK and result is not None:
+                if result.resultType == 'song':
+                    description = '{} by {}'.format(html.escape(result.title), html.escape(result.artist))
+                elif result.resultType == 'artist':
+                    description = html.escape(result.name)
+                else:
+                    description = html.escape(result.stationName)
+                user_data = result.resultType, description
+                self.worker_run(
+                    'add_station_by_music_id',
+                    (result.musicId,),
+                    self.station_added,
+                    'Creating station...',
+                    user_data=user_data,
+                )
+            dialog.destroy()
+            self._search_dlg = None
+
+        self._search_dlg.connect('response', on_response)
+        self._search_dlg.present()
 
     def refresh_stations(self, *ignore):
         self.worker_run(self.pandora.get_stations, (), self.process_stations, "Refreshing stations...")

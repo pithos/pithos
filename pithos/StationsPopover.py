@@ -58,6 +58,12 @@ class StationsPopover(Gtk.Popover):
         sw.set_vexpand(True)
         box.append(sw)
 
+        self.new_station_button = Gtk.Button.new_with_mnemonic(_('_New Station…'))
+        self.new_station_button.set_action_name('app.new-station')
+        self.new_station_button.set_margin_top(6)
+        self.new_station_button.connect('clicked', lambda *_: self.set_visible(False))
+        box.append(self.new_station_button)
+
         settings = Gio.Settings.new('io.github.Pithos')
         settings.bind('sort-stations', self.sort, 'active', Gio.SettingsBindFlags.DEFAULT)
 

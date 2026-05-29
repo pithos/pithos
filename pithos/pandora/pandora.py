@@ -579,6 +579,10 @@ class Song:
     def bookmark_artist(self):
         self.pandora.json_call('bookmark.addArtistBookmark', {'trackToken': self.trackToken})
 
+    def explain(self):
+        result = self.pandora.json_call('track.explainTrack', {'trackToken': self.trackToken})
+        return [e['focusTraitName'] for e in result.get('explanations', [])]
+
     @property
     def rating_str(self):
         return self.rating
