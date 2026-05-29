@@ -8,13 +8,13 @@ jobs:
     name: "Flatpak Builder"
     runs-on: ubuntu-latest
     container:
-      image: docker.io/bilelmoussaoui/flatpak-github-actions
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
       options: --privileged
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: 'recursive'
-    - uses: bilelmoussaoui/flatpak-github-actions@v2
+    - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
       with:
         bundle: "pithos-devel.flatpak"
         manifest-path: "flatpak/io.github.Pithos.json"
