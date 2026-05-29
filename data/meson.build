@@ -32,8 +32,8 @@ pithos_desktop = i18n.merge_file(
 )
 
 pithos_appstream = i18n.merge_file(
-  input: 'io.github.Pithos.appdata.xml.in',
-  output: 'io.github.Pithos.appdata.xml',
+  input: 'io.github.Pithos.metainfo.xml.in',
+  output: 'io.github.Pithos.metainfo.xml',
   po_dir: '../po',
   install: true,
   install_dir: join_paths(get_option('datadir'), 'metainfo')

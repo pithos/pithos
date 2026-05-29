@@ -1,4 +1,4 @@
-data/io.github.Pithos.appdata.xml.in
+data/io.github.Pithos.metainfo.xml.in
 data/io.github.Pithos.desktop.in
 data/io.github.Pithos.gschema.xml
 data/ui/AboutPithosDialog.ui
