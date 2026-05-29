@@ -40,7 +40,7 @@ class PithosPluginRow(Gtk.ListBoxRow):
         label.set_halign(Gtk.Align.START)
         label.set_ellipsize(Pango.EllipsizeMode.END)
         label.set_max_width_chars(30)
-        label.set_line_wrap(True)
+        label.set_wrap(True)
         label.set_lines(1)
         label.set_hexpand(True)
         label.set_margin_start(4)
@@ -54,7 +54,7 @@ class PithosPluginRow(Gtk.ListBoxRow):
         self.switch.set_margin_start(2)
         self.switch.set_margin_end(2)
         box.append(self.switch)
-        self.connect('grab-focus', self.set_prefs_btn)
+        self.connect('notify::has-focus', self.set_prefs_btn)
         self.plugin.connect('notify::enabled', self.on_enabled)
 
         if plugin.prepared and plugin.error:
@@ -68,7 +68,7 @@ class PithosPluginRow(Gtk.ListBoxRow):
             self.set_prefs_btn()
 
     def set_prefs_btn(self, *ignore):
-        prefs_btn = self.get_toplevel().preference_btn
+        prefs_btn = self.get_root().preference_btn
         if self.plugin.enabled:
             sensitive = self.plugin.preferences_dialog is not None
         else:
@@ -131,12 +131,32 @@ class PreferencesPithosDialog(Gtk.Dialog):
             'proxy': (self.proxy_entry, 'text'),
             'control-proxy': (self.control_proxy_entry, 'text'),
             'control-proxy-pac': (self.control_proxy_pac_entry, 'text'),
-            'audio-quality': (self.audio_quality_combo, 'active-id'),
         }
 
         for key, val in settings_mapping.items():
             self.settings.bind(key, val[0], val[1],
                                Gio.SettingsBindFlags.DEFAULT|Gio.SettingsBindFlags.NO_SENSITIVITY)
+
+        self._audio_quality_ids = ['highQuality', 'mediumQuality', 'lowQuality']
+        try:
+            self.audio_quality_combo.set_selected(self._audio_quality_ids.index(self.settings['audio-quality']))
+        except ValueError:
+            pass
+        self.audio_quality_combo.connect('notify::selected', self._on_audio_quality_selected)
+        self.settings.connect('changed::audio-quality', self._on_audio_quality_setting_changed)
+
+    def _on_audio_quality_selected(self, dropdown, _pspec):
+        idx = dropdown.get_selected()
+        if 0 <= idx < len(self._audio_quality_ids):
+            self.settings['audio-quality'] = self._audio_quality_ids[idx]
+
+    def _on_audio_quality_setting_changed(self, settings, key):
+        try:
+            idx = self._audio_quality_ids.index(settings[key])
+        except ValueError:
+            return
+        if self.audio_quality_combo.get_selected() != idx:
+            self.audio_quality_combo.set_selected(idx)
 
     def set_plugins(self, plugins):
         self.plugins_listbox.set_header_func(self.on_listbox_update_header)

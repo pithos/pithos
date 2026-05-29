@@ -146,7 +146,7 @@ class PithosNotificationIcon(PithosPlugin):
 
         # Preferences for icon type
         if not self.settings['data']:
-            self.settings['data'] = 'io.github.Pithos-tray-symbolic'
+            self.settings['data'] = 'io.github.Pithos-symbolic'
         self.preferences_dialog = NotificationIconPluginPrefsDialog(self.window, self.settings)
 
         def on_icon_theme_changed(settings, key):
@@ -286,27 +286,34 @@ class NotificationIconPluginPrefsDialog(Gtk.Dialog):
 
         sub_title = Gtk.Label.new(_('Set the Notification Icon Type'))
         sub_title.set_halign(Gtk.Align.CENTER)
-        self.icons_combo = Gtk.ComboBoxText.new()
 
-        icons = (
-            ('io.github.Pithos-tray', _('Full Color')),
-            ('io.github.Pithos-symbolic', _('Symbolic')),
-        )
+        self._icon_ids = ['io.github.Pithos-tray', 'io.github.Pithos-symbolic']
+        icon_labels = [_('Full Color'), _('Symbolic')]
+        self.icons_combo = Gtk.DropDown.new(Gtk.StringList.new(icon_labels), None)
 
-        for icon in icons:
-            self.icons_combo.append(icon[0], icon[1])
         self._reset_combo()
 
         content_area = self.get_content_area()
+        content_area.set_spacing(12)
+        content_area.set_margin_top(12)
+        content_area.set_margin_bottom(12)
+        content_area.set_margin_start(12)
+        content_area.set_margin_end(12)
         content_area.append(sub_title)
         content_area.append(self.icons_combo)
 
     def _reset_combo(self):
-        self.icons_combo.set_active_id(self.settings['data'])
+        try:
+            idx = self._icon_ids.index(self.settings['data'])
+        except ValueError:
+            idx = 0
+        self.icons_combo.set_selected(idx)
 
     def do_response(self, response):
         if response == Gtk.ResponseType.APPLY:
-            self.settings['data'] = self.icons_combo.get_active_id()
+            idx = self.icons_combo.get_selected()
+            if 0 <= idx < len(self._icon_ids):
+                self.settings['data'] = self._icon_ids[idx]
         else:
             self._reset_combo()
         self.set_visible(False)

@@ -29,18 +29,17 @@
           <object class="GtkNotebook" id="notebook1">
             <property name="vexpand">1</property>
             <child>
-              <object class="GtkGrid" id="grid2">
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
                 <property name="margin_top">12</property>
                 <property name="margin_bottom">12</property>
                 <property name="margin_start">12</property>
                 <property name="margin_end">12</property>
-                <property name="row_spacing">18</property>
+                <property name="spacing">18</property>
                 <child>
-                  <object class="GtkGrid" id="grid3">
-                    <layout>
-                      <property name="column">0</property>
-                      <property name="row">0</property>
-                    </layout>
+                  <object class="GtkBox">
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">8</property>
                     <child>
                       <object class="GtkLabel" id="label_account">
                         <property name="halign">start</property>
@@ -49,98 +48,75 @@
                           <attribute name="weight" value="bold"/>
                         </attributes>
                       </object>
-                      <layout>
-                        <property name="column">0</property>
-                        <property name="row">0</property>
-                      </layout>
                     </child>
                     <child>
-                      <object class="GtkGrid" id="grid4">
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
                         <property name="margin_start">20</property>
-                        <property name="row_spacing">8</property>
-                        <property name="column_spacing">20</property>
+                        <property name="spacing">8</property>
                         <child>
-                          <object class="GtkLabel" id="label_email">
-                            <property name="halign">start</property>
-                            <property name="valign">center</property>
-                            <property name="label" translatable="yes">Email</property>
+                          <object class="GtkBox">
+                            <property name="orientation">horizontal</property>
+                            <property name="spacing">20</property>
+                            <child>
+                              <object class="GtkLabel" id="label_email">
+                                <property name="halign">start</property>
+                                <property name="valign">center</property>
+                                <property name="label" translatable="yes">Email</property>
+                                <property name="width_request">100</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="email_entry">
+                                <property name="hexpand">1</property>
+                                <property name="input_purpose">email</property>
+                                <signal name="changed" handler="on_account_changed" swapped="no"/>
+                              </object>
+                            </child>
                           </object>
-                          <layout>
-                            <property name="column">0</property>
-                            <property name="row">0</property>
-                          </layout>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="email_entry">
-                            <property name="hexpand">1</property>
-                            <property name="input_purpose">email</property>
-                            <signal name="changed" handler="on_account_changed" swapped="no"/>
+                          <object class="GtkBox">
+                            <property name="orientation">horizontal</property>
+                            <property name="spacing">20</property>
+                            <child>
+                              <object class="GtkLabel" id="label_password">
+                                <property name="halign">start</property>
+                                <property name="valign">center</property>
+                                <property name="label" translatable="yes">Password</property>
+                                <property name="width_request">100</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="password_entry">
+                                <property name="visibility">0</property>
+                                <property name="hexpand">1</property>
+                                <property name="input_purpose">password</property>
+                                <signal name="changed" handler="on_account_changed" swapped="no"/>
+                              </object>
+                            </child>
                           </object>
-                          <layout>
-                            <property name="column">1</property>
-                            <property name="row">0</property>
-                          </layout>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label_password">
-                            <property name="label" translatable="yes">Password</property>
-                          </object>
-                          <layout>
-                            <property name="column">0</property>
-                            <property name="row">1</property>
-                          </layout>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="password_entry">
-                            <property name="visibility">0</property>
-                            <property name="input_purpose">password</property>
-                            <signal name="changed" handler="on_account_changed" swapped="no"/>
-                          </object>
-                          <layout>
-                            <property name="column">1</property>
-                            <property name="row">1</property>
-                          </layout>
                         </child>
                         <child>
                           <object class="GtkCheckButton" id="explicit_content_filter_checkbutton">
                             <property name="label" translatable="yes">Explicit Content Filter</property>
                             <property name="halign">start</property>
                           </object>
-                          <layout>
-                            <property name="column">0</property>
-                            <property name="row">2</property>
-                            <property name="column-span">2</property>
-                          </layout>
                         </child>
                         <child>
                           <object class="GtkLabel" id="label_create_account">
-                            <property name="label" translatable="yes">&lt;small&gt;&lt;a href=&apos;http://pandora.com&apos;&gt;Create an account at pandora.com&lt;/a&gt;&lt;/small&gt;</property>
+                            <property name="label" translatable="yes">&lt;small&gt;&lt;a href='http://pandora.com'&gt;Create an account at pandora.com&lt;/a&gt;&lt;/small&gt;</property>
                             <property name="use_markup">1</property>
                           </object>
-                          <layout>
-                            <property name="column">0</property>
-                            <property name="row">4</property>
-                            <property name="column-span">2</property>
-                          </layout>
                         </child>
                       </object>
-                      <layout>
-                        <property name="column">0</property>
-                        <property name="row">1</property>
-                      </layout>
                     </child>
                   </object>
-                  <layout>
-                    <property name="column">0</property>
-                    <property name="row">0</property>
-                  </layout>
                 </child>
                 <child>
-                  <object class="GtkGrid" id="grid5">
-                    <layout>
-                      <property name="column">0</property>
-                      <property name="row">1</property>
-                    </layout>
+                  <object class="GtkBox">
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">8</property>
                     <child>
                       <object class="GtkLabel" id="label_advanced">
                         <property name="halign">start</property>
@@ -149,111 +125,105 @@
                           <attribute name="weight" value="bold"/>
                         </attributes>
                       </object>
-                      <layout>
-                        <property name="column">0</property>
-                        <property name="row">0</property>
-                      </layout>
                     </child>
                     <child>
-                      <object class="GtkGrid" id="grid6">
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
                         <property name="margin_start">20</property>
-                        <property name="row_spacing">8</property>
-                        <property name="column_spacing">20</property>
-                        <property name="row_homogeneous">1</property>
+                        <property name="spacing">8</property>
                         <child>
-                          <object class="GtkLabel" id="label_audio_quality">
-                            <property name="halign">start</property>
-                            <property name="label" translatable="yes">Audio Quality</property>
+                          <object class="GtkBox">
+                            <property name="orientation">horizontal</property>
+                            <property name="spacing">20</property>
+                            <child>
+                              <object class="GtkLabel" id="label_audio_quality">
+                                <property name="halign">start</property>
+                                <property name="valign">center</property>
+                                <property name="label" translatable="yes">Audio Quality</property>
+                                <property name="width_request">120</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkDropDown" id="audio_quality_combo">
+                                <property name="model">
+                                  <object class="GtkStringList">
+                                    <items>
+                                      <item translatable="yes">High</item>
+                                      <item translatable="yes">Medium</item>
+                                      <item translatable="yes">Low</item>
+                                    </items>
+                                  </object>
+                                </property>
+                              </object>
+                            </child>
                           </object>
-                          <layout>
-                            <property name="column">0</property>
-                            <property name="row">0</property>
-                          </layout>
                         </child>
                         <child>
-                          <object class="GtkComboBoxText" id="audio_quality_combo">
-                            <items>
-                              <item id="highQuality" translatable="yes">High</item>
-                              <item id="mediumQuality" translatable="yes">Medium</item>
-                              <item id="lowQuality" translatable="yes">Low</item>
-                            </items>
+                          <object class="GtkBox">
+                            <property name="orientation">horizontal</property>
+                            <property name="spacing">20</property>
+                            <child>
+                              <object class="GtkLabel" id="label_proxy">
+                                <property name="tooltip_text" translatable="yes">This proxy is used for all HTTP/HTTPS traffic. If empty, http_proxy and https_proxy environment variables will be used.</property>
+                                <property name="halign">start</property>
+                                <property name="valign">center</property>
+                                <property name="label" translatable="yes">Proxy URL</property>
+                                <property name="width_request">120</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="proxy_entry">
+                                <property name="hexpand">1</property>
+                                <property name="input_purpose">url</property>
+                              </object>
+                            </child>
                           </object>
-                          <layout>
-                            <property name="column">1</property>
-                            <property name="row">0</property>
-                          </layout>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label_proxy">
-                            <property name="tooltip_text" translatable="yes">This proxy is used for all HTTP/HTTPS traffic. If empty, http_proxy and https_proxy environment variables will be used.</property>
-                            <property name="halign">start</property>
-                            <property name="label" translatable="yes">Proxy URL</property>
+                          <object class="GtkBox">
+                            <property name="orientation">horizontal</property>
+                            <property name="spacing">20</property>
+                            <child>
+                              <object class="GtkLabel" id="label_control_proxy">
+                                <property name="tooltip_text" translatable="yes">Proxy for Pandora API requests only (for those outside the US). If unset, the normal proxy is used.</property>
+                                <property name="halign">start</property>
+                                <property name="valign">center</property>
+                                <property name="label" translatable="yes">Control Proxy URL</property>
+                                <property name="width_request">120</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="control_proxy_entry">
+                                <property name="hexpand">1</property>
+                                <property name="input_purpose">url</property>
+                              </object>
+                            </child>
                           </object>
-                          <layout>
-                            <property name="column">0</property>
-                            <property name="row">1</property>
-                          </layout>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="proxy_entry">
-                            <property name="input_purpose">url</property>
+                          <object class="GtkBox">
+                            <property name="orientation">horizontal</property>
+                            <property name="spacing">20</property>
+                            <child>
+                              <object class="GtkLabel" id="label_control_proxy_pac">
+                                <property name="tooltip_text" translatable="yes">Proxy auto-configuration URL. Used only if Control Proxy URL above is unset.</property>
+                                <property name="halign">start</property>
+                                <property name="valign">center</property>
+                                <property name="label" translatable="yes">Control Proxy PAC</property>
+                                <property name="width_request">120</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="control_proxy_pac_entry">
+                                <property name="hexpand">1</property>
+                                <property name="input_purpose">url</property>
+                              </object>
+                            </child>
                           </object>
-                          <layout>
-                            <property name="column">1</property>
-                            <property name="row">1</property>
-                          </layout>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label_control_proxy">
-                            <property name="tooltip_text" translatable="yes">Proxy for Pandora API requests only (for those outside the US). If unset, the normal proxy is used.</property>
-                            <property name="halign">start</property>
-                            <property name="label" translatable="yes">Control Proxy URL</property>
-                          </object>
-                          <layout>
-                            <property name="column">0</property>
-                            <property name="row">2</property>
-                          </layout>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="control_proxy_entry">
-                            <property name="input_purpose">url</property>
-                          </object>
-                          <layout>
-                            <property name="column">1</property>
-                            <property name="row">2</property>
-                          </layout>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="label_control_proxy_pac">
-                            <property name="tooltip_text" translatable="yes">Proxy auto-configuration URL. Used only if Control Proxy URL above is unset.</property>
-                            <property name="halign">start</property>
-                            <property name="label" translatable="yes">Control Proxy PAC</property>
-                          </object>
-                          <layout>
-                            <property name="column">0</property>
-                            <property name="row">3</property>
-                          </layout>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="control_proxy_pac_entry">
-                            <property name="input_purpose">url</property>
-                          </object>
-                          <layout>
-                            <property name="column">1</property>
-                            <property name="row">3</property>
-                          </layout>
                         </child>
                       </object>
-                      <layout>
-                        <property name="column">0</property>
-                        <property name="row">1</property>
-                      </layout>
                     </child>
                   </object>
-                  <layout>
-                    <property name="column">0</property>
-                    <property name="row">1</property>
-                  </layout>
                 </child>
               </object>
             </child>

@@ -392,6 +392,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         GLib.set_application_name("Pithos")
 
         self.settings.bind('volume', self.volume, 'value', Gio.SettingsBindFlags.DEFAULT)
+        self._volume_handler_id = self.volume.connect('value-changed', self.on_volume_change_event)
 
         self.songs_treeview.set_model(self.songs_model)
 
@@ -435,62 +436,62 @@ class PithosWindow(Gtk.ApplicationWindow):
     def init_actions(self, app):
         action = Gio.SimpleAction.new('playpause', None)
         self.add_action(action)
-        app.add_accelerator('space', 'win.playpause', None)
+        app.set_accels_for_action('win.playpause', ['space'])
         action.connect('activate', self.user_playpause)
 
         action = Gio.SimpleAction.new('playselected', None)
         self.add_action(action)
-        app.add_accelerator('Return', 'win.playselected', None)
+        app.set_accels_for_action('win.playselected', ['Return'])
         action.connect('activate', self.start_selected_song)
 
         action = Gio.SimpleAction.new('songinfo', None)
         self.add_action(action)
-        app.add_accelerator('<Primary>i', 'win.songinfo', None)
+        app.set_accels_for_action('win.songinfo', ['<Primary>i'])
         action.connect('activate', self.info_song)
 
         action = Gio.SimpleAction.new('volumeup', None)
         self.add_action(action)
-        app.add_accelerator('<Primary>Up', 'win.volumeup', None)
+        app.set_accels_for_action('win.volumeup', ['<Primary>Up'])
         action.connect('activate', self.volume_up)
 
         action = Gio.SimpleAction.new('volumedown', None)
         self.add_action(action)
-        app.add_accelerator('<Primary>Down', 'win.volumedown', None)
+        app.set_accels_for_action('win.volumedown', ['<Primary>Down'])
         action.connect('activate', self.volume_down)
 
         action = Gio.SimpleAction.new('skip', None)
         self.add_action(action)
-        app.add_accelerator('<Primary>Right', 'win.skip', None)
+        app.set_accels_for_action('win.skip', ['<Primary>Right'])
         action.connect('activate', self.next_song)
 
         action = Gio.SimpleAction.new('love', None)
         self.add_action(action)
-        app.add_accelerator('<Primary>l', 'win.love', None)
+        app.set_accels_for_action('win.love', ['<Primary>l'])
         action.connect('activate', self.love_song)
 
         action = Gio.SimpleAction.new('ban', None)
         self.add_action(action)
-        app.add_accelerator('<Primary>b', 'win.ban', None)
+        app.set_accels_for_action('win.ban', ['<Primary>b'])
         action.connect('activate', self.ban_song)
 
         action = Gio.SimpleAction.new('tired', None)
         self.add_action(action)
-        app.add_accelerator('<Primary>t', 'win.tired', None)
+        app.set_accels_for_action('win.tired', ['<Primary>t'])
         action.connect('activate', self.tired_song)
 
         action = Gio.SimpleAction.new('unrate', None)
         self.add_action(action)
-        app.add_accelerator('<Primary>u', 'win.unrate', None)
+        app.set_accels_for_action('win.unrate', ['<Primary>u'])
         action.connect('activate', self.unrate_song)
 
         action = Gio.SimpleAction.new('bookmark', None)
         self.add_action(action)
-        app.add_accelerator('<Primary>d', 'win.bookmark', None)
+        app.set_accels_for_action('win.bookmark', ['<Primary>d'])
         action.connect('activate', self.bookmark_song)
 
         action = Gio.SimpleAction.new('toggle-station-popover', None)
         self.add_action(action)
-        app.add_accelerator('<Primary>r', 'win.toggle-station-popover', None)
+        app.set_accels_for_action('win.toggle-station-popover', ['<Primary>r'])
         action.connect('activate', self.stations_popover.toggle_visibility)
 
         for name, handler in [
@@ -836,7 +837,7 @@ class PithosWindow(Gtk.ApplicationWindow):
             return self.next_song()
 
         if self._set_player_state(PseudoGst.PLAYING, change_gst_state=change_gst_state):
-            self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+            self.playpause_image.set_from_icon_name('media-playback-pause-symbolic')
             self.emit('play-state-changed', True)
         return True
 
@@ -846,7 +847,7 @@ class PithosWindow(Gtk.ApplicationWindow):
 
     def pause(self):
         if self._set_player_state(PseudoGst.PAUSED):
-            self.playpause_image.set_from_icon_name('media-playback-start-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+            self.playpause_image.set_from_icon_name('media-playback-start-symbolic')
             self.emit('play-state-changed', False)
 
 
@@ -860,7 +861,7 @@ class PithosWindow(Gtk.ApplicationWindow):
         if self._set_player_state(PseudoGst.STOPPED, change_gst_state=True):
             # We need to reset the icon at song changes since our default
             # desired state is playing when going to a new song.
-            self.playpause_image.set_from_icon_name('media-playback-pause-symbolic', Gtk.IconSize.SMALL_TOOLBAR)
+            self.playpause_image.set_from_icon_name('media-playback-pause-symbolic')
 
     def user_playpause(self, *ignore):
         self.playpause_notify()
@@ -1214,9 +1215,9 @@ class PithosWindow(Gtk.ApplicationWindow):
     def set_volume_cb(self, volume):
         # Convert to the cubic scale that the volume slider uses
         scaled_volume = math.pow(volume, 1.0/3.0)
-        self.volume.handler_block_by_func(self.on_volume_change_event)
+        self.volume.handler_block(self._volume_handler_id)
         self.volume.set_property("value", scaled_volume)
-        self.volume.handler_unblock_by_func(self.on_volume_change_event)
+        self.volume.handler_unblock(self._volume_handler_id)
 
     def on_gst_volume(self, player, volumespec):
         vol = self.player.get_property('volume')
@@ -1477,14 +1478,13 @@ class PithosWindow(Gtk.ApplicationWindow):
     def volume_down(self, *ignore):
         self.adjust_volume(-2)
 
-    @Gtk.Template.Callback()
     def on_volume_change_event(self, volumebutton, value):
         self.set_player_volume(value)
 
     def show_about(self, version):
         about = AboutPithosDialog.AboutPithosDialog(transient_for=self)
         about.set_version(version)
-        about.connect('response', lambda d, r: d.destroy())
+        about.connect('close-request', lambda d: d.destroy() or False)
         about.present()
 
     def on_prefs_response(self, widget, response):

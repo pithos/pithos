@@ -45,18 +45,22 @@ class EqDialog(Gtk.Dialog):
 
     def __init__(self, plugin):
         super().__init__(
-            _('Logging Level'),
-            plugin.window,
-            0,
-            ('_Reset', Gtk.ResponseType.CANCEL, '_Close', Gtk.ResponseType.CLOSE),
+            title=_('10 Band Equalizer'),
+            transient_for=plugin.window,
             use_header_bar=1,
+            resizable=False,
+            default_width=200,
+            default_height=200,
         )
+        self.add_buttons('_Reset', Gtk.ResponseType.CANCEL, '_Close', Gtk.ResponseType.CLOSE)
         self.init_template()
-        self.set_title(_('10 Band Equalizer'))
-        self.set_default_size(200, 200)
-        self.set_resizable(False)
         self.connect('response', self.on_response)
         self.connect('close-request', lambda *ignore: self.set_visible(False) or True)
+
+        self._scale_handler_ids = {}
+        for i in range(10):
+            scale = getattr(self, 'band{}'.format(i))
+            self._scale_handler_ids[i] = scale.connect('value-changed', self.on_scale_value_changed)
 
         self.plugin = plugin
         self.plugin.window.connect('player-ready', self.on_enabled)
@@ -80,7 +84,6 @@ class EqDialog(Gtk.Dialog):
         else:
             self.zero_eq()
 
-    @Gtk.Template.Callback()
     def on_scale_value_changed(self, scale):
         value = scale.get_value()
         name = scale.get_name()
@@ -102,7 +105,7 @@ class EqDialog(Gtk.Dialog):
     def set_eq_values(self, index, value=0.0):
         name = 'band{}'.format(index)
         scale = getattr(self, name)
-        scale.handler_block_by_func(self.on_scale_value_changed)
+        scale.handler_block(self._scale_handler_ids[index])
         scale.set_value(value)
-        scale.handler_unblock_by_func(self.on_scale_value_changed)
+        scale.handler_unblock(self._scale_handler_ids[index])
         self.plugin.window.equalizer.set_property(name, value)

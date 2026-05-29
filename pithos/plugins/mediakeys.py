@@ -14,7 +14,7 @@
 
 import logging
 
-from gi.repository import GLib, Gdk, Gio
+from gi.repository import GLib, Gio
 
 from pithos.plugin import PithosPlugin
 
@@ -52,11 +52,6 @@ class MediaKeyPlugin(PithosPlugin):
             None,
             None,
         )
-
-    def update_focus_time(self, widget, event, userdata=None):
-        if event.changed_mask & Gdk.WindowState.FOCUSED and \
-           event.new_window_state & Gdk.WindowState.FOCUSED:
-            self.grab_media_keys()
 
     def update_active(self, *ignore):
         if self.window.is_active():
@@ -134,12 +129,9 @@ class MediaKeyPlugin(PithosPlugin):
     def on_enable(self):
         if self.mediakeys:
             iface_name = self.mediakeys.props.g_interface_name
+            self.focus_hook = self.window.connect('notify::is-active', self.update_active)
             if 'mate' in iface_name:
-                # Workaround for MATE not updating it's window state properly.
-                self.focus_hook = self.window.connect('notify::is-active', self.update_active)
                 self.grab_media_keys()
-            else:
-                self.focus_hook = self.window.connect('window-state-event', self.update_focus_time)
             self.mediakey_hook = self.mediakeys.connect('g-signal', self.mediakey_signal)
             logging.info('Bound media keys with DBUS {}'.format(iface_name))
         elif self.keybinder:

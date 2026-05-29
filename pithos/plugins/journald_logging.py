@@ -69,40 +69,48 @@ class LoggingPluginPrefsDialog(Gtk.Dialog):
 
     def __init__(self, parent, settings):
         super().__init__(
-            _('Logging Level'),
-            parent,
-            0,
-            ('_Cancel', Gtk.ResponseType.CANCEL, '_Apply', Gtk.ResponseType.APPLY),
+            title=_('Logging Level'),
+            transient_for=parent,
             use_header_bar=1,
+            resizable=False,
+            default_width=300,
         )
-        self.set_default_size(300, -1)
+        self.add_buttons('_Cancel', Gtk.ResponseType.CANCEL, '_Apply', Gtk.ResponseType.APPLY)
         self.pithos_window = parent
         self.settings = settings
-        self.set_resizable(False)
 
         self.connect('close-request', lambda *ignore: self.response(Gtk.ResponseType.CANCEL) or True)
 
         sub_title = Gtk.Label.new(_('Set the journald logging level for Pithos'))
         sub_title.set_halign(Gtk.Align.CENTER)
-        self.log_level_combo = Gtk.ComboBoxText.new()
 
-        logging_levels = [
-            ('debug', 'High - debug'),
-            ('verbose', 'Default - verbose'),
-            ('warning', 'Low - warning'),
-        ]
-
-        for level in logging_levels:
-            self.log_level_combo.append(level[0], level[1])
+        self._level_ids = ['debug', 'verbose', 'warning']
+        level_labels = ['High - debug', 'Default - verbose', 'Low - warning']
+        self.log_level_combo = Gtk.DropDown.new(Gtk.StringList.new(level_labels), None)
 
         self._reset_combo()
         content_area = self.get_content_area()
+        content_area.set_spacing(12)
+        content_area.set_margin_top(12)
+        content_area.set_margin_bottom(12)
+        content_area.set_margin_start(12)
+        content_area.set_margin_end(12)
 
         content_area.append(sub_title)
         content_area.append(self.log_level_combo)
 
     def _reset_combo(self):
-        self.log_level_combo.set_active_id(self.settings['data'] or 'verbose')
+        try:
+            idx = self._level_ids.index(self.settings['data'] or 'verbose')
+        except ValueError:
+            idx = self._level_ids.index('verbose')
+        self.log_level_combo.set_selected(idx)
+
+    def _active_id(self):
+        idx = self.log_level_combo.get_selected()
+        if 0 <= idx < len(self._level_ids):
+            return self._level_ids[idx]
+        return None
 
     def do_response(self, response):
         if response != Gtk.ResponseType.APPLY:
@@ -111,7 +119,7 @@ class LoggingPluginPrefsDialog(Gtk.Dialog):
             return
 
         setting = self.settings['data']
-        active_id = self.log_level_combo.get_active_id()
+        active_id = self._active_id()
 
         if setting == active_id:
             self.set_visible(False)

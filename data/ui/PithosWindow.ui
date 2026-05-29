@@ -75,7 +75,6 @@
             <child>
               <object class="GtkVolumeButton" id="volume">
                 <property name="orientation">vertical</property>
-                <signal name="value-changed" handler="on_volume_change_event" swapped="no"/>
               </object>
             </child>
             <style>
@@ -149,7 +148,6 @@
         </child>
         <child>
           <object class="GtkStatusbar" id="statusbar">
-            <property name="spacing">2</property>
           </object>
         </child>
       </object>

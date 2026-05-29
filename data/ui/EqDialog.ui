@@ -7,12 +7,6 @@
     <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">0.10000000000000001</property>
   </object>
-  <object class="GtkAdjustment" id="adjustment10">
-    <property name="lower">-24</property>
-    <property name="upper">12</property>
-    <property name="step_increment">0.10000000000000001</property>
-    <property name="page_increment">0.10000000000000001</property>
-  </object>
   <object class="GtkAdjustment" id="adjustment2">
     <property name="lower">-24</property>
     <property name="upper">12</property>
@@ -61,318 +55,284 @@
     <property name="step_increment">0.10000000000000001</property>
     <property name="page_increment">0.10000000000000001</property>
   </object>
+  <object class="GtkAdjustment" id="adjustment10">
+    <property name="lower">-24</property>
+    <property name="upper">12</property>
+    <property name="step_increment">0.10000000000000001</property>
+    <property name="page_increment">0.10000000000000001</property>
+  </object>
   <template class="EqDialog" parent="GtkDialog">
     <property name="resizable">False</property>
     <property name="modal">True</property>
     <child>
-      <object class="GtkGrid">
+      <object class="GtkBox">
         <property name="margin_start">6</property>
         <property name="margin_end">6</property>
         <property name="margin_top">6</property>
         <property name="margin_bottom">6</property>
         <property name="hexpand">True</property>
         <property name="vexpand">True</property>
-        <property name="column_spacing">6</property>
-        <property name="column_homogeneous">True</property>
+        <property name="spacing">6</property>
+        <property name="homogeneous">True</property>
         <child>
-          <object class="GtkScale" id="band0">
-            <property name="name">band0</property>
-            <property name="halign">center</property>
-            <property name="vexpand">True</property>
+          <object class="GtkBox">
             <property name="orientation">vertical</property>
-            <property name="adjustment">adjustment1</property>
-            <property name="inverted">True</property>
-            <property name="round_digits">1</property>
-            <property name="has_origin">False</property>
-            <property name="value_pos">bottom</property>
-            <signal name="value-changed" handler="on_scale_value_changed" swapped="no"/>
+            <child>
+              <object class="GtkScale" id="band0">
+                <property name="name">band0</property>
+                <property name="halign">center</property>
+                <property name="vexpand">True</property>
+                <property name="orientation">vertical</property>
+                <property name="adjustment">adjustment1</property>
+                <property name="inverted">True</property>
+                <property name="round_digits">1</property>
+                <property name="has_origin">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="halign">center</property>
+                <property name="valign">end</property>
+                <property name="label" translatable="yes">29 &lt;small&gt;Hz&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
           </object>
-          <layout>
-            <property name="column">0</property>
-            <property name="row">0</property>
-          </layout>
         </child>
         <child>
-          <object class="GtkScale" id="band1">
-            <property name="name">band1</property>
-            <property name="halign">center</property>
-            <property name="vexpand">True</property>
+          <object class="GtkBox">
             <property name="orientation">vertical</property>
-            <property name="adjustment">adjustment2</property>
-            <property name="inverted">True</property>
-            <property name="round_digits">1</property>
-            <property name="has_origin">False</property>
-            <property name="value_pos">bottom</property>
-            <signal name="value-changed" handler="on_scale_value_changed" swapped="no"/>
+            <child>
+              <object class="GtkScale" id="band1">
+                <property name="name">band1</property>
+                <property name="halign">center</property>
+                <property name="vexpand">True</property>
+                <property name="orientation">vertical</property>
+                <property name="adjustment">adjustment2</property>
+                <property name="inverted">True</property>
+                <property name="round_digits">1</property>
+                <property name="has_origin">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="halign">center</property>
+                <property name="valign">end</property>
+                <property name="label" translatable="yes">59 &lt;small&gt;Hz&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
           </object>
-          <layout>
-            <property name="column">1</property>
-            <property name="row">0</property>
-          </layout>
         </child>
         <child>
-          <object class="GtkScale" id="band2">
-            <property name="name">band2</property>
-            <property name="halign">center</property>
-            <property name="vexpand">True</property>
+          <object class="GtkBox">
             <property name="orientation">vertical</property>
-            <property name="adjustment">adjustment3</property>
-            <property name="inverted">True</property>
-            <property name="round_digits">1</property>
-            <property name="has_origin">False</property>
-            <property name="value_pos">bottom</property>
-            <signal name="value-changed" handler="on_scale_value_changed" swapped="no"/>
+            <child>
+              <object class="GtkScale" id="band2">
+                <property name="name">band2</property>
+                <property name="halign">center</property>
+                <property name="vexpand">True</property>
+                <property name="orientation">vertical</property>
+                <property name="adjustment">adjustment3</property>
+                <property name="inverted">True</property>
+                <property name="round_digits">1</property>
+                <property name="has_origin">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="halign">center</property>
+                <property name="valign">end</property>
+                <property name="label" translatable="yes">119 &lt;small&gt;Hz&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
           </object>
-          <layout>
-            <property name="column">2</property>
-            <property name="row">0</property>
-          </layout>
         </child>
         <child>
-          <object class="GtkScale" id="band3">
-            <property name="name">band3</property>
-            <property name="halign">center</property>
-            <property name="vexpand">True</property>
+          <object class="GtkBox">
             <property name="orientation">vertical</property>
-            <property name="adjustment">adjustment4</property>
-            <property name="inverted">True</property>
-            <property name="round_digits">1</property>
-            <property name="has_origin">False</property>
-            <property name="value_pos">bottom</property>
-            <signal name="value-changed" handler="on_scale_value_changed" swapped="no"/>
+            <child>
+              <object class="GtkScale" id="band3">
+                <property name="name">band3</property>
+                <property name="halign">center</property>
+                <property name="vexpand">True</property>
+                <property name="orientation">vertical</property>
+                <property name="adjustment">adjustment4</property>
+                <property name="inverted">True</property>
+                <property name="round_digits">1</property>
+                <property name="has_origin">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="halign">center</property>
+                <property name="valign">end</property>
+                <property name="label" translatable="yes">237 &lt;small&gt;Hz&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
           </object>
-          <layout>
-            <property name="column">3</property>
-            <property name="row">0</property>
-          </layout>
         </child>
         <child>
-          <object class="GtkScale" id="band4">
-            <property name="name">band4</property>
-            <property name="halign">center</property>
-            <property name="vexpand">True</property>
+          <object class="GtkBox">
             <property name="orientation">vertical</property>
-            <property name="adjustment">adjustment5</property>
-            <property name="inverted">True</property>
-            <property name="round_digits">1</property>
-            <property name="has_origin">False</property>
-            <property name="value_pos">bottom</property>
-            <signal name="value-changed" handler="on_scale_value_changed" swapped="no"/>
+            <child>
+              <object class="GtkScale" id="band4">
+                <property name="name">band4</property>
+                <property name="halign">center</property>
+                <property name="vexpand">True</property>
+                <property name="orientation">vertical</property>
+                <property name="adjustment">adjustment5</property>
+                <property name="inverted">True</property>
+                <property name="round_digits">1</property>
+                <property name="has_origin">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="halign">center</property>
+                <property name="valign">end</property>
+                <property name="label" translatable="yes">474 &lt;small&gt;Hz&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
           </object>
-          <layout>
-            <property name="column">4</property>
-            <property name="row">0</property>
-          </layout>
         </child>
         <child>
-          <object class="GtkScale" id="band5">
-            <property name="name">band5</property>
-            <property name="halign">center</property>
-            <property name="vexpand">True</property>
+          <object class="GtkBox">
             <property name="orientation">vertical</property>
-            <property name="adjustment">adjustment6</property>
-            <property name="inverted">True</property>
-            <property name="round_digits">1</property>
-            <property name="has_origin">False</property>
-            <property name="value_pos">bottom</property>
-            <signal name="value-changed" handler="on_scale_value_changed" swapped="no"/>
+            <child>
+              <object class="GtkScale" id="band5">
+                <property name="name">band5</property>
+                <property name="halign">center</property>
+                <property name="vexpand">True</property>
+                <property name="orientation">vertical</property>
+                <property name="adjustment">adjustment6</property>
+                <property name="inverted">True</property>
+                <property name="round_digits">1</property>
+                <property name="has_origin">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="halign">center</property>
+                <property name="valign">end</property>
+                <property name="label" translatable="yes">947 &lt;small&gt;Hz&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
           </object>
-          <layout>
-            <property name="column">5</property>
-            <property name="row">0</property>
-          </layout>
         </child>
         <child>
-          <object class="GtkScale" id="band6">
-            <property name="name">band6</property>
-            <property name="halign">center</property>
-            <property name="vexpand">True</property>
+          <object class="GtkBox">
             <property name="orientation">vertical</property>
-            <property name="adjustment">adjustment7</property>
-            <property name="inverted">True</property>
-            <property name="round_digits">1</property>
-            <property name="has_origin">False</property>
-            <property name="value_pos">bottom</property>
-            <signal name="value-changed" handler="on_scale_value_changed" swapped="no"/>
+            <child>
+              <object class="GtkScale" id="band6">
+                <property name="name">band6</property>
+                <property name="halign">center</property>
+                <property name="vexpand">True</property>
+                <property name="orientation">vertical</property>
+                <property name="adjustment">adjustment7</property>
+                <property name="inverted">True</property>
+                <property name="round_digits">1</property>
+                <property name="has_origin">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="halign">center</property>
+                <property name="valign">end</property>
+                <property name="label" translatable="yes">1889 &lt;small&gt;Hz&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
           </object>
-          <layout>
-            <property name="column">6</property>
-            <property name="row">0</property>
-          </layout>
         </child>
         <child>
-          <object class="GtkScale" id="band7">
-            <property name="name">band7</property>
-            <property name="halign">center</property>
-            <property name="vexpand">True</property>
+          <object class="GtkBox">
             <property name="orientation">vertical</property>
-            <property name="adjustment">adjustment8</property>
-            <property name="inverted">True</property>
-            <property name="round_digits">1</property>
-            <property name="has_origin">False</property>
-            <property name="value_pos">bottom</property>
-            <signal name="value-changed" handler="on_scale_value_changed" swapped="no"/>
+            <child>
+              <object class="GtkScale" id="band7">
+                <property name="name">band7</property>
+                <property name="halign">center</property>
+                <property name="vexpand">True</property>
+                <property name="orientation">vertical</property>
+                <property name="adjustment">adjustment8</property>
+                <property name="inverted">True</property>
+                <property name="round_digits">1</property>
+                <property name="has_origin">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="halign">center</property>
+                <property name="valign">end</property>
+                <property name="label" translatable="yes">3770 &lt;small&gt;Hz&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
           </object>
-          <layout>
-            <property name="column">7</property>
-            <property name="row">0</property>
-          </layout>
         </child>
         <child>
-          <object class="GtkScale" id="band8">
-            <property name="name">band8</property>
-            <property name="halign">center</property>
-            <property name="vexpand">True</property>
+          <object class="GtkBox">
             <property name="orientation">vertical</property>
-            <property name="adjustment">adjustment9</property>
-            <property name="inverted">True</property>
-            <property name="round_digits">1</property>
-            <property name="has_origin">False</property>
-            <property name="value_pos">bottom</property>
-            <signal name="value-changed" handler="on_scale_value_changed" swapped="no"/>
+            <child>
+              <object class="GtkScale" id="band8">
+                <property name="name">band8</property>
+                <property name="halign">center</property>
+                <property name="vexpand">True</property>
+                <property name="orientation">vertical</property>
+                <property name="adjustment">adjustment9</property>
+                <property name="inverted">True</property>
+                <property name="round_digits">1</property>
+                <property name="has_origin">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="halign">center</property>
+                <property name="valign">end</property>
+                <property name="label" translatable="yes">7523 &lt;small&gt;Hz&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
           </object>
-          <layout>
-            <property name="column">8</property>
-            <property name="row">0</property>
-          </layout>
         </child>
         <child>
-          <object class="GtkScale" id="band9">
-            <property name="name">band9</property>
-            <property name="halign">center</property>
-            <property name="vexpand">True</property>
+          <object class="GtkBox">
             <property name="orientation">vertical</property>
-            <property name="adjustment">adjustment10</property>
-            <property name="inverted">True</property>
-            <property name="round_digits">1</property>
-            <property name="has_origin">False</property>
-            <property name="value_pos">bottom</property>
-            <signal name="value-changed" handler="on_scale_value_changed" swapped="no"/>
+            <child>
+              <object class="GtkScale" id="band9">
+                <property name="name">band9</property>
+                <property name="halign">center</property>
+                <property name="vexpand">True</property>
+                <property name="orientation">vertical</property>
+                <property name="adjustment">adjustment10</property>
+                <property name="inverted">True</property>
+                <property name="round_digits">1</property>
+                <property name="has_origin">False</property>
+                <property name="value_pos">bottom</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="halign">center</property>
+                <property name="valign">end</property>
+                <property name="label" translatable="yes">15011 &lt;small&gt;Hz&lt;/small&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
           </object>
-          <layout>
-            <property name="column">9</property>
-            <property name="row">0</property>
-          </layout>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="halign">center</property>
-            <property name="valign">end</property>
-            <property name="label" translatable="yes">29 &lt;small&gt;Hz&lt;/small&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <layout>
-            <property name="column">0</property>
-            <property name="row">1</property>
-          </layout>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="halign">center</property>
-            <property name="valign">end</property>
-            <property name="label" translatable="yes">59 &lt;small&gt;Hz&lt;/small&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <layout>
-            <property name="column">1</property>
-            <property name="row">1</property>
-          </layout>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="halign">center</property>
-            <property name="valign">end</property>
-            <property name="label" translatable="yes">119 &lt;small&gt;Hz&lt;/small&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <layout>
-            <property name="column">2</property>
-            <property name="row">1</property>
-          </layout>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="halign">center</property>
-            <property name="valign">end</property>
-            <property name="label" translatable="yes">237 &lt;small&gt;Hz&lt;/small&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <layout>
-            <property name="column">3</property>
-            <property name="row">1</property>
-          </layout>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="halign">center</property>
-            <property name="valign">end</property>
-            <property name="label" translatable="yes">474 &lt;small&gt;Hz&lt;/small&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <layout>
-            <property name="column">4</property>
-            <property name="row">1</property>
-          </layout>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="halign">center</property>
-            <property name="valign">end</property>
-            <property name="label" translatable="yes">947 &lt;small&gt;Hz&lt;/small&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <layout>
-            <property name="column">5</property>
-            <property name="row">1</property>
-          </layout>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="halign">center</property>
-            <property name="valign">end</property>
-            <property name="label" translatable="yes">1889 &lt;small&gt;Hz&lt;/small&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <layout>
-            <property name="column">6</property>
-            <property name="row">1</property>
-          </layout>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="halign">center</property>
-            <property name="valign">end</property>
-            <property name="label" translatable="yes">3770 &lt;small&gt;Hz&lt;/small&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <layout>
-            <property name="column">7</property>
-            <property name="row">1</property>
-          </layout>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="halign">center</property>
-            <property name="valign">end</property>
-            <property name="label" translatable="yes">7523 &lt;small&gt;Hz&lt;/small&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <layout>
-            <property name="column">8</property>
-            <property name="row">1</property>
-          </layout>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="halign">center</property>
-            <property name="valign">end</property>
-            <property name="label" translatable="yes">15011 &lt;small&gt;Hz&lt;/small&gt;</property>
-            <property name="use_markup">True</property>
-          </object>
-          <layout>
-            <property name="column">9</property>
-            <property name="row">1</property>
-          </layout>
         </child>
       </object>
     </child>

@@ -859,6 +859,11 @@ class MprisPluginPrefsDialog(Gtk.Dialog):
         box.append(self.switch)
 
         content_area = self.get_content_area()
+        content_area.set_spacing(12)
+        content_area.set_margin_top(12)
+        content_area.set_margin_bottom(12)
+        content_area.set_margin_start(12)
+        content_area.set_margin_end(12)
         content_area.append(box)
 
     def on_close(self, window):
