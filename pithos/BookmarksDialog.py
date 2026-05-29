@@ -24,9 +24,8 @@ class BookmarksDialog(Gtk.Dialog):
             transient_for=pithos,
             modal=True,
             use_header_bar=1,
-            default_width=520,
-            default_height=460,
         )
+        self.set_default_size(520, 460)
         self.pithos = pithos
         self.worker_run = pithos.worker_run
 

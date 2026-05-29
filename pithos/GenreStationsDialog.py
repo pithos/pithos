@@ -26,9 +26,8 @@ class GenreStationsDialog(Gtk.Dialog):
             transient_for=pithos,
             modal=True,
             use_header_bar=1,
-            default_width=640,
-            default_height=480,
         )
+        self.set_default_size(640, 480)
         self.pithos = pithos
         self.worker_run = pithos.worker_run
 

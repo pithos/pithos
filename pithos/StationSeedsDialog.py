@@ -28,9 +28,8 @@ class StationSeedsDialog(Gtk.Dialog):
             transient_for=parent or pithos,
             modal=True,
             use_header_bar=1,
-            default_width=480,
-            default_height=420,
         )
+        self.set_default_size(480, 420)
         self.pithos = pithos
         self.station = station
         self.worker_run = pithos.worker_run
