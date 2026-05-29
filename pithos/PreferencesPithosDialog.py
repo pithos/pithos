@@ -118,10 +118,6 @@ class PreferencesPithosDialog(Gtk.Dialog):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, use_header_bar=1, **kwargs)
         self.init_template()
-        # close-request can't be wired in the .ui template: gtk-builder-tool
-        # rejects it on custom template subclasses because it doesn't resolve
-        # GtkWindow's inherited signals.
-        self.connect('close-request', self.on_delete_event)
 
         self.last_password = None
         self.settings = Gio.Settings.new('io.github.Pithos')

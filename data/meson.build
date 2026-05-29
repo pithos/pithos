@@ -62,7 +62,7 @@ if compile_schemas.found()
   )
 endif
 
-gtk_builder_tool = find_program('gtk-builder-tool', required: false)
+gtk_builder_tool = find_program('gtk4-builder-tool', 'gtk-builder-tool', required: false)
 if gtk_builder_tool.found()
   ui_files = [
     ['ui', 'AboutPithosDialog.ui'],

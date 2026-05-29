@@ -5,6 +5,7 @@
     <property name="modal">1</property>
     <property name="default-width">360</property>
     <property name="default-height">300</property>
+    <signal name="close-request" handler="on_close" swapped="no"/>
     <child type="titlebar">
       <object class="GtkHeaderBar" id="headerbar1">
         <property name="show-title-buttons">1</property>
