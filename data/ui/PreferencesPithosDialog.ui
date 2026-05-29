@@ -6,7 +6,6 @@
     <property name="resizable">False</property>
     <property name="modal">1</property>
     <signal name="show" handler="on_show" swapped="no"/>
-    <signal name="close-request" handler="on_delete_event" swapped="no"/>
     <child type="action">
       <object class="GtkButton" id="button_cancel">
         <property name="label">Cancel</property>

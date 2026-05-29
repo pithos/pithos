@@ -60,7 +60,7 @@
     <signal name="destroy" handler="on_destroy" swapped="no"/>
     <child type="titlebar">
       <object class="GtkHeaderBar">
-        <property name="show_title_buttons">True</property>
+        <property name="show-title-buttons">True</property>
         <child>
           <object class="GtkBox" id="playcontrol_box">
             <property name="homogeneous">1</property>

@@ -37,6 +37,10 @@ class StationsDialog(Gtk.Dialog):
     def __init__(self, pithos, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.init_template()
+        # close-request can't be wired in the .ui template: gtk-builder-tool
+        # rejects it on custom template subclasses because it doesn't resolve
+        # GtkWindow's inherited signals.
+        self.connect('close-request', self.on_close)
 
         self.pithos = pithos
         self.model = pithos.stations_model
