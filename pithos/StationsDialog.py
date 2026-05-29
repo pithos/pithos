@@ -19,6 +19,7 @@ from gi.repository import Gtk, Gdk, Gio, GObject
 
 from .util import open_browser
 from . import SearchDialog
+from .StationSeedsDialog import StationSeedsDialog
 
 
 @Gtk.Template(resource_path='/io/github/Pithos/ui/StationsDialog.ui')
@@ -63,6 +64,8 @@ class StationsDialog(Gtk.Dialog):
         station_menu = Gio.Menu()
         station_menu.append(_("Listen to Station"), "ctx.station-listen")
         station_menu.append(_("Station Info"), "ctx.station-info")
+        station_menu.append(_("Edit Seeds…"), "ctx.station-seeds")
+        station_menu.append(_("Share Station…"), "ctx.station-share")
         station_menu.append(_("Rename Station"), "ctx.station-rename")
         station_menu.append(_("Delete Station"), "ctx.station-delete")
 
@@ -74,6 +77,8 @@ class StationsDialog(Gtk.Dialog):
         for name, handler in [
             ('station-listen', lambda *_: self.on_menuitem_listen(None)),
             ('station-info',   lambda *_: self.on_menuitem_info(None)),
+            ('station-seeds',  lambda *_: self.on_menuitem_seeds(None)),
+            ('station-share',  lambda *_: self.on_menuitem_share(None)),
             ('station-rename', lambda *_: self.on_menuitem_rename(None)),
             ('station-delete', lambda *_: self.on_menuitem_delete(None)),
         ]:
@@ -184,6 +189,61 @@ class StationsDialog(Gtk.Dialog):
 
     def on_menuitem_info(self, widget):
         open_browser(self.selected_station().info_url, parent=self)
+
+    def on_menuitem_seeds(self, widget):
+        station = self.selected_station()
+        if station is None:
+            return
+        dlg = StationSeedsDialog(self.pithos, station, parent=self)
+        dlg.present()
+
+    def on_menuitem_share(self, widget):
+        station = self.selected_station()
+        if station is None:
+            return
+
+        dialog = Gtk.Dialog(
+            title=_('Share "{}"').format(station.name),
+            transient_for=self,
+            modal=True,
+            use_header_bar=1,
+            default_width=380,
+        )
+        dialog.add_buttons('_Cancel', Gtk.ResponseType.CANCEL, '_Share', Gtk.ResponseType.APPLY)
+        dialog.set_response_sensitive(Gtk.ResponseType.APPLY, False)
+
+        content = dialog.get_content_area()
+        content.set_margin_top(12)
+        content.set_margin_bottom(12)
+        content.set_margin_start(12)
+        content.set_margin_end(12)
+        content.set_spacing(8)
+
+        prompt = Gtk.Label(label=_('Enter the email address of the person you want to share this station with. '
+                                   'Separate multiple addresses with commas.'))
+        prompt.set_wrap(True)
+        prompt.set_xalign(0)
+        content.append(prompt)
+
+        entry = Gtk.Entry()
+        entry.set_input_purpose(Gtk.InputPurpose.EMAIL)
+        entry.set_placeholder_text('friend@example.com')
+        content.append(entry)
+
+        def on_text_changed(e):
+            dialog.set_response_sensitive(Gtk.ResponseType.APPLY, bool(e.get_text().strip()))
+        entry.connect('changed', on_text_changed)
+        entry.connect('activate', lambda *_: dialog.response(Gtk.ResponseType.APPLY))
+
+        def on_response(dlg, response):
+            if response == Gtk.ResponseType.APPLY:
+                emails = [e.strip() for e in entry.get_text().split(',') if e.strip()]
+                if emails:
+                    self.worker_run(station.share, (emails,), None, _('Sharing station…'))
+            dlg.destroy()
+
+        dialog.connect('response', on_response)
+        dialog.present()
 
     def on_menuitem_rename(self, widget):
         sel = self.treeview.get_selection().get_selected()

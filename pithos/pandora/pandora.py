@@ -401,6 +401,51 @@ class Pandora:
     def delete_feedback(self, stationToken, feedbackId):
         self.json_call('station.deleteFeedback', {'feedbackId': feedbackId, 'stationToken': stationToken})
 
+    def get_genre_stations(self):
+        result = self.json_call('station.getGenreStations')
+        return [GenreCategory(c) for c in result.get('categories', [])]
+
+    def get_bookmarks(self):
+        result = self.json_call('user.getBookmarks')
+        songs = [SongBookmark(b) for b in result.get('songs', [])]
+        artists = [ArtistBookmark(b) for b in result.get('artists', [])]
+        return songs, artists
+
+    def delete_song_bookmark(self, bookmarkToken):
+        self.json_call('bookmark.deleteSongBookmark', {'bookmarkToken': bookmarkToken})
+
+    def delete_artist_bookmark(self, bookmarkToken):
+        self.json_call('bookmark.deleteArtistBookmark', {'bookmarkToken': bookmarkToken})
+
+
+class GenreCategory:
+    def __init__(self, d):
+        self.name = d['categoryName']
+        self.stations = [GenreStation(s) for s in d.get('stations', [])]
+
+
+class GenreStation:
+    def __init__(self, d):
+        self.name = d['stationName']
+        self.musicId = d['stationToken']
+
+
+class SongBookmark:
+    def __init__(self, d):
+        self.bookmarkToken = d['bookmarkToken']
+        self.title = d.get('songName', '')
+        self.artist = d.get('artistName', '')
+        self.album = d.get('albumName', '')
+        self.musicToken = d.get('musicToken')
+
+
+class ArtistBookmark:
+    def __init__(self, d):
+        self.bookmarkToken = d['bookmarkToken']
+        self.artist = d.get('artistName', '')
+        self.musicToken = d.get('musicToken')
+
+
 class Station:
     def __init__(self, pandora, d):
         self.pandora = pandora
@@ -450,6 +495,44 @@ class Station:
     def delete(self):
         self.pandora.delete_station(self)
 
+    def get_details(self):
+        d = self.pandora.json_call('station.getStation', {
+            'stationToken': self.idToken,
+            'includeExtendedAttributes': True,
+        })
+        seeds = []
+        music = d.get('music', {})
+        for s in music.get('songs', []):
+            seeds.append(StationSeed('song', s['seedId'],
+                                     '{} by {}'.format(s.get('songName', ''), s.get('artistName', ''))))
+        for a in music.get('artists', []):
+            seeds.append(StationSeed('artist', a['seedId'], a.get('artistName', '')))
+        for g in music.get('genres', []):
+            seeds.append(StationSeed('genre', g['seedId'], g.get('genreName', '')))
+        return seeds
+
+    def add_music(self, musicToken):
+        self.transformIfShared()
+        result = self.pandora.json_call('station.addMusic', {
+            'stationToken': self.idToken,
+            'musicToken': musicToken,
+        })
+        return result.get('seedId')
+
+    def delete_music(self, seedId):
+        self.transformIfShared()
+        self.pandora.json_call('station.deleteMusic', {'seedId': seedId})
+
+    def share(self, emails):
+        if isinstance(emails, str):
+            emails = [emails]
+        self.transformIfShared()
+        self.pandora.json_call('station.shareStation', {
+            'stationToken': self.idToken,
+            'stationId': self.id,
+            'emails': emails,
+        })
+
     def __repr__(self):
         return '<{}.{} {} "{}">'.format(
             __name__,
@@ -457,6 +540,14 @@ class Station:
             self.id,
             self.name,
         )
+
+
+class StationSeed:
+    def __init__(self, seedType, seedId, description):
+        self.seedType = seedType
+        self.seedId = seedId
+        self.description = description
+
 
 class Song:
     def __init__(self, pandora, d, playlist_time):

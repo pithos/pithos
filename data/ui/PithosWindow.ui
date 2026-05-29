@@ -8,8 +8,16 @@
         <attribute name="label" translatable="yes">_New Station…</attribute>
       </item>
       <item>
+        <attribute name="action">app.genre-stations</attribute>
+        <attribute name="label" translatable="yes">_Browse Genre Stations…</attribute>
+      </item>
+      <item>
         <attribute name="action">app.stations</attribute>
         <attribute name="label" translatable="yes">_Stations</attribute>
+      </item>
+      <item>
+        <attribute name="action">app.bookmarks</attribute>
+        <attribute name="label" translatable="yes">_Bookmarks…</attribute>
       </item>
     </section>
     <section>

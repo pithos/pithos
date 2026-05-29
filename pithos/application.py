@@ -81,6 +81,14 @@ class PithosApplication(Gtk.Application):
         self.add_action(action)
         self.set_accels_for_action('app.new-station', ['<Primary>n'])
 
+        action = Gio.SimpleAction.new("genre-stations", None)
+        action.connect("activate", self.genre_stations_cb)
+        self.add_action(action)
+
+        action = Gio.SimpleAction.new("bookmarks", None)
+        action.connect("activate", self.bookmarks_cb)
+        self.add_action(action)
+
         action = Gio.SimpleAction.new("preferences", None)
         action.connect("activate", self.prefs_cb)
         self.add_action(action)
@@ -206,6 +214,12 @@ class PithosApplication(Gtk.Application):
 
     def new_station_cb(self, action, param):
         self.window.show_new_station()
+
+    def genre_stations_cb(self, action, param):
+        self.window.show_genre_stations()
+
+    def bookmarks_cb(self, action, param):
+        self.window.show_bookmarks()
 
     def prefs_cb(self, action, param):
         self.window.show_preferences()

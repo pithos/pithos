@@ -39,6 +39,8 @@ if Gtk.get_major_version() < 4:
     sys.exit('Gtk 4.0 is required')
 
 from . import AboutPithosDialog, PreferencesPithosDialog, SearchDialog, StationsDialog
+from .BookmarksDialog import BookmarksDialog
+from .GenreStationsDialog import GenreStationsDialog
 from .StationsPopover import StationsPopover
 from .gobject_worker import GObjectWorker
 from .pandora import *
@@ -1566,6 +1568,14 @@ class PithosWindow(Gtk.ApplicationWindow):
 
         self._search_dlg.connect('response', on_response)
         self._search_dlg.present()
+
+    def show_genre_stations(self):
+        dlg = GenreStationsDialog(self)
+        dlg.present()
+
+    def show_bookmarks(self):
+        dlg = BookmarksDialog(self)
+        dlg.present()
 
     def refresh_stations(self, *ignore):
         self.worker_run(self.pandora.get_stations, (), self.process_stations, "Refreshing stations...")
