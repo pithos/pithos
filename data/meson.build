@@ -42,9 +42,14 @@ pithos_appstream = i18n.merge_file(
 pithos_settings = gnome.compile_schemas()
 
 appstream_util = find_program('appstream-util', required: false)
+appstreamcli = find_program('appstreamcli', required: false)
 if appstream_util.found()
   test('Validate appstream file', appstream_util,
     args: ['validate', '--nonet', pithos_appstream]
+  )
+elif appstreamcli.found()
+  test('Validate appstream file', appstreamcli,
+    args: ['validate', '--no-net', pithos_appstream]
   )
 endif
 
