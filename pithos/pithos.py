@@ -201,7 +201,8 @@ class CellRendererAlbumArt(Gtk.CellRenderer):
         # We request 24px icons because what we really want is 12px icons,
         # and they doesn't exist in many(or any?) icon themes. We then manually color
         # and scale them down to 12px.
-        info = current_theme.lookup_icon('emblem-favorite-symbolic', 24, 0)
+        # Newer Adwaita releases no longer ship emblem-favorite-symbolic.
+        info = current_theme.choose_icon(['emblem-favorite-symbolic', 'starred-symbolic'], 24, 0)
         icon, was_symbolic = info.load_symbolic(fg_color, fg_color, fg_color, fg_color)
         self.love_icon = icon.scale_simple(12, 12, GdkPixbuf.InterpType.BILINEAR)
 
