@@ -17,7 +17,7 @@ import logging
 
 from gi.repository import Gio, Gtk, GObject, Pango
 
-from .util import SecretService
+from .Secrets import SecretService
 
 try:
     import pacparser
