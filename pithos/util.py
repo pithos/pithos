@@ -15,26 +15,41 @@
 
 import logging
 import os
+import sys
 from urllib.parse import splittype, splituser, splitpasswd
 
 import gi
-gi.require_version('Secret', '1')
 from gi.repository import (
     GLib,
-    Secret,
     Gtk
 )
 
 
+def is_macos() -> bool:
+    return sys.platform == 'darwin'
+
+
+def is_windows() -> bool:
+    return sys.platform == 'win32'
+
+
+# Only Linux and the BSDs have a Secret Service provider; elsewhere the
+# keyring package talks to the native credential store.
+_use_keyring = is_macos() or is_windows()
+
+if not _use_keyring:
+    gi.require_version('Secret', '1')
+    from gi.repository import Secret
+
+
 class _SecretService:
 
-    _account_schema = Secret.Schema.new(
-        'io.github.Pithos.Account',
-        Secret.SchemaFlags.NONE,
-        {'email': Secret.SchemaAttributeType.STRING},
-    )
-
     def __init__(self):
+        self._account_schema = Secret.Schema.new(
+            'io.github.Pithos.Account',
+            Secret.SchemaFlags.NONE,
+            {'email': Secret.SchemaAttributeType.STRING},
+        )
         self._current_collection = Secret.COLLECTION_DEFAULT
 
     def unlock_keyring(self, callback):
@@ -196,7 +211,11 @@ class _SecretService:
             )
 
 
-SecretService = _SecretService()
+if _use_keyring:
+    from .keyring_backend import KeyringService
+    SecretService = KeyringService()
+else:
+    SecretService = _SecretService()
 
 
 def parse_proxy(proxy):
