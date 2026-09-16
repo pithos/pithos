@@ -17,7 +17,7 @@ import os
 from gi.repository import Gio
 
 from pithos.plugin import PithosPlugin
-from pithos.util import is_flatpak
+from pithos.util import is_flatpak, is_macos
 
 
 class NotifyPlugin(PithosPlugin):
@@ -31,8 +31,9 @@ class NotifyPlugin(PithosPlugin):
     def on_prepare(self):
         # We prefer the behavior of the fdo backend to the gtk backend
         # as it doesn't force persistence which doesn't make sense for
-        # this application.
-        if not is_flatpak():
+        # this application. macOS has no fdo notification server, so
+        # leave GLib's native backend alone there.
+        if not is_flatpak() and not is_macos():
             os.environ['GNOTIFICATION_BACKEND'] = 'freedesktop'
 
         self._app = Gio.Application.get_default()
