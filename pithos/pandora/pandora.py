@@ -37,6 +37,11 @@ from . import data
 HTTP_TIMEOUT = 30
 USER_AGENT = 'pithos'
 
+# What must never reach the log: the auth token in the request url, and the
+# password and auth tokens in the request and response bodies.
+_SECRET_URL_RE = re.compile(r'auth_token=[^&]*')
+_SECRET_JSON_RE = re.compile(r'"(password|partnerAuthToken|userAuthToken)"(\s*:\s*)"(?:[^"\\]|\\.)*"')
+
 RATE_BAN = 'ban'
 RATE_LOVE = 'love'
 RATE_NONE = None
@@ -143,6 +148,14 @@ class PandoraTimeout(PandoraNetError): pass
 def pad(s, l):
     return s + b'\0' * (l - len(s))
 
+def _redact_url(url):
+    """Blank the auth token in a request url before it is logged"""
+    return _SECRET_URL_RE.sub('auth_token=<redacted>', url)
+
+def _redact_body(body):
+    """Blank the password and auth tokens in a request or response body before it is logged"""
+    return _SECRET_JSON_RE.sub(r'"\1"\2"<redacted>"', body)
+
 class Pandora:
     """Access the Pandora API
 
@@ -189,11 +202,12 @@ class Pandora:
             args['userAuthToken'] = self.userAuthToken
         elif self.partnerAuthToken:
             args['partnerAuthToken'] = self.partnerAuthToken
-        data = json.dumps(args).encode('utf-8')
+        body = json.dumps(args)
 
-        logging.debug(url)
-        logging.debug(data)
+        logging.debug(_redact_url(url))
+        logging.debug(_redact_body(body))
 
+        data = body.encode('utf-8')
         if blowfish:
             data = self.pandora_encrypt(data)
 
@@ -218,7 +232,7 @@ class Pandora:
             logging.error("Network Socket Error: %s", error_string)
             raise PandoraNetError("Network Socket Error", submsg=error_string)
 
-        logging.debug(text)
+        logging.debug(_redact_body(text))
 
         tree = json.loads(text)
         if tree['stat'] == 'fail':
