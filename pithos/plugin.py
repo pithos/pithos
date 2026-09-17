@@ -90,10 +90,9 @@ class PithosPlugin(GObject.Object):
 class ErrorPlugin(PithosPlugin):
     def __init__(self, name, error):
         logging.error('Error loading plugin {}: {}'.format(name, error))
+        super().__init__(name, None, None)
         self.prepared = True
         self.error = error
-        self.name = name
-        self.enabled = False
 
 
 def load_plugin(name, window, bus):
